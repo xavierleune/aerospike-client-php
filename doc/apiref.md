@@ -1,9 +1,9 @@
 ---
-title: PHP v3 Client API Reference
-description: Complete reference for the PHP v3 Client API.
+title: Aerospike PHP Client API Reference
+description: Complete reference for the Aerospike PHP Client API.
 ---
 
-The PHP v3 Client API may be described as follows:
+The Aerospike PHP Client API may be described as follows:
 
 ```
 // AerospikeResult is returned on each Aerospike call.
@@ -58,61 +58,84 @@ class AerospikeWriteUniqueFlag
 // Signature for query callback functions:
 // function query_foreach_callback($val_z, $udata_z);
 
-
 // Client interface to the Aerospke cluster.
 class AerospikeClient
 {
-   public function set_log_level($level_s);
-   public function set_log_file($filename_s);
-   public function set_log_callback($callback_z);
+   // Client Object APIs:
 
-   public function init($config_z);
+   public function __construct($config_z);
+   public function __destruct($config_z);
 
-   public function connect($url_s, &$err_s);
-   public function connect($urls_a, &$err_s);
+   // Cluster Management APIs:
 
-   public function disconnect();
+   public function connect($hosts_a, &$err_s);
+   public function isConnected();
+   public function close();
+
+   public function getNodeNames();
+   public function getNodes();
 
    public function info($host_s, $port_l, $command_s [,$timeoutms_l]);
 
-   // KVS APIs:
-   public function key_exists($key_z);
-   public function key_get($key_z);
-   public function key_select($key_z);
-   public function key_operate($key_z);
-   public function key_put($key_z, $value_z);
-   public function key_batch_get($keys_z);
-   public function key_remove($key_z);
+   // Key Value Store (KVS) APIs:
+
+   public function add($key_z [, $policy_z]);
+   public function append($key_z [, $policy_z]);
+   public function delete($key_z [, $policy_z]);
+   public function exists($key_z [, $policy_z]);
+   public function get($key_z [, $policy_z]);
+   public function getHeader($key_z [, $policy_z]);
+   public function operate($key_z [, $policy_z]);
+   public function prepend($key_z [, $policy_z]);
+   public function put($key_z, $value_z [, $policy_z]);
+   public function touch($key_z [, $policy_z]);
 
    // Scan APIs:
+
    public function scan_create(&$scan_s, $options_s);
-   public function scan_select($scan_s);
-   public function scan_foreach($scan_s);
+   public function scanAll($scan_s);
+   public function scanNode($scan_s);
    public function scan_background($scan_s);
    public function scan_info($scan_s);
    public function scan_destroy($scan_s);
 
    // Secondary Index APIs:
-   public function index_create(&$index_z, $type_s, $options_s);
-   public function index_destroy($index_z);
+
+   public function createIndex(&$index_z, $type_s, $options_s);
+   public function dropIndex($index_z);
 
    // Query APIs:
+
    public function query_create(&$query_s, $options_s);
-   public function query_select($query_s);
-   public function query_where($query_s);
+   public function query($query_s);
+   public function queryAggregate($query_s);
    public function query_foreach($query_s);
    public function query_destroy($query_s);
 
-   // UDF APIs:
-   public function key_apply($key_z);
+   // User Defined Function (UDF) APIs:
 
-   // LDT APIs:
-   // [TBD]
+   public function execute($key_z);
+   public function register($client_path_s, $server_path_s, $langage);
+
+   // Large Data Type (LDT) APIs:
+
+   public function getLargeList($key_z);
+   public function getLargeMap($key_z);
+   public function getLargeSet($key_z);
+   public function getLargeStack($key_z);
+
+   // Logging APIs:
+
+   public function setLogLevel($level_s);
+   public function setLogFile($filename_s);
+   public function setLogCallback($callback_z);
+
+   // Shared Memory APIs:
 
    // NB:  The Aerospike 3.0 C client does not yet provide
    //       the underlying necessary support for these SHM APIs,
    //       and so they are still subject to change.
-   public function use_shm($num_nodes_l, $key_l);
-   public function free_shm();
+   public function useShm($num_nodes_l, $key_l);
+   public function freeShm();
 }
 ```

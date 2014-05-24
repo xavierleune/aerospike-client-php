@@ -1,18 +1,18 @@
 ---
-title: PHP v3 Client Internals
-description: Learn about the internal architecture of the PHP v3 API for the Aerospike database.
+title: Aerospike PHP Client Internals
+description: Learn about the internal architecture of the Aerospike PHP Client for the Aerospike database.
 ---
 
-# PHP v3 Client Internal Architecture
+# Aerospiek PHP Client Internal Architecture
 
-The PHP v3 Client API provides access to the Aerospike server via a set
-of PHP objects.  The objects are implented as a PHP extension
+The Aerospike PHP Client provides access to the Aerospike server via a
+set of PHP object classes.  The objects are implented as a PHP extension
 implemented in the C programming language using the Zend Engine
-extension API.  The Aerospike PHP v3 extension is layered on top of the
-Aerospike C client.
+extension API.  The Aerospike PHP Client extension is layered on top of
+the Aerospike C client.
 
-The PHP v3 API is structurally quit similar to the other Aerospike
-client APIs, especially the Node.js client API.
+The Aerospike PHP Client API is structurally quit similar to the other
+Aerospike client APIs, especially the Java client API.
 
 ## Arrays as Containers
 

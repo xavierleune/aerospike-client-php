@@ -1,29 +1,32 @@
 /*
-    File:   src/aerospike/aerospike.c
+ * src/aerospike/aerospike.c
+ *
+ * Copyright (C) 2013-2014 Aerospike, Inc.
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ *
+ */
 
-    Description:
-       Aerospike PHP Client API Zend Engine extension implementation.
-
-       The extension has the following functions:
-	      string aerospike()
-		  bool aerospike_set_cb(string cb, string userdata)
-		  bool aerospike_invoke_cb()
-
-	Copyright (C) 2014 Aerospike, Inc.. Portions may be licensed
-	to Aerospike, Inc. under one or more contributor license agreements.
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-		http://www.apache.org/licenses/LICENSE-2.0
-
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
-*/
+/*
+ *  SYNOPSIS
+ *    This is the Aerospike PHP Client API Zend Engine extension implementation.
+ *
+ *    Please see "doc/apiref.md" for detailed information about the API and
+ *    "doc/internals.md" for the internal architecture of the client.
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -105,6 +108,8 @@ zend_module_entry aerospike_module_entry =
 ZEND_GET_MODULE(aerospike)
 #endif
 
+// XXX -- Test function to be removed:
+
 /* PHP Function:  string aerospike()
    Returns a aerospike string. */
 PHP_FUNCTION(aerospike)
@@ -113,6 +118,8 @@ PHP_FUNCTION(aerospike)
 
 	RETURN_STRING("This is a aerospike!", 1);
 }
+
+// XXX -- Test function to be removed:
 
 /* PHP Function:  bool aerospike_set_cb(string cb, string userdata)
    Returns a aerospike string. */
@@ -141,6 +148,8 @@ PHP_FUNCTION(aerospike_set_cb)
 
 	RETURN_TRUE;
 }
+
+// XXX -- Test function to be removed:
 
 /* PHP Function:  bool aerospike_invoke_cb()
    Invoke the callback function. */
@@ -190,8 +199,59 @@ PHP_FUNCTION(aerospike_invoke_cb)
 
 static zend_function_entry aerospike_class_functions[] =
 {
+	/*
+	 *  Client Object APIs:
+	 */
+
 	PHP_ME(aerospike, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
-	PHP_ME(aerospike, aerospike, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, __destruct, NULL, ZEND_ACC_DTOR | ZEND_ACC_PUBLIC)
+
+	/*
+	 *  Cluster Management APIs:
+	 */
+
+	PHP_ME(aerospike, connect, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, isConnected, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, close, NULL, ZEND_ACC_PUBLIC)
+
+	PHP_ME(aerospike, getNodeNames, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
+
+	PHP_ME(aerospike, info, NULL, ZEND_ACC_PUBLIC)
+
+	/*
+	 *  Key Value Store (KVS) APIs:
+	 */
+
+	PHP_ME(aerospike, add, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, append, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, delete, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, exists, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, get, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, getHeader, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, operate, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, put, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, touch, NULL, ZEND_ACC_PUBLIC)
+
+#if 0 // TBD
+
+	// Scan APIs:
+	// Secondary Index APIs:
+	// Query APIs:
+	// User Defined Function (UDF) APIs:
+	// Large Data Type (LDT) APIs:
+	// Logging APIs:
+	// Shared Memory APIs:
+
+	PHP_ME(aerospike, , NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, , NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, , NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, , NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, , NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(aerospike, , NULL, ZEND_ACC_PUBLIC)
+#endif
+
 	{ NULL, NULL, NULL }
 };
 
@@ -239,17 +299,9 @@ zend_object_value aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 	return retval;
 }
 
-/* PHP Method:  bool aerospike::aerospike()
-   Simple aerospike method. */
-PHP_METHOD(aerospike, aerospike)
-{
-	zval *object = getThis();
-	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
-	php_printf("**In aerospike method**\n");
-
-	RETURN_TRUE;
-}
+/*
+ *  Client Object APIs:
+ */
 
 /* PHP Method:  aerospike::__construct()
    Constructs a new "aerospike" object. */
@@ -259,10 +311,320 @@ PHP_METHOD(aerospike, __construct)
 
 	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(getThis() TSRMLS_CC);
 
+	// DEBUG
+	php_printf("**In aerospike::__construct() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
 //	php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
 }
 
-#if 0
+/* PHP Method:  bool aerospike::__destruct()
+   Simple aerospike method. */
+PHP_METHOD(aerospike, __destruct)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::__destruct() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/*
+ *  Cluster Management APIs:
+ */
+
+/* PHP Method:  bool aerospike::connect()
+   Connect the client to an Aerospike cluster. */
+PHP_METHOD(aerospike, connect)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::connect() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::is_connected()
+   Is the client connected to the Aerospike cluster? */
+PHP_METHOD(aerospike, is_connected)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::is_connected() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::close()
+   Disconnect the client to an Aerospike cluster. */
+PHP_METHOD(aerospike, close)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::close() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::getNodeNames()
+   Return an array of the names of the nodes in the Aerospike cluster. */
+PHP_METHOD(aerospike, getNodeNames)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::getNodeNames() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::getNodes()
+   Return an array of objects for the nodes in the Aerospike cluster. */
+PHP_METHOD(aerospike, getNodes)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::getNodes() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::info()
+   Send an Info. request to an Aerospike cluster. */
+PHP_METHOD(aerospike, info)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::info() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/*
+ *  Key Value Store (KVS) APIs:
+ */
+
+/* PHP Method:  bool aerospike::()
+    Add integer bin values to existing bin values. */
+PHP_METHOD(aerospike, add)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::add() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::append()
+    Append bin string values to existing record bin values. */
+PHP_METHOD(aerospike, append)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::append() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::delete()
+    Delete record for specified key. */
+PHP_METHOD(aerospike, delete)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::delete() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::exists()
+    Check if record key(s) exist in one batch call. */
+PHP_METHOD(aerospike, exists)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::exists() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::get()
+    Read record header(s) and bin(s) for specified key(s) in one batch call. */
+PHP_METHOD(aerospike, get)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::get() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::getHeader()
+    Read record generation and expiration for specified key(s) in one batch call. */
+PHP_METHOD(aerospike, getHeader)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::getHeader() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::operate()
+    Perform multiple read/write operations on a single key in one batch call. */
+PHP_METHOD(aerospike, operate)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::operate() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::prepend()
+    Prepend bin string values to existing record bin values. */
+PHP_METHOD(aerospike, prepend)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::prepend() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::put()
+    Write record bin(s). */
+PHP_METHOD(aerospike, put)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::put() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/* PHP Method:  bool aerospike::touch()
+    Create record if it does not already exist. */
+PHP_METHOD(aerospike, touch)
+{
+	zval *object = getThis();
+	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+
+	// DEBUG
+	php_printf("**In aerospike::touch() method**\n");
+
+	/*** TO BE IMPLEMENTED ***/
+
+	RETURN_TRUE;
+}
+
+/*
+ *  Scan APIs:
+ */
+
+/*** TBD ***/
+
+/*
+ *  Secondary Index APIs:
+ */
+
+/*** TBD ***/
+
+/*
+ *  Query APIs:
+ */
+
+/*** TBD ***/
+
+/*
+ *  User Defined Function (UDF) APIs:
+ */
+
+/*** TBD ***/
+
+/*
+ *  Large Data Type (LDT) APIs:
+ */
+
+/*** TBD ***/
+
+/*
+ *  Logging APIs:
+ */
+
+/*** TBD ***/
+
+/*
+ *  Shared Memory APIs:
+ */
+
+/*** TBD ***/
+
+#if 0 // XXX -- Currently unused.  Delete???
 static int zend_std_cast_object_tostring(zval *readobj, zval *writeobj, int type TSRMLS_DC)
 {
 	zval *retval = NULL;
