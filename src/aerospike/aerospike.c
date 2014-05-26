@@ -213,10 +213,7 @@ static zend_function_entry aerospike_class_functions[] =
 	PHP_ME(aerospike, connect, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(aerospike, isConnected, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(aerospike, close, NULL, ZEND_ACC_PUBLIC)
-
-	PHP_ME(aerospike, getNodeNames, NULL, ZEND_ACC_PUBLIC)
 	PHP_ME(aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
-
 	PHP_ME(aerospike, info, NULL, ZEND_ACC_PUBLIC)
 
 	/*
@@ -377,21 +374,6 @@ PHP_METHOD(aerospike, close)
 
 	// DEBUG
 	php_printf("**In aerospike::close() method**\n");
-
-	/*** TO BE IMPLEMENTED ***/
-
-	RETURN_TRUE;
-}
-
-/* PHP Method:  bool aerospike::getNodeNames()
-   Return an array of the names of the nodes in the Aerospike cluster. */
-PHP_METHOD(aerospike, getNodeNames)
-{
-	zval *object = getThis();
-	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
-	// DEBUG
-	php_printf("**In aerospike::getNodeNames() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 

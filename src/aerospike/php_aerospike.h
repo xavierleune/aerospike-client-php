@@ -71,7 +71,6 @@ PHP_METHOD(aerospike, __destruct);
 PHP_METHOD(aerospike, connect);
 PHP_METHOD(aerospike, isConnected);
 PHP_METHOD(aerospike, close);
-PHP_METHOD(aerospike, getNodeNames);
 PHP_METHOD(aerospike, getNodes);
 PHP_METHOD(aerospike, info);
 

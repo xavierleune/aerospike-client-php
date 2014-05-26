@@ -8,16 +8,25 @@ The Aerospike PHP Client API may be described as follows:
 ```
 // AerospikeResult is returned on each Aerospike call.
 // It specifies the success or failure condition of the call.
+// [Note:  Negative status values come from the client;
+//         positive status values come from the server.]
 class AerospikeResult
 {
-    // Negative error codes are errors from the client side
+    // Client status codes:
+
+    const AEROSPIKE_COMMAND_REJECTED        =  -8;
+    const AEROSPIKE_QUERY_TERMINATED        =  -7;
+    const AEROSPIKE_SCAN_TERMINATED         =  -6;
     const AEROSPIKE_NO_HOSTS                =  -5;
     const AEROSPIKE_INVALID_API_PARAM       =  -4;
     const AEROSPIKE_FAIL_ASYNCQ_FULL        =  -3;
     const AEROSPIKE_FAIL_TIMEOUT            =  -2;
     const AEROSPIKE_FAIL_CLIENT             =  -1;
+
+    // Server status codes:
+
     const AEROSPIKE_OK                      =   0;
-    const AEROSPIKE_UNKNOWN                 =   1;
+    const AEROSPIKE_SEVRVER_ERROR           =   1;
     const AEROSPIKE_KEY_NOT_FOUND_ERROR     =   2;
     const AEROSPIKE_GENERATION_ERROR        =   3;
     const AEROSPIKE_PARAMETER_ERROR         =   4;
@@ -26,11 +35,37 @@ class AerospikeResult
     const AEROSPIKE_CLUSTER_KEY_MISMATCH    =   7;
     const AEROSPIKE_PARTITION_OUT_OF_SPACE  =   8;
     const AEROSPIKE_SERVERSIDE_TIMEOUT      =   9;
-    const AEROSPIKE_NO_XDS                  =  10;
+    const AEROSPIKE_NO_XDR                  =  10;
     const AEROSPIKE_SERVER_UNAVAILABLE      =  11;
     const AEROSPIKE_INCOMPATIBLE_TYPE       =  12;
     const AEROSPIKE_RECORD_TOO_BIG          =  13;
     const AEROSPIKE_KEY_BUSY                =  14;
+    const AEROSPIKE_SCAN_ABORT              =  15;
+    const AEROSPIKE_UNSUPPORTED_FEATURE     =  16;
+    const AEROSPIKE_BIN_NOT_FOUND           =  17;
+    const AEROSPIKE_DEVICE_OVERLOAD         =  18;
+    const AEROSPIKE_KEY_MISMATCH            =  19;
+
+    // UDF status codes:
+
+    const AEROSPIKE_UDF_BAD_RESPONSE        = 100;
+
+    // Secondary Index status codes:
+
+    const AEROSPIKE_INDEX_FOUND             = 200;
+    const AEROSPIKE_INDEX_NOTFOUND          = 201;
+    const AEROSPIKE_INDEX_OOM               = 202;
+    const AEROSPIKE_INDEX_NOTREADABLE       = 203;
+    const AEROSPIKE_INDEX_GENERIC           = 204;
+    const AEROSPIKE_INDEX_NAME_MAXLEN       = 205;
+    const AEROSPIKE_INDEX_MAXCOUNT          = 206;
+
+    // Query statue codes:
+
+    const AEROSPIKE_QUERY_ABORTED           = 210;
+    const AEROSPIKE_QUERY_QUEUEFULL         = 211;
+    const AEROSPIKE_QUERY_TIMEOUT           = 212;
+    const AEROSPIKE_QUERY_GENERIC           = 213;
 }
 
 // Specifies the level of automatic retry to be performed on write.
@@ -38,7 +73,6 @@ class AerospikeWritePolicy
 {
     const ONCE     =  1;
     const RETRY    =  2;
-    const ASSURED  =  3;
 }
 
 // Specifies the uniqueness constraint to be applied on write.
@@ -71,10 +105,7 @@ class AerospikeClient
    public function connect($hosts_a, &$err_s);
    public function isConnected();
    public function close();
-
-   public function getNodeNames();
    public function getNodes();
-
    public function info($host_s, $port_l, $command_s [,$timeoutms_l]);
 
    // Key Value Store (KVS) APIs:
