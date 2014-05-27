@@ -350,15 +350,15 @@ PHP_METHOD(aerospike, connect)
 	RETURN_TRUE;
 }
 
-/* PHP Method:  bool aerospike::is_connected()
+/* PHP Method:  bool aerospike::isConnected()
    Is the client connected to the Aerospike cluster? */
-PHP_METHOD(aerospike, is_connected)
+PHP_METHOD(aerospike, isConnected)
 {
 	zval *object = getThis();
 	aerospike_object *intern = (aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In aerospike::is_connected() method**\n");
+	php_printf("**In aerospike::isConnected() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -652,6 +652,65 @@ PHP_MINIT_FUNCTION(aerospike)
 
 	aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
 //	aerospike_ce->get_iterator = aerospike_get_iterator;
+
+	// Define constants.
+	// [Note:  Negative status values come from the client;
+	//         positive status values come from the server.]
+
+	// Client status codes:
+
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_COMMAND_REJECTED"), -8);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_QUERY_TERMINATED"), -7);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_SCAN_TERMINATED"), -6);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_NO_HOSTS"), -5);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INVALID_API_PARAM"), -4);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_FAIL_ASYNCQ_FULL"), -3);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_FAIL_TIMEOUT"), -2);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_FAIL_CLIENT"), -1);
+
+	// Server status codes:
+
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_OK"), 0);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_SERVER_ERROR"), 1);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_KEY_NOT_FOUND_ERROR"), 2);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_GENERATION_ERROR"), 3);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_PARAMETER_ERROR"), 4);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_KEY_FOUND_ERROR"), 5);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_BIN_FOUND_ERROR"), 6);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_CLUSTER_KEY_MISMATCH"), 7);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_PARTITION_OUT_OF_SPACE"), 8);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_SERVERSIDE_TIMEOUT"), 9);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_NO_XDR"), 10);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_SERVER_UNAVAILABLE"), 11);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INCOMPATIBLE_TYPE"), 12);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_RECORD_TOO_BIG"), 13);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_KEY_BUSY"), 14);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_SCAN_ABORT"), 15);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_UNSUPPORTED_FEATURE"), 16);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_BIN_NOT_FOUND"), 17);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_DEVICE_OVERLOAD"), 18);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_KEY_MISMATCH"), 19);
+
+	// UDF status codes:
+
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_UDF_BAD_RESPONSE"), 100);
+
+	// Secondary Index status codes:
+
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INDEX_FOUND"), 200);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INDEX_NOTFOUND"), 201);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INDEX_OOM"), 202);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INDEX_NOTREADABLE"), 203);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_INDEX_GENERIC"), 204);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_NAME_MAXLEN"), 205);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_MAXCOUNT"), 206);
+
+	// Query statue codes:
+
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_ABORTED"), 210);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_QUERY_QUEUEFULL"), 211);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_QUERY_TIMEOUT"), 212);
+	zend_declare_class_constant_long(aerospike_ce, ZEND_STRL("AEROSPIKE_QUERY_GENERIC"), 213);
 
 	return SUCCESS;
 }
