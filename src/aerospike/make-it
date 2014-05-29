@@ -1,0 +1,3 @@
+#!/bin/bash
+
+make clean all EXTRA_INCLUDES+=-I$CLIENTREPO_3X EXTRA_LDFLAGS="-L$CLIENTREPO_3X/target/Linux-x86_64/lib -laerospike -llua -lrt"

@@ -3,70 +3,9 @@ title: Aerospike PHP Client API Reference
 description: Complete reference for the Aerospike PHP Client API.
 ---
 
-The Aerospike PHP Client API may be described as follows:
+The Aerospike PHP client API may be described as follows:
 
 ```
-// AerospikeResult is returned on each Aerospike call.
-// It specifies the success or failure condition of the call.
-// [Note:  Negative status values come from the client;
-//         positive status values come from the server.]
-class AerospikeResult
-{
-    // Client status codes:
-
-    const AEROSPIKE_COMMAND_REJECTED        =  -8;
-    const AEROSPIKE_QUERY_TERMINATED        =  -7;
-    const AEROSPIKE_SCAN_TERMINATED         =  -6;
-    const AEROSPIKE_NO_HOSTS                =  -5;
-    const AEROSPIKE_INVALID_API_PARAM       =  -4;
-    const AEROSPIKE_FAIL_ASYNCQ_FULL        =  -3;
-    const AEROSPIKE_FAIL_TIMEOUT            =  -2;
-    const AEROSPIKE_FAIL_CLIENT             =  -1;
-
-    // Server status codes:
-
-    const AEROSPIKE_OK                      =   0;
-    const AEROSPIKE_SEVRVER_ERROR           =   1;
-    const AEROSPIKE_KEY_NOT_FOUND_ERROR     =   2;
-    const AEROSPIKE_GENERATION_ERROR        =   3;
-    const AEROSPIKE_PARAMETER_ERROR         =   4;
-    const AEROSPIKE_KEY_FOUND_ERROR         =   5;
-    const AEROSPIKE_BIN_FOUND_ERROR         =   6;
-    const AEROSPIKE_CLUSTER_KEY_MISMATCH    =   7;
-    const AEROSPIKE_PARTITION_OUT_OF_SPACE  =   8;
-    const AEROSPIKE_SERVERSIDE_TIMEOUT      =   9;
-    const AEROSPIKE_NO_XDR                  =  10;
-    const AEROSPIKE_SERVER_UNAVAILABLE      =  11;
-    const AEROSPIKE_INCOMPATIBLE_TYPE       =  12;
-    const AEROSPIKE_RECORD_TOO_BIG          =  13;
-    const AEROSPIKE_KEY_BUSY                =  14;
-    const AEROSPIKE_SCAN_ABORT              =  15;
-    const AEROSPIKE_UNSUPPORTED_FEATURE     =  16;
-    const AEROSPIKE_BIN_NOT_FOUND           =  17;
-    const AEROSPIKE_DEVICE_OVERLOAD         =  18;
-    const AEROSPIKE_KEY_MISMATCH            =  19;
-
-    // UDF status codes:
-
-    const AEROSPIKE_UDF_BAD_RESPONSE        = 100;
-
-    // Secondary Index status codes:
-
-    const AEROSPIKE_INDEX_FOUND             = 200;
-    const AEROSPIKE_INDEX_NOTFOUND          = 201;
-    const AEROSPIKE_INDEX_OOM               = 202;
-    const AEROSPIKE_INDEX_NOTREADABLE       = 203;
-    const AEROSPIKE_INDEX_GENERIC           = 204;
-    const AEROSPIKE_INDEX_NAME_MAXLEN       = 205;
-    const AEROSPIKE_INDEX_MAXCOUNT          = 206;
-
-    // Query statue codes:
-
-    const AEROSPIKE_QUERY_ABORTED           = 210;
-    const AEROSPIKE_QUERY_QUEUEFULL         = 211;
-    const AEROSPIKE_QUERY_TIMEOUT           = 212;
-    const AEROSPIKE_QUERY_GENERIC           = 213;
-}
 
 // Specifies the level of automatic retry to be performed on write.
 class AerospikeWritePolicy
@@ -92,17 +31,85 @@ class AerospikeWriteUniqueFlag
 // Signature for query callback functions:
 // function query_foreach_callback($val_z, $udata_z);
 
-// Client interface to the Aerospke cluster.
-class AerospikeClient
+// Client interface to the Aerospike cluster.
+class Aerospike
 {
+   //
+   // Aerospike Status Codes:
+   //
+   // Each Aerospike API method invocation returns a status code
+   //  depending upon the success or failure condition of the call.
+   //
+   // [Note:  Negative status values come from the client;
+   //         positive status values come from the server.]
+   //
+
+   // Client status codes:
+
+   const COMMAND_REJECTED        =  -8;
+   const QUERY_TERMINATED        =  -7;
+   const SCAN_TERMINATED         =  -6;
+   const NO_HOSTS                =  -5;
+   const INVALID_API_PARAM       =  -4;
+   const FAIL_ASYNCQ_FULL        =  -3;
+   const FAIL_TIMEOUT            =  -2;
+   const FAIL_CLIENT             =  -1;
+
+   // Server status codes:
+
+   const OK                      =   0;
+   const SERVER_ERROR            =   1;
+   const KEY_NOT_FOUND_ERROR     =   2;
+   const GENERATION_ERROR        =   3;
+   const PARAMETER_ERROR         =   4;
+   const KEY_FOUND_ERROR         =   5;
+   const BIN_FOUND_ERROR         =   6;
+   const CLUSTER_KEY_MISMATCH    =   7;
+   const PARTITION_OUT_OF_SPACE  =   8;
+   const SERVERSIDE_TIMEOUT      =   9;
+   const NO_XDR                  =  10;
+   const SERVER_UNAVAILABLE      =  11;
+   const INCOMPATIBLE_TYPE       =  12;
+   const RECORD_TOO_BIG          =  13;
+   const KEY_BUSY                =  14;
+   const SCAN_ABORT              =  15;
+   const UNSUPPORTED_FEATURE     =  16;
+   const BIN_NOT_FOUND           =  17;
+   const DEVICE_OVERLOAD         =  18;
+   const KEY_MISMATCH            =  19;
+
+   // UDF status codes:
+
+   const UDF_BAD_RESPONSE        = 100;
+
+   // Secondary Index status codes:
+
+   const INDEX_FOUND             = 200;
+   const INDEX_NOTFOUND          = 201;
+   const INDEX_OOM               = 202;
+   const INDEX_NOTREADABLE       = 203;
+   const INDEX_GENERIC           = 204;
+   const INDEX_NAME_MAXLEN       = 205;
+   const INDEX_MAXCOUNT          = 206;
+
+   // Query statue codes:
+
+   const QUERY_ABORTED           = 210;
+   const QUERY_QUEUEFULL         = 211;
+   const QUERY_TIMEOUT           = 212;
+   const QUERY_GENERIC           = 213;
+
+   //
+   // Aerospike API Methods:
+   //
+
    // Client Object APIs:
 
    public function __construct($config_z);
-   public function __destruct($config_z);
+   public function __destruct();
 
    // Cluster Management APIs:
 
-   public function connect($hosts_a, &$err_s);
    public function isConnected();
    public function close();
    public function getNodes();
@@ -110,14 +117,16 @@ class AerospikeClient
 
    // Key Value Store (KVS) APIs:
 
-   public function add($key_z [, $policy_z]);
-   public function append($key_z [, $policy_z]);
+   public function add($key_z, $value_z [, $policy_z]);
+   public function append($key_z, $value_z [, $policy_z]);
    public function delete($key_z [, $policy_z]);
    public function exists($key_z [, $policy_z]);
-   public function get($key_z [, $policy_z]);
+   public function get($key_z, &$value_z [, $policy_z]);
+   public function getMany($key_z_a, &$value_z_a [, $policy_z]);
    public function getHeader($key_z [, $policy_z]);
+   public function getHeaderMany($key_z_a [, $policy_z]);
    public function operate($key_z [, $policy_z]);
-   public function prepend($key_z [, $policy_z]);
+   public function prepend($key_z, $value_z [, $policy_z]);
    public function put($key_z, $value_z [, $policy_z]);
    public function touch($key_z [, $policy_z]);
 
@@ -146,7 +155,7 @@ class AerospikeClient
    // User Defined Function (UDF) APIs:
 
    public function execute($key_z);
-   public function register($client_path_s, $server_path_s, $langage);
+   public function register($client_path_s, $server_path_s, $language);
 
    // Large Data Type (LDT) APIs:
 

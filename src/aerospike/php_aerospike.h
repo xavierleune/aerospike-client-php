@@ -35,11 +35,7 @@
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
-	char *cb;
-	int cb_len;
-	char *priv;
-	int priv_len;
-	long count;
+/* N.B.:  No globals defined for now. */
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS
@@ -50,11 +46,6 @@ extern int aerospike_globals_id;
 extern zend_aerospike_globals aerospike_globals;
 #endif
 
-// XXX -- Test functions to be removed:
-PHP_FUNCTION(aerospike);
-PHP_FUNCTION(aerospike_set_cb);
-PHP_FUNCTION(aerospike_invoke_cb);
-
 PHP_MINIT_FUNCTION(aerospike);
 PHP_MSHUTDOWN_FUNCTION(aerospike);
 PHP_RINIT_FUNCTION(aerospike);
@@ -63,29 +54,30 @@ PHP_MINFO_FUNCTION(aerospike);
 
 // Client Object APIs:
 
-PHP_METHOD(aerospike, __construct);
-PHP_METHOD(aerospike, __destruct);
+PHP_METHOD(Aerospike, __construct);
+PHP_METHOD(Aerospike, __destruct);
 
 // Cluster Management APIs:
 
-PHP_METHOD(aerospike, connect);
-PHP_METHOD(aerospike, isConnected);
-PHP_METHOD(aerospike, close);
-PHP_METHOD(aerospike, getNodes);
-PHP_METHOD(aerospike, info);
+PHP_METHOD(Aerospike, isConnected);
+PHP_METHOD(Aerospike, close);
+PHP_METHOD(Aerospike, getNodes);
+PHP_METHOD(Aerospike, info);
 
 // Key Value Store (KVS) APIs:
 
-PHP_METHOD(aerospike, add);
-PHP_METHOD(aerospike, append);
-PHP_METHOD(aerospike, delete);
-PHP_METHOD(aerospike, exists);
-PHP_METHOD(aerospike, get);
-PHP_METHOD(aerospike, getHeader);
-PHP_METHOD(aerospike, operate);
-PHP_METHOD(aerospike, prepend);
-PHP_METHOD(aerospike, put);
-PHP_METHOD(aerospike, touch);
+PHP_METHOD(Aerospike, add);
+PHP_METHOD(Aerospike, append);
+PHP_METHOD(Aerospike, delete);
+PHP_METHOD(Aerospike, exists);
+PHP_METHOD(Aerospike, get);
+PHP_METHOD(Aerospike, getMany);
+PHP_METHOD(Aerospike, getHeader);
+PHP_METHOD(Aerospike, getHeaderMany);
+PHP_METHOD(Aerospike, operate);
+PHP_METHOD(Aerospike, prepend);
+PHP_METHOD(Aerospike, put);
+PHP_METHOD(Aerospike, touch);
 
 // TBD
 

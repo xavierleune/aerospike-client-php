@@ -10,6 +10,14 @@ development packages must be installed.
 
 The Aerospike C Client SDK must also be installed.
 
+Set the `CLIENTREPO_3X` environment variable to the filesystem location
+of the Aerospike C Client Git repository clone:
+
+	$ export CLIENTREPO_3X=<LocalRepoClone>
+
+The Lua 5.1 language packages (`lua`, `lua-devel`, and `lua-static`)
+must also be installed.
+
 ## Build Instructions
 
 Process the `config.m4` file to generate the configuration scripts:
@@ -22,13 +30,19 @@ Configure the extension and create the `Makefile`:
 
 Build the `modules/aerospike.so` Zend extension shared library:
 
-	$ make
+	$ make-it
+
+or, equivalently:
+
+	$ make clean all EXTRA_INCLUDES+=-I$CLIENTREPO_3X EXTRA_LDFLAGS="-L$CLIENTREPO_3X/target/Linux-x86_64/lib -laerospike -llua -lrt"
 
 ## Installation Instructions
 
-Add the following lines to `/etc/php.ini` (or else to your own `php.ini`
-file to be used via the `--php_ini` command-line option to `php`):
+Add the following lines to `/etc/php.d/aerospike.ini` (or else to your
+own `php.ini` file to be used via the `--php_ini` command-line option to
+`php`):
 
+	; Enable aerospike extension module
 	enable_dl=On
 	extension=modules/aerospike.so
 
