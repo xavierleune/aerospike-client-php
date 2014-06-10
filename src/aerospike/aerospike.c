@@ -33,6 +33,11 @@
 #include "php_aerospike.h"
 
 #include "aerospike/aerospike.h"
+#include "aerospike/aerospike_key.h"
+#include "aerospike/as_error.h"
+#include "aerospike/as_record.h"
+#include "aerospike/as_status.h"
+#include "aerospike/as_val.h"
 
 PHP_INI_BEGIN()
 //PHP_INI_ENTRY()
@@ -147,6 +152,8 @@ static zend_class_entry *Aerospike_ce;
 
 static zend_object_handlers Aerospike_handlers;
 
+aerospike as;
+
 typedef struct Aerospike_object {
 	zend_object std;
 	int value;
@@ -157,6 +164,8 @@ static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS
 	Aerospike_object *intern = (Aerospike_object *) object;
 	zend_object_std_dtor(&(intern->std) TSRMLS_CC);
 	efree(object);
+	aerospike_destroy(&as);
+	php_printf("**DTOR**\n");
 }
 
 static void Aerospike_object_free_storage(void *object TSRMLS_DC)
@@ -183,15 +192,16 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 
 	retval.handle = zend_objects_store_put(intern, Aerospike_object_dtor, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
 	retval.handlers = &Aerospike_handlers;
-
+//php_printf("**New Object**\n");
 	return retval;
+
 }
 
 /*
  *  Client Object APIs:
  */
 
-aerospike as;
+//aerospike as;
 
 /* PHP Method:  aerospike::__construct()
    Constructs a new "aerospike" object. */
@@ -222,7 +232,10 @@ PHP_METHOD(Aerospike, __construct)
 	// XXX -- This doesn't work with the current build options.
 	config.hosts[0] = { .addr = "127.0.0.1", .port = 3000 };
 #else
-	config.hosts[0].addr = "127.0.0.1";
+	//config.hosts[0].addr = "127.0.0.1";
+
+	// TODO: get host address and port as input parameter
+	config.hosts[0].addr = "10.71.71.49";
 	config.hosts[0].port = 3000;
 #endif
 
@@ -404,20 +417,141 @@ PHP_METHOD(Aerospike, exists)
 	RETURN_TRUE;
 }
 
+as_val* get_record_value(const as_record* p_rec,char *bin)
+{
+	if (! p_rec) {
+	fprintf(stderr," null as_record object");
+	return;
+	}
+	zval **val;
+	as_val *asval = (as_val *)as_record_get(p_rec, bin);
+	return asval;	
+}
+
+
 /* PHP Method:  bool Aerospike::get()
     Read record header(s) and bin(s) for specified key(s) in one batch call. */
 PHP_METHOD(Aerospike, get)
 {
-	zval *object = getThis();
-	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
+	
+	zval *keyval, **rkey;
+	char *arrkey, *ns, *set;
+	char *binname;
+	int   binname_len;
+	
+	array_init(return_value);
 	// DEBUG
 	php_printf("**In Aerospike::get() method**\n");
 
-	/*** TO BE IMPLEMENTED ***/
+	zval *object = getThis();
+	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-	RETURN_TRUE;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &keyval, &binname, &binname_len) == FAILURE) {
+		// TODO: Error Handling
+		return;
+	}
+	
+	// Errors populate this object.
+	as_error err;
+
+	as_key key;
+	as_record *rec = NULL;
+
+	HashTable *keyindex = Z_ARRVAL_P(keyval);
+	HashPosition pointer;
+	zval **data;
+
+	for(zend_hash_internal_pointer_reset_ex(keyindex, &pointer); zend_hash_get_current_data_ex(keyindex, (void**)&data, &pointer) == SUCCESS; zend_hash_move_forward_ex(keyindex, &pointer)) {
+	
+	uint arrkey_len, arrkey_type;
+	ulong index;
+	
+	arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
+	if(strcmp(arrkey,"ns")== 0) {
+		ns = Z_STRVAL_PP(data);
+	}else if(strcmp(arrkey,"set")==0) {
+		set = Z_STRVAL_PP(data);
+	} else if(strcmp(arrkey,"key")==0) {
+		//php_printf(Z_TYPE_P(data));
+		rkey = data;
+	} else {
+		// TODO: Error Handling
+		return;
+        }
 }
+
+	switch (Z_TYPE_P(*rkey)) {
+		case IS_LONG:
+			as_key_init_int64(&key, ns, set, (int64_t)Z_LVAL_P(*rkey));
+			break;
+		case IS_STRING:
+			as_key_init_str(&key, ns, set, (char *)Z_STRVAL_P(*rkey));
+			break;
+		default:
+			zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*rkey));
+			RETURN_FALSE;
+						
+	}
+ 
+ 
+	if (aerospike_key_get(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
+		// An error occurred, so we log it.
+		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+		
+		// XXX -- Release any allocated resources and throw and exception.
+		as_record_destroy(rec);
+		// TODO: Error Handling
+	} else {
+		//fprintf(stderr, "It worked!\n");
+		
+		as_integer *integer;
+		as_string *string;
+		as_val  *asval = get_record_value(rec,binname);
+	switch (asval->type) {
+		case 0:
+			//TODO: handling AS_UNDEF
+			break;
+		case 1:
+			//TODO: handling AS_NIL 
+			break;
+		case 2:
+			//TODO: handling AS_BOOLEAN
+			break;
+		case 3:
+			integer = as_integer_fromval(asval);
+			//php_printf("%d",(int)as_integer_get(integer));
+			RETURN_LONG((int)as_integer_get(integer));
+			break;
+		case 4:
+			string = as_string_fromval(asval);
+			//php_printf("%s",(char *)as_string_get(string));
+			RETURN_STRING((char *)as_string_get(string),1);
+			break;
+		case 5:
+			//TODO: handling AS_LIST 
+			break;
+		case 6:
+			//TODO: handling AS_MAP 
+			break;
+		case 7:
+			//TODO: handling AS_REC 
+			break;
+		case 8:
+			//TODO: handling AS_PAIR 
+			break;
+		case 9:
+			//TODO: handling AS_BYTES
+			break;
+		default:
+			zend_error(E_NOTICE, "Type not found. %d\n",asval->type);
+			break;
+						
+		}
+			as_record_destroy(rec);
+	}
+	/*** TO BE IMPLEMENTED ***/
+}
+
 
 /* PHP Method:  bool Aerospike::getHeader()
     Read record generation and expiration for specified key(s) in one batch call. */
@@ -468,15 +602,117 @@ PHP_METHOD(Aerospike, prepend)
     Write record bin(s). */
 PHP_METHOD(Aerospike, put)
 {
-	zval *object = getThis();
-	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
 	// DEBUG
 	php_printf("**In Aerospike::put() method**\n");
 
-	/*** TO BE IMPLEMENTED ***/
+	as_error err;
+	as_key key;
+	as_record rec;
 
-	RETURN_TRUE;
+	zval *object = getThis();
+	zval *keyval,*recval, **rkey, **binvalue;
+	char *binname , *arrkey, *ns, *set;
+
+
+	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &keyval,&recval) == FAILURE) {
+		// TODO: Error Handling
+		return;
+	}
+
+	HashTable *keyindex = Z_ARRVAL_P(keyval);
+	HashPosition pointer;
+	zval **data;
+
+	for(zend_hash_internal_pointer_reset_ex(keyindex, &pointer); zend_hash_get_current_data_ex(keyindex, (void**)&data, &pointer) == SUCCESS; zend_hash_move_forward_ex(keyindex, &pointer)) {
+	
+	uint arrkey_len, arrkey_type;
+	ulong index;
+	
+	arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
+	if(strcmp(arrkey,"ns")== 0) {
+		ns = Z_STRVAL_PP(data);
+	}else if(strcmp(arrkey,"set")==0) {
+		set = Z_STRVAL_PP(data);
+	} else if(strcmp(arrkey,"key")==0) {
+		rkey = data;
+	} else {
+		// TODO: Error Handling
+		return;
+        }
+}
+	HashTable *recvalindex = Z_ARRVAL_P(recval);
+	HashPosition pointer1;
+	zval **dataval;
+
+	for(zend_hash_internal_pointer_reset_ex(recvalindex, &pointer1); zend_hash_get_current_data_ex(recvalindex, (void**)&dataval, &pointer1) == SUCCESS; zend_hash_move_forward_ex(recvalindex, &pointer1)) {
+	//TODO: Multi bin and there values need to handle
+	uint arrkey_len, arrkey_type;
+	ulong index;
+	
+	arrkey_type = zend_hash_get_current_key_ex(recvalindex, &arrkey, &arrkey_len, &index, 0, &pointer1);
+	binname = arrkey;
+	binvalue= dataval;
+}
+	
+	switch (Z_TYPE_P(*rkey)) {
+		case IS_LONG:
+			as_key_init_int64(&key, ns, set, (int64_t)Z_LVAL_P(*rkey));
+			break;
+		case IS_STRING:
+			as_key_init_str(&key, ns, set, (char *)Z_STRVAL_P(*rkey));
+			break;
+		default:
+			zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*rkey));
+			RETURN_FALSE;
+						
+	}
+
+	as_record_inita(&rec, 1);
+	switch (Z_TYPE_P(*binvalue)) {
+		case IS_LONG:
+			as_record_set_int64(&rec, binname, (int64_t)Z_LVAL_P(*binvalue));
+			break;
+		case IS_STRING:
+			as_record_set_str(&rec, binname, (char *)Z_STRVAL_P(*binvalue));
+			break;
+		case IS_NULL:
+				// TODO: handling NULL
+			break;
+		case IS_BOOL:
+				// TODO: handling BOOL
+			break;
+		case IS_DOUBLE:
+				// TODO: handling DOUBLE
+			break;
+		case IS_ARRAY:
+				// TODO: handling ARRAY
+			break;
+		case IS_OBJECT:
+				// TODO: handling OBJECT
+			break;
+		case IS_RESOURCE:
+				// TODO: handling RESOURCE
+			break;
+		default:
+			zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*binvalue));
+			RETURN_FALSE;
+						
+	}
+	
+
+		if (aerospike_key_put(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
+			// An error occurred, so we log it.
+			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+
+			// XXX -- Release any allocated resources and throw and exception.
+			// TODO: Error Handling
+
+		} else {
+			RETURN_TRUE;
+		}
+	
+	
 }
 
 /* PHP Method:  bool Aerospike::touch()
@@ -589,58 +825,58 @@ PHP_MINIT_FUNCTION(aerospike)
 
 	// Client status codes:
 
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("COMMAND_REJECTED"), -8);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_TERMINATED"), -7);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SCAN_TERMINATED"), -6);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("NO_HOSTS"), -5);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INVALID_API_PARAM"), -4);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("FAIL_ASYNCQ_FULL"), -3);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("FAIL_TIMEOUT"), -2);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("FAIL_CLIENT"), -1);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("COMMAND_REJECTED"), -8 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_TERMINATED"), -7 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SCAN_TERMINATED"), -6 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("NO_HOSTS"), -5 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INVALID_API_PARAM"), -4 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("FAIL_ASYNCQ_FULL"), -3 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("FAIL_TIMEOUT"), -2 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("FAIL_CLIENT"), -1 TSRMLS_CC);
 
 	// Server status codes:
 
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OK"), 0);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SERVER_ERROR"), 1);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_NOT_FOUND_ERROR"), 2);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("GENERATION_ERROR"), 3);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("PARAMETER_ERROR"), 4);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_FOUND_ERROR"), 5);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("BIN_FOUND_ERROR"), 6);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("CLUSTER_KEY_MISMATCH"), 7);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("PARTITION_OUT_OF_SPACE"), 8);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SERVERSIDE_TIMEOUT"), 9);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("NO_XDR"), 10);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SERVER_UNAVAILABLE"), 11);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INCOMPATIBLE_TYPE"), 12);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("RECORD_TOO_BIG"), 13);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_BUSY"), 14);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SCAN_ABORT"), 15);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("UNSUPPORTED_FEATURE"), 16);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("BIN_NOT_FOUND"), 17);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("DEVICE_OVERLOAD"), 18);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_MISMATCH"), 19);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OK"), 0 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SERVER_ERROR"), 1 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_NOT_FOUND_ERROR"), 2 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("GENERATION_ERROR"), 3 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("PARAMETER_ERROR"), 4 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_FOUND_ERROR"), 5 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("BIN_FOUND_ERROR"), 6 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("CLUSTER_KEY_MISMATCH"), 7 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("PARTITION_OUT_OF_SPACE"), 8 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SERVERSIDE_TIMEOUT"), 9 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("NO_XDR"), 10 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SERVER_UNAVAILABLE"), 11 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INCOMPATIBLE_TYPE"), 12 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("RECORD_TOO_BIG"), 13 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_BUSY"), 14 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("SCAN_ABORT"), 15 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("UNSUPPORTED_FEATURE"), 16 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("BIN_NOT_FOUND"), 17 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("DEVICE_OVERLOAD"), 18 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("KEY_MISMATCH"), 19 TSRMLS_CC);
 
 	// UDF status codes:
 
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("UDF_BAD_RESPONSE"), 100);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("UDF_BAD_RESPONSE"), 100 TSRMLS_CC);
 
 	// Secondary Index status codes:
 
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_FOUND"), 200);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_NOTFOUND"), 201);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_OOM"), 202);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_NOTREADABLE"), 203);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_GENERIC"), 204);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("NAME_MAXLEN"), 205);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("MAXCOUNT"), 206);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_FOUND"), 200 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_NOTFOUND"), 201 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_OOM"), 202 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_NOTREADABLE"), 203 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("INDEX_GENERIC"), 204 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("NAME_MAXLEN"), 205 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("MAXCOUNT"), 206 TSRMLS_CC);
 
 	// Query statue codes:
 
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("ABORTED"), 210);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_QUEUEFULL"), 211);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_TIMEOUT"), 212);
-	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_GENERIC"), 213);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("ABORTED"), 210 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_QUEUEFULL"), 211 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_TIMEOUT"), 212 TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("QUERY_GENERIC"), 213 TSRMLS_CC);
 
 	return SUCCESS;
 }
@@ -652,9 +888,7 @@ PHP_MSHUTDOWN_FUNCTION(aerospike)
 #ifndef ZTS
 	aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
 #endif
-
 	UNREGISTER_INI_ENTRIES();
-
 	return SUCCESS;
 }
 
