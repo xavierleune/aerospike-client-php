@@ -207,13 +207,20 @@ PHP_METHOD(Aerospike, __construct)
 {
 //	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
 
-	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(getThis() TSRMLS_CC);
-
 	// DEBUG
 	php_printf("**In Aerospike::__construct() method**\n");
 
 	// XXX -- Temporary implementation based on globals.
+	zval *object = getThis();
+	zval *host;
+	char *arrkey;
+	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &host) == FAILURE) {
+		// TODO: Error Handling
+		return;
+	}
 	// Errors populate this object.
 	as_error err;
 
@@ -221,6 +228,78 @@ PHP_METHOD(Aerospike, __construct)
 	as_config config;
 	as_config_init(&config);
 
+	HashTable *keyindex = Z_ARRVAL_P(host);
+	
+	HashPosition pointer;
+	zval **data , **host_array;
+	uint arrkey_len;
+	ulong index;
+	zend_hash_internal_pointer_reset_ex(keyindex, &pointer);
+	zend_hash_get_current_data_ex(keyindex, (void**)&data, &pointer);
+	uint arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
+
+	if (strcmp(arrkey,"hosts") == 0) {
+		if (Z_TYPE_P(*data) != IS_ARRAY) {
+				// TODO: Error Handling
+				return;
+		}
+		host_array = data;
+	} else {
+			// TODO: Error Handling
+			return;
+	}
+
+	HashTable *hostindex = Z_ARRVAL_P(*host_array);
+	HashPosition hostpointer;
+	zval **hostdata;
+	int i = 0;
+	for (zend_hash_internal_pointer_reset_ex(hostindex, &hostpointer); zend_hash_get_current_data_ex(hostindex, (void**)&hostdata, &hostpointer) == SUCCESS; zend_hash_move_forward_ex(hostindex, &hostpointer)) {
+	
+		uint arrkey_len, arrkey_type;
+		ulong index;
+		
+		arrkey_type = zend_hash_get_current_key_ex(hostindex, &arrkey, &arrkey_len, &index, 0, &hostpointer);
+
+		if (Z_TYPE_P(*hostdata) != IS_ARRAY) {
+				// TODO: Error Handling
+				return;
+		} 
+
+		HashTable *hostdataindex = Z_ARRVAL_P(*hostdata);
+		HashPosition hostdatapointer;
+		zval **hostdatavalue;		
+		for (zend_hash_internal_pointer_reset_ex(hostdataindex, &hostdatapointer); zend_hash_get_current_data_ex(hostdataindex, (void**)&hostdatavalue, &hostdatapointer) == SUCCESS; zend_hash_move_forward_ex(hostdataindex, &hostdatapointer)) {
+	
+			uint arrkey_len, arrkey_type;
+			ulong index;
+			
+			arrkey_type = zend_hash_get_current_key_ex(hostdataindex, &arrkey, &arrkey_len, &index, 0, &hostdatapointer);
+
+			if (strcmp(arrkey,"name") == 0) {
+				switch (Z_TYPE_P(*hostdatavalue)) {
+					case IS_STRING:
+						config.hosts[i].addr = Z_STRVAL_PP(hostdatavalue);
+						break;
+					default:
+						zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*hostdatavalue));
+						break;						
+				}
+			} else if (strcmp(arrkey,"port") == 0) {
+				switch (Z_TYPE_P(*hostdatavalue)) {
+					case IS_LONG:
+						config.hosts[i].port = Z_LVAL_PP(hostdatavalue);
+						break;
+					default:
+						zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*hostdatavalue));
+						break;						
+				}
+		    } else {
+		    	// TODO: Error Handling
+		    }
+		}
+
+		i++;		
+	}
 	// XXX -- Should process constructor arguments here.
 
 	// XXX -- For now, if none are supplied, default to localhost.
@@ -233,8 +312,8 @@ PHP_METHOD(Aerospike, __construct)
 	//config.hosts[0].addr = "127.0.0.1";
 
 	// TODO: get host address and port as input parameter
-	config.hosts[0].addr = "10.71.71.49";
-	config.hosts[0].port = 3000;
+	//config.hosts[0].addr = "10.71.72.49";
+	//config.hosts[0].port = 3000;
 #endif
 
 	// The Aerospike client instance, initialized with the configuration.
@@ -469,34 +548,34 @@ PHP_METHOD(Aerospike, get)
 
 	for (zend_hash_internal_pointer_reset_ex(keyindex, &pointer); zend_hash_get_current_data_ex(keyindex, (void**)&data, &pointer) == SUCCESS; zend_hash_move_forward_ex(keyindex, &pointer)) {
 	
-	uint arrkey_len, arrkey_type;
-	ulong index;
-	
-	arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
+		uint arrkey_len, arrkey_type;
+		ulong index;
+		
+		arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
 
-	if (strcmp(arrkey,"ns") == 0) {
-		ns = Z_STRVAL_PP(data);
-	} else if (strcmp(arrkey,"set") == 0) {
-		set = Z_STRVAL_PP(data);
-	} else if (strcmp(arrkey,"key") == 0) {
-		rkey = data;
-	} else {
-		// TODO: Error Handling
-		return;
-    }
-}
-
-	switch (Z_TYPE_P(*rkey)) {
-		case IS_LONG:
-			as_key_init_int64(&key, ns, set, (int64_t)Z_LVAL_P(*rkey));
-			break;
-		case IS_STRING:
-			as_key_init_str(&key, ns, set, (char *)Z_STRVAL_P(*rkey));
-			break;
-		default:
-			zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*rkey));
-			RETURN_FALSE;						
+		if (strcmp(arrkey,"ns") == 0) {
+			ns = Z_STRVAL_PP(data);
+		} else if (strcmp(arrkey,"set") == 0) {
+			set = Z_STRVAL_PP(data);
+		} else if (strcmp(arrkey,"key") == 0) {
+			rkey = data;
+		} else {
+			// TODO: Error Handling
+			return;
+	    }
 	}
+
+		switch (Z_TYPE_P(*rkey)) {
+			case IS_LONG:
+				as_key_init_int64(&key, ns, set, (int64_t)Z_LVAL_P(*rkey));
+				break;
+			case IS_STRING:
+				as_key_init_str(&key, ns, set, (char *)Z_STRVAL_P(*rkey));
+				break;
+			default:
+				zend_error(E_NOTICE, "zval_to_object: could not convert %d\n",Z_TYPE_P(*rkey));
+				RETURN_FALSE;						
+		}
  
  
 	if (aerospike_key_get(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
