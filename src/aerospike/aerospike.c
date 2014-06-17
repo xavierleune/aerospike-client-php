@@ -245,10 +245,10 @@ ZEND_METHOD(Record, getBin)
 			RETURN_NULL();
 			break;
 		case AS_INTEGER:
-			RETURN_LONG(as_integer_get(&value->integer));
+			RETURN_LONG(as_integer_get((as_integer *) value));
 			break;
 		case AS_STRING:
-			RETURN_STRINGL(as_string_get(&value->string), strlen(as_string_get(&value->string)), 1);
+			RETURN_STRINGL(as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
 			break;
 		case AS_BYTES:
 			//TODO: Handle bytes
