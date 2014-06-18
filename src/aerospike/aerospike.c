@@ -149,27 +149,6 @@ static zend_function_entry Aerospike_class_functions[] =
 };
 
 /**
- *  Mapper for PHP Record class to C SDK's struct as_record
- */
-typedef struct Record_object {
-	/**
-     *  Standard zend_object to represent PHP Record class.
-     *  zend_object.
-     */
-	zend_object std;
-	/**
-     *  Pointer to C client API record object.
-     */
-	as_record *rec;
-} Record_object;
-
-ZEND_METHOD(Record, __construct)
-{
-   zval *object = getThis();
-   Record_object *obj = (Record_object *) zend_object_store_get_object(object TSRMLS_CC);
-}
-
-/**
  *  Appends a bin and value to input parameter bins_array
  *
  *  @param name      Bin name
@@ -182,7 +161,7 @@ bool
 update_bins_array(const char * name, const as_val * value, zval *bins_array)
 {
 
-	switch (as_val_type(value)) {
+	switch ( as_val_type(value) ) {
 		case AS_NIL: 
 				add_assoc_null(bins_array, name);
 				break;
@@ -215,92 +194,9 @@ update_bins_array(const char * name, const as_val * value, zval *bins_array)
 	return true;
 }
 
-ZEND_METHOD(Record, getBins)
-{
-	array_init(return_value);
-	zval *object = getThis();
-	Record_object *obj = (Record_object *) zend_object_store_get_object(object TSRMLS_CC);
-	as_record_foreach(obj->rec, (as_rec_foreach_callback) update_bins_array, return_value);
-	return;
-}
-
-ZEND_METHOD(Record, getBin)
-{
-	char *bin_name;
-	int bin_name_length;
-	zval *object = getThis();
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &bin_name, &bin_name_length) == FAILURE) {
-		// TODO: Error Handling
-		return;
-	}
-	
-	as_bin_name the_bin_name;
-	int len = MIN(bin_name_length, AS_BIN_NAME_MAX_LEN);
-	strncpy(the_bin_name, bin_name, len);
-	the_bin_name[len] = '\0';
-	Record_object *obj = (Record_object *) zend_object_store_get_object(object TSRMLS_CC);
-	as_bin_value *value = as_record_get(obj->rec, the_bin_name);
-	switch (as_val_type(value)) {
-		case AS_NIL:
-			RETURN_NULL();
-			break;
-		case AS_INTEGER:
-			RETURN_LONG(as_integer_get((as_integer *) value));
-			break;
-		case AS_STRING:
-			RETURN_STRINGL(as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
-			break;
-		case AS_BYTES:
-			//TODO: Handle bytes
-			break;
-		case AS_LIST:
-			//TODO: Handle list
-			break;
-		case AS_MAP:
-			//TODO: Handle map
-			break;
-		case AS_REC:
-			//TODO: Handle Record
-			break;
-		case AS_UNDEF:
-			// DEBUG
-			fprintf(stderr, "Undefined value for bin \"%s\"\n", the_bin_name);
-			RETURN_NULL();
-			//TODO: Handle Undef
-			break;
-		default:
-			zend_error(E_ERROR, "Invalid bin type: %d\n", as_val_type(value));
-	}
-}
-
-ZEND_METHOD(Record, getGen)
-{
-	zval *object = getThis();
-	Record_object *obj = (Record_object *) zend_object_store_get_object(object TSRMLS_CC);
-	RETURN_LONG((obj->rec)->gen);
-}
-
-ZEND_METHOD(Record, getTTL)
-{
-	zval *object = getThis();
-	Record_object *obj = (Record_object *) zend_object_store_get_object(object TSRMLS_CC);
-	RETURN_LONG((obj->rec)->ttl);
-}
-
-static zend_function_entry Record_class_functions[] =
-{
-	ZEND_ME(Record, __construct, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_CTOR)
-	ZEND_ME(Record, getBins, NULL, ZEND_ACC_PUBLIC)
-	ZEND_ME(Record, getBin, NULL, ZEND_ACC_PUBLIC)
-	ZEND_ME(Record, getGen, NULL, ZEND_ACC_PUBLIC)
-	ZEND_ME(Record, getTTL, NULL, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
-};
-
 static zend_class_entry *Aerospike_ce;
-static zend_class_entry *Record_ce;
 
-static zend_object_handlers Aerospike_handlers, Record_handlers;
+static zend_object_handlers Aerospike_handlers;
 
 aerospike as;
 
@@ -342,38 +238,6 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 
 	retval.handle = zend_objects_store_put(intern, Aerospike_object_dtor, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
 	retval.handlers = &Aerospike_handlers;
-	return retval;
-}
-
-static void Record_object_free_storage(void *object TSRMLS_DC)
-{
-	Record_object *obj = (Record_object *) object;
-	efree(obj->rec);
-
-	zend_hash_destroy(obj->std.properties);
-	FREE_HASHTABLE(obj->std.properties);
-
-	efree(obj);
-}
-
-zend_object_value Record_object_create_handler(zend_class_entry *type TSRMLS_DC)
-{
-	zval *tmp;
-	zend_object_value retval;
-
-	Record_object *obj = (Record_object *) emalloc(sizeof(Record_object));
-	memset(obj, 0, sizeof(Record_object));
-	obj->std.ce = type;
-
-	ALLOC_HASHTABLE(obj->std.properties);
-	zend_hash_init(obj->std.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-	zend_hash_copy(obj->std.properties, &type->default_properties,
-		(copy_ctor_func_t)zval_add_ref, (void *) &tmp, sizeof(zval *));
-
-	retval.handle = zend_objects_store_put(obj, NULL,
-		Record_object_free_storage, NULL TSRMLS_CC);
-	retval.handlers = &Record_handlers;
-
 	return retval;
 }
 
@@ -542,6 +406,7 @@ PHP_METHOD(Aerospike, get)
 	zval *record_identifier, **record_key, *record;
 	char *arrkey, *namespace, *set;
 	zval *bins;
+	as_record *rec;
 		
 	//array_init(return_value);
 	// DEBUG
@@ -550,18 +415,15 @@ PHP_METHOD(Aerospike, get)
 	zval *object = getThis();
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|a", &record_identifier, &record, &bins) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a", &record_identifier, &record, &bins) == FAILURE) {
 		// TODO: Error Handling
 		return;
 	}
 
-	Record_object *obj = (Record_object *) zend_object_store_get_object(record TSRMLS_CC);
-		
 	// Errors populate this object.
 	as_error err;
 
 	as_key key;
-	as_record *rec = NULL;
 
 	HashTable *keyindex = Z_ARRVAL_P(record_identifier);
 	HashPosition pointer;
@@ -585,7 +447,7 @@ PHP_METHOD(Aerospike, get)
 		}
 	}
 
-	switch (Z_TYPE_PP(record_key)) {
+	switch ( Z_TYPE_PP(record_key) ) {
 		case IS_LONG:
 			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_PP(record_key));
 			break;
@@ -593,17 +455,26 @@ PHP_METHOD(Aerospike, get)
 			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_PP(record_key));
 			break;
 		default:
-			zend_error(E_ERROR, "Invalid Key Type: %d\n", Z_TYPE_PP(record_key));
-			RETURN_FALSE;
+			zend_error(E_ERROR, "Invalid Key Type: %d\n", Z_TYPE_PP (record_key));
+			RETURN_FALSE;						
 	}
  
-	if (ZEND_NUM_ARGS() == 2 && aerospike_key_get(&as, &err, NULL, &key, &obj->rec) != AEROSPIKE_OK) {
+	if ( ZEND_NUM_ARGS() == 2 ) {
+		if ( aerospike_key_get(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK ) {
 			// An error occurred, so we log it.
 			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
 			// XXX -- Release any allocated resources and throw and exception.
-			as_record_destroy(obj->rec);
-			// TODO: Error Handling 
-	} else if (ZEND_NUM_ARGS() == 3) {
+			as_record_destroy(rec);
+			// TODO: Error Handling
+		} else {
+			// rec contains record, hence process it and add bins of the record to input array record
+			if ( as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record) ) {
+				RETURN_TRUE;
+			} else {
+				RETURN_FALSE;
+			}
+		}
+	} else if ( ZEND_NUM_ARGS() == 3 ) {
 		HashTable *bins_array =  Z_ARRVAL_P(bins);
 		HashPosition pointer1;
 		int bins_count = zend_hash_num_elements(bins_array);
@@ -618,24 +489,33 @@ PHP_METHOD(Aerospike, get)
 						break;
 					default:
 						zend_error(E_ERROR, "Invalid bin name type: %d\n", Z_TYPE_P(*bin_names));
-						break;
+						break;						
 				}
 		}
 
 		select[bins_count] = NULL;
-		if (aerospike_key_select(&as, &err, NULL, &key, select, &obj->rec) != AEROSPIKE_OK) {
-		// An error occurred, so we log it.
-		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
-		// XXX -- Release any allocated resources and throw and exception.
-		as_record_destroy(obj->rec);
-		// TODO: Error Handling
+		if (aerospike_key_select(&as, &err, NULL, &key, select, &rec) != AEROSPIKE_OK) {
+			// An error occurred, so we log it.
+			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+			// XXX -- Release any allocated resources and throw and exception.
+			as_record_destroy(rec);
+			// TODO: Error Handling
+		} else {
+			// rec contains record, hence process it and add bins of the record to input array record
+			if ( as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record) ) {
+				RETURN_TRUE;
+			} else {
+				RETURN_FALSE;
+			}
+
 		}
 	}
+	as_record_destroy(rec);
 }
 
 
 /* PHP Method:  bool Aerospike::put()
-   Write record bin(s). */
+	Write record bin(s). */
 PHP_METHOD(Aerospike, put)
 {
 	// DEBUG
@@ -655,25 +535,23 @@ PHP_METHOD(Aerospike, put)
 	HashTable *keyindex = Z_ARRVAL_P(keyval);
 	HashPosition pointer;
 	zval **data;
+	uint arrkey_len, arrkey_type;
+	ulong index;
 
 	for (zend_hash_internal_pointer_reset_ex(keyindex, &pointer); zend_hash_get_current_data_ex(keyindex, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(keyindex, &pointer)) {
-		uint arrkey_len, arrkey_type;
-		ulong index;
-
 		arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
 
-		if (strcmp(arrkey, "ns") == 0) {
+		if (strcmp(arrkey,"ns") == 0) {
 			ns = Z_STRVAL_PP(data);
-		} else if (strcmp(arrkey, "set") == 0) {
+		} else if (strcmp(arrkey,"set") == 0) {
 			set = Z_STRVAL_PP(data);
-		} else if (strcmp(arrkey, "key") == 0) {
+		} else if(strcmp(arrkey,"key") ==0 ) {
 			rkey = data;
 		} else {
 			// TODO: Error Handling
 			return;
 		}
 	}
-
 	HashTable *recvalindex = Z_ARRVAL_P(recval);
 	HashPosition pointer1;
 	zval **dataval;
@@ -685,9 +563,7 @@ PHP_METHOD(Aerospike, put)
 
 	for (zend_hash_internal_pointer_reset_ex(recvalindex, &pointer1); zend_hash_get_current_data_ex(recvalindex, (void **) &dataval, &pointer1) == SUCCESS; zend_hash_move_forward_ex(recvalindex, &pointer1)) {
 		//TODO: Multi bin and there values need to handle
-		uint arrkey_len, arrkey_type;
-		ulong index;
-
+			
 		arrkey_type = zend_hash_get_current_key_ex(recvalindex, &arrkey, &arrkey_len, &index, 0, &pointer1);
 
 		binname = arrkey;
@@ -856,7 +732,7 @@ PHP_METHOD(Aerospike, info)
  */
 
 /* PHP Method:  bool Aerospike::()
-   Add integer bin values to existing bin values. */
+	Add integer bin values to existing bin values. */
 PHP_METHOD(Aerospike, add)
 {
 	zval *object = getThis();
@@ -871,7 +747,7 @@ PHP_METHOD(Aerospike, add)
 }
 
 /* PHP Method:  bool Aerospike::append()
-   Append bin string values to existing record bin values. */
+	Append bin string values to existing record bin values. */
 PHP_METHOD(Aerospike, append)
 {
 	zval *object = getThis();
@@ -886,7 +762,7 @@ PHP_METHOD(Aerospike, append)
 }
 
 /* PHP Method:  bool Aerospike::delete()
-   Delete record for specified key. */
+	Delete record for specified key. */
 PHP_METHOD(Aerospike, delete)
 {
 	zval *object = getThis();
@@ -901,7 +777,7 @@ PHP_METHOD(Aerospike, delete)
 }
 
 /* PHP Method:  bool Aerospike::exists()
-   Check if record key(s) exist in one batch call. */
+	Check if record key(s) exist in one batch call. */
 PHP_METHOD(Aerospike, exists)
 {
 	zval *object = getThis();
@@ -917,7 +793,7 @@ PHP_METHOD(Aerospike, exists)
 
 
 /* PHP Method:  bool Aerospike::getHeader()
-   Read record generation and expiration for specified key(s) in one batch call. */
+	Read record generation and expiration for specified key(s) in one batch call. */
 PHP_METHOD(Aerospike, getHeader)
 {
 	zval *object = getThis();
@@ -932,7 +808,7 @@ PHP_METHOD(Aerospike, getHeader)
 }
 
 /* PHP Method:  bool Aerospike::operate()
-   Perform multiple read/write operations on a single key in one batch call. */
+	Perform multiple read/write operations on a single key in one batch call. */
 PHP_METHOD(Aerospike, operate)
 {
 	zval *object = getThis();
@@ -947,7 +823,7 @@ PHP_METHOD(Aerospike, operate)
 }
 
 /* PHP Method:  bool Aerospike::prepend()
-   Prepend bin string values to existing record bin values. */
+	Prepend bin string values to existing record bin values. */
 PHP_METHOD(Aerospike, prepend)
 {
 	zval *object = getThis();
@@ -963,7 +839,7 @@ PHP_METHOD(Aerospike, prepend)
 
 
 /* PHP Method:  bool Aerospike::touch()
-   Create record if it does not already exist. */
+	Create record if it does not already exist. */
 PHP_METHOD(Aerospike, touch)
 {
 	zval *object = getThis();
@@ -1050,18 +926,6 @@ PHP_MINIT_FUNCTION(aerospike)
 	ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
 
 	zend_class_entry ce;
-	INIT_CLASS_ENTRY(ce, "Aerospike", Aerospike_class_functions);
-		INIT_CLASS_ENTRY(ce, "Record", Record_class_functions);
-
-		if (!(Record_ce = zend_register_internal_class(&ce TSRMLS_CC))) {
-			return FAILURE;
-		} else {
-			Record_ce->create_object = Record_object_create_handler;
-			memcpy(&Record_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-			Record_handlers.clone_obj = NULL;
-		}
-			
-
 	INIT_CLASS_ENTRY(ce, "Aerospike", Aerospike_class_functions);
 
 	if (!(Aerospike_ce = zend_register_internal_class(&ce TSRMLS_CC))) {
