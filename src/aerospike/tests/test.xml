@@ -1,0 +1,8 @@
+<phpunit>
+    <testsuites>
+        <testsuite name="CommonTests">
+            <file>Connection.inc</file>
+        </testsuite>
+    </testsuites>
+</phpunit>
+
