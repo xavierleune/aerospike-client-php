@@ -38,6 +38,7 @@
 #include "aerospike/as_record.h"
 #include "aerospike/as_status.h"
 #include "aerospike/as_val.h"
+#include "aerospike/as_boolean.h"
 
 PHP_INI_BEGIN()
 //PHP_INI_ENTRY()
@@ -148,6 +149,80 @@ static zend_function_entry Aerospike_class_functions[] =
 	{ NULL, NULL, NULL }
 };
 
+/*
+as_val *
+get_actual_type(const as_val *value)
+{
+	switch (as_val_type(value)) {
+		case AS_UNDEF | AS_UNKNOWN:
+                        return NULL;
+		case AS_NIL:
+			return NULL;
+		case AS_BOOLEAN:
+			return as_boolean_get((as_boolean *) value);
+		case AS_INTEGER:
+			return as_integer_get((as_integer *) value);
+		case AS_STRING:
+			return as_string_get((as_string *) value);
+		case AS_LIST:
+                        return (as_list *) value;
+		case AS_MAP:
+                        return (as_map *) value;
+		case AS_REC:
+			return (as_record *) value;
+		case AS_PAIR:
+			return (as_pair *) value;
+		case AS_BYTES:
+			return as_bytes_get((as_bytes *) value);
+		default:
+			return NULL;
+	}
+}*/
+
+bool
+callback_for_each_list_element(as_val *value, zval *list)
+{
+	//TODO: Yet to complete handling all cases
+	zval *tmp;
+	switch (as_val_type(value)) {
+                case AS_UNDEF | AS_UNKNOWN:
+			add_next_index_null(list);
+			break;
+                case AS_NIL:
+			add_next_index_null(list);
+			break;
+                case AS_BOOLEAN:
+			add_next_index_bool(list, (int) as_boolean_get((as_boolean *) value));
+			break;
+                case AS_INTEGER:
+			add_next_index_long(list, (long) as_integer_get((as_integer *) value));
+			break;
+                case AS_STRING:
+			add_next_index_stringl(list, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
+			break;
+                case AS_LIST:
+			MAKE_STD_ZVAL(tmp);
+			array_init(tmp);
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, tmp);
+			add_next_index_zval(list, tmp);
+			break;
+                case AS_MAP:
+			//TODO: Handle as_map
+                        //return (as_map *) value;
+                case AS_REC:
+			//TODO: Handle as_rec
+                        //return (as_record *) value;
+                case AS_PAIR:
+			//TODO: Handle as_pair
+                        //return (as_pair *) value;
+                case AS_BYTES:
+			//TODO: Handle as_bytes
+                        //return as_bytes_get((as_bytes *) value);
+                default:
+                        return;
+        }
+}
+
 /**
  *  Appends a bin and value to input parameter bins_array
  *
@@ -158,39 +233,48 @@ static zend_function_entry Aerospike_class_functions[] =
  *  @return true if success. Otherwise false.
  */
 bool 
-update_bins_array(const char * name, const as_val * value, zval *bins_array)
+update_bins_array(const char *name, const as_val *value, zval *bins_array)
 {
-
+	//TODO: Yet to complete all cases
+	zval *tmp;
 	switch (as_val_type(value)) {
-		case AS_NIL: 
-				add_assoc_null(bins_array, name);
-				break;
+		case AS_UNDEF | AS_UNKNOWN:
+			add_assoc_null(bins_array, name);
+			break;
+		case AS_NIL:
+			add_assoc_null(bins_array, name);
+			break;
+		case AS_BOOLEAN:
+			add_assoc_bool(bins_array, name, (int) as_boolean_get((as_boolean *) value));
+			break;
 		case AS_INTEGER:
-				add_assoc_long(bins_array, name, as_integer_get((as_integer *) value));
-				break;
+			add_assoc_long(bins_array, name, as_integer_get((as_integer *) value));
+			break;
 		case AS_STRING:
-				add_assoc_stringl(bins_array, name, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
-				break;
-		case AS_BYTES:
-				//TODO: Handle bytes
-				break;
+			add_assoc_stringl(bins_array, name, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
+			break;
 		case AS_LIST:
-				//TODO: Handle list
-				break;
+			MAKE_STD_ZVAL(tmp);
+			array_init(tmp);
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, tmp);
+			add_assoc_zval(bins_array, name, tmp);
+			break;
 		case AS_MAP:
-				//TODO: Handle map
-				break;
+			//TODO: Handle as_map
+			//return (as_map *) value;
 		case AS_REC:
-				//TODO: Handle Record
-				break;
-		case AS_UNDEF:
-				//TODO: Handle Undef
-				break;
+			//TODO: Handle as_rec
+			//return (as_record *) value;
+		case AS_PAIR:
+			//TODO: Handle as_pair
+			//return (as_pair *) value;
+		case AS_BYTES:
+			//TODO: Handle as_bytes
+			//return as_bytes_get((as_bytes *) value);
 		default:
-				zend_error(E_ERROR, "Invalid bin type: %d\n", as_val_type(value));
-				return false;
+			zend_error(E_ERROR, "Invalid bin type: %d\n", as_val_type(value));
+			return false;
 	}
-
 	return true;
 }
 
@@ -259,10 +343,10 @@ PHP_METHOD(Aerospike, __construct)
 	zval *object = getThis();
 	zval *host;
 	char *arrkey;
+
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &host) == FAILURE) {
-		// TODO: Error Handling
 		zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
 		return;
 	}
@@ -285,29 +369,29 @@ PHP_METHOD(Aerospike, __construct)
 
 	if (strcmp(arrkey, "hosts") == 0) {
 		if (Z_TYPE_P(*data) != IS_ARRAY) {
-				// TODO: Error Handling
-				return;
+			zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+			return;
 		}
 		host_array = data;
 	} else {
-			// TODO: Error Handling
-			return;
-	}
+		zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+		return;
+	}		
 
 	HashTable *hostindex = Z_ARRVAL_P(*host_array);
 	HashPosition hostpointer;
 	zval **hostdata;
 	int i = 0;
 	for (zend_hash_internal_pointer_reset_ex(hostindex, &hostpointer); zend_hash_get_current_data_ex(hostindex, (void **) &hostdata, &hostpointer) == SUCCESS; zend_hash_move_forward_ex(hostindex, &hostpointer)) {
-	
+
 		uint arrkey_len, arrkey_type;
 		ulong index;
 		
 		arrkey_type = zend_hash_get_current_key_ex(hostindex, &arrkey, &arrkey_len, &index, 0, &hostpointer);
 
 		if (Z_TYPE_P(*hostdata) != IS_ARRAY) {
-				// TODO: Error Handling
-				return;
+			zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+			return;
 		}
 
 		HashTable *hostdataindex = Z_ARRVAL_P(*hostdata);
@@ -325,8 +409,8 @@ PHP_METHOD(Aerospike, __construct)
 						config.hosts[i].addr = Z_STRVAL_PP(hostdatavalue);
 						break;
 					default:
-						zend_error(E_ERROR, "Invalid host address type: %d\n", Z_TYPE_P(*hostdatavalue));
-						break;
+						zend_throw_exception(AerospikeException_ce, "Invalid host address type", -4  TSRMLS_CC);
+						return;
 				}
 			} else if (strcmp(arrkey, "port") == 0) {
 				switch (Z_TYPE_P(*hostdatavalue)) {
@@ -334,12 +418,21 @@ PHP_METHOD(Aerospike, __construct)
 						config.hosts[i].port = Z_LVAL_PP(hostdatavalue);
 						break;
 					default:
-						zend_error(E_ERROR, "Invalid host port type: %d\n", Z_TYPE_P(*hostdatavalue));
-						break;
+						zend_throw_exception(AerospikeException_ce, "Invalid host port type", -4  TSRMLS_CC);
+						return;
 				}
 			} else {
-				// TODO: Error Handling
+				zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+				return;
 			}
+		}
+		if (config.hosts[i].addr == NULL) {
+			zend_throw_exception(AerospikeException_ce, "No host address found in host array index", -4  TSRMLS_CC);
+			return;
+		}
+		if (! config.hosts[i].port) {
+			zend_throw_exception(AerospikeException_ce, "No port found in host array index", -4  TSRMLS_CC);
+			return;
 		}
 		i++;
 	}
@@ -361,13 +454,16 @@ PHP_METHOD(Aerospike, __construct)
 #endif
 
 	// The Aerospike client instance, initialized with the configuration.
+	if(i == 0) {
+		zend_throw_exception(AerospikeException_ce, "No hosts", -5  TSRMLS_CC);
+		return;
+	}
 	aerospike_init(&as, &config);
 
 	// Connect to the cluster.
 	if (aerospike_connect(&as, &err) != AEROSPIKE_OK) {
 		// An error occurred, so we log it.
 		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
-
 		// XXX -- Release any allocated resources and throw and exception.
 
 	} else {
@@ -506,6 +602,7 @@ PHP_METHOD(Aerospike, get)
 			}
 		}
 	}
+	as_record_destroy(rec);
 }
 
 
@@ -925,7 +1022,7 @@ PHP_MINIT_FUNCTION(aerospike)
 	ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
 
 	zend_class_entry ce;
-	zend_class_entry *exception_ce = zend_exception_get_default();
+	zend_class_entry *exception_ce = (zend_class_entry *) zend_exception_get_default();
 
 	INIT_CLASS_ENTRY(ce, "AerospikeException", NULL);
 	if (!(AerospikeException_ce = zend_register_internal_class_ex(&ce, exception_ce, NULL TSRMLS_CC))) {
