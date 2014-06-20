@@ -403,12 +403,11 @@ PHP_METHOD(Aerospike, __destruct)
    Read record header(s) and bin(s) for specified key(s) in one batch call. */
 PHP_METHOD(Aerospike, get)
 {
-	
 	zval *record_identifier, **record_key, *record;
 	char *arrkey, *namespace, *set;
 	zval *bins;
-	as_record *rec;
-	
+	as_record *rec = NULL;
+
 	//array_init(return_value);
 	// DEBUG
 	php_printf("**In Aerospike::get() method**\n");
@@ -420,7 +419,7 @@ PHP_METHOD(Aerospike, get)
 		// TODO: Error Handling
 		return;
 	}
-	
+
 	// Errors populate this object.
 	as_error err;
 	as_key key;
