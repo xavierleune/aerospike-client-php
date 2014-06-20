@@ -173,7 +173,9 @@ class ASTestFramework {
 	public function assertTypeArray($array, $msg = "") {
         if (!is_array($array)) {
             $this->dieCommon("Not get Array");
-        }
+        }else if(count($array)==0) {
+			$this->dieCommon("No Data.");
+		}
         return true;
     }
 

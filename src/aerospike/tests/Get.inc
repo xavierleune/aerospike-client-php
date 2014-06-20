@@ -52,7 +52,7 @@ class Get extends AerospikeTestCommon
 		$key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
 		$bin_arr = array();
 		$rv = $as->get($key,$bin_arr);
-        $this->assertTrue($rv, $msg = "Aerospike Put Response");
+        $this->assertTypeArray($bin_arr, $msg = "Aerospike Get Response");
     }
 	/**
 	 * @test
@@ -77,7 +77,7 @@ class Get extends AerospikeTestCommon
 		$ret_arr = array();
 		$bin_arr = array("bin1");
 		$rv = $as->get($key,$ret_arr,$bin_arr);
-        $this->assertTrue($rv, $msg = "Aerospike Get Response");
+        $this->assertTypeArray($ret_arr, $msg = "Aerospike Get Response");
     }
 	/**
 	 * @test
