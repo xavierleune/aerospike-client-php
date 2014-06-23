@@ -40,6 +40,8 @@
 #include "aerospike/as_val.h"
 #include "aerospike/as_boolean.h"
 
+#include "dbg.h"
+
 PHP_INI_BEGIN()
 //PHP_INI_ENTRY()
 PHP_INI_END()
@@ -149,6 +151,11 @@ static zend_function_entry Aerospike_class_functions[] =
 	{ NULL, NULL, NULL }
 };
 
+
+static zend_class_entry *Aerospike_ce, *AerospikeException_ce;
+
+static zend_object_handlers Aerospike_handlers;
+
 /*
 as_val *
 get_actual_type(const as_val *value)
@@ -237,6 +244,7 @@ update_bins_array(const char *name, const as_val *value, zval *bins_array)
 {
 	//TODO: Yet to complete all cases
 	zval *tmp;
+	zval class_constant;
 	switch (as_val_type(value)) {
 		case AS_UNDEF | AS_UNKNOWN:
 			add_assoc_null(bins_array, name);
@@ -272,15 +280,12 @@ update_bins_array(const char *name, const as_val *value, zval *bins_array)
 			//TODO: Handle as_bytes
 			//return as_bytes_get((as_bytes *) value);
 		default:
-			zend_error(E_ERROR, "Invalid bin type: %d\n", as_val_type(value));
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_BIN_VALUE_TYPE"), Z_LVAL(class_constant)  TSRMLS_CC);
 			return false;
 	}
 	return true;
 }
-
-static zend_class_entry *Aerospike_ce, *AerospikeException_ce;
-
-static zend_object_handlers Aerospike_handlers;
 
 aerospike as;
 
@@ -295,7 +300,7 @@ static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS
 	zend_object_std_dtor(&(intern->std) TSRMLS_CC);
 	efree(object);
 	aerospike_destroy(&as);
-	php_printf("**DTOR**\n");
+	log_info("**DTOR**");
 }
 
 static void Aerospike_object_free_storage(void *object TSRMLS_DC)
@@ -337,7 +342,7 @@ PHP_METHOD(Aerospike, __construct)
 //	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::__construct() method**\n");
+	log_info("**In Aerospike::__construct() method**");
 
 	// XXX -- Temporary implementation based on globals.
 	zval *object = getThis();
@@ -347,7 +352,9 @@ PHP_METHOD(Aerospike, __construct)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &host) == FAILURE) {
-		zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 		return;
 	}
 	// Errors populate this object.
@@ -369,12 +376,16 @@ PHP_METHOD(Aerospike, __construct)
 
 	if (strcmp(arrkey, "hosts") == 0) {
 		if (Z_TYPE_P(*data) != IS_ARRAY) {
-			zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+			zval class_constant;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 			return;
 		}
 		host_array = data;
 	} else {
-		zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 		return;
 	}		
 
@@ -390,7 +401,9 @@ PHP_METHOD(Aerospike, __construct)
 		arrkey_type = zend_hash_get_current_key_ex(hostindex, &arrkey, &arrkey_len, &index, 0, &hostpointer);
 
 		if (Z_TYPE_P(*hostdata) != IS_ARRAY) {
-			zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+			zval class_constant;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 			return;
 		}
 
@@ -404,34 +417,44 @@ PHP_METHOD(Aerospike, __construct)
 			arrkey_type = zend_hash_get_current_key_ex(hostdataindex, &arrkey, &arrkey_len, &index, 0, &hostdatapointer);
 
 			if (strcmp(arrkey, "name") == 0) {
+				zval class_constant;
 				switch (Z_TYPE_P(*hostdatavalue)) {
 					case IS_STRING:
 						config.hosts[i].addr = Z_STRVAL_PP(hostdatavalue);
 						break;
 					default:
-						zend_throw_exception(AerospikeException_ce, "Invalid host address type", -4  TSRMLS_CC);
+						zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+						zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_HOST_ADDRESS_TYPE", Z_LVAL(class_constant)  TSRMLS_CC);
 						return;
 				}
 			} else if (strcmp(arrkey, "port") == 0) {
 				switch (Z_TYPE_P(*hostdatavalue)) {
+					zval class_constant;
 					case IS_LONG:
 						config.hosts[i].port = Z_LVAL_PP(hostdatavalue);
 						break;
 					default:
-						zend_throw_exception(AerospikeException_ce, "Invalid host port type", -4  TSRMLS_CC);
+						zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+						zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_HOST_PORT_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
 						return;
 				}
 			} else {
-				zend_throw_exception(AerospikeException_ce, "Invalid API Parameters", -4  TSRMLS_CC);
+				zval class_constant;
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 				return;
 			}
 		}
 		if (config.hosts[i].addr == NULL) {
-			zend_throw_exception(AerospikeException_ce, "No host address found in host array index", -4  TSRMLS_CC);
+			zval class_constant;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);                                    
+			zend_throw_exception(AerospikeException_ce, "Aerospike::NO_HOST_ADDRESS_FOUND_IN_HOST_ARRAY", Z_LVAL(class_constant) TSRMLS_CC);
 			return;
 		}
 		if (! config.hosts[i].port) {
-			zend_throw_exception(AerospikeException_ce, "No port found in host array index", -4  TSRMLS_CC);
+			zval class_constant;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);                        
+			zend_throw_exception(AerospikeException_ce, "Aerospike::NO_HOST_PORT_FOUND_IN_HOST_ARRAY", Z_LVAL(class_constant) TSRMLS_CC);
 			return;
 		}
 		i++;
@@ -455,7 +478,9 @@ PHP_METHOD(Aerospike, __construct)
 
 	// The Aerospike client instance, initialized with the configuration.
 	if(i == 0) {
-		zend_throw_exception(AerospikeException_ce, "No hosts", -5  TSRMLS_CC);
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::NO_HOSTS"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::NO_HOSTS"), Z_LVAL(class_constant)  TSRMLS_CC);
 		return;
 	}
 	aerospike_init(&as, &config);
@@ -465,9 +490,12 @@ PHP_METHOD(Aerospike, __construct)
 		// An error occurred, so we log it.
 		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
 		// XXX -- Release any allocated resources and throw and exception.
-
+		RETURN_LONG(err.code);
 	} else {
 		fprintf(stderr, "It worked!\n");
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		RETURN_LONG(Z_LVAL(class_constant));
 	}
 
 	/*** TO BE IMPLEMENTED ***/
@@ -483,7 +511,7 @@ PHP_METHOD(Aerospike, __destruct)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::__destruct() method**\n");
+	log_info("**In Aerospike::__destruct() method**");
 
 	// XXX -- Temporary implementation based on globals.
 
@@ -492,27 +520,30 @@ PHP_METHOD(Aerospike, __destruct)
 
 	/*** TO BE IMPLEMENTED ***/
 
-	RETURN_TRUE;
+	zval class_constant;
+	zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+	RETURN_LONG(Z_LVAL(class_constant));
 }
 
 /* PHP Method:  bool Aerospike::get()
    Read record header(s) and bin(s) for specified key(s) in one batch call. */
 PHP_METHOD(Aerospike, get)
 {
-	zval *record_identifier, **record_key, *record;
-	char *arrkey, *namespace, *set;
+	zval *record_identifier, **record_key = NULL, *record;
+	char *arrkey, *namespace = NULL, *set = NULL;
 	zval *bins;
 	as_record *rec = NULL;
 
-	//array_init(return_value);
 	// DEBUG
-	php_printf("**In Aerospike::get() method**\n");
+	log_info("**In Aerospike::get() method**\n");
 
 	zval *object = getThis();
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
+	
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a", &record_identifier, &record, &bins) == FAILURE) {
-		// TODO: Error Handling
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 		return;
 	}
 
@@ -537,12 +568,34 @@ PHP_METHOD(Aerospike, get)
 		} else if (strcmp(arrkey, "key") == 0) {
 			record_key = data;
 		} else {
-			// TODO: Error Handling
+			zval class_constant;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant) TSRMLS_CC);
 			return;
 		}
 	}
 
+	if (namespace == NULL) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::NO_NAMESPACE", Z_LVAL(class_constant) TSRMLS_CC);
+		return;
+	} 
+	if (set == NULL) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::NO_SET", Z_LVAL(class_constant) TSRMLS_CC);
+                return;
+	} 
+	if (record_key == NULL) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::NO_KEY", Z_LVAL(class_constant) TSRMLS_CC);
+                return;
+        }
+	
 	switch (Z_TYPE_PP(record_key)) {
+		zval class_constant;
 		case IS_LONG:
 			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_PP(record_key));
 			break;
@@ -550,23 +603,31 @@ PHP_METHOD(Aerospike, get)
 			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_PP(record_key));
 			break;
 		default:
-			zend_error(E_ERROR, "Invalid Key Type: %d\n", Z_TYPE_PP(record_key));
-			RETURN_FALSE;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_KEY_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+			return;
 	}
  
 	if (ZEND_NUM_ARGS() == 2) {
 		if (aerospike_key_get(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
 			// An error occurred, so we log it.
 			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+			//log_err(err.message, );
 			// XXX -- Release any allocated resources and throw and exception.
 			as_record_destroy(rec);
-			// TODO: Error Handling
+			//zval class_constant;
+			//zend_get_constant_ex(ZEND_STRL("Aerospike::KEY_NOT_FOUND_ERROR"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			RETURN_LONG(err.code);
 		} else {
 			// rec contains record, hence process it and add bins of the record to input array record
 			if (as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record)) {
-				RETURN_TRUE;
+				zval class_constant;
+				zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				RETURN_LONG(Z_LVAL(class_constant));
 			} else {
-				RETURN_FALSE;
+				zval class_constant;
+                                zend_get_constant_ex(ZEND_STRL("Aerospike::SERVER_ERROR"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+                                RETURN_LONG(Z_LVAL(class_constant));
 			}
 		}
 	} else if (ZEND_NUM_ARGS() == 3) {
@@ -578,12 +639,14 @@ PHP_METHOD(Aerospike, get)
 
 		for (zend_hash_internal_pointer_reset_ex(bins_array, &pointer); zend_hash_get_current_data_ex(bins_array, (void **) &bin_names, &pointer) == SUCCESS; zend_hash_move_forward_ex(bins_array, &pointer)) {
 			switch (Z_TYPE_PP(bin_names)) {
-					case IS_STRING:
-						select[i++] = Z_STRVAL_PP(bin_names);
-						break;
-					default:
-						zend_error(E_ERROR, "Invalid bin name type: %d\n", Z_TYPE_P(*bin_names));
-						break;
+				zval class_constant;
+				case IS_STRING:
+					select[i++] = Z_STRVAL_PP(bin_names);
+					break;
+				default:
+					zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);	
+					zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+					return;
 				}
 		}
 
@@ -591,14 +654,19 @@ PHP_METHOD(Aerospike, get)
 		if (aerospike_key_select(&as, &err, NULL, &key, select, &rec) != AEROSPIKE_OK) {
 			// An error occurred, so we log it.
 			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+			//log_err(err.message, );
 			// XXX -- Release any allocated resources and throw and exception.
 			as_record_destroy(rec);
-			// TODO: Error Handling
+			RETURN_LONG(err.code);
 		} else {
 			if (as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record)) {
-				RETURN_TRUE;
+				zval class_constant;
+				zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				RETURN_LONG(Z_LVAL(class_constant));
 			} else {
-				RETURN_FALSE;
+				zval class_constant;
+				zend_get_constant_ex(ZEND_STRL("Aerospike::SERVER_ERROR"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				RETURN_LONG(Z_LVAL(class_constant));
 			}
 		}
 	}
@@ -611,20 +679,22 @@ PHP_METHOD(Aerospike, get)
 PHP_METHOD(Aerospike, put)
 {
 	// DEBUG
-	php_printf("**In Aerospike::put() method**\n");
+	log_info("**In Aerospike::put() method**");
 
 	zval *object = getThis();
-	zval *keyval, *recval, **rkey, **binvalue;
-	char *binname , *arrkey, *ns, *set;
+	zval *record_identifier, *record, **record_key = NULL, **bin_value;
+	char *bin_name , *arrkey, *namespace = NULL, *set = NULL;
 	as_record rec;
 
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &keyval, &recval) == FAILURE) {
-		// TODO: Error Handling
-		return;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa", &record_identifier, &record) == FAILURE) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_API_PARAM", Z_LVAL(class_constant)  TSRMLS_CC);
+                return;
 	}
 
-	HashTable *keyindex = Z_ARRVAL_P(keyval);
+	HashTable *keyindex = Z_ARRVAL_P(record_identifier);
 	HashPosition pointer;
 	zval **data;
 
@@ -635,81 +705,107 @@ PHP_METHOD(Aerospike, put)
 		arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
 
 		if (strcmp(arrkey, "ns") == 0) {
-			ns = Z_STRVAL_PP(data);
+			namespace = Z_STRVAL_PP(data);
 		} else if (strcmp(arrkey, "set") == 0) {
 			set = Z_STRVAL_PP(data);
 		} else if (strcmp(arrkey, "key") == 0) {
-			rkey = data;
+			record_key = data;
 		} else {
-			// TODO: Error Handling
+			zval class_constant;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_API_PARAM", Z_LVAL(class_constant)  TSRMLS_CC);
 			return;
 		}
 	}
 
-	HashTable *recvalindex = Z_ARRVAL_P(recval);
-	HashPosition pointer1;
+	if (namespace == NULL) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::NO_NAMESPACE", Z_LVAL(class_constant)  TSRMLS_CC);
+		return;
+	}
+	if (set == NULL) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::NO_SET", Z_LVAL(class_constant)  TSRMLS_CC);
+		return;
+	}
+	if (record_key == NULL) {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		zend_throw_exception(AerospikeException_ce, "Aerospike::NO_KEY", Z_LVAL(class_constant)  TSRMLS_CC);
+		return;
+	}
+
+	HashTable *record_index = Z_ARRVAL_P(record);
 	zval **dataval;
 	int array_count;
 	
-	array_count = zend_hash_num_elements(recvalindex);
+	array_count = zend_hash_num_elements(record_index);
 
 	as_record_inita(&rec, array_count);
 
-	for (zend_hash_internal_pointer_reset_ex(recvalindex, &pointer1); zend_hash_get_current_data_ex(recvalindex, (void **) &dataval, &pointer1) == SUCCESS; zend_hash_move_forward_ex(recvalindex, &pointer1)) {
-		//TODO: Multi bin and there values need to handle
+	for (zend_hash_internal_pointer_reset_ex(record_index, &pointer); zend_hash_get_current_data_ex(record_index, (void **) &dataval, &pointer) == SUCCESS; zend_hash_move_forward_ex(record_index, &pointer)) {
 		uint arrkey_len, arrkey_type;
 		ulong index;
 
-		arrkey_type = zend_hash_get_current_key_ex(recvalindex, &arrkey, &arrkey_len, &index, 0, &pointer1);
+		arrkey_type = zend_hash_get_current_key_ex(record_index, &arrkey, &arrkey_len, &index, 0, &pointer);
 
-		binname = arrkey;
-		binvalue = dataval;
-		if (as_put_value(rkey, binname, binvalue, rec, ns, set) == FAILURE) {
-			RETURN_FALSE;
+		bin_name = arrkey;
+		bin_value = dataval;
+		int status = 0;
+
+		if (status = as_put_value(record_key, bin_name, bin_value, rec, namespace, set) != SUCCESS) {
+			RETURN_LONG(status);
 		}
 	}
-	RETURN_TRUE;
+	zval class_constant;
+	zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+	RETURN_LONG(Z_LVAL(class_constant));
 }
 
 /**
  *  return int
  *
- *  @param rkey				record key.
- *  @param binname 			name of bin.
- *  @param binvalue 		value of bin.
+ *  @param record_key		record key.
+ *  @param bin_name 		name of bin.
+ *  @param bin_value 		value of bin.
  *  @param as_record rec 	struct.
- *  @param namespace 		ns.
- *  @param set 				set.
+ *  @param namespace 		namespace.
+ *  @param set 			set.
  *
  *  @return SUCCESS for SUCCESS. Otherwise FAILURE.
  */
 int
-as_put_value(zval **rkey, char *binname, zval **binvalue, as_record rec, char *ns, char *set)
+as_put_value(zval **record_key, char *bin_name, zval **bin_value, as_record rec, char *namespace, char *set)
 {
 	as_error err;
 	as_key key;
 	
-	switch (Z_TYPE_P(*rkey)) {
+	switch (Z_TYPE_P(*record_key)) {
+		zval class_constant;
 		case IS_LONG:
-			as_key_init_int64(&key, ns, set, (int64_t) Z_LVAL_P(*rkey));
+			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_P(*record_key));
 			break;
 		case IS_STRING:
-			as_key_init_str(&key, ns, set, (char *) Z_STRVAL_P(*rkey));
+			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_P(*record_key));
 			break;
 		default:
-			zend_error(E_NOTICE, "zval_to_object: could not convert %d\n", Z_TYPE_P(*rkey));
-			return FAILURE;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_KEY_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+                        return;
 	}	
 
-	switch (Z_TYPE_P(*binvalue)) {
+	switch (Z_TYPE_P(*bin_value)) {
+		zval class_constant;
 		case IS_LONG:
-			as_record_set_int64(&rec, binname, (int64_t) Z_LVAL_P(*binvalue));
+			as_record_set_int64(&rec, bin_name, (int64_t) Z_LVAL_P(*bin_value));
 			break;
 		case IS_STRING:
-			as_record_set_str(&rec, binname, (char *) Z_STRVAL_P(*binvalue));
+			as_record_set_str(&rec, bin_name, (char *) Z_STRVAL_P(*bin_value));
 			break;
 		case IS_ARRAY:
-			/*HashTable *arr_hash = Z_ARRVAL_P(*binvalue);
+			/*HashTable *arr_hash = Z_ARRVAL_P(*bin_value);
 			HashPosition pointer;
 			zval **data;
 			as_arraylist list;
@@ -730,18 +826,20 @@ as_put_value(zval **rkey, char *binname, zval **binvalue, as_record rec, char *n
 				}
 			}
 			
-			as_record_set_list(&rec, binname, (as_list *) Z_ARRVAL_P (*binvalue));*/
+			as_record_set_list(&rec, bin_name, (as_list *) Z_ARRVAL_P (*bin_value));*/
 			break;
 		default:
-			zend_error(E_NOTICE, "zval_to_object: could not convert %d\n", Z_TYPE_P(*binvalue));
-			return 0;
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_VALUE_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+                        return;
 	}
 
 	if (aerospike_key_put(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
 		// An error occurred, so we log it.
 		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+		//log_err(err.message, );
 		// XXX -- Release any allocated resources and throw and exception.
-		// TODO: Error Handling
+		return err.code;
 	} else {
 		return SUCCESS;
 	}
@@ -760,7 +858,7 @@ PHP_METHOD(Aerospike, isConnected)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::isConnected() method**\n");
+	log_info("**In Aerospike::isConnected() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -775,7 +873,7 @@ PHP_METHOD(Aerospike, close)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::close() method**\n");
+	log_info("**In Aerospike::close() method**\n");
 
 	// Errors populate this object.
 	as_error err;
@@ -801,7 +899,7 @@ PHP_METHOD(Aerospike, getNodes)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::getNodes() method**\n");
+	log_info("**In Aerospike::getNodes() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -816,7 +914,7 @@ PHP_METHOD(Aerospike, info)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::info() method**\n");
+	log_info("**In Aerospike::info() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -835,7 +933,7 @@ PHP_METHOD(Aerospike, add)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::add() method**\n");
+	log_info("**In Aerospike::add() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -850,7 +948,7 @@ PHP_METHOD(Aerospike, append)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::append() method**\n");
+	log_info("**In Aerospike::append() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -865,7 +963,7 @@ PHP_METHOD(Aerospike, delete)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::delete() method**\n");
+	log_info("**In Aerospike::delete() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -880,7 +978,7 @@ PHP_METHOD(Aerospike, exists)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::exists() method**\n");
+	log_info("**In Aerospike::exists() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -896,7 +994,7 @@ PHP_METHOD(Aerospike, getHeader)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::getHeader() method**\n");
+	log_info("**In Aerospike::getHeader() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -911,7 +1009,7 @@ PHP_METHOD(Aerospike, operate)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::operate() method**\n");
+	log_info("**In Aerospike::operate() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -926,7 +1024,7 @@ PHP_METHOD(Aerospike, prepend)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::prepend() method**\n");
+	log_info("**In Aerospike::prepend() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -942,7 +1040,7 @@ PHP_METHOD(Aerospike, touch)
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
 	// DEBUG
-	php_printf("**In Aerospike::touch() method**\n");
+	log_info("**In Aerospike::touch() method**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -1015,7 +1113,7 @@ static int zend_std_cast_object_tostring(zval *readobj, zval *writeobj, int type
 
 PHP_MINIT_FUNCTION(aerospike)
 {
-	php_printf("**In aerospike minit**\n");
+	log_info("**In aerospike minit**\n");
 
 	REGISTER_INI_ENTRIES();
 
@@ -1107,7 +1205,7 @@ PHP_MINIT_FUNCTION(aerospike)
 
 PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
-	php_printf("**In aerospike mshutdown**\n");
+	log_info("**In aerospike mshutdown**\n");
 
 #ifndef ZTS
 	aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
@@ -1118,7 +1216,7 @@ PHP_MSHUTDOWN_FUNCTION(aerospike)
 
 PHP_RINIT_FUNCTION(aerospike)
 {
-	php_printf("**In aerospike rinit**\n");
+	log_info("**In aerospike rinit**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -1127,7 +1225,7 @@ PHP_RINIT_FUNCTION(aerospike)
 
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
-	php_printf("**In aerospike rshutdown**\n");
+	log_info("**In aerospike rshutdown**\n");
 
 	/*** TO BE IMPLEMENTED ***/
 
@@ -1136,7 +1234,7 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
 
 PHP_MINFO_FUNCTION(aerospike)
 {
-	php_printf("**In aerospike info**\n");
+	log_info("**In aerospike info**\n");
 
 	php_info_print_table_start();
 	php_info_print_table_row(2, "aerospike support", "enabled");
