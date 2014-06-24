@@ -11,7 +11,7 @@ The Aerospike PHP client permits the creation of PHP applications using the full
 // Create a client connection to the Aerospike cluster:
 
 // [Note:  The server is running on the local host on port 3000.]
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000)));
 
 try {
    $as = new Aerospike($config);
