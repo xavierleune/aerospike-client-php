@@ -14,7 +14,7 @@ is filled with an associative array of bins and values.  The bins returned in
 *record* can be filtered by passing an associative array of the bins needed.
 Non-existent bins will appear in the *record* with a NULL value.
 
-he behavior of **Aerospike::get** can be modified using the *policy* parameter.
+The behavior of **Aerospike::get** can be modified using the *policy* parameter.
 
 ## Parameters
 
@@ -64,7 +64,7 @@ elseif ($res == Aerospike::KEY_NOT_FOUND_ERROR) {
 We expect to see:
 
 ```
-array(2) {
+array(3) {
   ["email"]=>
   string(9) "hey@example.com"
   ["name"]=>

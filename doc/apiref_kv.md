@@ -16,6 +16,12 @@ public int Aerospike::get ( string $key, array &$record [, array $filter [, int 
 public int Aerospike::delete ( string $key [, int $policy ] )
 ```
 
+### [Aerospike::exists](aerospike_exists.md)
+```
+public int Aerospike::exists ( string $key, array &$metadata [, int $policy ] )
+public int Aerospike::getMetadata ( string $key, array &$metadata [, int $policy ] )
+```
+
 ## Example
 
 ```php
@@ -43,9 +49,11 @@ if ($res == Aerospike::OK) {
     echo "[{$db->errorno()}] ".$db->error();
 }
 
-$res = $db->get($key, $record);
-if ($res == Aerospike::OK) {
-    var_dump($record);
+if ($db->exists($key, $foo) == Aerospike::OK) {
+    $res = $db->get($key, $record);
+    if ($res == Aerospike::OK) {
+        var_dump($record);
+    }
 }
 
 // filtering for specific keys
