@@ -1,9 +1,19 @@
 
 # Key-Value Methods
 
-### [Aerospike::Put](aerospike_put.md)
+### [Aerospike::put](aerospike_put.md)
 ```
 public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, int $policy ]] )
+```
+
+### [Aerospike::get](aerospike_get.md)
+```
+public int Aerospike::get ( string $key, array &$record [, array $filter [, int $policy ]] )
+```
+
+### [Aerospike::delete](aerospike_delete.md)
+```
+public int Aerospike::delete ( string $key [, int $policy ] )
 ```
 
 ## Example
@@ -22,8 +32,8 @@ try {
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");
-// PUT the values at the given key without
-$res = $db->put($key, $put_val, Aerospike::POLICY_RETRY_ONCE & Aerospike::POLICY_NO_KEY_COLLISION);
+// attempt to 'CREATE' a new record at the specified key
+$res = $db->put($key, $put_val, 0, Aerospike::POLICY_RETRY_ONCE & Aerospike::POLICY_NO_KEY_COLLISION);
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
@@ -35,7 +45,7 @@ if ($res == Aerospike::OK) {
 
 $res = $db->get($key, $record);
 if ($res == Aerospike::OK) {
-    print_r($record);
+    var_dump($record);
 }
 
 // filtering for specific keys

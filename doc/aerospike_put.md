@@ -13,7 +13,7 @@ public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, int $p
 is an associative array of bins and values.  The *ttl* parameter can be used to
 control the expiration of the record.
 
-By default the **put** method behaves in a set-and-replace mode similar to
+By default the **Aerospike::put** method behaves in a set-and-replace mode similar to
 associative array keys and values. This behavior can be modified using the
 *policy* parameter.
 
@@ -50,11 +50,21 @@ try {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
-$put_val = array("email" => "hey@example.com", "name" => "Hey There");
+$put_vals = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
-$res = $db->put($key, $put_val);
+$res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
+} else {
+    echo "[{$db->errorno()}] ".$db->error();
+}
+
+// Updating the record
+$put_vals = array("name" => "You There", "age" => 33);
+// will update the name bin, and create a new 'age' bin
+$res = $db->put($key, $put_vals);
+if ($res == Aerospike::OK) {
+    echo "Record updated.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }
@@ -66,6 +76,7 @@ We expect to see:
 
 ```
 Record written.
+Record updated.
 ```
 
 ### Example #2 Fail unless the put explicitly creates a new record
