@@ -1,26 +1,18 @@
 
-# Key-Value Methods
+# Error Handling Methods
 
-### [Aerospike::put](aerospike_put.md)
+### [Aerospike::error](aerospike_error.md)
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, int $policy ]] )
-```
-
-### [Aerospike::get](aerospike_get.md)
-```
-public int Aerospike::get ( string $key, array &$record [, array $filter [, int $policy ]] )
+public string Aerospike::error ( void )
 ```
 
-### [Aerospike::delete](aerospike_delete.md)
+### [Aerospike::errorno](aerospike_errorno.md)
 ```
-public int Aerospike::delete ( string $key [, int $policy ] )
+public int Aerospike::errorno ( void )
 ```
 
-### [Aerospike::exists](aerospike_exists.md)
-```
-public int Aerospike::exists ( string $key, array &$metadata [, int $policy ] )
-public int Aerospike::getMetadata ( string $key, array &$metadata [, int $policy ] )
-```
+The error codes returned are constants of the **Aerospike** class, and map to
+the client and server error codes defined in the C client (in as_status.h).
 
 ## Example
 

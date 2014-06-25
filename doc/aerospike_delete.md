@@ -32,12 +32,10 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts" => array(array("name" => "localhost", "port" => 3000));
-
-try {
-   $db = new Aerospike($config);
-} catch (AerospikeException $e) {
-   echo "Aerospike client creation failed: " . $e->getMessage() . "\n";
+$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$db = new Aerospike($config);
+if (!$db->isConnected()) {
+   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
