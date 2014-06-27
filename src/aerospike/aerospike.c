@@ -39,8 +39,12 @@
 #include "aerospike/as_status.h"
 #include "aerospike/as_val.h"
 #include "aerospike/as_boolean.h"
+#include "aerospike/as_arraylist.h"
+#include "aerospike/as_hashmap.h"
+#include "aerospike/as_stringmap.h"
 
 #include "dbg.h"
+#include <stdbool.h>
 
 PHP_INI_BEGIN()
 //PHP_INI_ENTRY()
@@ -187,47 +191,89 @@ get_actual_type(const as_val *value)
 }*/
 
 bool
-callback_for_each_list_element(as_val *value, zval *list)
+callback_for_each_list_element(as_val *value, zval **list)
 {
 	//TODO: Yet to complete handling all cases
 	zval *tmp;
 	switch (as_val_type(value)) {
                 case AS_UNDEF | AS_UNKNOWN:
-			add_next_index_null(list);
+			add_next_index_null(*list);
 			break;
                 case AS_NIL:
-			add_next_index_null(list);
+			add_next_index_null(*list);
 			break;
                 case AS_BOOLEAN:
-			add_next_index_bool(list, (int) as_boolean_get((as_boolean *) value));
+			add_next_index_bool(*list, (int) as_boolean_get((as_boolean *) value));
 			break;
                 case AS_INTEGER:
-			add_next_index_long(list, (long) as_integer_get((as_integer *) value));
+			printf("\nGot int: %d\n", (long) as_integer_get((as_integer *) value));
+			add_next_index_long(*list, (long) as_integer_get((as_integer *) value));
 			break;
                 case AS_STRING:
-			add_next_index_stringl(list, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
+			add_next_index_stringl(*list, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
 			break;
                 case AS_LIST:
 			MAKE_STD_ZVAL(tmp);
 			array_init(tmp);
-			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, tmp);
-			add_next_index_zval(list, tmp);
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, &tmp);
+			add_next_index_zval(*list, tmp);
 			break;
                 case AS_MAP:
 			//TODO: Handle as_map
-                        //return (as_map *) value;
                 case AS_REC:
 			//TODO: Handle as_rec
-                        //return (as_record *) value;
                 case AS_PAIR:
 			//TODO: Handle as_pair
-                        //return (as_pair *) value;
                 case AS_BYTES:
 			//TODO: Handle as_bytes
-                        //return as_bytes_get((as_bytes *) value);
                 default:
-                        return;
+                    return false;
         }
+	return true;
+}
+
+bool
+callback_for_each_map_element(as_val *key, as_val *value, zval **arr)
+{
+	printf("\nIn map callback\n");
+//	int key_type = as_val_type(key);
+//	printf("\nGOT KEY TYPE: %s\n", key_type);
+
+	switch (as_val_type(value)) {
+		case AS_UNDEF | AS_UNKNOWN:
+			//TODO: Handle undef/unknown
+			break;
+		case AS_NIL:
+			//TODO: Handle nil
+			break;
+		case AS_BOOLEAN:
+			//TODO: Handle boolean
+			break;
+		case AS_INTEGER:
+			add_assoc_long(*arr, as_string_get((as_string *) key), (long) as_integer_get((as_integer *) value));
+			break;
+		case AS_STRING:
+			add_assoc_stringl(*arr, as_string_get((as_string *) key), as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
+			break;
+		case AS_LIST:
+			//TODO: Handle list
+			break;
+		case AS_MAP:
+			//TODO: Handle map
+			break;
+		case AS_REC:
+			//TODO: Handle rec
+			break;
+		case AS_PAIR:
+			//TODO: Handle pair
+			break;
+		case AS_BYTES:
+			//TODO: Handle bytes
+			break;
+		default:
+			return false;
+	}
+	return true;
 }
 
 /**
@@ -264,12 +310,22 @@ update_bins_array(const char *name, const as_val *value, zval *bins_array)
 		case AS_LIST:
 			MAKE_STD_ZVAL(tmp);
 			array_init(tmp);
-			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, tmp);
+			printf("LIST ELEM 0: %d", as_list_get_int64((as_list *) value, 0));
+			printf("LIST ELEM 1: %d", as_list_get_int64((as_list *) value, 1));
+			printf("LIST ELEM 2: %s", as_list_get_str((as_list *) value, 2));
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, &tmp);
 			add_assoc_zval(bins_array, name, tmp);
 			break;
 		case AS_MAP:
-			//TODO: Handle as_map
-			//return (as_map *) value;
+			printf("\nGot Map!\n");
+			MAKE_STD_ZVAL(tmp);
+			printf("\na: %d\n", as_stringmap_get_int64((as_map *) value, "a"));
+                        printf("\nb: %d\n", as_stringmap_get_int64((as_map *) value, "b"));
+                        printf("\nc: %d\n", as_stringmap_get_int64((as_map *) value, "c"));
+			array_init(tmp);
+			as_map_foreach((as_map *) value, (as_map_foreach_callback) callback_for_each_map_element, &tmp);
+			add_assoc_zval(bins_array, name, tmp);
+			break;
 		case AS_REC:
 			//TODO: Handle as_rec
 			//return (as_record *) value;
@@ -313,6 +369,7 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
 
 	zend_object_std_dtor(&intern->std TSRMLS_CC);
 	efree(intern);
+	printf("\nObject freed\n");
 }
 
 zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
@@ -755,13 +812,274 @@ PHP_METHOD(Aerospike, put)
 		bin_value = dataval;
 		int status = 0;
 
-		if (status = as_put_value(record_key, bin_name, bin_value, rec, namespace, set) != SUCCESS) {
+		/*
+		if (status = as_put_value(record_key, bin_name, bin_value, &rec, namespace, set) != SUCCESS) {
 			RETURN_LONG(status);
+		}*/
+
+		switch (Z_TYPE_P(*bin_value)) {
+			zval class_constant;
+			HashTable *arr_hash;
+			int array_len;
+			HashPosition pointer;
+			zval **data;
+			as_arraylist *list;
+			as_hashmap *map;
+						
+			//uint arrkey_len, arrkey_type;
+			char *key;
+			//ulong index;
+
+			printf("BIN TYPE: %d\n", Z_TYPE_PP(bin_value));
+			case IS_LONG:
+				as_record_set_int64(&rec, bin_name, (int64_t) Z_LVAL_P(*bin_value));
+				break;
+			case IS_STRING:
+				as_record_set_str(&rec, bin_name, (char *) Z_STRVAL_P(*bin_value));
+				break;
+			case IS_ARRAY:
+				arr_hash = Z_ARRVAL_P(*bin_value);
+				array_len = zend_hash_num_elements(arr_hash);
+				printf("Got array of len: %d\n", array_len);
+				//as_arraylist_init(&list, array_len, 0);
+				//as_map map;
+				//as_stringmap_init(&map);
+				
+				zend_hash_internal_pointer_reset_ex(arr_hash, &pointer);
+				zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer);
+				
+				if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+					map = as_hashmap_new(32);
+					as_map *m = (as_map *) map;
+					/*as_stringmap_set_int64(m, "a", 1);
+					as_stringmap_set_int64(m, "b", 2);
+					as_stringmap_set_int64(m, "c", 3);*/
+
+					handle_put_map(bin_value, m);
+					as_record_set_map(&rec, bin_name, m);
+					as_map *m1 = as_record_get_map(&rec, "bin1");
+					printf("\nname: %s\n", as_stringmap_get_str(m1, "name"));
+					printf("\nage: %d\n", as_stringmap_get_int64(m1, "age"));
+					//printf("\nc: %d\n", as_stringmap_get_int64(m1, "c"));					
+				} else {
+					/*
+					for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {				
+						printf("ELEM TYPE: %d\n", Z_TYPE_PP(data));
+						switch (Z_TYPE_PP(data)) {
+							case IS_LONG:
+								printf("GOT LONG: %d\n", Z_LVAL_PP(data));
+								as_arraylist_append_int64(&list, Z_LVAL_PP(data));
+								break;
+							case IS_STRING:
+								printf("GOT STRING: %s\n", Z_LVAL_PP(data));
+								as_arraylist_append_str(&list, Z_STRVAL_PP(data));
+								break;
+							default:
+								zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);	
+								zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+								return;
+							}
+					}
+	
+					as_record_set_list(&rec, bin_name, (as_list *) &list);
+					as_val *r = (as_val *) as_record_get(&rec, "bin3");
+					printf("BIN type: %d", as_val_type(r));*/
+		
+					array_len = zend_hash_num_elements(arr_hash);
+					list = as_arraylist_new(array_len, 0);
+					handle_put_list(bin_value, list);
+					as_record_set_list(&rec, bin_name, (as_list *) as_val_reserve(list));
+					as_list *l1 = as_record_get_list(&rec, "bin3");
+					int i=0;
+					for (i=0; i<2; i++) {
+						printf("%d\n", as_list_get_int64(l1, i));
+					}
+					printf("%s\n", as_list_get_str(l1, 2));
+					as_list *inner = as_list_get_list(l1, 3);
+					printf("\nInner\n");
+					for (i=0; i<3; i++) {
+                                                printf("%d\n", as_list_get_int64((as_list *) inner, i));
+                                        }
+					as_arraylist_destroy(list);
+				}
+				break;
+			default:
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_VALUE_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+				return;
+			}
+	}
+
+	//as_val *r = (as_val *) as_record_get(rec, "bin2");
+	//printf("BIN type: %d", as_val_type(r));
+	
+	as_list *l1 = as_record_get_list(&rec, "bin3");
+	int i=0;
+	for (i=0; i<3; i++) {
+		printf("%d\n", as_list_get_int64(l1, i));
+	}
+
+	as_error err;
+	as_key key;
+	
+	switch (Z_TYPE_P(*record_key)) {
+		zval class_constant;
+		case IS_LONG:
+			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_P(*record_key));
+			break;
+		case IS_STRING:
+			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_P(*record_key));
+			break;
+		default:
+			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_KEY_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+        	return;
+	}	
+
+	if (aerospike_key_put(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
+		// An error occurred, so we log it.
+		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
+		//log_err(err.message, );
+		// XXX -- Release any allocated resources and throw and exception.
+		RETURN_LONG(err.code);
+	} else {
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		RETURN_LONG(Z_LVAL(class_constant));
+	}
+}
+
+int
+handle_put_list(zval **bin_value, as_arraylist *list)
+{
+	HashTable *arr_hash;
+	HashPosition pointer;
+	zval **data;
+	char *key;
+	uint arrkey_len;
+	zval class_constant;
+	ulong index;
+
+	arr_hash = Z_ARRVAL_P(*bin_value);
+	printf("Got array\n");
+	for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
+		printf("ELEM TYPE: %d\n", Z_TYPE_PP(data));
+		switch (Z_TYPE_PP(data)) {
+			as_arraylist *inner_list;
+			HashTable *inner_arr_hash;
+			int inner_array_len, i;
+			case IS_LONG:
+				printf("GOT LONG: %d\n", Z_LVAL_PP(data));
+				as_arraylist_append_int64(list, Z_LVAL_PP(data));
+				break;
+			case IS_STRING:
+				printf("GOT STRING: %s\n", Z_LVAL_PP(data));
+				as_arraylist_append_str(list, Z_STRVAL_PP(data));
+				break;
+			case IS_ARRAY:
+				printf("\nGOT ARRAY\n");
+				inner_arr_hash = Z_ARRVAL_PP(data);
+				inner_array_len = zend_hash_num_elements(inner_arr_hash);
+				
+				//as_arraylist_init(&inner_list, inner_array_len, 0);
+				inner_list = as_arraylist_new(inner_array_len, 0);
+				handle_put_list(data, inner_list);
+				
+				printf("\nHandled Inner and its contents are:\n");
+                                for (i=0; i<3; i++) {
+					printf("%d\n", as_list_get_int64((as_list *) inner_list, i));
+				}
+					
+				as_arraylist_append_list(list, (as_list *) inner_list);
+				as_list *l = as_list_get_list((as_list *) list, 3);
+				for (i=0; i<3; i++) {
+					printf("%d\n", as_list_get_int64((as_list *) l, i));
+				}
+				//XXX LEAK:
+				//as_arraylist_destroy(inner_list);
+				break;
+			default:
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+				return;
 		}
 	}
-	zval class_constant;
-	zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-	RETURN_LONG(Z_LVAL(class_constant));
+}
+
+int
+handle_put_map(zval **bin_value, as_map *map)
+{
+        HashTable *arr_hash;
+        HashPosition pointer;
+        zval **data;
+        char *key, map_key_type[10];
+        uint arrkey_len, arrkey_type;
+        zval class_constant;
+        ulong index;
+
+        arr_hash = Z_ARRVAL_P(*bin_value);
+        printf("Got array\n");
+	for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
+		if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+			printf("String Key");
+			strcpy(map_key_type, "STRING");
+		} else if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_LONG) {
+			printf("Int Key");
+			strcpy(map_key_type, "INT");
+		} else {
+			printf("Invalid Key Type");
+			return FAILURE;
+		}		
+
+		printf("KEY_TYPE: %s", map_key_type);
+
+		printf("VALUE TYPE: %d\n", Z_TYPE_PP(data));
+		switch (Z_TYPE_PP(data)) {
+			as_arraylist inner_list;
+			HashTable *inner_arr_hash;
+			int inner_array_len, i;
+
+			case IS_LONG:
+				printf("GOT LONG: %d\n", Z_LVAL_PP(data));
+				if (!strcmp(map_key_type, "STRING")) {
+					as_stringmap_set_int64(map, key, Z_LVAL_PP(data));
+				} else {
+					//TODO: Handle INT Key of map
+				}
+				break;
+			
+			case IS_STRING:
+				printf("GOT STRING: %s\n", Z_LVAL_PP(data));
+				if (!strcmp(map_key_type, "STRING")) {
+					as_stringmap_set_str(map, key, Z_STRVAL_PP(data));
+				} else {
+					//TODO: Handle INT Key of map                                                                        
+				}                                     
+				break;
+			/*
+			case IS_ARRAY:
+				printf("\nGOT ARRAY\n");
+				inner_arr_hash = Z_ARRVAL_PP(data);
+				inner_array_len = zend_hash_num_elements(inner_arr_hash);
+				as_arraylist_init(&inner_list, inner_array_len, 0);
+				handle_put_array(data, &inner_list);
+
+				printf("\nHandled Inner and its contents are:\n");
+				for (i=0; i<3; i++) {
+					printf("%d\n", as_list_get_int64((as_list *) &inner_list, i));
+				}
+				as_arraylist_append_list(list, (as_list *) &inner_list);
+				as_list *l = as_list_get_list((as_list *) list, 3);
+				for (i=0; i<3; i++) {
+					printf("%d\n", as_list_get_int64((as_list *) l, i));
+				}
+				break;*/
+			default:
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+				return;
+		}
+	}
 }
 
 /**
@@ -777,72 +1095,69 @@ PHP_METHOD(Aerospike, put)
  *  @return SUCCESS for SUCCESS. Otherwise FAILURE.
  */
 int
-as_put_value(zval **record_key, char *bin_name, zval **bin_value, as_record rec, char *namespace, char *set)
+as_put_value(zval **record_key, char *bin_name, zval **bin_value, as_record *rec, char *namespace, char *set)
 {
-	as_error err;
-	as_key key;
-	
-	switch (Z_TYPE_P(*record_key)) {
-		zval class_constant;
-		case IS_LONG:
-			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_P(*record_key));
-			break;
-		case IS_STRING:
-			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_P(*record_key));
-			break;
-		default:
-			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_KEY_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
-                        return;
-	}	
-
 	switch (Z_TYPE_P(*bin_value)) {
 		zval class_constant;
+		HashTable *arr_hash;
+		int array_len;
+		HashPosition pointer;
+		zval **data;
+		as_arraylist list; 
+		uint arrkey_len, arrkey_type;
+		char *key;
+		ulong index;
+
 		case IS_LONG:
-			as_record_set_int64(&rec, bin_name, (int64_t) Z_LVAL_P(*bin_value));
+			as_record_set_int64(rec, bin_name, (int64_t) Z_LVAL_P(*bin_value));
 			break;
 		case IS_STRING:
-			as_record_set_str(&rec, bin_name, (char *) Z_STRVAL_P(*bin_value));
+			as_record_set_str(rec, bin_name, (char *) Z_STRVAL_P(*bin_value));
 			break;
 		case IS_ARRAY:
-			/*HashTable *arr_hash = Z_ARRVAL_P(*bin_value);
-			HashPosition pointer;
-			zval **data;
-			as_arraylist list;
-			as_arraylist_init(&list);
-			as_map map;
-			as_stringmap_init(&map);
-
-			for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
-	
-				uint arrkey_len, arrkey_type;
-				char *key;
-				ulong index;
-				
-				if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
-					//strcpy(values[counter].bin_name, key);
-				} else {
-					
-				}
-			}
+			arr_hash = Z_ARRVAL_P(*bin_value);
+			array_len = zend_hash_num_elements(arr_hash);
+			printf("Got array\n");
+			as_arraylist_init(&list, array_len, 0);
+			//as_map map;
+			//as_stringmap_init(&map);
+			zend_hash_internal_pointer_reset_ex(arr_hash, &pointer);
+			zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer);
 			
-			as_record_set_list(&rec, bin_name, (as_list *) Z_ARRVAL_P (*bin_value));*/
+			if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+				//TODO: Handle map				
+			} else {
+				for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {				
+					printf("ELEM TYPE: %d\n", Z_TYPE_PP(data));
+					switch (Z_TYPE_PP(data)) {
+						case IS_LONG:
+							printf("GOT LONG: %d\n", Z_LVAL_PP(data));
+							as_arraylist_append_int64(&list, Z_LVAL_PP(data));
+						case IS_STRING:
+							//select[i++] = Z_STRVAL_PP(bin_names);
+							break;
+						default:
+							zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);	
+							zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+							return;
+						}
+				}	
+				as_record_set_list(rec, bin_name, (as_list *) &list);
+				as_val *r = (as_val *) as_record_get(rec, "bin3");
+				printf("BIN type: %d", as_val_type(r));
+				as_list *l1 = as_record_get_list(rec, "bin3");
+				int i=0;
+				for (i=0; i<3; i++) {
+					printf("%d\n", as_list_get_int64(l1, i));
+				}
+			}			
 			break;
 		default:
 			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_VALUE_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
-                        return;
-	}
-
-	if (aerospike_key_put(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
-		// An error occurred, so we log it.
-		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
-		//log_err(err.message, );
-		// XXX -- Release any allocated resources and throw and exception.
-		return err.code;
-	} else {
-		return SUCCESS;
-	}
+            return;
+	}	
+	return SUCCESS;
 }
 
 
