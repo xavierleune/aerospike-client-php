@@ -177,9 +177,8 @@ callback_for_each_list_element(as_val *value, zval **list)
 	//TODO: Yet to complete handling all cases
 	zval *tmp;
 	switch (as_val_type(value)) {
-		case AS_UNDEF | AS_UNKNOWN:
-			add_next_index_null(*list);
-			break;
+		case AS_UNDEF:
+		case AS_UNKNOWN:
 		case AS_NIL:
 			add_next_index_null(*list);
 			break;
@@ -232,9 +231,8 @@ callback_for_each_map_element(as_val *key, as_val *value, zval **arr)
 	
 	zval *tmp;
 	switch (as_val_type(value)) {
-		case AS_UNDEF | AS_UNKNOWN:
-			add_assoc_null(*arr, as_string_get((as_string *) key));
-			break;
+		case AS_UNDEF
+		case AS_UNKNOWN:
 		case AS_NIL:
 			add_assoc_null(*arr, as_string_get((as_string *) key));
 			break;
