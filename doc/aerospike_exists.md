@@ -13,7 +13,7 @@ is an alias for
 public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
 ```
 
-**Aerospike::exists** will check if a record with a given *key* exists in the database.
+**Aerospike::exists()** will check if a record with a given *key* exists in the database.
 If such a key exists its metadata will be returned in the *metadata* variable,
 otherwise it will be an empty array.
 

@@ -24,8 +24,6 @@ This method has no parameters.
 
 ## Examples
 
-### Example #1 Aerospike::get() default behavior example
-
 ```php
 <?php
 
@@ -42,6 +40,7 @@ if (!$db->isConnected()) {
 echo "We have reconnected to the Aerospike DB\n";
 
 ?>
+```
 
 On success we expect to see:
 ```

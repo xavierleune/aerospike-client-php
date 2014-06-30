@@ -9,7 +9,7 @@ Aerospike::error - display an error message associated with the last operation
 public string Aerospike::error ( void )
 ```
 
-**Aerospike::error** will return an error message associated with the last
+**Aerospike::error()** will return an error message associated with the last
 operation. If the operation was successful the return value should be an empty
 string ''.
 

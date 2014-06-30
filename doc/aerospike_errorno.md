@@ -9,8 +9,9 @@ Aerospike::errorno - display an error code associated with the last operation
 public int Aerospike::errorno ( void )
 ```
 
-**Aerospike::errorno** will return an error code associated with the last
-operation. If the operation was successful the return value should be 0.
+**Aerospike::errorno()** will return an error code associated with the last
+operation. If the operation was successful the return value should be 0
+(**Aerospike::OK**).
 
 ## Return Values
 

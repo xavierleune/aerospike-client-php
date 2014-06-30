@@ -9,7 +9,7 @@ Aerospike::__construct - Constructs a new Aerospike object
 public int Aerospike::__construct ( array $config [, array $options] )
 ```
 
-**Aerospike::__construct** will create an Aerospike object and connect to the
+**Aerospike::__construct()** will create an Aerospike object and connect to the
 cluster defined in *config*.  The **Aerospike::isConnected()** method can be used
 to test whether the connection succeeded. If a config or connection error
 occured the **Aerospike::error()** and **Aerospike::errorno()** methods can be used
@@ -23,8 +23,8 @@ a node of the Aerospike DB the client will retrieve the full list of nodes in th
 cluster and manage its connections to them.
 
 - *hosts* an array of host data
--- *addr* hostname or IP of the node
--- *port*
+  - *addr* hostname or IP of the node
+  - *port*
 - *user*
 - *pass*
 
@@ -52,6 +52,7 @@ if (!$db->isConnected()) {
 }
 
 ?>
+```
 
 On error we expect to see:
 

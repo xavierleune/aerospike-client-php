@@ -9,7 +9,7 @@ Aerospike::remove - removes a record from the Aerospike database
 public int Aerospike::remove ( string $key [, array $options ] )
 ```
 
-**Aerospike::remove** will remove a *record* with a given *key* from the database.
+**Aerospike::remove()** will remove a record with a given *key* from the database.
 
 ## Parameters
 
@@ -24,8 +24,6 @@ constants.  When non-zero the **Aerospike::error()** and
 **Aerospike::errorno()** methods can be used.
 
 ## Examples
-
-### Example #1 Aerospike::remove()
 
 ```php
 <?php

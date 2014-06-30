@@ -32,8 +32,6 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## Examples
 
-### Example #1 Aerospike::increment() default behavior example
-
 ```php
 <?php
 

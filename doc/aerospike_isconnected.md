@@ -39,6 +39,7 @@ if (!$db->isConnected()) {
 }
 
 ?>
+```
 
 On error we expect to see:
 
