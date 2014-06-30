@@ -6,15 +6,13 @@ Aerospike::get - gets a record from the Aerospike database
 ## Description
 
 ```
-public int Aerospike::get ( string $key, array &$record [, array $filter [, int $policy ]] )
+public int Aerospike::get ( string $key, array &$record [, array $filter [, array $options]] )
 ```
 
-**Aerospike::get** will read a *record* with a given *key*, where the *record*
+**Aerospike::get()** will read a *record* with a given *key*, where the *record*
 is filled with an associative array of bins and values.  The bins returned in
 *record* can be filtered by passing an associative array of the bins needed.
 Non-existent bins will appear in the *record* with a NULL value.
-
-The behavior of **Aerospike::get** can be modified using the *policy* parameter.
 
 ## Parameters
 
@@ -24,7 +22,7 @@ The behavior of **Aerospike::get** can be modified using the *policy* parameter.
 
 **filter** an array of bin names
 
-**policy** optionally **Aerospike::POLICY_RETRY_ONCE**
+**options** including **Aerospike::OPT_READ_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 
 ## Return Values
 
@@ -39,7 +37,7 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
@@ -50,7 +48,7 @@ $key = array("ns" => "test", "set" => "users", "key" => "1234");
 $res = $db->get($key, $record);
 if ($res == Aerospike::OK) {
     var_dump($record);
-elseif ($res == Aerospike::KEY_NOT_FOUND_ERROR) {
+elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

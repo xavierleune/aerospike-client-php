@@ -27,7 +27,7 @@ Returns an error string, which may be empty on success.
 ```php
 <?php
 
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";

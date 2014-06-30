@@ -1,23 +1,21 @@
 
-# Aerospike::delete
+# Aerospike::remove
 
-Aerospike::delete - deletes a record from the Aerospike database
+Aerospike::remove - removes a record from the Aerospike database
 
 ## Description
 
 ```
-public int Aerospike::delete ( string $key [, int $policy ] )
+public int Aerospike::remove ( string $key [, array $options ] )
 ```
 
-**Aerospike::delete** will remove a *record* with a given *key* from the database.
-
-The behavior of **Aerospike::delete** can be modified using the *policy* parameter.
+**Aerospike::remove** will remove a *record* with a given *key* from the database.
 
 ## Parameters
 
 **key** the key under which to store the record.
 
-**policy** optionally **Aerospike::POLICY_RETRY_ONCE**
+**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 
 ## Return Values
 
@@ -27,12 +25,12 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## Examples
 
-### Example #1 Aerospike::delete()
+### Example #1 Aerospike::remove()
 
 ```php
 <?php
 
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
@@ -40,10 +38,10 @@ if (!$db->isConnected()) {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
-$res = $db->delete($key);
+$res = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
 if ($res == Aerospike::OK) {
-    echo "Record deleted.\n";
-elseif ($res == Aerospike::KEY_NOT_FOUND_ERROR) {
+    echo "Record removed.\n";
+elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -55,6 +53,6 @@ elseif ($res == Aerospike::KEY_NOT_FOUND_ERROR) {
 We expect to see:
 
 ```
-Record deleted.
+Record removed.
 ```
 

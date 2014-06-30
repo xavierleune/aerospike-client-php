@@ -25,14 +25,29 @@ class Aerospike
 {
     //
     // Policy flags:
-    // By default writes will try to create and replace records and bins
-    // behaving similar to an associative array in PHP.
-    // The following policy flags allow for the default behavior to be
-    // modified.  The flags can be combined with bitwise operators.
+    // The policy constants map to the C client
+    //  src/include/aerospike/as_policy.h
     //
-    const POLICY_RETRY_ONCE = 1; // allow for a single retry on an operation
-    const POLICY_NO_KEY_COLLISION = 2; // fail on writes where the key exists
-    const POLICY_NO_BIN_COLLISION = 4; // fail on writes where a bin exists
+    const POLICY_RETRY_NONE = 1; // do not retry an operation (default)
+    const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
+
+    // By default writes will try to create or replace records and bins
+    // behaving similar to an associative array in PHP. Setting
+    // OPT_POLICY_EXISTS with one of these values will overwrite this
+    const POLICY_EXISTS_IGNORE = 1; // write record regardless of existence
+    const POLICY_EXISTS_CREATE = 2; // create a record ONLY if it DOES NOT exist
+    const POLICY_EXISTS_UPDATE = 3; // update a record ONLY if it exists
+    const POLICY_EXISTS_REPLACE = 4; // replace a record ONLY if it exists
+    const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // default behavior
+
+    //
+    // Options can be assigned values that modify default behavior
+    //
+    const OPT_CONNECT_TIMEOUT = 1; // value in milliseconds, default: 1000
+    const OPT_READ_TIMEOUT = 2; // value in milliseconds, default: 1000
+    const OPT_WRITE_TIMEOUT = 3; // value in milliseconds, default: 1000
+    const OPT_POLICY_RETRY = 4; // set to a Aerospike::POLICY_RETRY_* value
+    const OPT_POLICY_EXISTS = 5; // set to a Aerospike::POLICY_EXISTS_* value
 
     //
     // Aerospike Status Codes:
@@ -123,11 +138,9 @@ class Aerospike
 
     public function add($key_z, $value_z [, $policy_z]);
     public function append($key_z, $value_z [, $policy_z]);
-    public function delete($key_z [, $policy_z]);
+    public function remove($key_z [, $policy_z]);
     public function exists($key_z [, $policy_z]);
     public function getMany($key_z_a, &$value_z_a [, $policy_z]);
-    public function getHeader($key_z [, $policy_z]);
-    public function getHeaderMany($key_z_a [, $policy_z]);
     public function operate($key_z [, $policy_z]);
     public function prepend($key_z, $value_z [, $policy_z]);
     public function touch($key_z [, $policy_z]);

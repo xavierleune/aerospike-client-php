@@ -6,16 +6,16 @@ Aerospike::put - writes a record to the Aerospike database
 ## Description
 
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, int $policy ]] )
+public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
 ```
 
-**Aerospike::put** will write a *record* with a given *key*, where the _record_
+**Aerospike::put()** will write a *record* with a given *key*, where the _record_
 is an associative array of bins and values.  The *ttl* parameter can be used to
 control the expiration of the record.
 
-By default the **Aerospike::put** method behaves in a set-and-replace mode similar to
+By default the **Aerospike::put()** method behaves in a set-and-replace mode similar to
 associative array keys and values. This behavior can be modified using the
-*policy* parameter.
+*options* parameter.
 
 ## Parameters
 
@@ -25,7 +25,7 @@ associative array keys and values. This behavior can be modified using the
 
 **ttl** the time-to-live in seconds for the record.
 
-**policy** any bitwise combined value of **Aerospike::POLICY_RETRY_ONCE**, **Aerospike::POLICY_NO_KEY_COLLISION**, **Aerospike::POLICY_NO_BIN_COLLISION**
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_EXISTS** and **Aerospike::OPT_POLICY_RETRY**.
 
 ## Return Values
 
@@ -40,7 +40,7 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
@@ -84,7 +84,7 @@ Record updated.
 
 // This time we expect an error due to the record already existing (assuming we
 // already ran Example #1)
-$res = $db->put($key, $put_val, 0, Aerospike::POLICY_RETRY_ONCE & Aerospike::POLICY_NO_KEY_COLLISION);
+$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";

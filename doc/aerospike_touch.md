@@ -1,29 +1,24 @@
 
-# Aerospike::exists / Aerospike::getMetadata
+# Aerospike::touch
 
-Aerospike::exists - check if a record exists in the Aerospike database
+Aerospike::touch - touch a record in the Aerospike DB
 
 ## Description
 
 ```
-public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
-
-is an alias for
-
-public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
 ```
 
-**Aerospike::exists** will check if a record with a given *key* exists in the database.
-If such a key exists its metadata will be returned in the *metadata* variable,
-otherwise it will be an empty array.
+**Aerospike::touch()** will touch the given record, resetting its time-to-live
+and incrementing its generation.
 
 ## Parameters
 
 **key** the key for the record.
 
-**metadata** filled by an associative array of metadata.
+**ttl** the time-to-live in seconds for the record.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 
 ## Return Values
 
@@ -32,8 +27,6 @@ constants.  When non-zero the **Aerospike::error()** and
 **Aerospike::errorno()** methods can be used.
 
 ## Examples
-
-### Example #1 Aerospike::exists()
 
 ```php
 <?php
@@ -46,9 +39,9 @@ if (!$db->isConnected()) {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => "1234");
-$res = $db->exists($key, $metadata);
+$res = $db->touch($key, 120);
 if ($res == Aerospike::OK) {
-    var_dump($metadata);
+    echo "Added 120 seconds to the record's expiration.\n"
 elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
@@ -61,12 +54,7 @@ elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
 We expect to see:
 
 ```
-array(2) {
-  ["generation"]=>
-  int(4)
-  ["ttl"]=>
-  int(1337)
-}
+Added 120 seconds to the record's expiration.
 ```
 **or**
 ```

@@ -19,7 +19,7 @@ the client and server error codes defined in the C client (in as_status.h).
 ```php
 <?php
 
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
@@ -29,7 +29,7 @@ if (!$db->isConnected()) {
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $put_val, 0, Aerospike::POLICY_RETRY_ONCE & Aerospike::POLICY_NO_KEY_COLLISION);
+$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike:POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($res == Aerospike::KEY_FOUND_ERROR) {

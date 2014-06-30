@@ -3,23 +3,43 @@
 
 ### [Aerospike::put](aerospike_put.md)
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, int $policy ]] )
+public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
 ```
 
 ### [Aerospike::get](aerospike_get.md)
 ```
-public int Aerospike::get ( string $key, array &$record [, array $filter [, int $policy ]] )
+public int Aerospike::get ( string $key, array &$record [, array $filter [, array $options ]] )
 ```
 
-### [Aerospike::delete](aerospike_delete.md)
+### [Aerospike::remove](aerospike_remove.md)
 ```
-public int Aerospike::delete ( string $key [, int $policy ] )
+public int Aerospike::remove ( string $key [, array $options ] )
 ```
 
 ### [Aerospike::exists](aerospike_exists.md)
 ```
-public int Aerospike::exists ( string $key, array &$metadata [, int $policy ] )
-public int Aerospike::getMetadata ( string $key, array &$metadata [, int $policy ] )
+public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
+```
+
+### [Aerospike::touch](aerospike_touch.md)
+```
+public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
+```
+
+### [Aerospike::increment](aerospike_increment.md)
+```
+public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+```
+
+### [Aerospike::append](aerospike_append.md)
+```
+public int Aerospike::append ( string $key, string $bin, string $value [, array $options ] )
+```
+
+### [Aerospike::prepend](aerospike_prepend.md)
+```
+public int Aerospike::prepend ( string $key, string $bin, string $value [, array $options ] )
 ```
 
 ## Example
@@ -27,7 +47,7 @@ public int Aerospike::getMetadata ( string $key, array &$metadata [, int $policy
 ```php
 <?php
 
-$config = array("hosts"=>array(array("name"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
@@ -37,7 +57,7 @@ if (!$db->isConnected()) {
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $put_val, 0, Aerospike::POLICY_RETRY_ONCE & Aerospike::POLICY_NO_KEY_COLLISION);
+$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($res == Aerospike::KEY_FOUND_ERROR) {
