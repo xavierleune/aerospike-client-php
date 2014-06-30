@@ -119,4 +119,5 @@ class Aerospike
 
 ### [Error Handling Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
+### [Lifecycle and Connection Methods](apiref_connection.md)
 
