@@ -93,6 +93,16 @@ class Aerospike
     const ERR_UDF                 = 1300; // Generic UDF error
     const ERR_UDF_NOT_FOUND       = 1301; // UDF does not exist
 
+    //
+    // Logger
+    //
+    const LOG_LEVEL_OFF   = 6;
+    const LOG_LEVEL_ERROR = 5;
+    const LOG_LEVEL_WARN  = 4;
+    const LOG_LEVEL_INFO  = 3;
+    const LOG_LEVEL_DEBUG = 2;
+    const LOG_LEVEL_TRACE = 1;
+
     // lifecycle and connection methods
     public int Aerospike::__construct ( array $config [, array $options] )
     public void Aerospike::__destruct ( void )
@@ -104,21 +114,23 @@ class Aerospike
     // error handling methods
     public string Aerospike::error ( void )
     public int Aerospike::errorno ( void )
+    public bool setLogger ( string $log_path [, $log_level = int Aerospike::LOG_LEVEL_INFO] )
 
     // key-value methods
-    public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
-    public int Aerospike::get ( string $key, array &$record [, array $filter [, array $options ]] )
-    public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
-    public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
-    public int Aerospike::remove ( string $key [, array $options ] )
-    public int Aerospike::removeBin ( string $key, array $bin [, array $options ] )
-    public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
-    public int Aerospike::append ( string $key, string $bin, string $value [, array $options ] )
-    public int Aerospike::prepend ( string $key, string $bin, string $value [, array $options ] )
+    public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
+    public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options ]] )
+    public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
+    public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
+    public int Aerospike::remove ( array $key [, array $options ] )
+    public int Aerospike::removeBin ( array $key, array $bin [, array $options ] )
+    public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+    public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
+    public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 }
 ```
 
-### [Error Handling Methods](apiref_error.md)
+### [Runtime Configuration](aerospike_config.md)
+### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
 

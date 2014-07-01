@@ -106,6 +106,16 @@ class Aerospike
     const ERR_UDF                 = 1300; // Generic UDF error
     const ERR_UDF_NOT_FOUND       = 1301; // UDF does not exist
 
+    //
+    // Logger
+    //
+    const LOG_LEVEL_OFF   = 6;
+    const LOG_LEVEL_ERROR = 5;
+    const LOG_LEVEL_WARN  = 4;
+    const LOG_LEVEL_INFO  = 3;
+    const LOG_LEVEL_DEBUG = 2;
+    const LOG_LEVEL_TRACE = 1;
+
 
     //
     // Aerospike API Methods:
@@ -136,7 +146,7 @@ class Aerospike
     public function put($key_z, $value_z [, $policy_z]);
     public function get($key_z, &$value_z, [$value_z [, $policy_z]]);
 
-    public function add($key_z, $value_z [, $policy_z]);
+    public function increment($key_z, $value_z [, $policy_z]);
     public function append($key_z, $value_z [, $policy_z]);
     public function remove($key_z [, $policy_z]);
     public function exists($key_z [, $policy_z]);

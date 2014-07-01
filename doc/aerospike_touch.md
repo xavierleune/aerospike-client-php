@@ -6,7 +6,7 @@ Aerospike::touch - touch a record in the Aerospike DB
 ## Description
 
 ```
-public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
+public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
 ```
 
 **Aerospike::touch()** will touch the given record, resetting its time-to-live

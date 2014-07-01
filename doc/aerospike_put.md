@@ -6,7 +6,7 @@ Aerospike::put - writes a record to the Aerospike database
 ## Description
 
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
+public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
 ```
 
 **Aerospike::put()** will write a *record* with a given *key*, where the _record_

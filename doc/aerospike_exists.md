@@ -6,11 +6,11 @@ Aerospike::exists - check if a record exists in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
 
 is an alias for
 
-public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::getMetadata ( array $key, array &$metadata [, array $options ] )
 ```
 
 **Aerospike::exists()** will check if a record with a given *key* exists in the database.

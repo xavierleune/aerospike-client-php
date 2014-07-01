@@ -6,7 +6,7 @@ Aerospike::increment - increments a numeric value in a bin
 ## Description
 
 ```
-public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
 ```
 
 **Aerospike::increment()** will increment a *bin* containing a numeric value by the *offest* or

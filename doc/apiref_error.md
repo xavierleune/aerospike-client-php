@@ -1,5 +1,5 @@
 
-# Error Handling Methods
+# Error Handling and Logging Methods
 
 ### [Aerospike::error](aerospike_error.md)
 ```
@@ -9,6 +9,11 @@ public string Aerospike::error ( void )
 ### [Aerospike::errorno](aerospike_errorno.md)
 ```
 public int Aerospike::errorno ( void )
+```
+
+### [Aerospike::setLogger](aerospike_setlogger.md)
+```
+public bool setLogger ( string $log_path [, int $log_level = Aerospike::LOG_LEVEL_INFO] )
 ```
 
 The error codes returned are constants of the **Aerospike** class, and map to
@@ -25,6 +30,7 @@ if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
+$db->setLogger('/path/to/logger/aerospike.log', Aerospike::LOG_LEVEL_DEBUG);
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");

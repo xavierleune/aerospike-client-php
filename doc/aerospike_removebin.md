@@ -6,7 +6,7 @@ Aerospike::removeBin - removes a bin from a record
 ## Description
 
 ```
-public int Aerospike::removeBin ( string $key, array $bin [, array $options ] )
+public int Aerospike::removeBin ( array $key, array $bin [, array $options ] )
 ```
 
 **Aerospike::removeBin()** will remove the specified *bin* from the record* with

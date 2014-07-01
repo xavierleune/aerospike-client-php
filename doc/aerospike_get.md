@@ -6,7 +6,7 @@ Aerospike::get - gets a record from the Aerospike database
 ## Description
 
 ```
-public int Aerospike::get ( string $key, array &$record [, array $filter [, array $options]] )
+public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options]] )
 ```
 
 **Aerospike::get()** will read a *record* with a given *key*, where the *record*

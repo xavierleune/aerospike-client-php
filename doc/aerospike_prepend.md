@@ -6,7 +6,7 @@ Aerospike::prepend - prepends a string to the string value in a bin
 ## Description
 
 ```
-public int Aerospike::prepend ( string $key, string $bin, string $value [, array $options ] )
+public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 ```
 
 **Aerospike::prepend()** will prepend a string to the string value in *bin*.

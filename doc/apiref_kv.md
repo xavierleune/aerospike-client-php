@@ -3,48 +3,48 @@
 
 ### [Aerospike::put](aerospike_put.md)
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
+public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
 ```
 
 ### [Aerospike::get](aerospike_get.md)
 ```
-public int Aerospike::get ( string $key, array &$record [, array $filter [, array $options ]] )
+public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options ]] )
 ```
 
 ### [Aerospike::remove](aerospike_remove.md)
 ```
-public int Aerospike::remove ( string $key [, array $options ] )
+public int Aerospike::remove ( array $key [, array $options ] )
 ```
 
 ### [Aerospike::removeBin](aerospike_removebin.md)
 ```
-public int Aerospike::removeBin ( string $key, array $bin [, array $options ] )
+public int Aerospike::removeBin ( array $key, array $bin [, array $options ] )
 ```
 
 ### [Aerospike::exists](aerospike_exists.md)
 ```
-public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
-public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
+public int Aerospike::getMetadata ( array $key, array &$metadata [, array $options ] )
 ```
 
 ### [Aerospike::touch](aerospike_touch.md)
 ```
-public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
+public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
 ```
 
 ### [Aerospike::increment](aerospike_increment.md)
 ```
-public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
 ```
 
 ### [Aerospike::append](aerospike_append.md)
 ```
-public int Aerospike::append ( string $key, string $bin, string $value [, array $options ] )
+public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
 ```
 
 ### [Aerospike::prepend](aerospike_prepend.md)
 ```
-public int Aerospike::prepend ( string $key, string $bin, string $value [, array $options ] )
+public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 ```
 
 ## Example

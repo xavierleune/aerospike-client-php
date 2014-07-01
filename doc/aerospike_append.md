@@ -6,7 +6,7 @@ Aerospike::append - appends a string to the string value in a bin
 ## Description
 
 ```
-public int Aerospike::append ( string $key, string $bin, string $value [, array $options ] )
+public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
 ```
 
 **Aerospike::append()** will append a string to the string value in *bin*.
