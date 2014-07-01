@@ -39,8 +39,12 @@
 #include "aerospike/as_status.h"
 #include "aerospike/as_val.h"
 #include "aerospike/as_boolean.h"
+#include "aerospike/as_arraylist.h"
+#include "aerospike/as_hashmap.h"
+#include "aerospike/as_stringmap.h"
 
 #include "dbg.h"
+#include <stdbool.h>
 
 PHP_INI_BEGIN()
 //PHP_INI_ENTRY()
@@ -156,85 +160,123 @@ static zend_class_entry *Aerospike_ce, *AerospikeException_ce;
 
 static zend_object_handlers Aerospike_handlers;
 
-/*
-as_val *
-get_actual_type(const as_val *value)
-{
-	switch (as_val_type(value)) {
-		case AS_UNDEF | AS_UNKNOWN:
-                        return NULL;
-		case AS_NIL:
-			return NULL;
-		case AS_BOOLEAN:
-			return as_boolean_get((as_boolean *) value);
-		case AS_INTEGER:
-			return as_integer_get((as_integer *) value);
-		case AS_STRING:
-			return as_string_get((as_string *) value);
-		case AS_LIST:
-                        return (as_list *) value;
-		case AS_MAP:
-                        return (as_map *) value;
-		case AS_REC:
-			return (as_record *) value;
-		case AS_PAIR:
-			return (as_pair *) value;
-		case AS_BYTES:
-			return as_bytes_get((as_bytes *) value);
-		default:
-			return NULL;
-	}
-}*/
 
+bool callback_for_each_map_element(as_val *, as_val *, zval **);
+
+/**
+ *  Callback for each list element
+ *
+ *  @param value     Value of current list element
+ *  @param list      List to which current value is to be appended
+ *
+ *  @return true if success. Otherwise false.
+ */
 bool
-callback_for_each_list_element(as_val *value, zval *list)
+callback_for_each_list_element(as_val *value, zval **list)
 {
 	//TODO: Yet to complete handling all cases
 	zval *tmp;
 	switch (as_val_type(value)) {
-                case AS_UNDEF | AS_UNKNOWN:
-			add_next_index_null(list);
+		case AS_UNDEF:
+		case AS_UNKNOWN:
+		case AS_NIL:
+			add_next_index_null(*list);
 			break;
-                case AS_NIL:
-			add_next_index_null(list);
+		case AS_BOOLEAN:
+			add_next_index_bool(*list, (int) as_boolean_get((as_boolean *) value));
 			break;
-                case AS_BOOLEAN:
-			add_next_index_bool(list, (int) as_boolean_get((as_boolean *) value));
+		case AS_INTEGER:
+			add_next_index_long(*list, (long) as_integer_get((as_integer *) value));
 			break;
-                case AS_INTEGER:
-			add_next_index_long(list, (long) as_integer_get((as_integer *) value));
+		case AS_STRING:
+			add_next_index_stringl(*list, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
 			break;
-                case AS_STRING:
-			add_next_index_stringl(list, as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
-			break;
-                case AS_LIST:
+		case AS_LIST:
 			MAKE_STD_ZVAL(tmp);
 			array_init(tmp);
-			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, tmp);
-			add_next_index_zval(list, tmp);
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, &tmp);
+			add_next_index_zval(*list, tmp);
 			break;
-                case AS_MAP:
-			//TODO: Handle as_map
-                        //return (as_map *) value;
-                case AS_REC:
+		case AS_MAP:
+			MAKE_STD_ZVAL(tmp);
+			array_init(tmp);
+			as_map_foreach((as_map *) value, (as_map_foreach_callback) callback_for_each_map_element, &tmp);
+			add_next_index_zval(*list, tmp);
+		case AS_REC:
 			//TODO: Handle as_rec
-                        //return (as_record *) value;
-                case AS_PAIR:
+		case AS_PAIR:
 			//TODO: Handle as_pair
-                        //return (as_pair *) value;
-                case AS_BYTES:
+		case AS_BYTES:
 			//TODO: Handle as_bytes
-                        //return as_bytes_get((as_bytes *) value);
-                default:
-                        return;
-        }
+		default:
+			return false;
+	}
+	return true;
+}
+
+/**
+ *  Callback for each map element
+ *
+ *  @param key       Key of the current map element
+ *  @param value     Value of current map element
+ *  @param arr       Array to which current key-value is to be appended
+ *
+ *  @return true if success. Otherwise false.
+ */
+bool
+callback_for_each_map_element(as_val *key, as_val *value, zval **arr)
+{
+	//TODO: Yet to complete handling all cases
+	//TODO: Handle Non string Key
+	
+	zval *tmp;
+	switch (as_val_type(value)) {
+		case AS_UNDEF
+		case AS_UNKNOWN:
+		case AS_NIL:
+			add_assoc_null(*arr, as_string_get((as_string *) key));
+			break;
+		case AS_BOOLEAN:
+			add_assoc_bool(*arr, as_string_get((as_string *) key), (int) as_boolean_get((as_boolean *) value));
+			break;
+		case AS_INTEGER:
+			add_assoc_long(*arr, as_string_get((as_string *) key), (long) as_integer_get((as_integer *) value));
+			break;
+		case AS_STRING:
+			add_assoc_stringl(*arr, as_string_get((as_string *) key), as_string_get((as_string *) value), strlen(as_string_get((as_string *) value)), 1);
+			break;
+		case AS_LIST:
+			MAKE_STD_ZVAL(tmp);
+			array_init(tmp);
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, &tmp);
+			add_assoc_zval(*arr, as_string_get((as_string *) key), tmp);
+			break;
+		case AS_MAP:
+			MAKE_STD_ZVAL(tmp);
+			array_init(tmp);
+			as_map_foreach((as_map *) value, (as_map_foreach_callback) callback_for_each_map_element, &tmp);
+			add_assoc_zval(*arr, as_string_get((as_string *) key), tmp);
+			break;
+		case AS_REC:
+			//TODO: Handle rec
+			break;
+		case AS_PAIR:
+			//TODO: Handle pair
+			break;
+		case AS_BYTES:
+			//TODO: Handle bytes
+			break;
+		default:
+			return false;
+	}
+	return true;
 }
 
 /**
  *  Appends a bin and value to input parameter bins_array
  *
- *  @param name      Bin name
- *  @param value     Bin value
+ *  @param name            Bin name
+ *  @param value           Bin value
  *  @param bins_array      Bin array to be appended to.
  *
  *  @return true if success. Otherwise false.
@@ -264,21 +306,21 @@ update_bins_array(const char *name, const as_val *value, zval *bins_array)
 		case AS_LIST:
 			MAKE_STD_ZVAL(tmp);
 			array_init(tmp);
-			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, tmp);
+			as_list_foreach((as_list *) value, (as_list_foreach_callback) callback_for_each_list_element, &tmp);
 			add_assoc_zval(bins_array, name, tmp);
 			break;
 		case AS_MAP:
-			//TODO: Handle as_map
-			//return (as_map *) value;
+			MAKE_STD_ZVAL(tmp);
+			array_init(tmp);
+			as_map_foreach((as_map *) value, (as_map_foreach_callback) callback_for_each_map_element, &tmp);
+			add_assoc_zval(bins_array, name, tmp);
+			break;
 		case AS_REC:
 			//TODO: Handle as_rec
-			//return (as_record *) value;
 		case AS_PAIR:
 			//TODO: Handle as_pair
-			//return (as_pair *) value;
 		case AS_BYTES:
 			//TODO: Handle as_bytes
-			//return as_bytes_get((as_bytes *) value);
 		default:
 			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 			zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_BIN_VALUE_TYPE"), Z_LVAL(class_constant)  TSRMLS_CC);
@@ -691,7 +733,7 @@ PHP_METHOD(Aerospike, put)
 		zval class_constant;
 		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 		zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_API_PARAM", Z_LVAL(class_constant)  TSRMLS_CC);
-                return;
+		return;
 	}
 
 	HashTable *keyindex = Z_ARRVAL_P(record_identifier);
@@ -755,93 +797,201 @@ PHP_METHOD(Aerospike, put)
 		bin_value = dataval;
 		int status = 0;
 
-		if (status = as_put_value(record_key, bin_name, bin_value, rec, namespace, set) != SUCCESS) {
-			RETURN_LONG(status);
-		}
-	}
-	zval class_constant;
-	zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-	RETURN_LONG(Z_LVAL(class_constant));
-}
+		switch (Z_TYPE_P(*bin_value)) {
+			zval class_constant;
+			HashTable *arr_hash;
+			int array_len;
+			HashPosition pointer;
+			zval **data;
+			as_arraylist *list;
+			as_hashmap *map;						
+			char *key;
 
-/**
- *  return int
- *
- *  @param record_key		record key.
- *  @param bin_name 		name of bin.
- *  @param bin_value 		value of bin.
- *  @param as_record rec 	struct.
- *  @param namespace 		namespace.
- *  @param set 			set.
- *
- *  @return SUCCESS for SUCCESS. Otherwise FAILURE.
- */
-int
-as_put_value(zval **record_key, char *bin_name, zval **bin_value, as_record rec, char *namespace, char *set)
-{
+			case IS_LONG:
+				as_record_set_int64(&rec, bin_name, (int64_t) Z_LVAL_PP(bin_value));
+				break;
+			case IS_STRING:
+				as_record_set_str(&rec, bin_name, (char *) Z_STRVAL_PP(bin_value));
+				break;
+			case IS_ARRAY:
+				arr_hash = Z_ARRVAL_PP(bin_value);				
+				zend_hash_internal_pointer_reset_ex(arr_hash, &pointer);
+				zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer);
+				
+				if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+					map = as_hashmap_new(32);
+					as_map *m = (as_map *) map;
+					handle_put_map(bin_value, m);
+					as_record_set_map(&rec, bin_name, m);
+					as_hashmap_destroy(map);
+				} else {
+					array_len = zend_hash_num_elements(arr_hash);
+					list = as_arraylist_new(array_len, 0);
+					handle_put_list(bin_value, list);
+					as_record_set_list(&rec, bin_name, (as_list *) as_val_reserve(list));
+					as_arraylist_destroy(list);
+				}
+				break;
+			default:
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_VALUE_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+				return;
+			}
+	}
+
 	as_error err;
 	as_key key;
 	
 	switch (Z_TYPE_P(*record_key)) {
 		zval class_constant;
 		case IS_LONG:
-			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_P(*record_key));
+			as_key_init_int64(&key, namespace, set, (int64_t) Z_LVAL_PP(record_key));
 			break;
 		case IS_STRING:
-			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_P(*record_key));
+			as_key_init_str(&key, namespace, set, (char *) Z_STRVAL_PP(record_key));
 			break;
 		default:
 			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_KEY_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
-                        return;
+		return;
 	}	
-
-	switch (Z_TYPE_P(*bin_value)) {
-		zval class_constant;
-		case IS_LONG:
-			as_record_set_int64(&rec, bin_name, (int64_t) Z_LVAL_P(*bin_value));
-			break;
-		case IS_STRING:
-			as_record_set_str(&rec, bin_name, (char *) Z_STRVAL_P(*bin_value));
-			break;
-		case IS_ARRAY:
-			/*HashTable *arr_hash = Z_ARRVAL_P(*bin_value);
-			HashPosition pointer;
-			zval **data;
-			as_arraylist list;
-			as_arraylist_init(&list);
-			as_map map;
-			as_stringmap_init(&map);
-
-			for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
-	
-				uint arrkey_len, arrkey_type;
-				char *key;
-				ulong index;
-				
-				if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
-					//strcpy(values[counter].bin_name, key);
-				} else {
-					
-				}
-			}
-			
-			as_record_set_list(&rec, bin_name, (as_list *) Z_ARRVAL_P (*bin_value));*/
-			break;
-		default:
-			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_VALUE_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
-                        return;
-	}
 
 	if (aerospike_key_put(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
 		// An error occurred, so we log it.
 		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
 		//log_err(err.message, );
 		// XXX -- Release any allocated resources and throw and exception.
-		return err.code;
+		RETURN_LONG(err.code);
 	} else {
-		return SUCCESS;
+		zval class_constant;
+		zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+		RETURN_LONG(Z_LVAL(class_constant));
+	}
+}
+
+/**
+ *  Copies list elements from a PHP array into an as_arraylist
+ *  
+ *  @param array      a PHP array to be copied into an as_arraylist
+ *  @param list       an as_arrayist into which the PHP array is copied
+ *
+ *  @return true if success. Otherwise false.
+ */
+int
+handle_put_list(zval **array, as_arraylist *list)
+{
+	HashTable *arr_hash, *inner_arr_hash;
+	HashPosition pointer, inner_pointer;
+	zval **data, **inner_data, class_constant;
+	char *key, *inner_key;
+	int inner_array_len, i;
+	uint arrkey_len, inner_arrkey_len;
+	ulong index, inner_index;
+	as_arraylist *inner_list;
+	as_hashmap *inner_map;
+
+	arr_hash = Z_ARRVAL_PP(array);
+	for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
+		switch (Z_TYPE_PP(data)) {
+			case IS_LONG:
+				as_arraylist_append_int64(list, Z_LVAL_PP(data));
+				break;
+			case IS_STRING:
+				as_arraylist_append_str(list, Z_STRVAL_PP(data));
+				break;
+			case IS_ARRAY:
+				inner_arr_hash = Z_ARRVAL_PP(data);
+				zend_hash_internal_pointer_reset_ex(inner_arr_hash, &inner_pointer);
+
+				if (zend_hash_get_current_key_ex(inner_arr_hash, &inner_key, &inner_arrkey_len, &inner_index, 0, &inner_pointer) == HASH_KEY_IS_STRING) {
+					inner_map = as_hashmap_new(32);
+					as_map *inner_m = (as_map *) inner_map;
+					handle_put_map(data, inner_m);
+					as_arraylist_append_map(list, inner_m);
+				} else {
+					inner_array_len = zend_hash_num_elements(inner_arr_hash);
+					inner_list = as_arraylist_new(inner_array_len, 0);
+					handle_put_list(data, inner_list);
+					as_arraylist_append_list(list, (as_list *) inner_list);
+				}
+				break;			
+			default:
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+				return;
+		}
+	}
+}
+
+/**
+ *  Copies map elements from a PHP array into an as_map
+ *    
+ *  @param array      a PHP array to be copied into an as_map
+ *  @param map        an as_map into which the PHP array is copied
+ * 
+ *  @return true if success. Otherwise false.
+ */
+int
+handle_put_map(zval **array, as_map *map)
+{
+	HashTable *arr_hash, *inner_arr_hash;
+	HashPosition pointer, inner_pointer;
+	zval **data, **inner_data, class_constant;
+	char *key, *inner_key, map_key_type[10];
+	uint arrkey_len, arrkey_type, inner_arrkey_len;
+	ulong index, inner_index;
+	as_arraylist* inner_list;
+	as_hashmap *inner_map;
+	int inner_array_len, i;
+
+	arr_hash = Z_ARRVAL_PP(array);
+	for (zend_hash_internal_pointer_reset_ex(arr_hash, &pointer); zend_hash_get_current_data_ex(arr_hash, (void **) &data, &pointer) == SUCCESS; zend_hash_move_forward_ex(arr_hash, &pointer)) {
+		if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_STRING) {
+			strcpy(map_key_type, "STRING");
+		} else if (zend_hash_get_current_key_ex(arr_hash, &key, &arrkey_len, &index, 0, &pointer) == HASH_KEY_IS_LONG) {
+			strcpy(map_key_type, "INT");
+		} else {
+			return FAILURE;
+		}		
+
+		switch (Z_TYPE_PP(data)) {
+			case IS_LONG:
+				if (!strcmp(map_key_type, "STRING")) {
+					as_stringmap_set_int64(map, key, Z_LVAL_PP(data));
+				} else {
+					//TODO: Handle INT Key of map
+				}
+				break;
+			
+			case IS_STRING:
+				if (!strcmp(map_key_type, "STRING")) {
+					as_stringmap_set_str(map, key, Z_STRVAL_PP(data));
+				} else {
+					//TODO: Handle INT Key of map
+				}
+				break;
+			
+			case IS_ARRAY:
+				inner_arr_hash = Z_ARRVAL_PP(data);
+				zend_hash_internal_pointer_reset_ex(inner_arr_hash, &inner_pointer);
+
+				if (zend_hash_get_current_key_ex(inner_arr_hash, &inner_key, &inner_arrkey_len, &inner_index, 0, &inner_pointer) == HASH_KEY_IS_STRING) {
+					inner_map = as_hashmap_new(32);
+					as_map *inner_m = (as_map *) inner_map;
+					handle_put_map(data, inner_m);
+					as_stringmap_set_map(map, key, inner_m);
+				} else {
+					inner_array_len = zend_hash_num_elements(inner_arr_hash);
+					inner_list = as_arraylist_new(inner_array_len, 0);
+					handle_put_list(data, inner_list);
+					as_stringmap_set_list(map, key, (as_list *) inner_list);
+				}
+				break;
+			default:
+				zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_BIN_NAME_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
+				return;
+		}
 	}
 }
 
