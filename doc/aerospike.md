@@ -111,6 +111,7 @@ class Aerospike
     public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
     public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
     public int Aerospike::remove ( string $key [, array $options ] )
+    public int Aerospike::removeBin ( string $key, array $bin [, array $options ] )
     public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
     public int Aerospike::append ( string $key, string $bin, string $value [, array $options ] )
     public int Aerospike::prepend ( string $key, string $bin, string $value [, array $options ] )

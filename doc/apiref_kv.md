@@ -16,6 +16,11 @@ public int Aerospike::get ( string $key, array &$record [, array $filter [, arra
 public int Aerospike::remove ( string $key [, array $options ] )
 ```
 
+### [Aerospike::removeBin](aerospike_removebin.md)
+```
+public int Aerospike::removeBin ( string $key, array $bin [, array $options ] )
+```
+
 ### [Aerospike::exists](aerospike_exists.md)
 ```
 public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
