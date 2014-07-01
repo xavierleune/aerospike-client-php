@@ -178,7 +178,6 @@ callback_for_each_list_element(as_val *value, zval **list)
 	zval *tmp;
 	switch (as_val_type(value)) {
 		case AS_UNDEF:
-		case AS_UNKNOWN:
 		case AS_NIL:
 			add_next_index_null(*list);
 			break;
@@ -231,8 +230,7 @@ callback_for_each_map_element(as_val *key, as_val *value, zval **arr)
 	
 	zval *tmp;
 	switch (as_val_type(value)) {
-		case AS_UNDEF
-		case AS_UNKNOWN:
+		case AS_UNDEF:
 		case AS_NIL:
 			add_assoc_null(*arr, as_string_get((as_string *) key));
 			break;
@@ -795,18 +793,18 @@ PHP_METHOD(Aerospike, put)
 
 		bin_name = arrkey;
 		bin_value = dataval;
-		int status = 0;
+		zval class_constant, **data;
+		HashTable *arr_hash;
+		int array_len;
+		HashPosition pointer;
+		as_arraylist *list;
+		as_hashmap *map;
+		char *key;
 
-		switch (Z_TYPE_P(*bin_value)) {
-			zval class_constant;
-			HashTable *arr_hash;
-			int array_len;
-			HashPosition pointer;
-			zval **data;
-			as_arraylist *list;
-			as_hashmap *map;						
-			char *key;
-
+		switch (Z_TYPE_PP(bin_value)) {
+			case IS_NULL:
+				as_record_set_nil(&rec, bin_name);
+				break;
 			case IS_LONG:
 				as_record_set_int64(&rec, bin_name, (int64_t) Z_LVAL_PP(bin_value));
 				break;
