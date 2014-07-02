@@ -103,8 +103,13 @@ class Aerospike
     const LOG_LEVEL_DEBUG = 2;
     const LOG_LEVEL_TRACE = 1;
 
+    //
+    // Lifecycle
+    //
+    const CLUSTER_ALIAS = ':DB0';
+
     // lifecycle and connection methods
-    public int Aerospike::__construct ( array $config [, array $options] )
+    public int Aerospike::__construct ( array $config [, string $alias = Aerospike::CLUSTER_ALIAS [, array $options]] )
     public void Aerospike::__destruct ( void )
     public boolean Aerospike::isConnected ( void )
     public void Aerospike::close ( void )

@@ -11,13 +11,13 @@ public string Aerospike::error ( void )
 public int Aerospike::errorno ( void )
 ```
 
+The error codes returned are constants of the **Aerospike** class, and map to
+the client and server error codes defined in the C client (in as_status.h).
+
 ### [Aerospike::setLogger](aerospike_setlogger.md)
 ```
 public bool setLogger ( string $log_path [, int $log_level = Aerospike::LOG_LEVEL_INFO] )
 ```
-
-The error codes returned are constants of the **Aerospike** class, and map to
-the client and server error codes defined in the C client (in as_status.h).
 
 ## Example
 

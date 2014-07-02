@@ -3,7 +3,7 @@
 
 ### [Aerospike::__construct](aerospike_construct.md)
 ```
-public int Aerospike::__construct ( array $config [, array $options] )
+public int Aerospike::__construct ( array $config [, string $alias = Aerospike::CLUSTER_ALIAS [, array $options]] )
 ```
 
 ### [Aerospike::__destruct](aerospike_destruct.md)

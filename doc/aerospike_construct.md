@@ -6,7 +6,7 @@ Aerospike::__construct - Constructs a new Aerospike object
 ## Description
 
 ```
-public int Aerospike::__construct ( array $config [, array $options] )
+public int Aerospike::__construct ( array $config [, string $alias = Aerospike::CLUSTER_ALIAS [, array $options]] )
 ```
 
 **Aerospike::__construct()** will create an Aerospike object and connect to the
@@ -14,6 +14,11 @@ cluster defined in *config*.  The **Aerospike::isConnected()** method can be use
 to test whether the connection succeeded. If a config or connection error
 occured the **Aerospike::error()** and **Aerospike::errorno()** methods can be used
 to inspect it.
+
+The Aerospike cluster should be identified with an alias.  This allows for
+reduced overhead on initializing the cluster and keeping track of the state of
+its nodes.  Further instantiation calls will attempt to reuse an initialized
+cluster with a matching alias.
 
 ## Parameters
 
