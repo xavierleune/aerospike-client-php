@@ -12,22 +12,14 @@ if ($keys < 10000) {
 	for($i=10000;$i<=$keys;$i++)
 	{
 		$key = array("ns"=>"test", "set"=>"demo", "key"=>"$i");
-		$line = $line."Memory Usage Get:= ".memory_get_usage().", ";
-		$start = microtime(true);
-		$line = $line."Start GET MicroS:= ".$start.", ";
+		$start = time();
 		$as->get($key, &$r);
-		$end = microtime(true);
-		$line = $line."End  GET MicroS:= ".$end.", ";
+		$end = time();
 		$avg = $avg+($end-$start);
-		$line = $line."Diff in MicroS:= ".($end-$start).", ";
-		$line = $line."Memory Usage end Get:= ".memory_get_usage()."\n";
 		$count++;
 	}
 	$average_get_time = $avg/$count;
-	$line = $line."\nTotal GET Time:= ".$avg."\n";
-	$line = $line."Total AVG GET Time:= ".$average_get_time."\n";
+	echo "\nTotal GET Time:= ".$avg."\n";
+	echo "Total AVG GET Time:= ".$average_get_time."\n"; 
 }
-$handle = fopen("GetPerformance",'a+');
-fwrite($handle,$line);
-fclose($handle);
 ?>
