@@ -14,7 +14,7 @@ if ($keys < 10000) {
 	for($i=10000;$i<=$keys;$i++)
 	{
 		$key = array("ns"=>"test", "set"=>"demo", "key"=>"$i");
-		for($j=1;$j<=$numberofbins;$j++)
+		for($j=1; $j<=$numberofbins; $j++)
 		{
 			$value = $i+$j;
 			$bins_key_value_array["bin".$j] = "$value";
