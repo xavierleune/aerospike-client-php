@@ -14,7 +14,7 @@ public int Aerospike::removeBin ( array $key, array $bin [, array $options ] )
 
 ## Parameters
 
-**key** the key under which to store the record.
+**key** the key for the record. An associative array with keys 'ns','set','key'.
 
 **bin** the name of the bin to remove from the record.
 

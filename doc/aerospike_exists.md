@@ -19,7 +19,7 @@ otherwise it will be an empty array.
 
 ## Parameters
 
-**key** the key for the record.
+**key** the key for the record. An associative array with keys 'ns','set','key'.
 
 **metadata** filled by an associative array of metadata.
 

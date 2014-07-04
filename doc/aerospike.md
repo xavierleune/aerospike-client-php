@@ -108,6 +108,12 @@ class Aerospike
     //
     const CLUSTER_ALIAS = ':DB0';
 
+    //
+    // Operators
+    //
+    const OP_EQ = '=';
+    const OP_BETWEEN = 'BETWEEN';
+
     // lifecycle and connection methods
     public int Aerospike::__construct ( array $config [, string $alias = Aerospike::CLUSTER_ALIAS [, array $options]] )
     public void Aerospike::__destruct ( void )
@@ -131,11 +137,15 @@ class Aerospike
     public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
     public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
     public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
+
+    // query and scan methods
+    public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
 }
 ```
 
 ### [Runtime Configuration](aerospike_config.md)
+### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
-### [Lifecycle and Connection Methods](apiref_connection.md)
+### [Query and Scan Methods](apiref_streams.md)
 

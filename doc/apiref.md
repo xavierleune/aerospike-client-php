@@ -4,8 +4,10 @@
 The Aerospike PHP client API may be described as follows:
 
 ### [Aerospike Class](aerospike.md)
+### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
+### [Query and Scan Methods](apiref_streams.md)
 
 # Client instance caching
 
@@ -32,31 +34,20 @@ class Aerospike
     public function getMany($key_z_a, &$value_z_a [, $policy_z]);
     public function operate($key_z [, $policy_z]);
 
-    // Scan APIs:
-
-    public function scan_create(&$scan_s, $options_s);
-    public function scanAll($scan_s);
-    public function scanNode($scan_s);
-    public function scan_background($scan_s);
-    public function scan_info($scan_s);
-    public function scan_destroy($scan_s);
-
     // Secondary Index APIs:
-
     public function createIndex(&$index_z, $type_s, $options_s);
     public function dropIndex($index_z);
 
     // Query APIs:
+    public function queryHalt(); // stop the current query; to be used in record callback of query()
+    public function queryApply($set, $where, $callback, $apply, $bins, $options); // apply UDF on the query
 
-    public function query_create(&$query_s, $options_s);
-    public function query($query_s);
-    public function queryAggregate($query_s);
-    public function query_foreach($query_s);
-    public function query_destroy($query_s);
+    // Scan APIs:
+    public function scan($set, $callback [, $bins [, $options]]);
+    public function scanHalt(); // stop the current scan; to be used in the record callback of scan()
+    public function scanApply($set, $callback, $apply, $bins, $options); // apply UDF on the scan
 
     // User Defined Function (UDF) APIs:
-
-    public function execute($key_z);
     public function register($client_path_s, $server_path_s, $language);
 
     // Large Data Type (LDT) APIs:

@@ -16,7 +16,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**key** the key under which to store the record.
+**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
 
 **record** filled by an associative array of bins and values.
 

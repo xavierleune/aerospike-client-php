@@ -19,7 +19,7 @@ associative array keys and values. This behavior can be modified using the
 
 ## Parameters
 
-**key** the key under which to store the record.
+**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
 
 **record** the associative array of bins and values to write.
 
