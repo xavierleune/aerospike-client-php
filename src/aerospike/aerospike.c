@@ -46,6 +46,8 @@
 #include "dbg.h"
 #include <stdbool.h>
 
+#include <aerospike_class_constants.h>
+
 PHP_INI_BEGIN()
 //PHP_INI_ENTRY()
 PHP_INI_END()
@@ -386,12 +388,12 @@ PHP_METHOD(Aerospike, __construct)
 
 	// XXX -- Temporary implementation based on globals.
 	zval *object = getThis();
-	zval *host;
+	zval *host, *options = NULL;
 	char *arrkey;
 
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &host) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &host, &options) == FAILURE) {
 		zval class_constant;
 		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
@@ -427,7 +429,7 @@ PHP_METHOD(Aerospike, __construct)
 		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
 		return;
-	}		
+	}
 
 	HashTable *hostindex = Z_ARRVAL_P(*host_array);
 	HashPosition hostpointer;
@@ -523,8 +525,46 @@ PHP_METHOD(Aerospike, __construct)
 		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::NO_HOSTS"), Z_LVAL(class_constant)  TSRMLS_CC);
 		return;
 	}
-	aerospike_init(&as, &config);
 
+	if (options != NULL) {		
+		HashTable *options_array = Z_ARRVAL_P(options);
+		HashPosition options_pointer;
+		zval **options_value;
+		char *options_key;
+		
+		for (zend_hash_internal_pointer_reset_ex(options_array, &options_pointer); zend_hash_get_current_data_ex(options_array, (void **) &options_value, &options_pointer) == SUCCESS; zend_hash_move_forward_ex(options_array, &options_pointer)) {
+			uint options_key_len;
+			ulong options_index;
+			
+			if (zend_hash_get_current_key_ex(options_array, &options_key, &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
+				//TODO: Handle invalid option key datatype error
+			}
+			switch((int) options_index) {
+				case OPT_READ_TIMEOUT:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					config.policies.read.timeout = Z_LVAL_PP(options_value);
+					break;
+				case OPT_WRITE_TIMEOUT:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					config.policies.write.timeout = Z_LVAL_PP(options_value);
+					break;
+				case OPT_CONNECT_TIMEOUT:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					//XXX: config.conn_timeout_ms = Z_LVAL_PP(options_value);
+					break;
+				default:
+					//TODO: Handle invalid option value error
+					break;
+			}
+		}
+	}
+	aerospike_init(&as, &config);
 	// Connect to the cluster.
 	if (aerospike_connect(&as, &err) != AEROSPIKE_OK) {
 		// An error occurred, so we log it.
@@ -569,9 +609,8 @@ PHP_METHOD(Aerospike, __destruct)
    Read record header(s) and bin(s) for specified key(s) in one batch call. */
 PHP_METHOD(Aerospike, get)
 {
-	zval *record_identifier, **record_key = NULL, *record;
+	zval *record_identifier, **record_key = NULL, *record, *bins = NULL, *options = NULL;
 	char *arrkey, *namespace = NULL, *set = NULL;
-	zval *bins;
 	as_record *rec = NULL;
 
 	// DEBUG
@@ -580,7 +619,7 @@ PHP_METHOD(Aerospike, get)
 	zval *object = getThis();
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a", &record_identifier, &record, &bins) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|aa", &record_identifier, &record, &bins, &options) == FAILURE) {
 		zval class_constant;
 		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 		zend_throw_exception(AerospikeException_ce, ZEND_STRL("Aerospike::INVALID_API_PARAM"), Z_LVAL(class_constant)  TSRMLS_CC);
@@ -646,10 +685,45 @@ PHP_METHOD(Aerospike, get)
 			zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 			zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_KEY_TYPE", Z_LVAL(class_constant) TSRMLS_CC);
 			return;
+	} 
+	
+	as_policy_read read_policy;
+	as_policy_read_init(&read_policy);
+	if (options != NULL) {
+		HashTable *options_array = Z_ARRVAL_P(options);
+		HashPosition options_pointer;
+		zval **options_value;
+		char *options_key;
+		
+		for (zend_hash_internal_pointer_reset_ex(options_array, &options_pointer); zend_hash_get_current_data_ex(options_array, (void **) &options_value, &options_pointer) == SUCCESS; zend_hash_move_forward_ex(options_array, &options_pointer)) {
+			uint options_key_len;
+			ulong options_index;
+			
+			if (zend_hash_get_current_key_ex(options_array, &options_key, &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
+				//TODO: Handle invalid option key datatype error
+			}
+			switch((int) options_index) {
+				case OPT_READ_TIMEOUT:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					read_policy.timeout = (uint32_t) Z_LVAL_PP(options_value);
+					break;
+				case OPT_POLICY_RETRY:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					//XXX: read_policy.retry = (as_policy_retry) Z_LVAL_PP(options_value);
+					break;
+				default:
+					//TODO: Handle invalid option value error
+					break;
+			}
+		}
 	}
- 
-	if (ZEND_NUM_ARGS() == 2) {
-		if (aerospike_key_get(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
+
+	if (bins == NULL) {
+		if (aerospike_key_get(&as, &err, &read_policy, &key, &rec) != AEROSPIKE_OK) {
 			// An error occurred, so we log it.
 			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
 			//log_err(err.message, );
@@ -670,7 +744,7 @@ PHP_METHOD(Aerospike, get)
                                 RETURN_LONG(Z_LVAL(class_constant));
 			}
 		}
-	} else if (ZEND_NUM_ARGS() == 3) {
+	} else if (bins != NULL) {
 		HashTable *bins_array =  Z_ARRVAL_P(bins);
 		int bins_count = zend_hash_num_elements(bins_array);
 		const char *select[bins_count];
@@ -691,7 +765,7 @@ PHP_METHOD(Aerospike, get)
 		}
 
 		select[bins_count] = NULL;
-		if (aerospike_key_select(&as, &err, NULL, &key, select, &rec) != AEROSPIKE_OK) {
+		if (aerospike_key_select(&as, &err, &read_policy, &key, select, &rec) != AEROSPIKE_OK) {
 			// An error occurred, so we log it.
 			fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
 			//log_err(err.message, );
@@ -700,9 +774,10 @@ PHP_METHOD(Aerospike, get)
 			RETURN_LONG(err.code);
 		} else {
 			if (as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record)) {
-				zval class_constant;
-				zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-				RETURN_LONG(Z_LVAL(class_constant));
+				//zval class_constant;
+				//zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+				//RETURN_LONG(Z_LVAL(class_constant));
+				RETURN_LONG(0);
 			} else {
 				zval class_constant;
 				zend_get_constant_ex(ZEND_STRL("Aerospike::SERVER_ERROR"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
@@ -722,12 +797,13 @@ PHP_METHOD(Aerospike, put)
 	log_info("**In Aerospike::put() method**");
 
 	zval *object = getThis();
-	zval *record_identifier, *record, **record_key = NULL, **bin_value;
+	zval *record_identifier, *record, **record_key = NULL, **bin_value, *options = NULL;
 	char *bin_name , *arrkey, *namespace = NULL, *set = NULL;
+	long ttl = 0;
 	as_record rec;
 
 	Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa", &record_identifier, &record) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &record_identifier, &record, &ttl, &options) == FAILURE) {
 		zval class_constant;
 		zend_get_constant_ex(ZEND_STRL("Aerospike::INVALID_API_PARAM"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
 		zend_throw_exception(AerospikeException_ce, "Aerospike::INVALID_API_PARAM", Z_LVAL(class_constant)  TSRMLS_CC);
@@ -854,7 +930,61 @@ PHP_METHOD(Aerospike, put)
 		return;
 	}	
 
-	if (aerospike_key_put(&as, &err, NULL, &key, &rec) != AEROSPIKE_OK) {
+	// set optional TTL
+	if (ttl != 0) {
+		rec.ttl = ttl;
+	}
+	
+	// set optional policies
+	as_policy_write write_policy;
+	as_policy_write_init(&write_policy);
+	if (options != NULL) {
+		HashTable *options_array = Z_ARRVAL_P(options);
+		HashPosition options_pointer;
+		zval **options_value;
+		char *options_key;
+		
+		for (zend_hash_internal_pointer_reset_ex(options_array, &options_pointer); zend_hash_get_current_data_ex(options_array, (void **) &options_value, &options_pointer) == SUCCESS; zend_hash_move_forward_ex(options_array, &options_pointer)) {
+			uint options_key_len;
+			ulong options_index;
+			
+			if (zend_hash_get_current_key_ex(options_array, &options_key, &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
+				//TODO: Handle invalid option key datatype error
+			}
+			switch((int) options_index) {
+				case OPT_WRITE_TIMEOUT:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					write_policy.timeout = (uint32_t) Z_LVAL_PP(options_value);
+					break;
+				case OPT_POLICY_EXISTS:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					if ((Z_LVAL_PP(options_value) & AS_POLICY_EXISTS) == AS_POLICY_EXISTS) {
+						write_policy.exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS + 1;
+					} else {
+						//TODO: Handle invalid option value for OPT_POLICY_EXISTS error	
+					}
+					break;
+				case OPT_POLICY_RETRY:
+					if (Z_TYPE_PP(options_value) != IS_LONG) {
+						//TODO: Handle invalid option value datatype error
+					}
+					if ((Z_LVAL_PP(options_value) & AS_POLICY_RETRY) == AS_POLICY_RETRY) {
+						write_policy.retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
+					} else {
+						//TODO: Handle invalid option value for OPT_POLICY_RETRY error
+				}
+					break;
+				default:
+					//TODO: Handle invalid option value error
+					break;
+			}
+		}
+	}
+	if (aerospike_key_put(&as, &err, &write_policy, &key, &rec) != AEROSPIKE_OK) {
 		// An error occurred, so we log it.
 		fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
 		//log_err(err.message, );
@@ -1292,6 +1422,35 @@ PHP_MINIT_FUNCTION(aerospike)
 	// Define constants.
 	// [Note:  Negative status values come from the client;
 	//         positive status values come from the server.]
+
+	//
+	//    Policy flags:
+	//    The policy constants map to the C client
+	//    src/include/aerospike/as_policy.h
+	//
+	
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_RETRY_NONE"), POLICY_RETRY_NONE TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_RETRY_ONCE"), POLICY_RETRY_ONCE TSRMLS_CC);
+
+	// By default writes will try to create or replace records and bins
+	// behaving similar to an associative array in PHP. Setting
+	// OPT_POLICY_EXISTS with one of these values will overwrite this
+	
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_EXISTS_IGNORE"), POLICY_EXISTS_IGNORE TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_EXISTS_CREATE"), POLICY_EXISTS_CREATE TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_EXISTS_UPDATE"), POLICY_EXISTS_UPDATE TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_EXISTS_REPLACE"), POLICY_EXISTS_REPLACE TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("POLICY_EXISTS_CREATE_OR_REPLACE"), POLICY_EXISTS_CREATE_OR_REPLACE TSRMLS_CC);
+
+	//
+	// Options can be assigned values that modify default behavior
+	//
+	
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OPT_CONNECT_TIMEOUT"), OPT_CONNECT_TIMEOUT TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OPT_READ_TIMEOUT"), OPT_READ_TIMEOUT TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OPT_WRITE_TIMEOUT"), OPT_WRITE_TIMEOUT TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OPT_POLICY_RETRY"), OPT_POLICY_RETRY TSRMLS_CC);
+	zend_declare_class_constant_long(Aerospike_ce, ZEND_STRL("OPT_POLICY_EXISTS"), OPT_POLICY_EXISTS TSRMLS_CC);
 
 	// Client status codes:
 
