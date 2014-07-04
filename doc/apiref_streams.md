@@ -3,7 +3,17 @@
 
 ### [Aerospike::query](aerospike_query.md)
 ```
-public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
+public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+```
+
+### [Aerospike::scan](aerospike_scan.md)
+```
+public int Aerospike::scan ( mixed $set, callback $record_cb [, array $bins [, array $options ]] )
+```
+
+### [Aerospike::halt](aerospike_halt.md)
+```
+public void Aerospike::halt ( void )
 ```
 
 ## Example
@@ -18,31 +28,22 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
-$put_val = array("email" => "hey@example.com", "name" => "Hey There");
-// attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
-if ($res == Aerospike::OK) {
-    echo "Record written.\n";
-} elseif ($res == Aerospike::KEY_FOUND_ERROR) {
-    echo "The Aerospike server already has a record with the given key.\n";
+$total = 0;
+$in_thirties = 0;
+$where = array("age", Aerospike::OP_BETWEEN, array(30, 39));
+$res = $db->query('test.users', $where, function ($record) {
+    echo "{$record['email']} age {$record['age']}\n";
+    $total += (int) $record['age'];
+    $in_thirties++;
+    if ($in_thirties >= 10) $db->halt(); // stop the stream at the tenth record
+}, array("email", "age"));
+if ($res == Aerospike::ERR_QUERY) {
+    echo "An error occured while querying[{$db->errorno()}] ".$db->error();
+else if ($res == Aerospike::ERR_QUERY_ABORTED) {
+    echo "Stopped the result stream after {$in_thirties} results\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "The average age of employees in their thirties is ".round($total / $in_thirties)."\n";
 }
 
-// check for the existance of the given key in the database, then fetch it
-if ($db->exists($key, $foo) == Aerospike::OK) {
-    $res = $db->get($key, $record);
-    if ($res == Aerospike::OK) {
-        var_dump($record);
-    }
-}
-
-// filtering for specific keys
-$res = $db->get($key, $record, array("email"), Aerospike::POLICY_RETRY_ONCE);
-if ($res == Aerospike::OK) {
-    echo "The email for this user is ". $record['email']. "\n";
-    echo "The name bin should be filtered out: ".var_export(is_null($record['name']), true). "\n";
-}
 ?>
 ```

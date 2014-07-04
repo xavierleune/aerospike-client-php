@@ -12,7 +12,7 @@ public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, a
 **Aerospike::query()** will query a *set* with a specified *where* predicate
 then invoke a callback function *record_cb* on each record in the result stream.
 The bins returned can be filtered by passing an associative array of the *bins*
-needed, otherwise all bins in the record are returned (similar to a SELECT *).
+needed, otherwise all bins in the record are returned (similar to a SELECT \*).
 Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
@@ -71,8 +71,8 @@ $res = $db->query('test.users', $where, function ($record) {
     $total += (int) $record['age'];
     $in_thirties++;
 }, array("email", "age"));
-if ($res == Aerospike::ERROR_QUERY) {
-    echo "An error occured while querying[{$db->errorno()}] ".$db->error();
+if ($res == Aerospike::ERR_QUERY) {
+    echo "An error occured while querying[{$db->errorno()}] {$db->error()}\n";
 } else {
     echo "The average age of employees in their thirties is ".round($total / $in_thirties)."\n";
 }

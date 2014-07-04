@@ -140,6 +140,8 @@ class Aerospike
 
     // query and scan methods
     public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+    public int Aerospike::scan ( mixed $set, callback $record_cb [, array $bins [, array $options ]] )
+    public void Aerospike::halt ( void )
 }
 ```
 

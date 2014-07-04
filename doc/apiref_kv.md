@@ -65,7 +65,7 @@ $put_val = array("email" => "hey@example.com", "name" => "Hey There");
 $res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::KEY_FOUND_ERROR) {
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

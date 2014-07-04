@@ -39,12 +39,9 @@ class Aerospike
     public function dropIndex($index_z);
 
     // Query APIs:
-    public function queryHalt(); // stop the current query; to be used in record callback of query()
     public function queryApply($set, $where, $callback, $apply, $bins, $options); // apply UDF on the query
 
     // Scan APIs:
-    public function scan($set, $callback [, $bins [, $options]]);
-    public function scanHalt(); // stop the current scan; to be used in the record callback of scan()
     public function scanApply($set, $callback, $apply, $bins, $options); // apply UDF on the scan
 
     // User Defined Function (UDF) APIs:
