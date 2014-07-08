@@ -6,7 +6,8 @@
  *
  */
 
-#include "aerospike/as_status.h"
+#ifndef __AEROSPIKE_STATUS_H__
+#define __AEROSPIKE_STATUS_H__
 
 #define MAX_STATUS_MSG_SIZE 512
 
@@ -65,3 +66,5 @@ do {                                                                \
                         aerospike_status[i].statusno TSRMLS_CC);    \
     }                                                               \
 } while(0);
+
+#endif /* end of __AEROSPIKE_STATUS_H__*/

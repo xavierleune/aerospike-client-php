@@ -41,20 +41,14 @@
 #include "aerospike/as_arraylist.h"
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_stringmap.h"
+#include "aerospike/as_status.h"
 
 #include "dbg.h"
 #include <stdbool.h>
 
+#include "aerospike_common.h"
 #include "aerospike_status.h"
 #include "aerospike_policy.h"
-
-
-#define foreach_hashtable(index, position, datavalue)                   \
-    for (zend_hash_internal_pointer_reset_ex(index, &position);     \
-            zend_hash_get_current_data_ex(index,                    \
-                (void **) &datavalue, &position) == SUCCESS;        \
-            zend_hash_move_forward_ex(index, &position))    \
-
 
 
 PHP_INI_BEGIN()
@@ -753,7 +747,7 @@ PHP_METHOD(Aerospike, get)
     } 
 
     as_policy_read read_policy;
-    if (AEROSPIKE_OK != (err.code = set_read_policy(&read_policy, options))) {
+    if (AEROSPIKE_OK != (err.code = set_policy(&read_policy, NULL, options))) {
         goto failure;
     }
 
@@ -827,6 +821,7 @@ PHP_METHOD(Aerospike, get)
         }
     }
 failure:
+    // XXX do we need to destroy read policy
     if (rec) {
         as_record_destroy(rec);
     }
@@ -996,7 +991,7 @@ PHP_METHOD(Aerospike, put)
 
     // set optional policies
     as_policy_write write_policy;
-    if (AEROSPIKE_OK != (err.code = set_write_policy(&write_policy, options))) {
+    if (AEROSPIKE_OK != (err.code = set_policy(NULL, &write_policy, options))) {
         goto failure;
     }
     if (aerospike_key_put(&as, &err, &write_policy, &key, &rec) != AEROSPIKE_OK) {
@@ -1004,6 +999,7 @@ PHP_METHOD(Aerospike, put)
         goto failure;
         //log_err(err.message, );
     }
+    // XXX destroy policy ???
     zval class_constant;
     zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
     RETURN_LONG(Z_LVAL(class_constant));
@@ -1451,8 +1447,7 @@ PHP_MINIT_FUNCTION(aerospike)
      * This will expose the policy values for PHP
      * as well as CSDK to PHP client.
      */
-    EXPOSE_CONSTANTS_STR_ZEND(Aerospike_ce);
-
+    declare_policy_constants_php(Aerospike_ce);
     /* Refer aerospike_status.h
      * This will expose the status code from CSDK
      * to PHP client.
