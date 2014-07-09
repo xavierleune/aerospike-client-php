@@ -1,5 +1,6 @@
 #include "php.h"
 
+#include "aerospike/as_config.h"
 #include "aerospike/as_policy.h"
 #include "aerospike/as_status.h"
 

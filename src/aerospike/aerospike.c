@@ -409,225 +409,47 @@ PHP_METHOD(Aerospike, __construct)
     log_info("**In Aerospike::__construct() method**");
 
     // XXX -- Temporary implementation based on globals.
-    zval *object = getThis();
-    zval *host, *options = NULL;
-    char *arrkey;
-    as_error err;
+    zval*       host_p = NULL;
+    zval*       options_p = NULL;
+    zval*       host_arr_p = NULL;
+    as_error    error;
+    as_config   config;
 
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &host, &options) == FAILURE) {
-        /*
-         * For now, using AEROSPIKE_ERR. Need to have specific
-         * error code here.
-         */
-        err.code = AEROSPIKE_ERR_PARAM;
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &host_p, &options_p) == FAILURE) {
+        error.code = AEROSPIKE_ERR_PARAM;
         goto failure;
     }
-    // Errors populate this object.
 
-    // Configuration for the client.
-    as_config config;
+    /* configuration */
     as_config_init(&config);
 
-    HashTable *keyindex = Z_ARRVAL_P(host);
-
-    HashPosition pointer;
-    zval **data , **host_array;
-    uint arrkey_len;
-    ulong index;
-    zend_hash_internal_pointer_reset_ex(keyindex, &pointer);
-    zend_hash_get_current_data_ex(keyindex, (void **) &data, &pointer);
-    uint arrkey_type = zend_hash_get_current_key_ex(keyindex, &arrkey, &arrkey_len, &index, 0, &pointer);
-
-    if (strcmp(arrkey, "hosts") == 0) {
-        if (Z_TYPE_P(*data) != IS_ARRAY) {
-            /*
-             * For now, using AEROSPIKE_ERR. Need to have specific
-             * error code here.
-             */
-            err.code = AEROSPIKE_ERR_PARAM;
-            goto failure;
-        }
-        host_array = data;
-    } else {
-        /*
-         * For now, using AEROSPIKE_ERR. Need to have specific
-         * error code here.
-         */
-        err.code = AEROSPIKE_ERR_PARAM;
+    /* check for hosts */
+    if (AEROSPIKE_OK != (aerospike_transform_iteratefor_hostkey(Z_ARRVAL_P(host_p), &host_arr_p))) {
+        error.code = AEROSPIKE_ERR_PARAM;
         goto failure;
     }
 
-    HashTable *hostindex = Z_ARRVAL_P(*host_array);
-    HashPosition hostpointer;
-    zval **hostdata;
-    int i = 0;
-    foreach_hashtable(hostindex, hostpointer, hostdata) {
-        uint arrkey_len, arrkey_type;
-        ulong index;
-
-        arrkey_type = zend_hash_get_current_key_ex(hostindex, &arrkey, &arrkey_len, &index, 0, &hostpointer);
-
-        if (Z_TYPE_P(*hostdata) != IS_ARRAY) {
-            /*
-             * For now, using AEROSPIKE_ERR. Need to have specific
-             * error code here.
-             */
-            err.code = AEROSPIKE_ERR_PARAM;
-            goto failure;
-        }
-
-        HashTable *hostdataindex = Z_ARRVAL_P(*hostdata);
-        HashPosition hostdatapointer;
-        zval **hostdatavalue;
-        foreach_hashtable(hostdataindex, hostdatapointer, hostdatavalue) {
-            uint arrkey_len, arrkey_type;
-            ulong index;
-
-            arrkey_type = zend_hash_get_current_key_ex(hostdataindex, &arrkey, &arrkey_len, &index, 0, &hostdatapointer);
-
-            if (strcmp(arrkey, "name") == 0) {
-                zval class_constant;
-                switch (Z_TYPE_P(*hostdatavalue)) {
-                    case IS_STRING:
-                        config.hosts[i].addr = Z_STRVAL_PP(hostdatavalue);
-                        break;
-                    default:
-                        /*
-                         * For now, using AEROSPIKE_ERR. Need to have specific
-                         * error code here.
-                         */
-                        err.code = AEROSPIKE_ERR_PARAM;
-                        goto failure;
-                }
-            } else if (strcmp(arrkey, "port") == 0) {
-                switch (Z_TYPE_P(*hostdatavalue)) {
-                    zval class_constant;
-                    case IS_LONG:
-                    config.hosts[i].port = Z_LVAL_PP(hostdatavalue);
-                    break;
-                    default:
-                    /*
-                     * For now, using AEROSPIKE_ERR. Need to have specific
-                     * error code here.
-                     */
-                    err.code = AEROSPIKE_ERR_PARAM;
-                    goto failure;
-                }
-            } else {
-                /*
-                 * For now, using AEROSPIKE_ERR. Need to have specific
-                 * error code here.
-                 */
-                err.code = AEROSPIKE_ERR_PARAM;
-                goto failure;
-            }
-        }
-        if (config.hosts[i].addr == NULL) {
-            /*
-             * For now, using AEROSPIKE_ERR. Need to have specific
-             * error code here.
-             */
-            err.code = AEROSPIKE_ERR_PARAM;
-            goto failure;
-        }
-        if (! config.hosts[i].port) {
-            /*
-             * For now, using AEROSPIKE_ERR. Need to have specific
-             * error code here.
-             */
-            err.code = AEROSPIKE_ERR_PARAM;
-            goto failure;
-        }
-        i++;
-    }
-    // XXX -- Should process constructor arguments here.
-
-    // XXX -- For now, if none are supplied, default to localhost.
-
-    // Add a seed host for cluster discovery.
-
-#if 0
-    // XXX -- This doesn't work with the current build options.
-    config.hosts[0] = { .addr = "127.0.0.1", .port = 3000 };
-#else
-    //config.hosts[0].addr = "127.0.0.1";
-
-    // TODO: get host address and port as input parameter
-    //config.hosts[0].addr = "10.71.72.49";
-    //config.hosts[0].port = 3000;
-#endif
-
-    // The Aerospike client instance, initialized with the configuration.
-    if(i == 0) {
-        /*
-         * For now, using AEROSPIKE_ERR. Need to have specific
-         * error code here.
-         */
-        err.code = AEROSPIKE_ERR_PARAM;
+    /* check for name, port */
+    if (AEROSPIKE_OK != (aerospike_transform_iteratefor_name_port(Z_ARRVAL_P(host_arr_p), &config))) {
+        error.code = AEROSPIKE_ERR_PARAM;
         goto failure;
     }
 
-    if (options != NULL) {		
-        HashTable *options_array = Z_ARRVAL_P(options);
-        HashPosition options_pointer;
-        zval **options_value;
-        char *options_key;
-
-        foreach_hashtable(options_array, options_pointer, options_value) {
-            uint options_key_len;
-            ulong options_index;
-
-            if (zend_hash_get_current_key_ex(options_array, &options_key, &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
-                //TODO: Handle invalid option key datatype error
-            }
-            switch((int) options_index) {
-                case OPT_READ_TIMEOUT:
-                    if (Z_TYPE_PP(options_value) != IS_LONG) {
-                        //TODO: Handle invalid option value datatype error
-                    }
-                    config.policies.read.timeout = Z_LVAL_PP(options_value);
-                    break;
-                case OPT_WRITE_TIMEOUT:
-                    if (Z_TYPE_PP(options_value) != IS_LONG) {
-                        //TODO: Handle invalid option value datatype error
-                    }
-                    config.policies.write.timeout = Z_LVAL_PP(options_value);
-                    break;
-                case OPT_CONNECT_TIMEOUT:
-                    if (Z_TYPE_PP(options_value) != IS_LONG) {
-                        //TODO: Handle invalid option value datatype error
-                    }
-                    //XXX: config.conn_timeout_ms = Z_LVAL_PP(options_value);
-                    break;
-                default:
-                    //TODO: Handle invalid option value error
-                    break;
-            }
-        }
-    }
-    aerospike_init(&as, &config);
-    // Connect to the cluster.
-    if (aerospike_connect(&as, &err) != AEROSPIKE_OK) {
-        /*
-         * For now, using AEROSPIKE_ERR. Need to have specific
-         * error code here.
-         */
-        err.code = AEROSPIKE_ERR_PARAM;
+    /* check and set config policies */
+    if (AEROSPIKE_OK != (set_policy(&config.policies.read, &config.policies.write, options_p))) {
+        error.code = AEROSPIKE_ERR_PARAM;
         goto failure;
-    } else {
-        zval class_constant;
-        zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-        RETURN_LONG(Z_LVAL(class_constant));
+    }
+
+    /* Connect to the cluster */
+    if (AEROSPIKE_OK != (aerospike_connect(&as, &error))) {
+        goto failure;
     }
 
 failure:
-    fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
-    RETURN_LONG(err.code);
-    /*** TO BE IMPLEMENTED ***/
-
-    //	php_set_error_handling(EH_NORMAL, NULL TSRMLS_CC);
+    fprintf(stderr, "error(%d) %s at [%s:%d]\n", error.code, error.message, error.file, error.line);
+    // XXX do we need to destroy as_config;    
+    RETURN_LONG(error.code);
 }
 
 /* PHP Method:  bool Aerospike::__destruct()
