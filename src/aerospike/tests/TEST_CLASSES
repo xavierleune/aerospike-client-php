@@ -1,3 +1,10 @@
 Connection
-Get
 Put
+Get
+Touch
+Increment
+Exist
+Append
+Prepend
+InitKey
+Remove

@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Append - Basic append operation bin not exists.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Append", "testAppendBinNotExist");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Append", "testAppendBinNotExist");
 --EXPECT--

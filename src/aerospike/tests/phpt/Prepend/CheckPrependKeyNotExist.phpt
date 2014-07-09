@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Prepend - Basic prepend operation key not exists.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Prepend", "testPrependKeyNotExist");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Prepend", "testPrependKeyNotExist");
 --EXPECT--

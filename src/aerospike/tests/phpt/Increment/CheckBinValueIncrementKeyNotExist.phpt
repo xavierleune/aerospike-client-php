@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Increment - bin value by offset key not exist
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Increment", "testBinIncrementKeyNotExist");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Increment", "testBinIncrementKeyNotExist");
 --EXPECT--
