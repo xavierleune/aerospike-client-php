@@ -45,40 +45,50 @@
                 level, action, err, static_pool, key, value, array,     \
                     label)
 
-#define AEROSPIKE_WALKER_SWITCH_CASE_GET(value, method, level, action,  \
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT(value, method, level, action,  \
         err, static_pool, key, value, label)                            \
     switch (FETCH_VALUE_##method(value)) {                              \
-        EXPAND_CASE(level, method, action, UNDEF, key, value,  \
+        EXPAND_CASE(level, method, action, ARRAY, key, value,           \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, NIL, key, value,    \
+        EXPAND_CASE(level, method, action, STRING, key, value,          \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, BOOLEAN, key, value,\
+        EXPAND_CASE(level, method, action, LONG, key, value,            \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, INTEGER, key, value,\
-                array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, STRING, key, value, \
-                array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, LIST, key, value,   \
-                array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, MAP, key, value,    \
-                array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, REC, key, value,    \
-                array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, PAIR, key, value,   \
-                array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, BYTES, key, value,  \
+        EXPAND_CASE(level, method, action, NULL, key, value,            \
                 array, err, static_pool, label)                         \
         default:                                                        \
             err.code = AEROSPIKE_ERR_PARAM;                             \
             goto label;                                                 \
     }
 
-#define AEROSPIKE_DEFAULT_PUT_APPEND_NULL(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_PUT_APPEND_LONG(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_PUT_APPEND_STRING(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_PUT_APPEND_ARRAY(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_PUT_APPEND_LIST(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_PUT_APPEND_MAP(key, value, array, static_pool)  
+#define AEROSPIKE_WALKER_SWITCH_CASE_GET(value, method, level, action,  \
+        err, static_pool, key, value, label)                            \
+    switch (FETCH_VALUE_##method(value)) {                              \
+        EXPAND_CASE(level, method, action, UNDEF, key, value,           \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, NIL, key, value,             \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, BOOLEAN, key, value,         \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, INTEGER, key, value,         \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, STRING, key, value,          \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, LIST, key, value,            \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, MAP, key, value,             \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, REC, key, value,             \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, PAIR, key, value,            \
+                array, err, static_pool, label)                         \
+        EXPAND_CASE(level, method, action, BYTES, key, value,           \
+                array, err, static_pool, label)                         \
+        default:                                                        \
+            err.code = AEROSPIKE_ERR_PARAM;                             \
+            goto label;                                                 \
+    }
+
 
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool)  
 #define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool)  
@@ -100,17 +110,6 @@
 #define AEROSPIKE_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)  
 #define AEROSPIKE_MAP_PUT_ASSOC_LIST(key, value, array, static_pool)  
 #define AEROSPIKE_MAP_PUT_ASSOC_MAP(key, value, array, static_pool)  
-
-#define AEROSPIKE_DEFAULT_GET_APPEND_UNDEF(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_NIL(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_BOOLEAN(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_INTEGER(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_STRING(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_LIST(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_MAP(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_REC(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_PAIR(key, value, array, static_pool)  
-#define AEROSPIKE_DEFAULT_GET_APPEND_BYTES(key, value, array, static_pool) 
 
 #define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool)  
 #define AEROSPIKE_LIST_GET_APPEND_NIL(key, value, array, static_pool)  
