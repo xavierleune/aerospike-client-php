@@ -3,17 +3,27 @@
 
 ### [Aerospike::query](aerospike_query.md)
 ```
-public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
 ```
 
 ### [Aerospike::scan](aerospike_scan.md)
 ```
-public int Aerospike::scan ( mixed $set, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
 ```
 
-### [Aerospike::halt](aerospike_halt.md)
+### [Aerospike::predicateEquals](aerospike_predicateequals.md)
 ```
-public void Aerospike::halt ( void )
+public array Aerospike::predicateEquals ( string $bin, int|string $val )
+```
+
+### [Aerospike::predicateBetween](aerospike_predicatebetween.md)
+```
+public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
+```
+
+### Aerospike::conjoin [reserved]
+```
+public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] ) 
 ```
 
 ## Example
@@ -22,7 +32,7 @@ public void Aerospike::halt ( void )
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
@@ -30,12 +40,12 @@ if (!$db->isConnected()) {
 
 $total = 0;
 $in_thirties = 0;
-$where = array("age", Aerospike::OP_BETWEEN, array(30, 39));
-$res = $db->query('test.users', $where, function ($record) {
+$where = Aerospike::predicateBetween("age", 30, 39);
+$res = $db->query("test", "users", $where, function ($record) {
     echo "{$record['email']} age {$record['age']}\n";
     $total += (int) $record['age'];
     $in_thirties++;
-    if ($in_thirties >= 10) $db->halt(); // stop the stream at the tenth record
+    if ($in_thirties >= 10) return false; // stop the stream at the tenth record
 }, array("email", "age"));
 if ($res == Aerospike::ERR_QUERY) {
     echo "An error occured while querying[{$db->errorno()}] ".$db->error();
@@ -47,3 +57,4 @@ else if ($res == Aerospike::ERR_QUERY_ABORTED) {
 
 ?>
 ```
+

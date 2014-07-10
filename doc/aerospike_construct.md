@@ -1,12 +1,12 @@
 
 # Aerospike::__construct
 
-Aerospike::__construct - Constructs a new Aerospike object
+Aerospike::__construct - constructs a new Aerospike object
 
 ## Description
 
 ```
-public int Aerospike::__construct ( array $config [, string $alias = Aerospike::CLUSTER_ALIAS [, array $options]] )
+public int Aerospike::__construct ( array $config [, string $persistence_alias [, array $options]] )
 ```
 
 **Aerospike::__construct()** will create an Aerospike object and connect to the
@@ -15,9 +15,9 @@ to test whether the connection succeeded. If a config or connection error
 occured the **Aerospike::error()** and **Aerospike::errorno()** methods can be used
 to inspect it.
 
-The Aerospike cluster should be identified with an alias.  This allows for
+The Aerospike cluster should be identified with a persistence alias.  This allows for
 reduced overhead on initializing the cluster and keeping track of the state of
-its nodes.  Further instantiation calls will attempt to reuse an initialized
+its nodes.  Subsequent instantiation calls will attempt to reuse an initialized
 cluster with a matching alias.
 
 ## Parameters
@@ -33,7 +33,10 @@ cluster and manage its connections to them.
 - *user*
 - *pass*
 
-**options**: set one or more of the following OPT_* constants
+**persistence_alias** if provided the C-client will persist between requests
+under the given alias.
+
+**options**: set one or more of the following *OPT_\** constants
   **OPT_CONNECT_TIMEOUT**, **OPT_READ_TIMEOUT**, **OPT_WRITE_TIMEOUT** as
 default values.
 
@@ -50,7 +53,7 @@ default values.
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250, Aerospike::OPT_WRITE_TIMEOUT => 1500);
-$db = new Aerospike($config, $opts);
+$db = new Aerospike($config, 'prod-db', $opts);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);

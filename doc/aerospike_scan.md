@@ -6,7 +6,7 @@ Aerospike::scan - scans a set in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::scan ( mixed $set, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
 ```
 
 **Aerospike::scan()** will scan a *set* and invoke a callback function 
@@ -17,7 +17,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**set** either a string value *namespace.set* or an associative array with keys "ns", "set".
+**set** an associative array with keys "ns", "set".
 
 **record_cb** a callback function invoked for each record streaming back from the server.
 
@@ -37,16 +37,16 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
 $processed = 0;
-$res = $db->scan('test.users', function ($record) {
+$res = $db->scan("test", "users", function ($record) {
     if (!is_null($record['email'])) echo $record['email']."\n";
-    if ($processed++ > 19) $db->halt();
+    if ($processed++ > 19) return false; // halt the stream by returning a false
 }, array("email"));
 if ($res == Aerospike::ERR_SCAN) {
     echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";

@@ -37,7 +37,7 @@ public int Aerospike::getNodes ( array &$metadata [, array $options ] )
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"192.168.1.10", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);

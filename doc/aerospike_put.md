@@ -41,13 +41,13 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$key = $db->initKey("test", "users", 1234);
 $put_vals = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
 $res = $db->put($key, $put_vals);

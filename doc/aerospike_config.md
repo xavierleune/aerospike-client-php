@@ -9,8 +9,6 @@ The following configuration options in php.ini
 | aerospike.connect_timeout | 1000 |
 | aerospike.read_timeout | 1000 |
 | aerospike.write_timeout | 1000 |
-| aerospike.log_path | **NULL** |
-| aerospike.log_level | **NULL** |
 
 Here is a description of the configuration directives:
 
@@ -25,13 +23,6 @@ Here is a description of the configuration directives:
 
 **aerospike.write_timeout integer**
     The write timeout in milliseconds
-
-**aerospike.log_path string**
-    If defined acts as Aerospike::setLogger()
-
-**aerospike.log_level string**
-    One of LOG_LEVEL_OFF through LOG_LEVEL_TRACE as described in the Aerospike
-    class. Example: aerospike.log_level = LOG_LEVEL_WARN
 
 ## See Also
 

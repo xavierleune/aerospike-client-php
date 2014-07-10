@@ -1,6 +1,11 @@
 
 # Key-Value Methods
 
+### [Aerospike::initKey](aerospike_initkey.md)
+```
+public array Aerospike::initKey ( string $ns, string $set, string $pk )
+```
+
 ### [Aerospike::put](aerospike_put.md)
 ```
 public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
@@ -18,7 +23,7 @@ public int Aerospike::remove ( array $key [, array $options ] )
 
 ### [Aerospike::removeBin](aerospike_removebin.md)
 ```
-public int Aerospike::removeBin ( array $key, array $bin [, array $options ] )
+public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 ```
 
 ### [Aerospike::exists](aerospike_exists.md)
@@ -53,13 +58,13 @@ public int Aerospike::prepend ( array $key, string $bin, string $value [, array 
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$key = $db->initKey("test", "users", 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
 $res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));

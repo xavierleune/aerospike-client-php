@@ -14,9 +14,14 @@ public int Aerospike::errorno ( void )
 The error codes returned are constants of the **Aerospike** class, and map to
 the client and server error codes defined in the C client (in as_status.h).
 
-### [Aerospike::setLogger](aerospike_setlogger.md)
+### [Aerospike::setLogLevel](aerospike_setloglevel.md)
 ```
-public bool setLogger ( string $log_path [, int $log_level = Aerospike::LOG_LEVEL_INFO] )
+public void setLogLevel ( int $log_level )
+```
+
+### [Aerospike::setLogHandler](aerospike_setloghandler.md)
+```
+public void setLogHandler ( callback $log_handler )
 ```
 
 ## Example
@@ -25,12 +30,34 @@ public bool setLogger ( string $log_path [, int $log_level = Aerospike::LOG_LEVE
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
-$db->setLogger('/path/to/logger/aerospike.log', Aerospike::LOG_LEVEL_DEBUG);
+$db->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
+$db->setLogHandler(function ($level, $file, $function, $line) {
+    switch ($level) {
+        case Aerospike::LOG_LEVEL_ERROR:
+            $lvl_str = 'ERROR';
+            break;
+        case Aerospike::LOG_LEVEL_WARN:
+            $lvl_str = 'WARN';
+            break;
+        case Aerospike::LOG_LEVEL_INFO:
+            $lvl_str = 'INFO';
+            break;
+        case Aerospike::LOG_LEVEL_DEBUG:
+            $lvl_str = 'DEBUG';
+            break;
+        case Aerospike::LOG_LEVEL_TRACE:
+            $lvl_str = 'TRACE';
+            break;
+        default:
+            $lvl_str = '???';
+    }
+    error_log("[$lvl_str] in $function at $file:$line");
+});
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");

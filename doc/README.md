@@ -8,6 +8,7 @@ The Aerospike PHP client API may be described as follows:
 ### [Error Handling Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
+### [User Defined Methods](apiref_udf.md)
 
 # Client instance caching
 
@@ -19,14 +20,16 @@ The (user land) PHP developer will pass an alias for the cluster that should be 
 
 When the process is terminated the module shutdown callbacks are called. A cleanup of the resources used by the Aerospike object should be registered with [PHP_MSHUTDOWN](http://www.php.net/manual/en/internals2.structure.modstruct.php) and include explicitly disconnecting from the cluster (aerospike_close, aerospike_destroy).
 
+# Halting a Stream
+
+Halting a query or scan stream can be done by returning (an explicit) boolean
+**false** from the callback.  The extension should capture the return value from
+the userland callback and if it is **=== false** it should return a false to the
+C-client.  The C-client will then close the sockets to the nodes involved in
+streaming results, effectively halting it.
+
 ## TBD
 ```
-
-//  Signature for scan callback functions:
-// function scan_foreach_callback($val_z, $udata_z);
-
-// Signature for query callback functions:
-// function query_foreach_callback($val_z, $udata_z);
 
 // Client interface to the Aerospike cluster.
 class Aerospike
@@ -43,6 +46,9 @@ class Aerospike
 
     // Scan APIs:
     public function scanApply($set, $callback, $apply, $bins, $options); // apply UDF on the scan
+
+    // helper method for combining predicates, such as predicate1 AND predicate2
+    public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
 
     // User Defined Function (UDF) APIs:
     public function register($client_path_s, $server_path_s, $language);

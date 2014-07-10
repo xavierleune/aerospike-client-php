@@ -6,7 +6,7 @@ The Aerospike PHP client API may be described as follows:
 
 The main Aerospike class
 
-```
+```php
 
 class Aerospike
 {
@@ -104,18 +104,13 @@ class Aerospike
     const LOG_LEVEL_TRACE = 1;
 
     //
-    // Lifecycle
-    //
-    const CLUSTER_ALIAS = ':DB0';
-
-    //
-    // Operators
+    // Predicate Operators
     //
     const OP_EQ = '=';
     const OP_BETWEEN = 'BETWEEN';
 
     // lifecycle and connection methods
-    public int Aerospike::__construct ( array $config [, string $alias = Aerospike::CLUSTER_ALIAS [, array $options]] )
+    public int Aerospike::__construct ( array $config [, string $persistence_alias [, array $options]] )
     public void Aerospike::__destruct ( void )
     public boolean Aerospike::isConnected ( void )
     public void Aerospike::close ( void )
@@ -125,23 +120,26 @@ class Aerospike
     // error handling methods
     public string Aerospike::error ( void )
     public int Aerospike::errorno ( void )
-    public bool setLogger ( string $log_path [, $log_level = int Aerospike::LOG_LEVEL_INFO] )
+    public void setLogLevel ( int $log_level )
+    public void setLogHandler ( callback $log_handler )
 
     // key-value methods
+    public array Aerospike::initKey ( string $ns, string $set, int|string $pk )
     public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
     public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options ]] )
     public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
     public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
     public int Aerospike::remove ( array $key [, array $options ] )
-    public int Aerospike::removeBin ( array $key, array $bin [, array $options ] )
+    public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
     public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
     public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
     public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 
     // query and scan methods
-    public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
-    public int Aerospike::scan ( mixed $set, callback $record_cb [, array $bins [, array $options ]] )
-    public void Aerospike::halt ( void )
+    public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+    public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
+    public array Aerospike::predicateEquals ( string $bin, int|string $val )
+    public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
 }
 ```
 
@@ -150,4 +148,5 @@ class Aerospike
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
+### [User Defined Methods](apiref_udf.md)
 

@@ -29,7 +29,7 @@ This method has no parameters.
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
 $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250, Aerospike::OPT_WRITE_TIMEOUT => 1500);
-$db = new Aerospike($config, $opts);
+$db = new Aerospike($config, 'prod-db', $opts);
 
 $db->close();
 $db->reconnect();

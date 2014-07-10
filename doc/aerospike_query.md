@@ -6,7 +6,7 @@ Aerospike::query - queries a set in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::query ( mixed $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
 ```
 
 **Aerospike::query()** will query a *set* with a specified *where* predicate
@@ -26,17 +26,10 @@ Associative Array:
   op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
   val => scalar integer/string for OP_EQ or array($min, $max) for OP_BETWEEN
 ```
-*or*
-```
-Tuple (Indexed Array):
-  (bin, operator, value)
-```
 *examples:*
 ```
 array("bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo")
 array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
-array("name", Aerospike::OP_EQ, "foo")
-array("age", Aerospike::OP_BETWEEN, array(35,50))
 ```
 
 **record_cb** a callback function invoked for each record streaming back from the server.
@@ -57,7 +50,7 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
@@ -65,8 +58,8 @@ if (!$db->isConnected()) {
 
 $total = 0;
 $in_thirties = 0;
-$where = array("age", Aerospike::OP_BETWEEN, array(30, 39));
-$res = $db->query('test.users', $where, function ($record) {
+$where = Aerospike::predicateBetween("age", 30, 39);
+$res = $db->query("test", "users", $where, function ($record) {
     echo "{$record['email']} age {$record['age']}\n";
     $total += (int) $record['age'];
     $in_thirties++;
