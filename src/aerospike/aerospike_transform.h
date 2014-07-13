@@ -79,6 +79,7 @@
             goto label;                                                 \
     }
 
+/*note : INTEGER, it does not translate to IS_LONG ??? */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET(value, method, level, action,  \
         err, static_pool, key, value, label)                            \
     switch (FETCH_VALUE_##method(value)) {                              \
@@ -109,60 +110,81 @@
             goto label;                                                 \
     }
 
+typedef struct data_list_map {
+    u_int32_t        current_list_idx_u32;
+    as_arraylist     alloc_list[MAX_AS_LIST_SIZE];
+    u_int32_t        current_map_idx_u32;
+    as_hashmap       alloc_map[MAX_AS_MAP_SIZE];
+} as_data_list_map_struct;
+
+#define MAX_AS_LIST_SIZE   100
+#define MAX_AS_MAP_SIZE    MAX_AS_LIST_SIZE
+
+#define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
+#define AEROSPIKE_ASLIST_BLOCK_SIZE       0
+
+#define GET_PRE_ALLOC_LIST(stack_data_p, list_p, num_elem)                                                                                          \
+     if (MAX_AS_LIST_SIZE > ((as_data_list_map_struct *)stack_data_p)->current_list_idx_u32) {                                                      \
+         list_p = (void *)(((as_data_list_map_struct *)stack_data_p)->alloc_list[((as_data_list_map_struct *)stack_data_p)->current_list_idx_u32]); \
+         list_p = as_arraylist_init((as_arraylist *)list_p, num_elem, AEROSPIKE_ASLIST_BLOCK_SIZE)                                                  \
+         if (list_p)                                                                                                                                \
+             ((as_data_list_map_struct *)stack_data_p)->current_list_idx_u32++;                                                                     \
+     }
+
+#define GET_PRE_ALLOC_MAP(stack_data_p, map_p, num_elem)                                                                                            \
+     if (MAX_AS_MAP_SIZE > ((as_data_list_map_struct *)stack_data_p)->current_map_idx_u32) {                                                        \
+         map_p = (void *)(((as_data_list_map_struct *)stack_data_p)->alloc_map[((as_data_list_map_struct *)stack_data_p)->current_map_idx_u32]);    \
+         map_p = (void *)(as_hashmap_init((as_hashmap *)map_p, AEROSPIKE_HASHMAP_BUCKET_SIZE));                                                     \
+         if (map_p)                                                                                                                                 \
+             ((as_data_list_map_struct *)stack_data_p)->current_map_idx_u32++;                                                                      \
+     }
 
 #define IS_MAP(hash, key, key_len, index, pointer)                      \
     (zend_hash_get_current_key_ex(hash, &(key), &(key_len), &(index),   \
             0, &(pointer)) == HASH_KEY_IS_STRING)
 
-#define IS_LIST(hash, ket, key_len, index, pointer)                     \
+#define IS_LIST(hash, key, key_len, index, pointer)                     \
     (zend_hash_get_current_key_ex(hash, &(key), &(key_len), &(index),   \
             0, &(pointer)) != HASH_KEY_IS_STRING)
 
+#define INIT_LIST(static_pool, inner_store) GET_PRE_ALLOC_LIST(static_pool, inner_store, 0) /* for the time being we are passing 0 need to change */   
+#define INIT_MAP(static_pool, inner_store)  GET_PRE_ALLOC_MAP(static_pool, inner_store, 0)   
+
 /*level => where are you at present */
-#define AEROSPIKE_PROCESS_ARRAY(datatype, level, action, label, hash, key, key_len, index, pointer, value, store, static_pool)                      \
-    if (IS_##datatype(hash, key, key_len, index, pointer)) {                   \
-        as_val *inner_store = INIT_##datatype(); \
-        if (AEROSPIKE_OK != (error_code =  \
-                    AEROSPIKE_##level_PUT_##action_##datatype(key, value, inner_store, static_pool))) { \
-            goto label;\
-        }\
+#define AEROSPIKE_PROCESS_ARRAY(datatype, level, action, label, hash, key, key_len, index, pointer, outer_key, value, store, static_pool)    \
+    if (IS_##datatype(hash, key, key_len, index, pointer)) {                                                                                 \
+        void  *inner_store = NULL;                                                                                                           \
+        INIT_##datatype(static_pool, inner_store);                                                                                           \
+        if (AEROSPIKE_OK != (error_code =                                                                                                    \
+                    AEROSPIKE_##level_PUT_##action_##datatype(key, value, inner_store, static_pool))) {                                      \
+            goto label;                                                                                                                      \
+        }                                                                                                                                    \
+        AEROSPIKE_##level_SET_##action_##datatype(store, inner_store, outer_key)                                                             \
     }
 
-static inline AS_LIST_PUT_APPEND_ARRAY(void *key_p, void *value_p, void *container_p, void *static_pool_p)
-{
-    HashTable*             inner_ht_p = (HashTable *)(key_p);
-    HashPosition           hashPosition_p;
-    int8_t*                inner_key_p;
-    int32_t                inner_key_len_32;
-    u_int64_t              inner_idx_u64;
-    as_status              error_code = AEROSPIKE_OK;
-
-    zend_hash_internal_pointer_reset_ex(inner_ht_p, &hashPosition_p);
-    AEROSPIKE_PROCESS_ARRAY(MAP, LIST, APPEND, exit, inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u64, hashPosition_p, value_p, static_pool)
-    AEROSPIKE_PROCESS_ARRAY(LIST, LIST, APPEND, exit, inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u64, hashPosition_p, value_p, static_pool)
-#if 0
-    if (IS_MAP(inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u34, hashPosition_p)) {
-        as_map *inner_map = INIT_MAP();
-        if (AEROSPIKE_OK != (error_code =
-                    AEROSPIKE_LIST_PUT_APPEND_MAP(inner_key_p, value, inner_map, static_pool_p))) {
-            goto failure;
-        }
-    }
-    if (IS_LIST(inner_hash, inner_key, inner_key_len, inner_index,
-                inner_pointer)) {
-        as_arraylist *inner_list = INIT_LIST();
-        if (AEROSPIKE_OK != (error_code =
-                    AEROSPIKE_LIST_PUT_APPEND_LIST(key, value,
-                        inner_list, static_pool))) {
-            goto failure;
-        }
-    }
-#endif
-failure:
-    return (error_code);
+#define AEROSPIKE_ITERATE_RECORDS_WITHIN(array, as_holder, level, action, status, static_pool)                               \
+{                                                                                                                            \
+    HashPosition   hashPosition_p = NULL;                                                                                    \
+    zval**         record_pp = NULL;                                                                                         \
+    foreach_hashtable((HashTable *)array, hashPosition_p, record_pp) {                                                       \
+        AEROSPIKE_WALKER_SWITCH_CASE_PUT(PUT, level, action, status, alloc_pool, NULL, Z_TYPE_P(record_pp), as_holder, exit) \
+    }                                                                                                                        \
 }
 
-    
+#define AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key_p, value_p, hash_table_p, array_p, static_pool_p, level, action)             \
+{                                                                                                                            \
+    HashTable*             inner_ht_p = (HashTable *)(hash_table);                                                           \
+    HashPosition           hashPosition_p;                                                                                   \
+    int8_t*                inner_key_p;                                                                                      \
+    int32_t                inner_key_len_32;                                                                                 \
+    u_int64_t              inner_idx_u64;                                                                                    \
+                                                                                                                             \
+    zend_hash_internal_pointer_reset_ex(inner_ht_p, &hashPosition_p);                                                        \
+    AEROSPIKE_PROCESS_ARRAY(MAP, level, action, exit, inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u64,              \
+                            hashPosition_p, key_p, value_p, array_p, static_pool)                                            \
+    AEROSPIKE_PROCESS_ARRAY(LIST, level, action, exit, inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u64,             \
+                            hashPosition_p, key_p, value_p, array_p, static_pool)                                            \
+}
 
 
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool)       AS_SET_ERROR_CASE(key, value, array, static_pool) 
@@ -170,7 +192,9 @@ failure:
 #define AEROSPIKE_LIST_PUT_APPEND_STRING(key, value, array, static_pool)     AS_ARRAYLIST_APPEND_STR(key, value, array, static_pool)
 #define AEROSPIKE_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool)      AS_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool) 
 #define AEROSPIKE_LIST_PUT_APPEND_LIST(key, value, array, static_pool)       AS_ARRAYLIST_APPEND_LIST(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_PUT_APPEND_MAP(key, value, array, static_pool)        AS_ARRAYLIST_APPEND_MAP(key, value, array, static_pool) 
+#define AEROSPIKE_LIST_PUT_APPEND_MAP(key, value, array, static_pool)        AS_ARRAYLIST_APPEND_MAP(key, value, array, static_pool)
+#define AEROSPIKE_LIST_SET_APPEND_LIST(store, data_to_be_added, bin_name)    AS_ARRAYLIST_SET_APPEND_LIST(store, data_to_be_added, bin_name)
+#define AEROSPIKE_LIST_SET_APPEND_MAP(store, data_to_be_added, bin_name)     AS_ARRAYLIST_SET_APPEND_MAP(store, data_to_be_added, bin_name)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool)     AS_RECORD_SET_NIL(key, value, array, static_pool) 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool)     AS_RECORD_SET_INT64(key, value, array, static_pool)
@@ -178,6 +202,8 @@ failure:
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool)    AS_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool)
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool)     AS_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool)
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)      AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_SET_ASSOC_LIST(store, data_to_be_added, bin_name)  AS_DEFAULT_SET_ASSOC_LIST(store, data_to_be_added, bin_name)
+#define AEROSPIKE_DEFAULT_SET_ASSOC_MAP(store, data_to_be_added, bin_name)   AS_DEFAULT_SET_ASSOC_MAP(store, data_to_be_added, bin_name)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool)         AS_SET_ERROR_CASE() 
 #define AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array, static_pool)         AS_STRINGMAP_SET_INT64(key, value, array, static_pool)
@@ -185,6 +211,8 @@ failure:
 #define AEROSPIKE_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)        AS_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)
 #define AEROSPIKE_MAP_PUT_ASSOC_LIST(key, value, array, static_pool)         AS_STRINGMAP_SET_LIST(key, value, array, static_pool) 
 #define AEROSPIKE_MAP_PUT_ASSOC_MAP(key, value, array, static_pool)          AS_STRINGMAP_SET_MAP(key, value, array, static_pool) 
+#define AEROSPIKE_MAP_SET_ASSOC_LIST(store, data_to_be_added, bin_name)      AS_STRINGMAP_SET_ASSOC_LIST(store, data_to_be_added, bin_name)
+#define AEROSPIKE_MAP_SET_ASSOC_MAP(store, data_to_be_added, bin_name)       AS_STRINGMAP_SET_ASSOC_MAP(store, data_to_be_added, bin_name)
 
 #define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool)    ADD_APPEND_NULL(key, value, array, static_pool) 
 #define AEROSPIKE_LIST_GET_APPEND_UNKNOWN(key, value, array, static_pool)  ADD_APPEND_NULL(key, value, array, static_pool) 
@@ -403,22 +431,65 @@ static inline as_status AS_SET_ERROR_CASE(void* key_p, void* value_p, void* arra
 
 static inline as_status AS_ARRAYLIST_APPEND_INT64(void* key_p, value, array, static_pool)
 {
+    /*
+     * key_p - ignore 
+     * value - value to be stored in list
+     * array - as_val to be typecased into list  
+     */
+     as_arraylist_append_int64((as_arraylist *)list, (int_64)Z_LVAL_P(data));
+     return AEROSPIKE_OK;
 }
  
 static inline as_status AS_ARRAYLIST_APPEND_STR(key, value, array, static_pool)
 {
+    /*
+     * key - ignore
+     * value - value to be stored in list
+     * array - as_val to be typecasted into list
+     */
+     as_arraylist_append_str((as_arraylist *)list, Z_STRVAL_P(data));
+}
+
+static inline void AS_ARRAYLIST_SET_APPEND_LIST(void* store_p, void* data_to_be_added_p, void* bin_name)
+{
+    as_arraylist_append_list((as_arraylist *)store_p, (as_list*) data_to_be_added_p);
+}
+
+
+static inline void AS_ARRAYLIST_SET_APPEND_MAP(void* store_p, void* data_to_be_added_p, void* bin_name)
+{
+    as_arraylist_append_map((as_arraylist *)store_p, (as_map*) data_to_be_added_p);
 }
 
 static inline as_status AS_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool)
 {
+    /*
+     * key_p   - holds the name of the bin
+     * value_p - holds the data 
+     * array_p - holds as_list  
+     */
+    as_status     status = AEROSPIKE_OK;
+    AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key, value, Z_VAL_PP(value), array, static_pool_p, LIST, APPEND);
+exit:
+    return status;
+
 }
 
 static inline as_status AS_ARRAYLIST_APPEND_LIST(key, value, array, static_pool)
 {
+     /*
+      * key -> key not to be looked in this case
+      * value-> holds the data to be parsed for list
+      * array->as_list which needs to be populated
+      */
+     as_status    status = AEROSPIKE_OK;
+     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, LIST, APPEND, status, static_pool)
 }
  
 static inline as_status AS_ARRAYLIST_APPEND_MAP(key, value, array, static_pool) 
 {
+     as_status    status = AEROSPIKE_OK;
+     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, MAP, APPEND, status, static_pool)
 }
 
 static inline as_status AS_RECORD_SET_NIL(void* key_p, void* value_p, void* array_p, void* static_pool_p)
@@ -450,18 +521,6 @@ static inline as_status AS_RECORD_SET_STR(key, value, array, static_pool)
     return AEROSPIKE_OK;;
 }
 
-#define AEROSPIKE_RESET_KEY_PROCESS_ISARRAY(key, value_p, array_p, static_pool_p, level, action)\
-{\
-    HashTable*             inner_ht_p = (HashTable *)(array_p);\
-    HashPosition           hashPosition_p;\
-    int8_t*                inner_key_p;\
-    int32_t                inner_key_len_32;\
-    u_int64_t              inner_idx_u64;\
-\
-    zend_hash_internal_pointer_reset_ex(inner_ht_p, &hashPosition_p); \
-    AEROSPIKE_PROCESS_ARRAY(MAP, level, action, exit, inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u64, hashPosition_p, value_p, static_pool)\
-    AEROSPIKE_PROCESS_ARRAY(LIST, level, action, exit, inner_ht_p, inner_key_p, inner_key_len_32, inner_idx_u64, hashPosition_p, value_p, static_pool)\
-}
    
 static inline as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void* key_p, void* value_p, void* array_p, void* static_pool_p)
 {
@@ -471,14 +530,45 @@ static inline as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void* key_p, void* value_p, v
      * array_p - holds as_record pointer 
     */
     as_status     status = AEROSPIKE_OK;
-    AEROSPIKE_RESET_KEY_PROCESS_ISARRAY(key_p, value_p, array_p, static_pool_p, DEFAULT, ASSOC);
+/* note: is this right ??*/
+    AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key_p, value_p, Z_VAL_PP(value_p), Z_VAL_PP(array_p), static_pool_p, DEFAULT, ASSOC);
 exit:
     return status;
 }
 
 
+static inline void AS_DEFAULT_SET_ASSOC_LIST(void* store_p, void* data_to_be_added_p, void* bin_name)
+{
+    as_record_set_list((as_record *)store_p, (int8_t*)bin_name, (as_list *) data_to_be_added);
+}
+
+static inline void AS_DEFAULT_SET_ASSOC_MAP(void* store_p, void* data_to_be_added_p, void* bin_name)
+{
+    as_record_set_map((as_record *)store_p, (int8_t*)bin_name, (as_map *) data_to_be_added);
+}
+
+
 static inline as_status AS_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool)
 {
+    /*
+     * key -> key not to be looked in this case
+     * value-> holds the data to be parsed for list
+     * array->as_list which needs to be populated
+     */
+     as_status    status = AEROSPIKE_OK;
+     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, LIST, APPEND, status, static_pool)
+exit:
+    return status; 
+}
+
+static inline void AS_STRINGMAP_SET_ASSOC_LIST(void* store_p, void* data_to_be_added_p, void* bin_name)
+{
+    as_stringmap_set_list((as_hashmap *)store_p, key, (as_list *) inner_list);
+}
+
+static inline void AS_STRINGMAP_SET_ASSOC_MAP(void* store_p, void* data_to_be_added_p, void* bin_name_p)
+{
+    as_stringmap_set_map((as_hashmap *)store, key, (as_map *)data_to_be_added);
 }
 
 static inline as_status AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)
@@ -487,10 +577,14 @@ static inline as_status AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)
 
 static inline as_status AS_STRINGMAP_SET_INT64(key, value, array, static_pool)
 {
+/* need inputs */
+    return AEROSPIKE_ERR;
 }
 
 static inline as_status AS_STRINGMAP_SET_STR(key, value, array, static_pool)
 {
+/* need inputs */
+    return AEROSPIKE_ERR;
 }
 
 static inline as_status AS_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)
