@@ -289,7 +289,7 @@ static inline as_status AS_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool)
      * array_p - holds as_list  
      */
     as_status     status = AEROSPIKE_OK;
-    AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key, value, Z_VAL_PP(value), array, static_pool_p, LIST, APPEND);
+    AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key, value, Z_ARRVAL_PP(value), array, static_pool_p, LIST, APPEND);
 exit:
     return status;
 
@@ -351,7 +351,7 @@ static inline as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void* key_p, void* value_p, v
     */
     as_status     status = AEROSPIKE_OK;
 /* note: is this right ??*/
-    AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key_p, value_p, Z_VAL_PP(value_p), Z_VAL_PP(array_p), static_pool_p, DEFAULT, ASSOC);
+    AEROSPIKE_RESET_AND_PROCESS_ISARRAY(key_p, value_p, Z_ARRVAL_PP(value_p), Z_VAL_PP(array_p), static_pool_p, DEFAULT, ASSOC);
 exit:
     return status;
 }
@@ -409,6 +409,7 @@ static inline as_status AS_STRINGMAP_SET_STR(key, value, array, static_pool)
 
 static inline as_status AS_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)
 {
+ /*ZARRVAL_P*/
 }
 
 static inline as_status AS_STRINGMAP_SET_LIST(key, value, array, static_pool)
