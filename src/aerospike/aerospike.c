@@ -403,21 +403,26 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
    Constructs a new "aerospike" object. */
 PHP_METHOD(Aerospike, __construct)
 {
-    //	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
-
     // DEBUG
     log_info("**In Aerospike::__construct() method**");
 
-    // XXX -- Temporary implementation based on globals.
-    zval*       host_p = NULL;
-    zval*       options_p = NULL;
-    zval*       host_arr_p = NULL;
-    as_error    error;
-    as_config   config;
+    zval*                  host_p = NULL;
+    zval*                  options_p = NULL;
+    zval*                  host_arr_p = NULL;
+    as_error               error;
+    as_config              config;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        error.code = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
+    }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &host_p, &options_p) == FAILURE) {
         error.code = AEROSPIKE_ERR_PARAM;
-        goto failure;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for construct in zend");
+        goto exit;
     }
 
     /* configuration */
@@ -426,29 +431,34 @@ PHP_METHOD(Aerospike, __construct)
     /* check for hosts */
     if (AEROSPIKE_OK != (aerospike_transform_iteratefor_hostkey(Z_ARRVAL_P(host_p), &host_arr_p))) {
         error.code = AEROSPIKE_ERR_PARAM;
-        goto failure;
+        DEBUG_PHP_EXT_ERROR("unable to find host parameter");
+        goto exit;
     }
 
     /* check for name, port */
     if (AEROSPIKE_OK != (aerospike_transform_iteratefor_name_port(Z_ARRVAL_P(host_arr_p), &config))) {
         error.code = AEROSPIKE_ERR_PARAM;
-        goto failure;
+        DEBUG_PHP_EXT_ERROR("unable to find name name/port parameter");
+        goto exit;
     }
 
     /* check and set config policies */
     if (AEROSPIKE_OK != (set_policy(&config.policies.read, &config.policies.write, options_p))) {
         error.code = AEROSPIKE_ERR_PARAM;
-        goto failure;
+        DEBUG_PHP_EXT_ERROR("unable to set config read/ write policies");
+        goto exit;
     }
 
     /* Connect to the cluster */
     if (AEROSPIKE_OK != (aerospike_connect(&as, &error))) {
-        goto failure;
+        DEBUG_PHP_EXT_ERROR("unable to make connection");
+        goto exit;
     }
 
-failure:
+    DEBUG_PHP_EXT_INFO("success in creating php-aerospike object")
+exit:
+    /* config + write + read policy not being destroyed*/
     fprintf(stderr, "error(%d) %s at [%s:%d]\n", error.code, error.message, error.file, error.line);
-    // XXX do we need to destroy as_config;    
     RETURN_LONG(error.code);
 }
 
@@ -456,8 +466,14 @@ failure:
    Perform Aerospike object finalization. */
 PHP_METHOD(Aerospike, __destruct)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
+    }
 
     // DEBUG
     log_info("**In Aerospike::__destruct() method**");
@@ -471,7 +487,11 @@ PHP_METHOD(Aerospike, __destruct)
 
     zval class_constant;
     zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
-    RETURN_LONG(Z_LVAL(class_constant));
+
+    DEBUG_PHP_EXT_INFO("success in creating php-aerospike object")
+exit:
+    /*RETURN_LONG(Z_LVAL(class_constant));*/
+    RETURN_LONG(status);
 }
 
 /* PHP Method:  bool Aerospike::get()
@@ -649,7 +669,50 @@ failure:
     }
 }
 
+PHP_METHOD(Aerospike, put)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    zval*                  options_p = NULL;
+    u_int64_t              ttl_u64;
+    as_key                 as_key_for_put_record;
+    int16_t                initializeKey = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, &record_p, &ttl_u64, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to iterate through put key params");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(&as, Z_ARRVAL_P(record_p), &as_key_for_put_record, &error, options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_put_record);
+    }
+    RETURN_LONG(status);
+}
+
+#if 0
 /* PHP Method:  bool Aerospike::put()
    Write record bin(s). */
 PHP_METHOD(Aerospike, put)
@@ -830,6 +893,7 @@ failure:
     fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
     RETURN_LONG(err.code);
 }
+#endif
 
 /**
  *  Copies list elements from a PHP array into an as_arraylist
