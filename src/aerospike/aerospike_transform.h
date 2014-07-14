@@ -158,17 +158,6 @@ typedef struct data_list_map {
 #define INIT_MAP(static_pool, inner_store, size)  GET_PRE_ALLOC_MAP(static_pool, inner_store, 0)   
 
 /*level => where are you at present */
-<<<<<<< HEAD
-#define AEROSPIKE_PROCESS_ARRAY(datatype, level, action, label, hash, key, key_len, index, pointer, outer_key, value, store, static_pool)    \
-    if (IS_##datatype(hash, key, key_len, index, pointer)) {                                                                                 \
-        void  *inner_store = NULL;                                                                                                           \
-        INIT_##datatype(static_pool, inner_store);                                                                                           \
-        if (AEROSPIKE_OK != (error_code =                                                                                                    \
-                    AEROSPIKE_##level_PUT_##action_##datatype(key, value, inner_store, static_pool))) {                                      \
-            goto ##label;                                                                                                                      \
-        }                                                                                                                                    \
-        AEROSPIKE_##level_SET_##action_##datatype(store, inner_store, outer_key)                                                             \
-=======
 #define AEROSPIKE_PROCESS_ARRAY(datatype, level, action, label, hash, key, key_len, index, pointer, outer_key, value, store, static_pool, num_elem) \
     if (IS_##datatype(hash, key, key_len, index, pointer)) {                                                                                        \
         void  *inner_store = NULL;                                                                                                                  \
@@ -178,7 +167,6 @@ typedef struct data_list_map {
             goto label;                                                                                                                             \
         }                                                                                                                                           \
         AEROSPIKE_##level_SET_##action_##datatype(store, inner_store, outer_key)                                                                    \
->>>>>>> 540eacf31c8d270ee106a6a9e47839f42d9c3fb9
     }
 
 #define AEROSPIKE_ITERATE_RECORDS_WITHIN(key, array, as_holder, level, action, status, static_pool)                               \
@@ -504,25 +492,17 @@ static inline as_status AS_ARRAYLIST_APPEND_LIST(void *key, void *value, void *a
       * array->as_list which needs to be populated
       */
      as_status    status = AEROSPIKE_OK;
-<<<<<<< HEAD
      AEROSPIKE_ITERATE_RECORDS_WITHIN(key, value, array, LIST, APPEND, status, static_pool)
-=======
-     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, LIST, APPEND, status, static_pool)
 exit:
     return status;
->>>>>>> 540eacf31c8d270ee106a6a9e47839f42d9c3fb9
 }
  
 static inline as_status AS_ARRAYLIST_APPEND_MAP(key, value, array, static_pool) 
 {
      as_status    status = AEROSPIKE_OK;
-<<<<<<< HEAD
      AEROSPIKE_ITERATE_RECORDS_WITHIN(key, value, array, MAP, APPEND, status, static_pool)
-=======
-     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, MAP, APPEND, status, static_pool)
 exit:
      return status;
->>>>>>> 540eacf31c8d270ee106a6a9e47839f42d9c3fb9
 }
 
 static inline as_status AS_RECORD_SET_NIL(void* key_p, void* value_p, void* array_p, void* static_pool_p)
