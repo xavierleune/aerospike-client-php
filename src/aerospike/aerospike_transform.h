@@ -24,19 +24,26 @@
 #ifndef __AEROSPIKE_TRANSFORM_H__
 #define __AEROSPIKE_TRANSFORM_H__
 
-#define PREFIX_GET AS
-#define PREFIX_PUT IS
-
 #define FETCH_VALUE_GET(val) as_val_type(val)
 #define FETCH_VALUE_PUT(val) Z_TYPE_PP(val) // do we want to keep it Z_TYPE_P
 
-#define EXPAND_CASE(level, method, action, datatype, key, value,        \
+#define EXPAND_CASE_PUT(level, method, action, datatype, key, value,        \
                             array, err, static_pool, label)             \
-        case PREFIX_##method_##datatype:                                \
-            if (AEROSPIKE_OK != (err.code =                             \
+        case IS_##datatype:                                \
+            if (AEROSPIKE_OK != (err =                             \
                         AEROSPIKE_##level_##method_##action_##datatype( \
                     key, value, array, static_pool))) {                 \
-                goto label;                                             \
+                goto ##label;                                             \
+            }                                                           \
+            break;
+
+#define EXPAND_CASE_GET(level, method, action, datatype, key, value,        \
+                            array, err, static_pool, label)             \
+        case AS_##datatype:                                \
+            if (AEROSPIKE_OK != (err =                             \
+                        AEROSPIKE_##level_##method_##action_##datatype( \
+                    key, value, array, static_pool))) {                 \
+                goto ##label;                                             \
             }                                                           \
             break;
 
@@ -66,50 +73,52 @@
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action,  \
         err, static_pool, key, value, array, label)                            \
     switch (FETCH_VALUE_##method(value)) {                              \
-        EXPAND_CASE(level, method, action, ARRAY, key, value,           \
+        EXPAND_CASE_PUT(level, method, action, ARRAY, key, value,           \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, STRING, key, value,          \
+        EXPAND_CASE_PUT(level, method, action, STRING, key, value,          \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, LONG, key, value,            \
+        EXPAND_CASE_PUT(level, method, action, LONG, key, value,            \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, NULL, key, value,            \
+        EXPAND_CASE_PUT(level, method, action, NULL, key, value,            \
                 array, err, static_pool, label)                         \
         default:                                                        \
-            err.code = AEROSPIKE_ERR_PARAM;                             \
-            goto label;                                                 \
+            err = AEROSPIKE_ERR_PARAM;                             \
+            goto ##label;                                                 \
     }
 
 /*note : INTEGER, it does not translate to IS_LONG ??? */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET(value, method, level, action,  \
         err, static_pool, key, value, label)                            \
     switch (FETCH_VALUE_##method(value)) {                              \
-        EXPAND_CASE(level, method, action, UNDEF, key, value,           \
+        EXPAND_CASE_GET(level, method, action, UNDEF, key, value,           \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, UNKNOWN, key, value,         \
+        EXPAND_CASE_GET(level, method, action, UNKNOWN, key, value,         \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, NIL, key, value,             \
+        EXPAND_CASE_GET(level, method, action, NIL, key, value,             \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, BOOLEAN, key, value,         \
+        EXPAND_CASE_GET(level, method, action, BOOLEAN, key, value,         \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, INTEGER, key, value,         \
+        EXPAND_CASE_GET(level, method, action, INTEGER, key, value,         \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, STRING, key, value,          \
+        EXPAND_CASE_GET(level, method, action, STRING, key, value,          \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, LIST, key, value,            \
+        EXPAND_CASE_GET(level, method, action, LIST, key, value,            \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, MAP, key, value,             \
+        EXPAND_CASE_GET(level, method, action, MAP, key, value,             \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, REC, key, value,             \
+        EXPAND_CASE_GET(level, method, action, REC, key, value,             \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, PAIR, key, value,            \
+        EXPAND_CASE_GET(level, method, action, PAIR, key, value,            \
                 array, err, static_pool, label)                         \
-        EXPAND_CASE(level, method, action, BYTES, key, value,           \
+        EXPAND_CASE_GET(level, method, action, BYTES, key, value,           \
                 array, err, static_pool, label)                         \
         default:                                                        \
-            err.code = AEROSPIKE_ERR_PARAM;                             \
-            goto label;                                                 \
+            err = AEROSPIKE_ERR_PARAM;                             \
+            goto ##label;                                                 \
     }
 
+#define MAX_AS_LIST_SIZE   100
+#define MAX_AS_MAP_SIZE    MAX_AS_LIST_SIZE
 typedef struct data_list_map {
     u_int32_t        current_list_idx_u32;
     as_arraylist     alloc_list[MAX_AS_LIST_SIZE];
@@ -117,8 +126,6 @@ typedef struct data_list_map {
     as_hashmap       alloc_map[MAX_AS_MAP_SIZE];
 } as_data_list_map_struct;
 
-#define MAX_AS_LIST_SIZE   100
-#define MAX_AS_MAP_SIZE    MAX_AS_LIST_SIZE
 
 #define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
@@ -157,17 +164,17 @@ typedef struct data_list_map {
         INIT_##datatype(static_pool, inner_store);                                                                                           \
         if (AEROSPIKE_OK != (error_code =                                                                                                    \
                     AEROSPIKE_##level_PUT_##action_##datatype(key, value, inner_store, static_pool))) {                                      \
-            goto label;                                                                                                                      \
+            goto ##label;                                                                                                                      \
         }                                                                                                                                    \
         AEROSPIKE_##level_SET_##action_##datatype(store, inner_store, outer_key)                                                             \
     }
 
-#define AEROSPIKE_ITERATE_RECORDS_WITHIN(array, as_holder, level, action, status, static_pool)                               \
+#define AEROSPIKE_ITERATE_RECORDS_WITHIN(key, array, as_holder, level, action, status, static_pool)                               \
 {                                                                                                                            \
     HashPosition   hashPosition_p = NULL;                                                                                    \
     zval**         record_pp = NULL;                                                                                         \
     foreach_hashtable((HashTable *)array, hashPosition_p, record_pp) {                                                       \
-        AEROSPIKE_WALKER_SWITCH_CASE_PUT(PUT, level, action, status, alloc_pool, NULL, Z_TYPE_P(record_pp), as_holder, exit) \
+        AEROSPIKE_WALKER_SWITCH_CASE_PUT(PUT, level, action, status, static_pool, key, Z_TYPE_P(record_pp), as_holder, exit) \
     }                                                                                                                        \
 }
 
@@ -475,7 +482,7 @@ exit:
 
 }
 
-static inline as_status AS_ARRAYLIST_APPEND_LIST(key, value, array, static_pool)
+static inline as_status AS_ARRAYLIST_APPEND_LIST(void *key, void *value, void *array, void void **static_pool)
 {
      /*
       * key -> key not to be looked in this case
@@ -483,13 +490,13 @@ static inline as_status AS_ARRAYLIST_APPEND_LIST(key, value, array, static_pool)
       * array->as_list which needs to be populated
       */
      as_status    status = AEROSPIKE_OK;
-     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, LIST, APPEND, status, static_pool)
+     AEROSPIKE_ITERATE_RECORDS_WITHIN(key, value, array, LIST, APPEND, status, static_pool)
 }
  
 static inline as_status AS_ARRAYLIST_APPEND_MAP(key, value, array, static_pool) 
 {
      as_status    status = AEROSPIKE_OK;
-     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, MAP, APPEND, status, static_pool)
+     AEROSPIKE_ITERATE_RECORDS_WITHIN(key, value, array, MAP, APPEND, status, static_pool)
 }
 
 static inline as_status AS_RECORD_SET_NIL(void* key_p, void* value_p, void* array_p, void* static_pool_p)
@@ -517,7 +524,7 @@ static inline as_status AS_RECORD_SET_STR(key, value, array, static_pool)
      * value_p - holds the data associated with bin
      * array_p - holds as_record pointer 
     */
-    as_record_set_str((as_record *)array_p, (int_8 *)key_p, (char *) Z_STRVAL_P(value_p));
+    as_record_set_str((as_record *)array_p, (int8_t *)key_p, (char *) Z_STRVAL_P(value_p));
     return AEROSPIKE_OK;;
 }
 
@@ -556,7 +563,7 @@ static inline as_status AS_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool
      * array->as_list which needs to be populated
      */
      as_status    status = AEROSPIKE_OK;
-     AEROSPIKE_ITERATE_RECORDS_WITHIN(value, array, LIST, APPEND, status, static_pool)
+     AEROSPIKE_ITERATE_RECORDS_WITHIN(key, value, array, LIST, APPEND, status, static_pool)
 exit:
     return status; 
 }
