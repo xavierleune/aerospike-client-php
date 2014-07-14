@@ -402,3 +402,80 @@ exit:
 
     return status;
 }
+
+extern as_status
+aerospike_transform_filter_bins_exists(aerospike *as_object_p,
+                                       HashTable *bins_array_p,
+                                       as_record *get_record_p,
+                                       as_error *error_p,
+                                       as_key *get_rec_key_p,
+                                       as_policy_read *read_policy_p)
+{
+    int bins_count = zend_hash_num_elements(bins_array_p);
+    const char *select[bins_count];
+    HashPosition pointer;
+    zval **bin_names;
+    uint sel_cnt = 0;
+    
+    foreach_hashtable (bins_array_p, pointer, bin_names) {
+        switch (Z_TYPE_PP(bin_names)) {
+            case IS_STRING:
+                select[sel_cnt++] = Z_STRVAL_PP(bin_names);
+                break;
+            default:
+                error_p->code = AEROSPIKE_ERR_PARAM;
+                goto exit;
+        }
+    }
+    
+    select[bins_count] = NULL;
+    if (aerospike_key_select(as_object_p, error_p, read_policy_p, get_rec_key_p,
+        select, &get_record_p) != AEROSPIKE_OK) {
+        error_p->code = AEROSPIKE_ERR_PARAM;
+    }
+exit:
+    return (error_p->code);
+}
+
+extern as_status
+aerospike_transform_get_record(aerospike* as_object_p,
+                               as_key* get_rec_key_p,
+                               zval* options_p,
+                               as_error *error_p,
+                               zval* get_record_p,
+                               zval* bins_p)
+{
+    as_status         status = AEROSPIKE_OK;
+    as_policy_read    read_policy;
+    as_record         get_record;
+    int               rec_initialized = 0;
+
+    if ((!as_object_p) || (!get_rec_key_p) || (!options_p) ||
+        (!error_p) || (!get_record_p) || (!bins_p)) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, options_p))) {
+        goto exit;
+    }
+
+    if (bins_p != NULL && AEROSPIKE_OK != aerospike_transform_filter_bins_exists(
+            as_object_p, Z_ARRVAL_P(bins_p), &get_record, error_p, get_rec_key_p,
+            &read_policy)) {
+        goto exit;
+    }
+
+    rec_initialized = 1;
+    if (!as_record_foreach(&get_record, (as_rec_foreach_callback) AS_DEFAULT_GET,
+        get_record_p)) {
+        error_p->code = AEROSPIKE_ERR_SERVER;
+        goto exit;
+    }
+
+exit:
+    if (rec_initialized) {
+        as_record_destroy(&get_record);
+    }
+    return status;
+}
