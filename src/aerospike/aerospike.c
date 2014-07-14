@@ -400,7 +400,7 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
     zend_object_value retval;
     Aerospike_object *intern_obj_p;
 
-    if (NULL != intern_obj_p = ecalloc(1, sizeof(Aerospike_object))) {
+    if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
         zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
         zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
 
@@ -409,8 +409,8 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
         intern_obj_p->as_p = NULL;
         return (retval);
     } else {
-	DEBUG_PHP_EXT_ERROR("could not allocate memory for aerospike object");
-	RETURN_NULL();
+    	DEBUG_PHP_EXT_ERROR("could not allocate memory for aerospike object");
+        // Handle return error    
     }
 }
 
@@ -510,7 +510,7 @@ PHP_METHOD(Aerospike, __destruct)
     // XXX -- Temporary implementation based on globals.
 
     // Cleanup the resources used by the client
-    aerospike_destroy(aerospike_obj_p->as);
+    aerospike_destroy(aerospike_obj_p->as_p);
 
     /*** TO BE IMPLEMENTED ***/
 
@@ -623,7 +623,7 @@ PHP_METHOD(Aerospike, get)
     }
 
     if (bins == NULL) {
-        if (aerospike_key_get(aerospike_obj_p->as_p, &err, &read_policy, &key, &rec) != AEROSPIKE_OK) {
+        if (aerospike_key_get(intern->as_p, &err, &read_policy, &key, &rec) != AEROSPIKE_OK) {
             /*
              * For now, using AEROSPIKE_ERR. Need to have specific
              * error code here.
@@ -668,7 +668,7 @@ PHP_METHOD(Aerospike, get)
         }
 
         select[bins_count] = NULL;
-        if (aerospike_key_select(aerospike_obj_p->as_p, &err, &read_policy, &key, select, &rec) != AEROSPIKE_OK) {
+        if (aerospike_key_select(intern->as_p, &err, &read_policy, &key, select, &rec) != AEROSPIKE_OK) {
             /*
              * For now, using AEROSPIKE_ERR. Need to have specific
              * error code here.
@@ -1320,7 +1320,7 @@ PHP_METHOD(Aerospike, setLogLevel)
         goto exit;
     }
 
-    if (!as_log_set_level(&aerospike_obj_p->as.log, log_level)) {
+    if (!as_log_set_level(&aerospike_obj_p->as_p->log, log_level)) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to set log level");
         goto exit;
@@ -1340,7 +1340,7 @@ PHP_METHOD(Aerospike, setLogHandler)
         RETURN_FALSE;
     }
 
-    if (as_log_set_callback(&as.log, aerospike_helper_log_callback)) {
+    if (as_log_set_callback(&aerospike_obj_p->as_p->log, aerospike_helper_log_callback)) {
         Z_ADDREF_P(func_call_info.function_name);
         RETURN_TRUE;
     } else {

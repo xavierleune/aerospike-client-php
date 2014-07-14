@@ -1,12 +1,22 @@
 #include "php.h"
+#include "aerospike/as_log.h"
+#include "aerospike/as_key.h"
+#include "aerospike/as_config.h"
+#include "aerospike/as_error.h"
+#include "aerospike/as_status.h"
+#include "aerospike/aerospike.h"
 
 #include "aerospike_common.h"
 
-extern bool
+extern int16_t
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
 {
     zval **params[4];
-    zval *z_func, *z_file, *z_line, *z_level;
+    zval *z_func;
+    zval *z_file;
+    zval *z_line; 
+    zval *z_level;
+    func_callback_retval_p = NULL;
 
     ALLOC_INIT_ZVAL(z_level);
     ZVAL_LONG(z_level, level);

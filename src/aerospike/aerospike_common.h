@@ -11,9 +11,9 @@
 
 extern zend_fcall_info       func_call_info;
 extern zend_fcall_info_cache func_call_info_cache;
-extern zval                  *func_callback_retval_p = NULL;
+extern zval                  *func_callback_retval_p;
 
-extern bool
+extern int16_t
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
 
 /* need to re-direct the same to log function that we have written
