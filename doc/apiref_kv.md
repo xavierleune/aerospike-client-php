@@ -52,6 +52,22 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 ```
 
+### [Aerospike::operate](aerospike_operate.md)
+```
+public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+```
+
+### [Aerospike::getMany](aerospike_getmany.md)
+```
+public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
+```
+
+### [Aerospike::existsMany](aerospike_existsmany.md)
+```
+public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
+```
+
+
 ## Example
 
 ```php

@@ -15,7 +15,7 @@ public int Aerospike::getMetadata ( array $key, array &$metadata [, array $optio
 
 **Aerospike::exists()** will check if a record with a given *key* exists in the database.
 If such a key exists its metadata will be returned in the *metadata* variable,
-otherwise it will be an empty array.
+otherwise it will be NULL.
 
 ## Parameters
 

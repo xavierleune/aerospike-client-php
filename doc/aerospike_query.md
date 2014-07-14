@@ -17,7 +17,9 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**set** either a string value *namespace.set* or an associative array with keys "ns", "set".
+**ns** the namespace
+
+**set** the set
 
 **where** the predicate conforming to one of the following:
 ```

@@ -17,7 +17,7 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 
 **bin** the name of the bin in which we have a numeric value.
 
-**value** the string to append the value in the bin.
+**value** the string to append to the string value in the bin.
 
 **options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 

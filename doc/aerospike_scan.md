@@ -17,7 +17,9 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**set** an associative array with keys "ns", "set".
+**ns** the namespace
+
+**set** the set
 
 **record_cb** a callback function invoked for each record streaming back from the server.
 

@@ -9,6 +9,7 @@ The Aerospike PHP client API may be described as follows:
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
 ### [User Defined Methods](apiref_udf.md)
+### [Admin Methods](apiref_admin.md)
 
 # Client instance caching
 
@@ -34,13 +35,6 @@ streaming results, effectively halting it.
 // Client interface to the Aerospike cluster.
 class Aerospike
 {
-    public function getMany($key_z_a, &$value_z_a [, $policy_z]);
-    public function operate($key_z [, $policy_z]);
-
-    // Secondary Index APIs:
-    public function createIndex(&$index_z, $type_s, $options_s);
-    public function dropIndex($index_z);
-
     // Query APIs:
     public function queryApply($set, $where, $callback, $apply, $bins, $options); // apply UDF on the query
 
@@ -50,11 +44,7 @@ class Aerospike
     // helper method for combining predicates, such as predicate1 AND predicate2
     public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
 
-    // User Defined Function (UDF) APIs:
-    public function register($client_path_s, $server_path_s, $language);
-
     // Large Data Type (LDT) APIs:
-
     public function getLargeList($key_z);
     public function getLargeMap($key_z);
     public function getLargeSet($key_z);

@@ -20,12 +20,13 @@ class Aerospike
 
     // By default writes will try to create or replace records and bins
     // behaving similar to an associative array in PHP. Setting
-    // OPT_POLICY_EXISTS with one of these values will overwrite this
-    const POLICY_EXISTS_IGNORE = 1; // write record regardless of existence
+    // OPT_POLICY_EXISTS with one of these values will overwrite this.
+    // POLICY_EXISTS_IGNORE (aka CREATE_OR_UPDATE) is the default value
+    const POLICY_EXISTS_IGNORE = 1; // interleave bins of a record if it exists
     const POLICY_EXISTS_CREATE = 2; // create a record ONLY if it DOES NOT exist
     const POLICY_EXISTS_UPDATE = 3; // update a record ONLY if it exists
     const POLICY_EXISTS_REPLACE = 4; // replace a record ONLY if it exists
-    const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // default behavior
+    const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // overwrite the bins if record exists
 
     //
     // Options can be assigned values that modify default behavior
@@ -104,10 +105,28 @@ class Aerospike
     const LOG_LEVEL_TRACE = 1;
 
     //
-    // Predicate Operators
+    // Query Predicate Operators
     //
     const OP_EQ = '=';
     const OP_BETWEEN = 'BETWEEN';
+
+    //
+    // Multi-operation operators map to the C client
+    //  src/include/aerospike/as_operations.h
+    const OPERATOR_WRITE   = 0;
+    const OPERATOR_READ    = 1;
+    const OPERATOR_INCR    = 2;
+    const OPERATOR_PREPEND = 4;
+    const OPERATOR_APPEND  = 5;
+    const OPERATOR_TOUCH   = 8;
+
+    // UDF types
+    const UDF_TYPE_LUA     = 1;
+
+    // bin types
+    const INDEX_TYPE_STRING  = 1;
+    const INDEX_TYPE_INTEGER = 2;
+
 
     // lifecycle and connection methods
     public int Aerospike::__construct ( array $config [, string $persistence_alias [, array $options]] )
@@ -134,12 +153,26 @@ class Aerospike
     public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
     public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
     public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
+    public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+
+    // batch operation methods
+    public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
+    public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
+
+    // UDF methods
+    public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+    public int Aerospike::deregister ( string $module )
+    public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
 
     // query and scan methods
     public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
     public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
     public array Aerospike::predicateEquals ( string $bin, int|string $val )
     public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
+
+    // admin methods
+    public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name )
+    public int Aerospike::dropIndex ( string $ns, string $name )
 }
 ```
 
@@ -149,4 +182,5 @@ class Aerospike
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
 ### [User Defined Methods](apiref_udf.md)
+### [Admin Methods](apiref_admin.md)
 

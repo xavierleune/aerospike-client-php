@@ -1,6 +1,16 @@
 
 # UDF Methods
 
+### [Aerospike::register](aerospike_register.md)
+```
+public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+```
+
+### [Aerospike::deregister](aerospike_deregister.md)
+```
+public int Aerospike::deregister ( string $module )
+```
+
 ### [Aerospike::apply](aerospike_apply.md)
 ```
 public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
