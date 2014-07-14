@@ -49,6 +49,8 @@ typedef struct asconfig_iter {
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].port)
 
+php_log_level_set = AS_LOG_LEVEL_OFF;
+
 static as_status 
 aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp, 
                                aerospike_transform_key_callback keycallback_p,
@@ -338,7 +340,7 @@ aerospike_transform_iterate_records(HashTable* ht_p, as_record* record_p, as_dat
         u_int32_t     key_type_u32 = zend_hash_get_current_key_ex(ht_p, (char **)&bin_name_p, &bin_name_len_u32,
                                                                   &index_u64, 0, &hashPosition_p);
         /* switch case statements for put for zend related data types */
-        AEROSPIKE_WALKER_SWITCH_CASE_PUT(PUT, DEFAULT, ASSOC, status, pre_stackalloc_data, bin_name_p, Z_TYPE_P(record_pp), record_p, exit)
+        AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(status, pre_stackalloc_data_p, bin_name_p, record_pp, record_p, exit);
     }
 
 exit:
@@ -386,11 +388,11 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
 exit:
     /* clean up the as_* objects that were initialised */
     for (iter = 0; iter < list_map_data.current_list_idx_u32; iter++) {
-        as_arraylist_destroy(list_map_data.alloc_list[iter]);
+        as_arraylist_destroy(&list_map_data.alloc_list[iter]);
     }
 
     for (iter = 0; iter < list_map_data.current_map_idx_u32; iter++) {
-        as_hashmap_destroy(list_map_data.alloc_map[iter]);
+        as_hashmap_destroy(&list_map_data.alloc_map[iter]);
     }
 
     /*policy_write, should it be destroyed ??? */
