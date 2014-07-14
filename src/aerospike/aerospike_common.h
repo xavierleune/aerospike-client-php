@@ -6,18 +6,23 @@
 #define foreach_hashtable(ht, position, datavalue)               \
     for (zend_hash_internal_pointer_reset_ex(ht, &position);     \
          zend_hash_get_current_data_ex(ht,                       \
-                (void **) &datavalue, &position) == SUCCESS;        \
+                (void **) &datavalue, &position) == SUCCESS;     \
          zend_hash_move_forward_ex(ht, &position))
 
 /* need to re-direct the same to log function that we have written
  * if per Aerospike_obj has been decided then we have to pass the object
  * as well into the callback method
  */
+as_log_level   php_log_level_set = AS_LOG_LEVEL_OFF;
 #ifdef __DEBUG_PHP__
-#define DEBUG_PHP_EXT_ERROR(var_args, ...)
-#define DEBUG_PHP_EXT_WARNING(var_args, ...)
-#define DEBUG_PHP_EXT_DEBUG(var_args, ...)
-#define DEBUG_PHP_EXT_INFO(var_args, ...)
+#define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, var_args, ...)      \
+    if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                  \
+        if (php_log_level_set >= log_level)                        \
+            printf("hey i am in logs"); /*replace this with our log function*/
+#define DEBUG_PHP_EXT_ERROR(var_args, ...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_ERROR, var_args, ...)
+#define DEBUG_PHP_EXT_WARNING(var_args, ...)        DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_WARN, var_args, ...)
+#define DEBUG_PHP_EXT_DEBUG(var_args, ...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, var_args, ...)
+#define DEBUG_PHP_EXT_INFO(var_args, ...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, var_args, ...)
 #else
 #define DEBUG_PHP_EXT_ERROR(var_args, ...)
 #define DEBUG_PHP_EXT_WARNING(var_args, ...)
