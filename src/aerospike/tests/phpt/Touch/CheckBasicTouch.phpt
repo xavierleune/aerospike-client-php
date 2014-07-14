@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Touch - Basic Touch opeartion
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Touch", "testBasicTouchOpeartion");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Touch", "testBasicTouchOpeartion");
 --EXPECT--

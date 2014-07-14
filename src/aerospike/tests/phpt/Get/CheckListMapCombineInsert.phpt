@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Get - Check Linst and Map combine insert in bin
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Get", "testCheckListMapCombineInsert");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Get", "testCheckListMapCombineInsert");
 --EXPECT--

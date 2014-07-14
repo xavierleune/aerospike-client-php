@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Remove - Remove key from database
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Remove", "testKeyRemove");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Remove", "testKeyRemove");
 --EXPECT--

@@ -1,3 +1,6 @@
+#ifndef __AEROSPIKE_POLICY_H__
+#define __AEROSPIKE_POLICY_H__
+
 enum Aerospike_constants {
 	OPT_CONNECT_TIMEOUT = 1, // value in milliseconds, default: 1000
 	OPT_READ_TIMEOUT, // value in milliseconds, default: 1000
@@ -6,7 +9,12 @@ enum Aerospike_constants {
 	OPT_POLICY_EXISTS, // set to a Aerospike::POLICY_EXISTS_* value
 };
 
-
+/*
+ * These values are redundant with the read/write policy
+ * implementation of CSDK. It can be removed once CSDK
+ * starts enforcing the policies. This implementation enforces
+ * it in PHP SDK.
+ */
 #define AS_POLICY_RETRY 0x00000010
 #define AS_POLICY_EXISTS 0x00000100
 
@@ -20,19 +28,7 @@ enum Aerospike_values {
 	POLICY_EXISTS_CREATE_OR_REPLACE // default behavior
 };
 
-const char *get_aerospike_constant_name(int aerospike_constant_value)
-{
-	switch(aerospike_constant_value) {
-		case OPT_CONNECT_TIMEOUT:
-			return "OPT_CONNECT_TIMEOUT";
-		case OPT_READ_TIMEOUT:
-			return "OPT_READ_TIMEOUT";
-		case OPT_WRITE_TIMEOUT:
-			return "OPT_WRITE_TIMEOUT";
-		case OPT_POLICY_RETRY:
-			return "OPT_POLICY_RETRY";
-		case OPT_POLICY_EXISTS:
-			return "OPT_POLICY_EXISTS";
-		
-	}
-}
+extern as_status set_policy(as_policy_read *read_policy, as_policy_write *write_policy, zval *options);
+extern as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce);
+
+#endif /* end of __AEROSPIKE_POLICY_H__ */

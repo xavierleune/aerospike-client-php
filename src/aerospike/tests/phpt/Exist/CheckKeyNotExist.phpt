@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Exists - Error if Key not exists
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Exist", "testKeyNotExist");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Exist", "testKeyNotExist");
 --EXPECT--

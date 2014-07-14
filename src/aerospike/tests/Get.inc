@@ -224,6 +224,211 @@ class Get extends AerospikeTestCommon
 		$rv = $as->get($key,$ret);
         $this->assertTrue($rv, $msg = "Aerospike Get Response");
     }
+        /**
+         * @test
+         * Basic GET Check parameter sequence change in  key array
+         *
+         * @pre
+         * Connect using aerospike object to the specified node
+         *
+         * @post
+         * newly initialized Aerospike objects
+         *
+         * @remark
+         * Variants: OO (testCheckParameterSequenceChangeInKeyArray)
+         *
+         * @test_plans{1.1}
+         */
+        function testCheckParameterSequenceChangeInKeyArray()
+        {
+                $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+                $as = new Aerospike($config);
+                $key = array("set"=>"demo","ns"=>"test","key"=>"10000");
+                $ret=array();
+                $rv = $as->get($key,$ret);
+        	$this->assertTrue($rv, $msg = "Aerospike Get Response");
+    	}
+        /**
+         * @test
+         * Basic GET Check set parameter value non exist in database
+         *
+         * @pre
+         * Connect using aerospike object to the specified node
+         *
+         * @post
+         * newly initialized Aerospike objects
+         *
+         * @remark
+         * Variants: OO (testCheckSetValueNotExistInDB)
+         *
+         * @test_plans{1.1}
+         */
+        function testCheckSetValueNotExistInDB()
+        {
+                $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+                $as = new Aerospike($config);
+                $key = array("ns"=>"demo","set"=>"adfhashfag98712asd","key"=>"10000");
+                $ret=array();
+                $rv = $as->get($key,$ret);
+                $this->assertTrue($rv, $msg = "Aerospike Get Response");
+        }
+/**
+  * @test
+  * Basic GET Check namespace parameter value non exist in database
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckNameSpaceValueNotExistInDB)
+  *
+  * @test_plans{1.1}
+  */
+  function testCheckNameSpaceValueNotExistInDB()
+  {
+      $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+      $as = new Aerospike($config);
+      $key = array("ns"=>"kjahdjasdsa","set"=>"demo","key"=>"10000");
+      $ret=array();
+      $rv = $as->get($key,$ret);
+      $this->assertTrue($rv, $msg = "Aerospike Get Response");
   }
-  
-?>
+
+/**
+  * @test
+  * Basic GET Check key parameter value non exist in database
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckKeyValueNotExistInDB)
+  *
+  * @test_plans{1.1}
+  */
+  function testCheckKeyValueNotExistInDB()
+  {
+      $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+      $as = new Aerospike($config);
+      $key = array("ns"=>"test","set"=>"demo","key"=>"-0000000000010000");
+      $ret=array();
+      $rv = $as->get($key,$ret);
+      $this->assertTrue($rv, $msg = "Aerospike Get Response");
+  }
+/**
+  * @test
+  * Basic Get list from single bin
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListInsert)
+  *
+  * @test_plans{1.1}
+  */
+  function testCheckListInsert()
+  {
+      $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+      $as = new Aerospike($config);
+      $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
+      $rv = $as->put($key,array("bin1"=>array("speaking", "reading", "writing")));
+      $ret=array();
+      $rv = $as->get($key,$ret);
+      $this->assertTrue($rv, $msg = "Aerospike Get Response");
+  }
+/**
+  * @test
+  * Basic Get Map from single bin
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckMapInsert)
+  *
+  * @test_plans{1.1}
+  */
+  function testCheckMapInsert()
+  {
+      $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+      $as = new Aerospike($config);
+      $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
+      $rv = $as->put($key,array("bin1"=>("month"=>"May", "year"=>2013)));
+      $ret=array();
+      $rv = $as->get($key,$ret);
+      $this->assertTrue($rv, $msg = "Aerospike Get Response");
+  }
+/**
+  * @test
+  * Basic Get Map and List combine from single bin
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
+  function testCheckListMapCombineInsert()
+  {
+      $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+      $as = new Aerospike($config);
+      $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
+      $softskills = array("speaking", "reading", "writing");
+      $skills = array("python", "c", "java",$softskills);
+      $innermostmap = array("month"=>"May", "year"=>2013);
+      $innermap1 = array("degree_name"=>"B.E.", "degree_branch"=>"Comp Sci", "degree_date"=>$innermostmap);
+      $innermap = array("degree"=>$innermostmap, "aggregate"=>70);
+      $mymap = array("name"=>"aero", "age"=>23, "edu"=>$innermap, "skills"=>$skills);
+      $innermostlist = array("twitter", 100);
+      $innerlist = array(1,2,"facebook", $innermostlist);
+      $mylist = array(10, 20, "whatsup", $innerlist, $mymap);
+      $rec = array("bin1"=>$mylist);	
+      $rv = $as->put($key,$rec);
+      $ret=array();
+      $rv = $as->get($key,$ret);
+      $this->assertTrue($rv, $msg = "Aerospike Get Response");
+  }
+/**
+  * @test
+  * Basic Get single bin missing
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckBinMissing)
+  *
+  * @test_plans{1.1}
+  */
+  function testCheckBinMissing()
+  {
+      $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+      $as = new Aerospike($config);
+      $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
+      $ret=array();
+      $rv = $as->get($key,$ret,array("bin1","bin2","00000000000bin1000000"));
+      $this->assertTrue($rv, $msg = "Aerospike Get Response");
+  }
+}  
+?>l

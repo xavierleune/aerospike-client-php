@@ -1,13 +1,13 @@
 --TEST--
-Get - Key Parameter missing in key array.
+InitKey - Basic operation
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("InitKey", "testInitKeyHelper");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("InitKey", "testInitKeyHelper");
 --EXPECT--

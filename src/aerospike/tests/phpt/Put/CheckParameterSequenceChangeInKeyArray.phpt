@@ -1,13 +1,14 @@
 --TEST--
-Get - Key Parameter missing in key array.
+Put - Parameter equence change in Key array
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_skipif("Put", "testCheckParameterSequenceChangeInKeyArray
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
+aerospike_phpt_runtest("Put", "testCheckParameterSequenceChangeInKeyArray");
 --EXPECT--
+
