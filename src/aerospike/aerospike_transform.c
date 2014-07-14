@@ -101,7 +101,7 @@ aerospike_transform_hostkey_callback(HashTable* ht_p,
     as_status      status = AEROSPIKE_OK;
 
     if (PHP_IS_NOT_ARRAY(key_data_type_u32) || 
-        !PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32)) {
+        !PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
     }
@@ -145,10 +145,10 @@ as_status aerospike_transform_nameport_callback(HashTable* ht_p,
     }
 
     if (PHP_IS_STRING(key_data_type_u32) &&
-        PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_ADDR, PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32)) {
+        PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_ADDR, PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32 - 1)) {
         AS_CONFIG_ITER_MAP_SET_ADDR(as_config_iter_map_p, Z_STRVAL_PP(retdata_pp));
     } else if(PHP_IS_LONG(key_data_type_u32) &&
-             PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32)) {
+             PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
         AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, Z_LVAL_PP(retdata_pp));
     } else {
         status = AEROSPIKE_ERR_PARAM;

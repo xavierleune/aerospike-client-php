@@ -33,6 +33,9 @@
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
 /* N.B.:  No globals defined for now. */
+	char *default_path;
+	int default_fd;
+	zend_bool debug;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS
@@ -76,6 +79,11 @@ PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, touch);
 
+// Logging APIs:
+
+PHP_METHOD(Aerospike, setLogLevel);
+PHP_METHOD(Aerospike, setLogHandler);
+
 // TBD
 
 // Scan APIs:
@@ -83,7 +91,6 @@ PHP_METHOD(Aerospike, touch);
 // Query APIs:
 // User Defined Function (UDF) APIs:
 // Large Data Type (LDT) APIs:
-// Logging APIs:
 // Shared Memory APIs:
 
 extern zend_module_entry aerospike_module_entry;
