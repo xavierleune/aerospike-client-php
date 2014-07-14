@@ -13,7 +13,7 @@
  * if per Aerospike_obj has been decided then we have to pass the object
  * as well into the callback method
  */
-as_log_level   php_log_level_set = AS_LOG_LEVEL_OFF;
+extern as_log_level   php_log_level_set;
 #ifdef __DEBUG_PHP__
 #define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, var_args, ...)      \
     if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                  \

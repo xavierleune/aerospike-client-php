@@ -49,6 +49,8 @@ typedef struct asconfig_iter {
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].port)
 
+php_log_level_set = AS_LOG_LEVEL_OFF;
+
 static as_status 
 aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp, 
                                aerospike_transform_key_callback keycallback_p,
