@@ -43,7 +43,6 @@
 #include "aerospike/as_stringmap.h"
 #include "aerospike/as_status.h"
 
-#include "dbg.h"
 #include <stdbool.h>
 
 #include "aerospike_common.h"
@@ -52,6 +51,16 @@
 #include "aerospike_logger.h"
 #include "aerospike_transform.h"
 
+/*-----------------------------------------------------------*/
+typedef struct Aerospike_object {
+    zend_object std;
+    int value;
+    aerospike *as_p;
+} Aerospike_object;
+
+static zend_class_entry *Aerospike_ce;
+static zend_object_handlers Aerospike_handlers;
+/*-----------------------------------------------------------*/
 PHP_INI_BEGIN()
     //PHP_INI_ENTRY()
 PHP_INI_END()
@@ -60,23 +69,14 @@ ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
 static void aerospike_globals_ctor(zend_aerospike_globals *globals)
 {
-    // Initialize globals.
-
-    // [None for now.]
 }
 
 static void aerospike_globals_dtor(zend_aerospike_globals *globals)
 {
-    // Release any allocated globals.
-
-    // [None for now.]
 }
 
 static PHP_GINIT_FUNCTION(aerospike)
 {
-    // Perform extension global initializations.
-
-    // [None for now.]
 }
 
 zend_module_entry aerospike_module_entry =
@@ -101,11 +101,9 @@ zend_module_entry aerospike_module_entry =
 ZEND_GET_MODULE(aerospike)
 #endif
 
-    /*
-     *  Define the "Aerospike" class.
-     */
-
-    //static ZEND_BEGIN_ARG_INFO()
+/*
+ *  Define the "Aerospike" class.
+ */
 
 static zend_function_entry Aerospike_class_functions[] =
 {
@@ -157,16 +155,11 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, , NULL, ZEND_ACC_PUBLIC)
 #endif
 
-        { NULL, NULL, NULL }
+    { NULL, NULL, NULL }
 };
 
 
-static zend_class_entry *Aerospike_ce;
 
-static zend_object_handlers Aerospike_handlers;
-
-
-//bool callback_for_each_map_element(as_val *, as_val *, zval **);
 
 /**
  *  Callback for each list element
@@ -359,11 +352,6 @@ failure:
 }
 #endif
 
-typedef struct Aerospike_object {
-    zend_object std;
-    int value;
-    aerospike *as_p;
-} Aerospike_object;
 
 static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS_DC)
 {
@@ -384,15 +372,12 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
 
     if (intern_obj_p) {
     	zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
-	    efree(intern_obj_p);
+        efree(intern_obj_p);
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
-	    DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         return;
     } 
-
-    zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
-    efree(intern_obj_p);
 }
 
 zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
@@ -423,9 +408,6 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
    Constructs a new "aerospike" object. */
 PHP_METHOD(Aerospike, __construct)
 {
-    // DEBUG
-    log_info("**In Aerospike::__construct() method**");
-
     zval*                  host_p = NULL;
     zval*                  options_p = NULL;
     zval*                  host_arr_p = NULL;
@@ -504,18 +486,8 @@ PHP_METHOD(Aerospike, __destruct)
         goto exit;
     }
 
-    // DEBUG
-    log_info("**In Aerospike::__destruct() method**");
-
-    // XXX -- Temporary implementation based on globals.
-
-    // Cleanup the resources used by the client
     aerospike_destroy(aerospike_obj_p->as_p);
-
-    /*** TO BE IMPLEMENTED ***/
-
-    zval class_constant;
-    zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
+    aerospike_obj_p->as_p = NULL;
 
     DEBUG_PHP_EXT_INFO("success in creating php-aerospike object")
 exit:
@@ -924,6 +896,7 @@ failure:
 }
 #endif
 
+#if 0
 /**
  *  Copies list elements from a PHP array into an as_arraylist
  *  
@@ -1066,6 +1039,7 @@ failure:
     return err.code;
 }
 
+#endif
 
 /*
  *  Cluster Management APIs:
@@ -1090,26 +1064,22 @@ PHP_METHOD(Aerospike, isConnected)
    Disconnect the client to an Aerospike cluster. */
 PHP_METHOD(Aerospike, close)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    as_error               err;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    // DEBUG
-    log_info("**In Aerospike::close() method**\n");
-
-    // Errors populate this object.
-    as_error err;
-
-    // We are finished with the client.
-    if (aerospike_close(intern->as_p, &err) != AEROSPIKE_OK) {
-        // An error occurred, so we log it.
-        fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
-    } else {
-        fprintf(stderr, "It worked!\n");
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
     }
 
-    /*** TO BE IMPLEMENTED ***/
+    if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_p, &err))) {
+        DEBUG_PHP_EXT_ERROR("aerospike close returned error ");
+    }
 
-    RETURN_TRUE;
+exit:
+    RETURN_LONG(status);
 }
 
 /* PHP Method:  bool Aerospike::getNodes()
@@ -1326,7 +1296,6 @@ PHP_METHOD(Aerospike, setLogLevel)
         goto exit;
     }
 
-
 exit:
     RETURN_LONG(status);
 }
@@ -1335,12 +1304,14 @@ PHP_METHOD(Aerospike, setLogHandler)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*", &func_call_info, &func_call_info_cache, &func_call_info.params, &func_call_info.param_count) == FAILURE) {
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
+                             &func_call_info, &func_call_info_cache,
+                             &func_call_info.params, &func_call_info.param_count) == FAILURE) {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         RETURN_FALSE;
     }
 
-    if (as_log_set_callback(&aerospike_obj_p->as_p->log, aerospike_helper_log_callback)) {
+    if (as_log_set_callback(&aerospike_obj_p->as_p->log, &aerospike_helper_log_callback)) {
         Z_ADDREF_P(func_call_info.function_name);
         RETURN_TRUE;
     } else {
