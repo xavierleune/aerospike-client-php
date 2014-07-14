@@ -49,7 +49,7 @@
 #include "aerospike_common.h"
 #include "aerospike_status.h"
 #include "aerospike_policy.h"
-
+#include "aerospike_transform.h"
 
 PHP_INI_BEGIN()
     //PHP_INI_ENTRY()
@@ -160,7 +160,7 @@ static zend_class_entry *Aerospike_ce;
 static zend_object_handlers Aerospike_handlers;
 
 
-bool callback_for_each_map_element(as_val *, as_val *, zval **);
+//bool callback_for_each_map_element(as_val *, as_val *, zval **);
 
 /**
  *  Callback for each list element
@@ -170,6 +170,7 @@ bool callback_for_each_map_element(as_val *, as_val *, zval **);
  *
  *  @return true if success. Otherwise false.
  */
+#if 0
     bool
 callback_for_each_list_element(as_val *value, zval **list)
 {
@@ -350,7 +351,7 @@ failure:
     fprintf(stderr, "error(%d) %s at [%s:%d]\n", err.code, err.message, err.file, err.line);
     return false;
 }
-
+#endif
 aerospike as;
 
 typedef struct Aerospike_object {
@@ -603,7 +604,7 @@ PHP_METHOD(Aerospike, get)
             goto failure;
         } else {
             // rec contains record, hence process it and add bins of the record to input array record
-            if (as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record)) {
+            if (as_record_foreach(rec, (as_rec_foreach_callback) AS_DEFAULT_GET, record)) {
                 zval class_constant;
                 zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
                 RETURN_LONG(Z_LVAL(class_constant));
@@ -647,7 +648,7 @@ PHP_METHOD(Aerospike, get)
             err.code = AEROSPIKE_ERR_PARAM;
             goto failure;
         } else {
-            if (as_record_foreach(rec, (as_rec_foreach_callback) update_bins_array, record)) {
+            if (as_record_foreach(rec, (as_rec_foreach_callback) AS_DEFAULT_GET, record)) {
                 //zval class_constant;
                 //zend_get_constant_ex(ZEND_STRL("Aerospike::OK"), &class_constant, Aerospike_ce, 0 TSRMLS_DC);
                 //RETURN_LONG(Z_LVAL(class_constant));

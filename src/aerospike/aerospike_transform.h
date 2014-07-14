@@ -459,6 +459,9 @@ exit:
             goto label;                                                 \
     }
 
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(err, static_pool, key, value, array, label) \
+    AEROSPIKE_WALKER_SWITCH_CASE_PUT(PUT, DEFAULT, ASSOC, err, static_pool, key, value, array, label)
+
 /*note : INTEGER, it does not translate to IS_LONG ??? */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET(method, level, action,  \
         err, static_pool, key, value, array, label)                            \
