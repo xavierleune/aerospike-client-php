@@ -8,6 +8,10 @@
 
 #include "aerospike_common.h"
 
+zend_fcall_info       func_call_info;
+zend_fcall_info_cache func_call_info_cache;
+zval                  *func_callback_retval_p;
+
 extern int16_t
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
 {
@@ -38,11 +42,14 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     func_call_info.params = params;
     func_call_info.retval_ptr_ptr = &func_callback_retval_p;
 
+#if 0
     if (zend_call_function(&func_call_info, &func_call_info_cache TSRMLS_CC) == SUCCESS && func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {
         //COPY_PZVAL_TO_ZVAL(*return_value, *func_call_info.retval_ptr_ptr);
     } else {
-        //fprintf(stderr, "%s");
-    }
+#else
+        fprintf(stderr, "Logging error: level %d func %s file %s line %d msg %s", level, func, file, line, fmt);
+#endif
+//    }
 
     zval_ptr_dtor(&z_func);
     zval_ptr_dtor(&z_file);
