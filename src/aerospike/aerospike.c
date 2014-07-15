@@ -663,6 +663,7 @@ PHP_METHOD(Aerospike, setLogHandler)
     }
 
     if (as_log_set_callback(&aerospike_obj_p->as_p->log, &aerospike_helper_log_callback)) {
+	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         RETURN_TRUE;
     } else {

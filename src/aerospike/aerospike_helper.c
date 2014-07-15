@@ -11,6 +11,7 @@
 zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
+uint32_t              is_callback_registered;
 
 extern int16_t
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
@@ -21,6 +22,9 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     zval *z_line; 
     zval *z_level;
     func_callback_retval_p = NULL;
+
+    char msg[1024] = {0};
+    va_list ap;
 
     ALLOC_INIT_ZVAL(z_level);
     ZVAL_LONG(z_level, level);
@@ -41,15 +45,21 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     func_call_info.param_count = 4;
     func_call_info.params = params;
     func_call_info.retval_ptr_ptr = &func_callback_retval_p;
+    
+    va_start(ap, fmt);
+    vsnprintf(msg, 1024, fmt, ap);
+    msg[1023] = '\0';
+    va_end(ap);
 
-#if 0
+    if (level & 0x08) {
+	if (!is_callback_registered) {
+		fprintf(stderr, "Logging error: level %d func %s file %s line %d msg %s", level, func, file, line, fmt);
+	}
+    } 
     if (zend_call_function(&func_call_info, &func_call_info_cache TSRMLS_CC) == SUCCESS && func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {
         //COPY_PZVAL_TO_ZVAL(*return_value, *func_call_info.retval_ptr_ptr);
-    } else {
-#else
-        fprintf(stderr, "Logging error: level %d func %s file %s line %d msg %s", level, func, file, line, fmt);
-#endif
-//    }
+    ///}
+    } 
 
     zval_ptr_dtor(&z_func);
     zval_ptr_dtor(&z_file);

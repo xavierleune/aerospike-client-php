@@ -14,6 +14,7 @@
 extern zend_fcall_info       func_call_info;
 extern zend_fcall_info_cache func_call_info_cache;
 extern zval                  *func_callback_retval_p;
+extern uint32_t              is_callback_registered;
 
 extern int16_t
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
@@ -28,7 +29,7 @@ extern as_log_level   php_log_level_set;
 #define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, var_args, ...)      \
     if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                  \
         if (php_log_level_set >= log_level)                        \
-            aerospike_helper_log_callback(log_level, __func__, __FILE__, __LINE__, var_args); /*replace this with our log function*/
+            aerospike_helper_log_callback((log_level | 0x08), __func__, __FILE__, __LINE__, var_args); /*replace this with our log function*/
 #define DEBUG_PHP_EXT_ERROR(var_args, ...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_ERROR, var_args, ...)
 #define DEBUG_PHP_EXT_WARNING(var_args, ...)        DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_WARN, var_args, ...)
 #define DEBUG_PHP_EXT_DEBUG(var_args, ...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, var_args, ...)
