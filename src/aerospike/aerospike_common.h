@@ -1,6 +1,8 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
 
+#include "dbg.h"
+
 #define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
 
 #define foreach_hashtable(ht, position, datavalue)               \
@@ -21,6 +23,7 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
  * as well into the callback method
  */
 extern as_log_level   php_log_level_set;
+#define __DEBUG_PHP__
 #ifdef __DEBUG_PHP__
 #define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, var_args, ...)      \
     if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                  \

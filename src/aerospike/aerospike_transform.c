@@ -27,6 +27,7 @@
 #define PHP_COMPARE_KEY(key_const, key_const_len, key_obtained, key_obtained_len)    \
      ((key_const_len == key_obtained_len) && (0 == memcmp(key_obtained, key_const, key_const_len)))
 #define PHP_IS_STRING(type) (IS_STRING == type)
+#define PHP_IS_LONG(type) (IS_LONG == type)
 
 typedef as_status (*aerospike_transform_key_callback)(HashTable* ht_p,
                                                       u_int32_t key_data_type_u32, 
@@ -49,7 +50,7 @@ typedef struct asconfig_iter {
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].port)
 
-php_log_level_set = AS_LOG_LEVEL_OFF;
+php_log_level_set = AS_LOG_LEVEL_DEBUG;
 
 static as_status 
 aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp, 
@@ -286,32 +287,32 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
     as_status            status = AEROSPIKE_OK;
     as_put_key_data_map  put_key_data_map = {0};
     HashPosition         hashPosition_p = NULL;
-    zval**               key_record_pp = NULL;
+    zval*                key_record_p = NULL;
     u_int64_t            index_u64 = 0;
 
-    if ((!ht_p) || (!as_key_p) || (!key_record_pp) || (!set_val_p)) {
+    if ((!ht_p) || (!as_key_p) || (!as_key_p) || (!set_val_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     foreach_hashtable(ht_p, hashPosition_p, index_u64) {
-        if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, key_record_pp,
+        if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, &key_record_p,
                                                                      &aerospike_transform_putkey_callback,
                                                                      (void *)&put_key_data_map, 0))) {
             goto exit;
         }
     }
 
-    if (!(put_key_data_map.namespace_p) || !(put_key_data_map.set_p) || !(put_key_data_map.key_pp)) {
+    if (!(put_key_data_map.namespace_p) || !(put_key_data_map.set_p) || !(put_key_data_map.key_pp) || (!key_record_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     if(AEROSPIKE_OK != (status = aerospike_add_key_params(as_key_p,
-                                                          Z_TYPE_PP(key_record_pp),
+                                                          Z_TYPE_P(key_record_p),
                                                           put_key_data_map.namespace_p,
                                                           put_key_data_map.set_p,
-                                                          key_record_pp))) {
+                                                          key_record_p))) {
         goto exit;
     }
 
@@ -361,13 +362,12 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     int16_t                     initialize_16 = 0;
     u_int32_t                   iter = 0;
 
-    if ((!ht_p) || (!as_key_p) || (!error_p) ||
-        (!options_p) || (!as_object_p)) {
+    if ((!ht_p) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    as_record_init_a(&record, zend_hash_num_elements(ht_p));
+    as_record_inita(&record, zend_hash_num_elements(ht_p));
     initialize_16 = 1; /* indicates record has been initialized*/
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(ht_p, &record, &list_map_data))) {

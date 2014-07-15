@@ -245,7 +245,7 @@ static inline as_status AS_RECORD_SET_INT64(void* key_p, void* value_p, void* ar
      * value_p - holds the data associated with bin
      * array_p - holds as_record pointer 
     */
-    as_record_set_int64((as_record *)array_p, (int8_t *)key_p, (int64_t) Z_LVAL_P((zval*)value_p)); //changed from Z_VAL_PP to Z_VAL_P
+    as_record_set_int64((as_record *)array_p, (int8_t *)key_p, (int64_t) Z_LVAL_P((zval*)value_p)); //changed from Z_LVAL_PP to Z_LVAL_P
     return AEROSPIKE_OK;
 }
 
@@ -270,7 +270,7 @@ static inline as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void* key_p, void* value_p, v
     */
     as_status     status = AEROSPIKE_OK;
     /* note: is this right ??*/
-    AEROSPIKE_RESET_AND_PROCESS_ISARRAY_DEFAULT_ASSOC(key_p, value_p, Z_ARRVAL_PP((zval**)value_p), Z_VAL_PP((zval**)array_p), static_pool_p);
+//    AEROSPIKE_RESET_AND_PROCESS_ISARRAY_DEFAULT_ASSOC(key_p, value_p, Z_ARRVAL_PP((zval**)value_p), Z_LVAL_PP((zval**)array_p), static_pool_p);
 exit:
     return status;
 }
@@ -377,10 +377,11 @@ exit:
 static inline as_status AS_DEFAULT_GET(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, key, value, array, exit);
+//    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, key, value, array, exit);
 exit:
     return (status);
 }
+
 static inline as_status AS_LIST_GET(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;

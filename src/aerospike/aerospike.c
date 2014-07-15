@@ -228,7 +228,7 @@ PHP_METHOD(Aerospike, __construct)
 
     if (aerospike_obj_p->as_p) {
         error.code = AEROSPIKE_ERR;
-	DEBUG_PHP_EXT_ERROR("already created aerospike object");
+		DEBUG_PHP_EXT_ERROR("already created aerospike object");
         goto exit;
     }
 
