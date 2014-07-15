@@ -29,6 +29,221 @@
 #define PHP_IS_STRING(type) (IS_STRING == type)
 #define PHP_IS_LONG(type) (IS_LONG == type)
 
+static as_status AS_LIST_GET_CALLBACK(void *key, void *value, void *array);
+static as_status AS_MAP_GET_CALLBACK(void *key, void *value, void *array);
+
+static as_status ADD_APPEND_MAP(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_APPEND_MAP_TO_LIST(key, value, array);
+    return (status);
+}
+static as_status ADD_APPEND_LIST(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_APPEND_LIST_TO_LIST(key, value, array);
+    return (status);
+}
+static as_status ADD_ASSOC_MAP(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_ASSOC_MAP_TO_MAP(key, value, array);
+    return (status);
+}
+
+static as_status ADD_ASSOC_LIST(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_ASSOC_LIST_TO_MAP(key, value, array);
+    return (status);
+}
+
+static as_status ADD_APPEND_NULL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_next_index_null(((zval*)array));
+    return (status);
+}
+
+static as_status ADD_APPEND_BOOL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_next_index_bool(((zval*)array),
+            (int8_t) as_boolean_get((as_boolean *) value));
+    return (status);
+}
+
+static as_status ADD_APPEND_LONG(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_next_index_bool(((zval*)array),
+            (long) as_integer_get((as_integer *) value));
+    return (status);
+}
+
+static as_status ADD_APPEND_STRING(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_next_index_stringl(((zval*)array),
+            as_string_get((as_string *) value),
+            strlen(as_string_get((as_string *) value)), 1);
+    return (status);
+}
+
+static as_status ADD_APPEND_REC(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_APPEND_PAIR(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_APPEND_BYTES(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+
+static as_status ADD_ASSOC_MAP_NULL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_null(((zval*)array), as_string_get((as_string *) key));
+    return (status);
+}
+
+static as_status ADD_ASSOC_MAP_BOOL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_bool(((zval*)array), as_string_get((as_string *) key),
+            (int) as_boolean_get((as_boolean *) value));
+    return (status);
+}
+
+as_status ADD_ASSOC_MAP_LONG(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_long(((zval*)array),  as_string_get((as_string *) key),
+            (long) as_integer_get((as_integer *) value));
+    return (status);
+}
+
+static as_status ADD_ASSOC_MAP_STRING(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_stringl(((zval*)array), as_string_get((as_string *) key),
+            as_string_get((as_string *) value),
+            strlen(as_string_get((as_string *) value)), 1);
+    return (status);
+}
+
+static as_status ADD_ASSOC_MAP_REC(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_ASSOC_MAP_PAIR(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_ASSOC_MAP_BYTES(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_ASSOC_NULL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_null(((zval*)array), as_string_get((as_string *) key));
+    return (status);
+}
+
+static as_status ADD_ASSOC_BOOL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_bool(((zval*)array), (char*) key,
+            (int) as_boolean_get((as_boolean *) value));
+    return (status);
+}
+
+as_status ADD_ASSOC_LONG(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_long(((zval*)array),  (char*) key,
+            (long) as_integer_get((as_integer *) value));
+    return (status);
+}
+
+static as_status ADD_ASSOC_STRING(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_assoc_stringl(((zval*)array), (char*) key,
+            as_string_get((as_string *) value),
+            strlen(as_string_get((as_string *) value)), 1);
+    return (status);
+}
+
+static as_status ADD_ASSOC_REC(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_ASSOC_PAIR(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+static as_status ADD_ASSOC_BYTES(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+
+    return (status);
+}
+
+
+
+bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, key, value, array, exit);
+exit:
+    return (true);
+}
+as_status AS_LIST_GET_CALLBACK(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(status, NULL, key, value, array, exit);
+exit:
+    return (status);
+}
+as_status AS_MAP_GET_CALLBACK(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, key, value, array, exit);
+exit:
+    return (status);
+}
+
+
+
 typedef as_status (*aerospike_transform_key_callback)(HashTable* ht_p,
                                                       u_int32_t key_data_type_u32, 
                                                       int8_t* key_p, u_int32_t key_len_u32,
@@ -435,7 +650,7 @@ exit:
     return (error_p->code);
 }
 
-extern as_status
+as_status
 aerospike_transform_get_record(aerospike* as_object_p,
                                as_key* get_rec_key_p,
                                zval* options_p,
@@ -445,11 +660,9 @@ aerospike_transform_get_record(aerospike* as_object_p,
 {
     as_status         status = AEROSPIKE_OK;
     as_policy_read    read_policy;
-    as_record         get_record;
-    int               rec_initialized = 0;
+    as_record         *get_record = NULL;
 
-    if ((!as_object_p) || (!get_rec_key_p) || (!options_p) ||
-        (!error_p) || (!get_record_p) || (!bins_p)) {
+    if ((!as_object_p) || (!get_rec_key_p) || (!error_p) || (!get_record_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
@@ -459,21 +672,22 @@ aerospike_transform_get_record(aerospike* as_object_p,
     }
 
     if (bins_p != NULL && AEROSPIKE_OK != aerospike_transform_filter_bins_exists(
-            as_object_p, Z_ARRVAL_P(bins_p), &get_record, error_p, get_rec_key_p,
+            as_object_p, Z_ARRVAL_P(bins_p), get_record, error_p, get_rec_key_p,
             &read_policy)) {
         goto exit;
+    } else if (aerospike_key_get(as_object_p, error_p, &read_policy, get_rec_key_p,
+                &get_record) != AEROSPIKE_OK) {
+        goto exit;
     }
-
-    rec_initialized = 1;
-    if (!as_record_foreach(&get_record, (as_rec_foreach_callback) AS_DEFAULT_GET,
+    if (!as_record_foreach(get_record, (as_rec_foreach_callback) AS_DEFAULT_GET,
         get_record_p)) {
         error_p->code = AEROSPIKE_ERR_SERVER;
         goto exit;
     }
 
 exit:
-    if (rec_initialized) {
-        as_record_destroy(&get_record);
+    if (get_record) {
+        as_record_destroy(get_record);
     }
     return status;
 }
