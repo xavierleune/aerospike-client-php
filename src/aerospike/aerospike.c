@@ -256,7 +256,7 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* check and set config policies */
-    if (AEROSPIKE_OK != (set_policy(&config.policies.read, &config.policies.write, options_p))) {
+    if (AEROSPIKE_OK != (set_general_policies(&config, options_p))) {
         error.code = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to set config read/ write policies");
         goto exit;
