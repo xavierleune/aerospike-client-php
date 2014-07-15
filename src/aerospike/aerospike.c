@@ -501,30 +501,92 @@ PHP_METHOD(Aerospike, append)
    Delete record for specified key. */
 PHP_METHOD(Aerospike, delete)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-    // DEBUG
-    log_info("**In Aerospike::delete() method**\n");
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    as_key                 as_key_for_put_record;
+    int16_t                initializeKey = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    /*** TO BE IMPLEMENTED ***/
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, &record_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to iterate through put key params");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_rec_opp_delete(&aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_put_record);
+    }
+    RETURN_LONG(status);
+
+
 }
 
 /* PHP Method:  bool Aerospike::exists()
    Check if record key(s) exist in one batch call. */
 PHP_METHOD(Aerospike, exists)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    as_key                 as_key_for_put_record;
+    int16_t                initializeKey = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    // DEBUG
-    log_info("**In Aerospike::exists() method**\n");
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
+    }
 
-    /*** TO BE IMPLEMENTED ***/
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, &record_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to iterate through put key params");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_rec_opp_exist(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_put_record);
+    }
+    RETURN_LONG(status);
+
+
+
 }
 
 

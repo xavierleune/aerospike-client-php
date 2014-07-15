@@ -59,4 +59,10 @@ aerospike_transform_get_record(aerospike* as_object_p,
                                as_error *error_p,
                                zval* get_record_p,
                                zval* bins_p);
+
+extern as_status
+aerospike_rec_opp_exist(aerospike* as_object_p,as_key* as_key_p,as_error *error_p);
+extern as_status
+aerospike_rec_opp_delete(aerospike* as_object_p,as_key* as_key_p,as_error *error_p);
+
 #endif
