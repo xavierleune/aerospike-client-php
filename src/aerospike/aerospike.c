@@ -294,7 +294,7 @@ PHP_METHOD(Aerospike, __destruct)
     aerospike_destroy(aerospike_obj_p->as_p);
     aerospike_obj_p->as_p = NULL;
 
-    DEBUG_PHP_EXT_INFO("success in creating php-aerospike object")
+    DEBUG_PHP_EXT_INFO("destruct method of aerospike object executed")
 exit:
     /*RETURN_LONG(Z_LVAL(class_constant));*/
     RETURN_LONG(status);
