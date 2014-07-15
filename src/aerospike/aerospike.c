@@ -178,9 +178,9 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
     if (intern_obj_p) {
     	zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
         efree(intern_obj_p);
-        DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
+//        DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
-        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+//        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         return;
     } 
 }
