@@ -16,12 +16,12 @@ the client and server error codes defined in the C client (in as_status.h).
 
 ### [Aerospike::setLogLevel](aerospike_setloglevel.md)
 ```
-public void setLogLevel ( int $log_level )
+public static void setLogLevel ( int $log_level )
 ```
 
 ### [Aerospike::setLogHandler](aerospike_setloghandler.md)
 ```
-public void setLogHandler ( callback $log_handler )
+public static void setLogHandler ( callback $log_handler )
 ```
 
 ## Example
@@ -29,14 +29,8 @@ public void setLogHandler ( callback $log_handler )
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config, 'prod-db');
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
-   exit(1);
-}
-$db->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
-$db->setLogHandler(function ($level, $file, $function, $line) {
+Aerospike::setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
+Aerospike::setLogHandler(function ($level, $file, $function, $line) {
     switch ($level) {
         case Aerospike::LOG_LEVEL_ERROR:
             $lvl_str = 'ERROR';
@@ -58,6 +52,13 @@ $db->setLogHandler(function ($level, $file, $function, $line) {
     }
     error_log("[$lvl_str] in $function at $file:$line");
 });
+
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
+$db = new Aerospike($config, 'prod-db');
+if (!$db->isConnected()) {
+   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+   exit(1);
+}
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");

@@ -13,5 +13,5 @@ implementation are in [doc/internals.md](doc/internals.md).
 
 The source code and instructions needed for building the Aerospike PHP
 Client SDK are in the `src` directory.  Instructions are in
-[src/README.md](src/README.md).
+[src/README.md](src/aerospike/README.md).
 

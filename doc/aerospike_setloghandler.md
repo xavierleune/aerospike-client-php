@@ -6,11 +6,13 @@ Aerospike::setLogHandler - sets a handler for log events
 ## Description
 
 ```
-public void setLogHandler ( callback $log_handler )
+public static void setLogHandler ( callback $log_handler )
 ```
 
 **Aerospike::setLogHandler()** registers a callback method that will be triggered
 whenever a logging event above the declared [log threshold](aerospike_setloglevel.md) occurs.
+This is a static method and the log handler is global across all instances of
+the Aerospike class.
 
 The callback method must follow the signature
 ```
@@ -27,14 +29,8 @@ with **level** matching one of the *Aerospike::LOG_LEVEL_\** values
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config, 'prod-db');
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
-   exit(1);
-}
-$db->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
-$db->setLogHandler(function ($level, $file, $function, $line) {
+Aerospike::setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
+Aerospike::setLogHandler(function ($level, $file, $function, $line) {
     switch ($level) {
         case Aerospike::LOG_LEVEL_ERROR:
             $lvl_str = 'ERROR';
@@ -56,6 +52,13 @@ $db->setLogHandler(function ($level, $file, $function, $line) {
     }
     error_log("[$lvl_str] in $function at $file:$line");
 });
+
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
+$db = new Aerospike($config, 'prod-db');
+if (!$db->isConnected()) {
+   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+   exit(1);
+}
 
 ?>
 ```

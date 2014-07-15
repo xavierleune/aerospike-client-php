@@ -139,8 +139,8 @@ class Aerospike
     // error handling methods
     public string Aerospike::error ( void )
     public int Aerospike::errorno ( void )
-    public void setLogLevel ( int $log_level )
-    public void setLogHandler ( callback $log_handler )
+    public static void setLogLevel ( int $log_level )
+    public static void setLogHandler ( callback $log_handler )
 
     // key-value methods
     public array Aerospike::initKey ( string $ns, string $set, int|string $pk )
