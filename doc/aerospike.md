@@ -146,8 +146,8 @@ class Aerospike
     // error handling methods
     public string Aerospike::error ( void )
     public int Aerospike::errorno ( void )
-    public static void setLogLevel ( int $log_level )
-    public static void setLogHandler ( callback $log_handler )
+    public static void Aerospike::setLogLevel ( int $log_level )
+    public static void Aerospike::setLogHandler ( callback $log_handler )
 
     // key-value methods
     public array Aerospike::initKey ( string $ns, string $set, int|string $pk )
@@ -163,8 +163,8 @@ class Aerospike
     public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
 
     // unsupported type handler methods
-    public static void setSerializer ( callback $serialize_cb )
-    public static void setDeserializer ( callback $unserialize_cb )
+    public static void Aerospike::setSerializer ( callback $serialize_cb )
+    public static void Aerospike::setDeserializer ( callback $unserialize_cb )
 
     // batch operation methods
     public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )

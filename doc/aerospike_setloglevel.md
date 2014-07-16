@@ -6,7 +6,7 @@ Aerospike::setLogLevel - set the logging threshold of the Aerospike object
 ## Description
 
 ```
-public static void setLogLevel ( int $log_level )
+public static void Aerospike::setLogLevel ( int $log_level )
 ```
 
 **Aerospike::setLogLevel()** declares a logging threshold for the Aerospike C client.
