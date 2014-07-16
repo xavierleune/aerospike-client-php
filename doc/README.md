@@ -29,8 +29,25 @@ the userland callback and if it is **=== false** it should return a false to the
 C-client.  The C-client will then close the sockets to the nodes involved in
 streaming results, effectively halting it.
 
+# Handling Unsupported Types
+
+See: [citrusleaf.h](https://github.com/citrusleaf/aerospike-client-c/blob/master/src/include/citrusleaf/cl_object.h)
+* Allow the user to configure their serializer through an option.
+ - OPT\_SERIALIZER : SERIALIZER\_PHP (default), SERIALIZER\_NONE, SERIALIZER\_UDF, SERIALIZER\_JSON
+* when a write operation runs into types that do not map directly to Aerospike DB types it checks the OPT\_SERIALIZER setting:
+ - if SERIALIZER\_NONE it returns an Aerospike::ERR\_PARAM error
+ - if SERIALIZER\_PHP it calls the PHP serializer, sets the object's cl\_type to CL\_PHP_BLOB
+ - if SERIALIZER\_JSON it calls json\_encode, sets the object's cl\_type CL\_JSON_BLOB
+ - if SERIALIZER\_UDF it calls the PHP function the user registered a callback with Aerospike::setSerializer(), and sets cl\_type to CL\_BLOB
+* when a read operation extracts a value from a BLOB type bin:
+ - if it’s a CL\_PHP\_BLOB use the PHP unserialize function
+ - if it’s a CL\_JSON\_BLOB call json_decode
+ - if it’s a CL\_BLOB and the user registered a callback with Aerospike::setSerializer() call that function, otherwise place it in a PHP string
+
 ## TBD
-```
+
+```php
+<?php
 
 // Client interface to the Aerospike cluster.
 class Aerospike
@@ -50,4 +67,6 @@ class Aerospike
     public function getLargeSet($key_z);
     public function getLargeStack($key_z);
 }
+?>
 ```
+

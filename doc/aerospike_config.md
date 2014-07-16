@@ -9,6 +9,7 @@ The following configuration options in php.ini
 | aerospike.connect_timeout | 1000 |
 | aerospike.read_timeout | 1000 |
 | aerospike.write_timeout | 1000 |
+| aerospike.serializer | php |
 
 Here is a description of the configuration directives:
 
@@ -23,6 +24,9 @@ Here is a description of the configuration directives:
 
 **aerospike.write_timeout integer**
     The write timeout in milliseconds
+
+**aerospike.serializer string**
+    The unsupported type handler. One of { php, json, none }
 
 ## See Also
 

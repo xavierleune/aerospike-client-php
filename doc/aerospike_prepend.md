@@ -19,7 +19,7 @@ public int Aerospike::prepend ( array $key, string $bin, string $value [, array 
 
 **value** the string to prepend to the string value in the bin.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_RETRY**, **Aerospike::OPT_SERIALIZER**
 
 ## Return Values
 

@@ -23,7 +23,7 @@ The bins returned can be filtered by passing an associative array of the bins ne
 
 **filter** an array of bin names
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**.
+**options** including **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

@@ -22,7 +22,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 **filter** an array of bin names
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**.
+**options** including **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

@@ -28,6 +28,12 @@ class Aerospike
     const POLICY_EXISTS_REPLACE = 4; // replace a record ONLY if it exists
     const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // overwrite the bins if record exists
 
+    // Determines a handler for writing values of unsupported type into bins
+    const SERIALIZER_NONE = 0;
+    const SERIALIZER_PHP  = 1; // default handler
+    const SERIALIZER_JSON = 2;
+    const SERIALIZER_UDF  = 3;
+
     //
     // Options can be assigned values that modify default behavior
     //
@@ -36,6 +42,7 @@ class Aerospike
     const OPT_WRITE_TIMEOUT = 3; // value in milliseconds, default: 1000
     const OPT_POLICY_RETRY = 4; // set to a Aerospike::POLICY_RETRY_* value
     const OPT_POLICY_EXISTS = 5; // set to a Aerospike::POLICY_EXISTS_* value
+    const OPT_SERIALIZER = 6; // set the unsupported type handler
 
     //
     // Aerospike Status Codes:
@@ -154,6 +161,10 @@ class Aerospike
     public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
     public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
     public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+
+    // unsupported type handler methods
+    public static void setSerializer ( callback $serialize_cb )
+    public static void setDeserializer ( callback $unserialize_cb )
 
     // batch operation methods
     public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
