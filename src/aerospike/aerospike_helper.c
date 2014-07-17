@@ -52,13 +52,15 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     va_end(ap);
 
     if (level & 0x08) {
-	if (!is_callback_registered) {
-		fprintf(stderr, "Logging error: level %d func %s file %s line %d msg %s", level, func, file, line, fmt);
+        if (!is_callback_registered) { 
+                fprintf(stderr, "Logging error: level %d func %s file %s line %d msg %s", level, func, file, line, fmt);
+        } else {
+            if (zend_call_function(&func_call_info, &func_call_info_cache TSRMLS_CC) == SUCCESS && func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {
+                //TODO: COPY_PZVAL_TO_ZVAL(*return_value, *func_call_info.retval_ptr_ptr);
+            } else {
+                // TODO: Handle failure in zend_call_function
+            }
 	}
-    } 
-    if (zend_call_function(&func_call_info, &func_call_info_cache TSRMLS_CC) == SUCCESS && func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {
-        //COPY_PZVAL_TO_ZVAL(*return_value, *func_call_info.retval_ptr_ptr);
-    ///}
     } 
 
     zval_ptr_dtor(&z_func);
@@ -69,3 +71,22 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     return true;
 }
 
+extern int parseLogParameters(as_log* as_log_p)
+{
+    /*if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
+                            &func_call_info, &func_call_info_cache,
+                            &func_call_info.params, &func_call_info.param_count) == FAILURE) {    
+	DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        return 0;
+    }*/
+    if (as_log_set_callback(as_log_p, &aerospike_helper_log_callback)) {
+	is_callback_registered = 1;
+        Z_ADDREF_P(func_call_info.function_name);
+        return 1;
+    
+    } else {	
+        return 0;;
+    }	
+}
+
+    

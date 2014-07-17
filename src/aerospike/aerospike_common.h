@@ -18,6 +18,7 @@ extern uint32_t              is_callback_registered;
 
 extern int16_t
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
+extern int parseLogParameters(as_log *as_log_p);
 
 /* need to re-direct the same to log function that we have written
  * if per Aerospike_obj has been decided then we have to pass the object

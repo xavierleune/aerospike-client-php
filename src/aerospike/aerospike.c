@@ -493,7 +493,6 @@ PHP_METHOD(Aerospike, append)
     log_info("**In Aerospike::append() method**\n");
 
     /*** TO BE IMPLEMENTED ***/
-
     RETURN_TRUE;
 }
 
@@ -654,19 +653,27 @@ exit:
 PHP_METHOD(Aerospike, setLogHandler)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    uint32_t ret_val = -1;
+    is_callback_registered = 0;
 
+    //ret_val = parseLogParameters(&aerospike_obj_p->as_p->log);
+    
+    /*if (ret_val == 1)
+	RETURN_TRUE;
+    if(ret_val == 0)
+ 	RETURN_FALSE;*/
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
                              &func_call_info, &func_call_info_cache,
                              &func_call_info.params, &func_call_info.param_count) == FAILURE) {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         RETURN_FALSE;
     }
-
+	
     if (as_log_set_callback(&aerospike_obj_p->as_p->log, &aerospike_helper_log_callback)) {
 	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         RETURN_TRUE;
-    } else {
+    } else {printf("\n*********\n");
         RETURN_FALSE;
     }
 }
