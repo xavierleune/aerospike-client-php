@@ -1,9 +1,11 @@
+#include "php.h"
 #include "aerospike/as_status.h"
-#include "aerospike_policy.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"
 
+#include "aerospike_common.h"
+#include "aerospike_policy.h"
 extern as_status aerospike_rec_opp_exist(aerospike* as_object_p,
                                  as_key* as_key_p,
                                  as_error *error_p)

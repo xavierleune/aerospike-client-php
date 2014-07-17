@@ -132,6 +132,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, touch, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, initkey, NULL, ZEND_ACC_PUBLIC)
     /*
      *  Logging APIs:
      */
@@ -228,7 +229,7 @@ PHP_METHOD(Aerospike, __construct)
 
     if (aerospike_obj_p->as_p) {
         error.code = AEROSPIKE_ERR;
-		DEBUG_PHP_EXT_ERROR("already created aerospike object");
+        DEBUG_PHP_EXT_ERROR("already created aerospike object");
         goto exit;
     }
 
@@ -270,6 +271,10 @@ PHP_METHOD(Aerospike, __construct)
         DEBUG_PHP_EXT_ERROR("unable to make connection");
         goto exit;
     }
+
+    /* connection is established, set the connection flag now */
+
+    zend_update_property(Aerospike_ce, aerospike_obj_p, "is_conn_16", strlen("is_conn_16"), 1 TSRMLS_DC);
 
     DEBUG_PHP_EXT_INFO("success in creating php-aerospike object")
 exit:
@@ -400,15 +405,33 @@ exit:
    Is the client connected to the Aerospike cluster? */
 PHP_METHOD(Aerospike, isConnected)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
 
-    // DEBUG
-    log_info("**In Aerospike::isConnected() method**\n");
+    as_error               err;
+    int                    errno;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    /*** TO BE IMPLEMENTED ***/
+    if (!aerospike_obj_p) {
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+        goto exit;
+    }
+ 
+    
+    errno = Z_LVAL_P(zend_read_property(Aerospike_ce, aerospike_obj_p, "is_conn_16", strlen("is_conn_16"), 1 TSRMLS_CC));
+    if(errno == 1){
 
-    RETURN_TRUE;
+        RETURN_TRUE;
+    }
+    else {
+
+        goto exit;
+    }
+
+
+exit:
+    RETURN_FALSE;
+
+
+
 }
 
 /* PHP Method:  bool Aerospike::close()
@@ -428,6 +451,9 @@ PHP_METHOD(Aerospike, close)
     if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_p, &err))) {
         DEBUG_PHP_EXT_ERROR("aerospike close returned error ");
     }
+   
+    /* Now as connection is getting closed we need to set the connection flag to false */
+    zend_update_property(Aerospike_ce, aerospike_obj_p, "is_conn_16", strlen("isd_conn_16"), 0 TSRMLS_DC);
 
 exit:
     RETURN_LONG(status);
@@ -516,7 +542,7 @@ PHP_METHOD(Aerospike, delete)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, &record_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa", &key_record_p, &record_p)) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
         goto exit;
@@ -561,7 +587,7 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, &record_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa", &key_record_p, &record_p)) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
         goto exit;
@@ -651,6 +677,53 @@ PHP_METHOD(Aerospike, touch)
     RETURN_TRUE;
 }
 
+/* PHP Method:  bool Aerospike::initkey()
+   helper method for building the key array. */
+PHP_METHOD(Aerospike, initkey)
+{
+
+    as_status              status = AEROSPIKE_OK;
+    char                   *ns_p  =  NULL;
+    int                    ns_p_length;
+    char                   *set_p =  NULL;
+    int                    set_p_length;
+    zval                   *pk_p ;
+    MAKE_STD_ZVAL(pk_p);
+    
+    //zval *array;
+    //MAKE_STD_ZVAL(array);
+    //array_init(array);
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
+
+    add_assoc_stringl(return_value, "ns", &ns_p,ns_p_length, 1);
+    add_assoc_stringl(return_value, "set", &set_p,set_p_length, 1);
+
+    switch(Z_TYPE_P(pk_p)){
+       case IS_LONG:
+           add_assoc_long(return_value,"key",Z_LVAL_P(pk_p));
+           break;
+       case IS_STRING:
+           add_assoc_string(return_value,"key",Z_STRVAL_P(pk_p),1);
+           break;
+       default:
+           status = AEROSPIKE_ERR_PARAM;
+           DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+           goto exit;
+    
+                  
+    }
+
+exit:
+         RETURN_LONG(status);
+          
+
+
+}
 /*
  *  Scan APIs:
  */
@@ -658,6 +731,7 @@ PHP_METHOD(Aerospike, touch)
 /*** TBD ***/
 
 /*
+ *  r
  *  Secondary Index APIs:
  */
 
@@ -790,6 +864,7 @@ PHP_MINIT_FUNCTION(aerospike)
      * This will expose the policy values for PHP
      * as well as CSDK to PHP client.
      */
+    zend_declare_property_long(Aerospike_ce, "is_conn_16", strlen("is_conn_16"), 0, ZEND_ACC_PRIVATE TSRMLS_DC);
     declare_policy_constants_php(Aerospike_ce);
     /* Refer aerospike_status.h
      * This will expose the status code from CSDK

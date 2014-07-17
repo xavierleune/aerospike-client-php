@@ -78,7 +78,7 @@ PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, touch);
-
+PHP_METHOD(Aerospike, initkey);
 // Logging APIs:
 
 PHP_METHOD(Aerospike, setLogLevel);
