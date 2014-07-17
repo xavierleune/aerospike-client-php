@@ -24,142 +24,6 @@
 #ifndef __AEROSPIKE_TRANSFORM_H__
 #define __AEROSPIKE_TRANSFORM_H__
 #include "aerospike/as_boolean.h"
-
-static inline as_status ADD_APPEND_NULL(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_next_index_null(((zval*)array));
-    return (status);
-}
-
-static inline as_status ADD_APPEND_BOOL(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_next_index_bool(((zval*)array),
-            (int8_t) as_boolean_get((as_boolean *) value));
-    return (status);
-}
-
-static inline as_status ADD_APPEND_LONG(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_next_index_bool(((zval*)array),
-            (long) as_integer_get((as_integer *) value));
-    return (status);
-}
-
-static inline as_status ADD_APPEND_STRING(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_next_index_stringl(((zval*)array),
-            as_string_get((as_string *) value),
-            strlen(as_string_get((as_string *) value)), 1);
-    return (status);
-}
-
-static inline as_status ADD_APPEND_MAP(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AS_APPEND_MAP_TO_LIST(key, value, array);
-    return (status);
-}
-
-static inline as_status ADD_APPEND_LIST(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AS_APPEND_LIST_TO_LIST(key, value, array);
-    return (status);
-}
-
-static inline as_status ADD_APPEND_REC(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-
-    return (status);
-}
-
-static inline as_status ADD_APPEND_PAIR(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-
-    return (status);
-}
-
-static inline as_status ADD_APPEND_BYTES(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_NULL(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_assoc_null(((zval*)array), as_string_get((as_string *) key));
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_BOOL(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_assoc_bool(((zval*)array), as_string_get((as_string *) key),
-            (int) as_boolean_get((as_boolean *) value));
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_LONG(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_assoc_long(((zval*)array), as_string_get((as_string *) key),
-            (long) as_integer_get((as_integer *) value));
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_STRING(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_assoc_stringl(((zval*)array), as_string_get((as_string *) key),
-            as_string_get((as_string *) value),
-            strlen(as_string_get((as_string *) value)), 1);
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_MAP(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AS_ASSOC_MAP_TO_MAP(key, value, array);
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_LIST(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AS_ASSOC_LIST_TO_MAP(key, value, array);
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_REC(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_PAIR(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-
-    return (status);
-}
-
-static inline as_status ADD_ASSOC_BYTES(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-
-    return (status);
-}
-
-
 static inline as_status AS_SET_ERROR_CASE(void* key_p, void* value_p, void* array_p, void* static_pool)
 {
 }
@@ -374,29 +238,14 @@ exit:
      return status;
 }
 
-static inline as_status AS_DEFAULT_GET(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-//    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, key, value, array, exit);
-exit:
-    return (status);
-}
+#define AS_MAP_TYPE as_map
+#define AS_LIST_TYPE as_list
 
-static inline as_status AS_LIST_GET(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(status, NULL, key, value, array, exit);
-exit:
-    return (status);
-}
-static inline as_status AS_MAP_GET(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, key, value, array, exit);
-exit:
-    return (status);
-}
+#define AS_MAP_FOREACH as_map_foreach
+#define AS_LIST_FOREACH as_list_foreach
 
+#define AS_MAP_FOREACH_CALLBACK as_map_foreach_callback
+#define AS_LIST_FOREACH_CALLBACK as_list_foreach_callback
 
 #define FETCH_VALUE_GET(val) as_val_type(val)
 #define FETCH_VALUE_PUT(val) Z_TYPE_PP(val) // do we want to keep it Z_TYPE_P
@@ -466,10 +315,9 @@ exit:
 /*note : INTEGER, it does not translate to IS_LONG ??? */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET(method, level, action,  \
         err, static_pool, key, value, array, label)                            \
+            printf("\n\n\nAt start\n\n\n");\
     switch (FETCH_VALUE_##method(value)) {                              \
         EXPAND_CASE_GET(level, method, action, UNDEF, key, value,           \
-                array, err, static_pool, label)                         \
-        EXPAND_CASE_GET(level, method, action, UNKNOWN, key, value,         \
                 array, err, static_pool, label)                         \
         EXPAND_CASE_GET(level, method, action, NIL, key, value,             \
                 array, err, static_pool, label)                         \
@@ -490,6 +338,7 @@ exit:
         EXPAND_CASE_GET(level, method, action, BYTES, key, value,           \
                 array, err, static_pool, label)                         \
         default:                                                        \
+            printf("In default");\
             err = AEROSPIKE_ERR_PARAM;                             \
             goto label;                                                 \
     }
@@ -501,6 +350,10 @@ exit:
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(err, static_pool, key, value, array, label) \
     AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, LIST, APPEND, err, static_pool, key, value, array, label) 
 
+#define AS_APPEND_LIST_TO_LIST(key, value, array)  AS_STORE_ITERATE(GET, LIST, APPEND, LIST, key, value, array)
+#define AS_APPEND_MAP_TO_LIST(key, value, array)  AS_STORE_ITERATE(GET, LIST, APPEND, MAP, key, value, array)
+#define AS_ASSOC_LIST_TO_MAP(key, value, array)  AS_STORE_ITERATE(GET, MAP, ASSOC, LIST, key, value, array)
+#define AS_ASSOC_MAP_TO_MAP(key, value, array)  AS_STORE_ITERATE(GET, MAP, ASSOC, MAP, key, value, array)
 
 
 #define MAX_AS_LIST_SIZE   100
@@ -624,50 +477,41 @@ typedef struct data_list_map {
 #define AEROSPIKE_MAP_SET_ASSOC_LIST(store, data_to_be_added, bin_name)      AS_STRINGMAP_SET_ASSOC_LIST(store, data_to_be_added, bin_name)
 #define AEROSPIKE_MAP_SET_ASSOC_MAP(store, data_to_be_added, bin_name)       AS_STRINGMAP_SET_ASSOC_MAP(store, data_to_be_added, bin_name)
 
-#define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool)    ADD_APPEND_NULL(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_UNKNOWN(key, value, array, static_pool)  ADD_APPEND_NULL(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_NIL(key, value, array, static_pool)      ADD_APPEND_NULL(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_BOOLEAN(key, value, array, static_pool)  ADD_APPEND_BOOL(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_INTEGER(key, value, array, static_pool)  ADD_APPEND_LONG(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_STRING(key, value, array, static_pool)   ADD_APPEND_STRING(key, value, array, static_pool)
-#define AEROSPIKE_LIST_GET_APPEND_LIST(key, value, array, static_pool)     ADD_APPEND_LIST(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_MAP(key, value, array, static_pool)      ADD_APPEND_MAP(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_REC(key, value, array, static_pool)      ADD_APPEND_REC(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_PAIR(key, value, array, static_pool)     ADD_APPEND_PAIR(key, value, array, static_pool) 
-#define AEROSPIKE_LIST_GET_APPEND_BYTES(key, value, array, static_pool)    ADD_APPEND_BYTES(key, value, array, static_pool) 
+#define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool)    ADD_APPEND_NULL(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_UNKNOWN(key, value, array, static_pool)  ADD_APPEND_NULL(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_NIL(key, value, array, static_pool)      ADD_APPEND_NULL(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_BOOLEAN(key, value, array, static_pool)  ADD_APPEND_BOOL(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_INTEGER(key, value, array, static_pool)  ADD_APPEND_LONG(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_STRING(key, value, array, static_pool)   ADD_APPEND_STRING(key, value, array)
+#define AEROSPIKE_LIST_GET_APPEND_LIST(key, value, array, static_pool)     ADD_APPEND_LIST(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_MAP(key, value, array, static_pool)      ADD_APPEND_MAP(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_REC(key, value, array, static_pool)      ADD_APPEND_REC(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_PAIR(key, value, array, static_pool)     ADD_APPEND_PAIR(key, value, array) 
+#define AEROSPIKE_LIST_GET_APPEND_BYTES(key, value, array, static_pool)    ADD_APPEND_BYTES(key, value, array) 
 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_UNDEF(key, value, array, static_pool)   ADD_ASSOC_NULL(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_UNKNOWN(key, value, array, static_pool) ADD_ASSOC_NULL(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_NIL(key, value, array, static_pool)     ADD_ASSOC_NULL(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_BOOLEAN(key, value, array, static_pool) ADD_ASSOC_BOOL(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_INTEGER(key, value, array, static_pool) ADD_ASSOC_LONG(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_STRING(key, value, array, static_pool)  ADD_ASSOC_STRING(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_LIST(key, value, array, static_pool)    ADD_ASSOC_LIST(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_MAP(key, value, array, static_pool)     ADD_ASSOC_MAP(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_REC(key, value, array, static_pool)     ADD_ASSOC_REC(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_PAIR(key, value, array, static_pool)    ADD_ASSOC_PAIR(key, value, array, static_pool) 
-#define AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool)   ADD_ASSOC_BYTES(key, value, array, static_pool) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_UNDEF(key, value, array, static_pool)   ADD_ASSOC_NULL(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_UNKNOWN(key, value, array, static_pool) ADD_ASSOC_NULL(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_NIL(key, value, array, static_pool)     ADD_ASSOC_NULL(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_BOOLEAN(key, value, array, static_pool) ADD_ASSOC_BOOL(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_INTEGER(key, value, array, static_pool) ADD_ASSOC_LONG(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_STRING(key, value, array, static_pool)  ADD_ASSOC_STRING(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_LIST(key, value, array, static_pool)    ADD_ASSOC_LIST(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_MAP(key, value, array, static_pool)     ADD_ASSOC_MAP(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_REC(key, value, array, static_pool)     ADD_ASSOC_REC(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_PAIR(key, value, array, static_pool)    ADD_ASSOC_PAIR(key, value, array) 
+#define AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool)   ADD_ASSOC_BYTES(key, value, array) 
 
-#define AEROSPIKE_MAP_GET_ASSOC_UNDEF(key, value, array, static_pool)      AEROSPIKE_DEFAULT_GET_ASSOC_UNDEF(key, value, array, static_pool)   
-#define AEROSPIKE_MAP_GET_ASSOC_UNKNOWN(key, value, array, static_pool)    AEROSPIKE_DEFAULT_GET_ASSOC_UNKNOWN(key, value, array, static_pool)   
-#define AEROSPIKE_MAP_GET_ASSOC_NIL(key, value, array, static_pool)        AEROSPIKE_DEFAULT_GET_ASSOC_NIL(key, value, array, static_pool)  
-#define AEROSPIKE_MAP_GET_ASSOC_BOOLEAN(key, value, array, static_pool)    AEROSPIKE_DEFAULT_GET_ASSOC_BOOLEAN(key, value, array, static_pool)
-#define AEROSPIKE_MAP_GET_ASSOC_INTEGER(key, value, array, static_pool)    AEROSPIKE_DEFAULT_GET_ASSOC_INTEGER(key, value, array, static_pool)
-#define AEROSPIKE_MAP_GET_ASSOC_STRING(key, value, array, static_pool)     AEROSPIKE_DEFAULT_GET_ASSOC_STRING(key, value, array, static_pool) 
-#define AEROSPIKE_MAP_GET_ASSOC_LIST(key, value, array, static_pool)       AEROSPIKE_DEFAULT_GET_ASSOC_LIST(key, value, array, static_pool)  
-#define AEROSPIKE_MAP_GET_ASSOC_MAP(key, value, array, static_pool)        AEROSPIKE_DEFAULT_GET_ASSOC_MAP(key, value, array, static_pool)  
-#define AEROSPIKE_MAP_GET_ASSOC_REC(key, value, array, static_pool)        AEROSPIKE_DEFAULT_GET_ASSOC_REC(key, value, array, static_pool)  
-#define AEROSPIKE_MAP_GET_ASSOC_PAIR(key, value, array, static_pool)       AEROSPIKE_DEFAULT_GET_ASSOC_PAIR(key, value, array, static_pool)  
-#define AEROSPIKE_MAP_GET_ASSOC_BYTES(key, value, array, static_pool)      AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool)
-
-#define AS_MAP as_map
-#define AS_LIST as_list
-
-#define AS_MAP_FOREACH as_map_foreach
-#define AS_LIST_FOREACH as_list_foreach
-
-#define AS_MAP_FOREACH_CALLBACK as_map_foreach_callback
-#define AS_LIST_FOREACH_CALLBACK as_list_foreach_callback
+#define AEROSPIKE_MAP_GET_ASSOC_UNDEF(key, value, array, static_pool)       ADD_ASSOC_MAP_NULL(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_UNKNOWN(key, value, array, static_pool)     ADD_ASSOC_MAP_NULL(key, value, array)    
+#define AEROSPIKE_MAP_GET_ASSOC_NIL(key, value, array, static_pool)         ADD_ASSOC_MAP_NULL(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_BOOLEAN(key, value, array, static_pool)     ADD_ASSOC_MAP_BOOL(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_INTEGER(key, value, array, static_pool)     ADD_ASSOC_MAP_LONG(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_STRING(key, value, array, static_pool)      ADD_ASSOC_MAP_STRING(key, value, array)
+#define AEROSPIKE_MAP_GET_ASSOC_LIST(key, value, array, static_pool)        ADD_ASSOC_LIST(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_MAP(key, value, array, static_pool)         ADD_ASSOC_MAP(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_REC(key, value, array, static_pool)         ADD_ASSOC_MAP_REC(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_PAIR(key, value, array, static_pool)        ADD_ASSOC_MAP_PAIR(key, value, array) 
+#define AEROSPIKE_MAP_GET_ASSOC_BYTES(key, value, array, static_pool)       ADD_ASSOC_MAP_BYTES(key, value, array) 
 
 #define ADD_ASSOC_ZVAL(array, key, store) add_assoc_zval(array, as_string_get((as_string *) key), store)
 #define ADD_APPEND_ZVAL(array, key, store) add_next_index_zval(array, store)
@@ -676,13 +520,9 @@ typedef struct data_list_map {
     zval *store;                                                                                            \
     MAKE_STD_ZVAL(store);                                                                                   \
     array_init(store);                                                                                      \
-    AS_##level##_FOREACH((AS_##level*) value,                                                             \
-            (AS_##level##_FOREACH_CALLBACK) AS_##level##_##method , &store);                                  \
+    AS_##level##_FOREACH((AS_##level##_TYPE*) value,                                                             \
+            (AS_##level##_FOREACH_CALLBACK) AS_##level##_##method##_CALLBACK , &store);                                  \
     ADD_##action##_ZVAL(array, key, store);
 
-#define AS_APPEND_LIST_TO_LIST(key, value, array)  AS_STORE_ITERATE(GET, LIST, APPEND, LIST, key, value, array)
-#define AS_APPEND_MAP_TO_LIST(key, value, array)  AS_STORE_ITERATE(GET, LIST, APPEND, MAP, key, value, array)
-#define AS_ASSOC_LIST_TO_MAP(key, value, array)  AS_STORE_ITERATE(GET, MAP, ASSOC, LIST, key, value, array)
-#define AS_ASSOC_MAP_TO_MAP(key, value, array)  AS_STORE_ITERATE(GET, MAP, ASSOC, MAP, key, value, array)
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */

@@ -178,9 +178,9 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
     if (intern_obj_p) {
     	zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
         efree(intern_obj_p);
-        DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
+//        DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
-        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+//        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         return;
     } 
 }
@@ -256,7 +256,7 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* check and set config policies */
-    if (AEROSPIKE_OK != (set_policy(&config.policies.read, &config.policies.write, options_p))) {
+    if (AEROSPIKE_OK != (set_general_policies(&config, options_p))) {
         error.code = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to set config read/ write policies");
         goto exit;
@@ -294,7 +294,7 @@ PHP_METHOD(Aerospike, __destruct)
     aerospike_destroy(aerospike_obj_p->as_p);
     aerospike_obj_p->as_p = NULL;
 
-    DEBUG_PHP_EXT_INFO("success in creating php-aerospike object")
+    DEBUG_PHP_EXT_INFO("destruct method of aerospike object executed")
 exit:
     /*RETURN_LONG(Z_LVAL(class_constant));*/
     RETURN_LONG(status);

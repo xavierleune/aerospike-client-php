@@ -16,7 +16,7 @@ extern zend_fcall_info_cache func_call_info_cache;
 extern zval                  *func_callback_retval_p;
 extern uint32_t              is_callback_registered;
 
-extern int16_t
+extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
 
@@ -54,7 +54,7 @@ aerospike_transform_iteratefor_hostkey(HashTable* ht_p, zval** retdata_pp);
 extern as_status
 aerospike_transform_key_data_put(aerospike* as_object_p, HashTable* ht_p, as_key* as_key_p, as_error *error_p, zval* options_p);
 
-extern as_status
+as_status
 aerospike_transform_get_record(aerospike* as_object_p,
                                as_key* get_rec_key_p,
                                zval* options_p,
