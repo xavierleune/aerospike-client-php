@@ -1,7 +1,3 @@
----
-title: Aerospike PHP Client Internals
-description: Learn about the internal architecture of the Aerospike PHP Client for the Aerospike database.
----
 
 # Aerospike PHP Client Internal Architecture
 
@@ -83,3 +79,14 @@ created by the following):
 ```
 $my_bin_values = array("bin1"=>"value1", "bin3"=>"value3");
 ```
+
+## Bin Values
+
+### Supported Types
+PHP strings, integers and associative arrays should map directly to the
+equivalent types on the database - string, integer, list, and map.
+
+### Handling Unsupported Types
+PHP values which do not have a directly mappable bin type need to be handled
+in configurable way, whether by calling a specified serializer or by throwing an
+explicit error.
