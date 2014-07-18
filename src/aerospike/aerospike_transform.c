@@ -97,7 +97,7 @@ static as_status ADD_LIST_APPEND_BYTES(void *key, void *value, void *array)
 static as_status ADD_MAP_ASSOC_NULL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    ad_assoc_null(*((zval**)array), as_string_get((as_string *) key));
+    add_assoc_null(*((zval**)array), as_string_get((as_string *) key));
     return (status);
 }
 
@@ -210,12 +210,14 @@ static as_status ADD_LIST_APPEND_MAP(void *key, void *value, void *array)
     AS_APPEND_MAP_TO_LIST(key, value, array);
     return (status);
 }
+
 static as_status ADD_LIST_APPEND_LIST(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     AS_APPEND_LIST_TO_LIST(key, value, array);
     return (status);
 }
+
 static as_status ADD_MAP_ASSOC_MAP(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
@@ -408,6 +410,10 @@ exit:
 
 /* PUT functions whoes macros will expand */
 
+static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool);
+static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool);
+static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool);
+
 as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool)
 {
     as_status status;
@@ -434,6 +440,40 @@ as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool)
 exit:
     return (status);
 }
+
+static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(key, value, store, status,
+           static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(key, value, store, status,
+           static_pool, exit);
+exit:
+    return (status);
+}
+
+static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
+           static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
+           static_pool, exit);
+exit:
+    return (status);
+}
+
+static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
+           static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
+           static_pool, exit);
+exit:
+    return (status);
+}
+
 
 /* End of PUT helper functions */
 
@@ -803,16 +843,17 @@ exit:
 extern as_status
 aerospike_transform_filter_bins_exists(aerospike *as_object_p,
                                        HashTable *bins_array_p,
-                                       as_record *get_record_p,
+                                       as_record **get_record_p,
                                        as_error *error_p,
                                        as_key *get_rec_key_p,
                                        as_policy_read *read_policy_p)
 {
-    int bins_count = zend_hash_num_elements(bins_array_p);
-    const char *select[bins_count];
-    HashPosition pointer;
-    zval **bin_names;
-    uint sel_cnt = 0;
+    int                 bins_count = zend_hash_num_elements(bins_array_p);
+    as_status           status = AEROSPIKE_OK;
+    uint                sel_cnt = 0;
+    const char          *select[bins_count];
+    HashPosition        pointer;
+    zval                **bin_names;
     
     foreach_hashtable (bins_array_p, pointer, bin_names) {
         switch (Z_TYPE_PP(bin_names)) {
@@ -820,18 +861,18 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
                 select[sel_cnt++] = Z_STRVAL_PP(bin_names);
                 break;
             default:
-                error_p->code = AEROSPIKE_ERR_PARAM;
+                status = AEROSPIKE_ERR_PARAM;
                 goto exit;
         }
     }
     
     select[bins_count] = NULL;
-    if (aerospike_key_select(as_object_p, error_p, read_policy_p, get_rec_key_p,
-        select, &get_record_p) != AEROSPIKE_OK) {
-        error_p->code = AEROSPIKE_ERR_PARAM;
+    if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p, error_p, read_policy_p, get_rec_key_p,
+        select, get_record_p))) {
+        goto exit;
     }
 exit:
-    return (error_p->code);
+    return status;
 }
 
 as_status
@@ -855,17 +896,17 @@ aerospike_transform_get_record(aerospike* as_object_p,
         goto exit;
     }
 
-    if (bins_p != NULL && AEROSPIKE_OK != aerospike_transform_filter_bins_exists(
-            as_object_p, Z_ARRVAL_P(bins_p), get_record, error_p, get_rec_key_p,
-            &read_policy)) {
+    if (bins_p != NULL && (AEROSPIKE_OK != (status = aerospike_transform_filter_bins_exists(
+            as_object_p, Z_ARRVAL_P(bins_p), &get_record, error_p, get_rec_key_p,
+            &read_policy)))) {
         goto exit;
-    } else if (aerospike_key_get(as_object_p, error_p, &read_policy, get_rec_key_p,
-                &get_record) != AEROSPIKE_OK) {
+    } else if (AEROSPIKE_OK != (status = aerospike_key_get(as_object_p, error_p, &read_policy, get_rec_key_p,
+                &get_record))) {
         goto exit;
     }
     if (!as_record_foreach(get_record, (as_rec_foreach_callback) AS_DEFAULT_GET,
         get_record_p)) {
-        error_p->code = AEROSPIKE_ERR_SERVER;
+        status = AEROSPIKE_ERR_SERVER;
         goto exit;
     }
 

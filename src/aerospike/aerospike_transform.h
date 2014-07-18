@@ -67,7 +67,7 @@
 
 #define CURRENT_LIST_SIZE(static_pool)                                         \
     ((as_static_pool *)static_pool)->current_list_id
-#define CURRNET_MAP_SIZE(static_pool)                                          \
+#define CURRENT_MAP_SIZE(static_pool)                                          \
     ((as_static_pool *)static_pool)->current_map_id
 
 #define CURRENT_LIST_POOL(static_pool)                                         \
@@ -82,11 +82,13 @@
 
 #define INIT_MAP_IN_POOL(store, htable)                                        \
     store = as_hashmap_init((as_hashmap *)store, AEROSPIKE_HASHMAP_BUCKET_SIZE);
-
-#define INIT_STORE(store, static_pool, htable, level)                          \
-    if (AS_MAX_STORE_SIZE > CURRENT_##level##_SIZE(static_pool)) {             \
+/*
         store = (void *) CURRENT_##level##_POOL(static_pool)                   \
                 [CURRENT_##level##_SIZE(static_pool)++];                       \
+*/
+#define INIT_STORE(store, static_pool, htable, level)                          \
+    if (AS_MAX_STORE_SIZE > CURRENT_##level##_SIZE(static_pool)) {             \
+        store = NULL;                                                         \
         INIT_##level##_IN_POOL(store, htable);                                 \
     }
 
@@ -264,18 +266,6 @@ typedef struct list_map_static_pool {
             AEROSPIKE_PROCESS_ARRAY(LIST, DEFAULT, ASSOC, label, key, value,   \
                     store, status, static_pool)
 
-static inline as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key,
-        void *value, void *store, void *static_pool)
-{
-    as_status status;
-    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(key, value, store, status,
-            static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(key, value, store, status,
-            static_pool, exit);
-exit:
-    return (status);
-}
-
 #define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store,               \
         status, static_pool, label)                                            \
             AEROSPIKE_PROCESS_ARRAY(MAP, MAP, ASSOC, label, key, value,        \
@@ -285,18 +275,6 @@ exit:
         status, static_pool, label)                                            \
             AEROSPIKE_PROCESS_ARRAY(LIST, MAP, ASSOC, label, key, value,       \
                     store, status, static_pool)
-
-static inline as_status AS_MAP_PUT_ASSOC_ARRAY(void *key,
-        void *value, void *store, void *static_pool)
-{
-    as_status status;
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
-            static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
-            static_pool, exit);
-exit:
-    return (status);
-}
 
 #define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_MAP(key, value, store,             \
         status, static_pool, label)                                            \
@@ -308,17 +286,6 @@ exit:
             AEROSPIKE_PROCESS_ARRAY(LIST, LIST, APPEND, label, key, value,     \
                     store, status, static_pool)
 
-static inline as_status AS_LIST_PUT_APPEND_ARRAY(void *key,
-        void *value, void *store, void *static_pool)
-{
-    as_status status;
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
-            static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
-            static_pool, exit);
-exit:
-    return (status);
-}
 /* Misc function calls to set inner store  */
 
 #define AEROSPIKE_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name)     \
@@ -365,7 +332,7 @@ exit:
     AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool)       \
-    AS_DEFAULT_PUT_ASSOCINT64(key, value, array, static_pool)
+    AS_DEFAULT_PUT_ASSOC_INT64(key, value, array, static_pool)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_STRING(key, value, array, static_pool)     \
     AS_DEFAULT_PUT_ASSOC_STR(key, value, array, static_pool)
@@ -493,7 +460,7 @@ exit:
     ADD_MAP_ASSOC_LIST(key, value, array)
 
 #define AEROSPIKE_MAP_GET_ASSOC_MAP(key, value, array, static_pool)            \
-    ADD_MAP_ASSOC(key, value, array)
+    ADD_MAP_ASSOC_MAP(key, value, array)
 
 #define AEROSPIKE_MAP_GET_ASSOC_REC(key, value, array, static_pool)            \
     ADD_MAP_ASSOC_REC(key, value, array)
@@ -519,7 +486,7 @@ do {                                                                           \
     AS_##datatype##_FOREACH((AS_##datatype##_DATATYPE*) value,                 \
             (AS_##datatype##_FOREACH_CALLBACK)                                 \
             AS_##datatype##_##method##_CALLBACK, &store);                      \
-    ADD_##action##_ZVAL(array, key, store);                                    \
+    ADD_##level##_ZVAL(array, key, store);                                    \
 } while(0);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
