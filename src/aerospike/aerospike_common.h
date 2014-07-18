@@ -50,7 +50,7 @@ extern as_status
 aerospike_transform_iteratefor_hostkey(HashTable* ht_p, zval** retdata_pp);
 
 extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p, HashTable* ht_p, as_key* as_key_p, as_error *error_p, zval* options_p);
+aerospike_transform_key_data_put(aerospike* as_object_p, zval **record_pp, as_key* as_key_p, as_error *error_p, zval* options_p);
 
 as_status
 aerospike_transform_get_record(aerospike* as_object_p,

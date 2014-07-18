@@ -29,150 +29,134 @@
 #define PHP_IS_STRING(type) (IS_STRING == type)
 #define PHP_IS_LONG(type) (IS_LONG == type)
 
-static as_status AS_LIST_GET_CALLBACK(void *key, void *value, void *array);
-static as_status AS_MAP_GET_CALLBACK(void *key, void *value, void *array);
+as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool);
+as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool);
+as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool);
+bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
+bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
 
-static as_status ADD_APPEND_MAP(void *key, void *value, void *array)
+/* GET helper functions */
+
+/* Wrappers for appeding datatype to List */
+
+static as_status ADD_LIST_APPEND_NULL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AS_APPEND_MAP_TO_LIST(key, value, array);
-    return (status);
-}
-static as_status ADD_APPEND_LIST(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AS_APPEND_LIST_TO_LIST(key, value, array);
-    return (status);
-}
-static as_status ADD_ASSOC_MAP(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    AS_ASSOC_MAP_TO_MAP(key, value, array);
+    add_next_index_null(*((zval**)array));
     return (status);
 }
 
-static as_status ADD_ASSOC_LIST(void *key, void *value, void *array)
+static as_status ADD_LIST_APPEND_BOOL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AS_ASSOC_LIST_TO_MAP(key, value, array);
-    return (status);
-}
-
-static as_status ADD_APPEND_NULL(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_next_index_null(((zval*)array));
-    return (status);
-}
-
-static as_status ADD_APPEND_BOOL(void *key, void *value, void *array)
-{
-    as_status status = AEROSPIKE_OK;
-    add_next_index_bool(((zval*)array),
+    add_next_index_bool(*((zval**)array),
             (int8_t) as_boolean_get((as_boolean *) value));
     return (status);
 }
 
-static as_status ADD_APPEND_LONG(void *key, void *value, void *array)
+static as_status ADD_LIST_APPEND_LONG(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_next_index_bool(((zval*)array),
+    add_next_index_long(*((zval**)array),
             (long) as_integer_get((as_integer *) value));
     return (status);
 }
 
-static as_status ADD_APPEND_STRING(void *key, void *value, void *array)
+static as_status ADD_LIST_APPEND_STRING(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_next_index_stringl(((zval*)array),
+    add_next_index_stringl(*((zval**)array),
             as_string_get((as_string *) value),
             strlen(as_string_get((as_string *) value)), 1);
     return (status);
 }
 
-static as_status ADD_APPEND_REC(void *key, void *value, void *array)
+static as_status ADD_LIST_APPEND_REC(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_APPEND_PAIR(void *key, void *value, void *array)
+static as_status ADD_LIST_APPEND_PAIR(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_APPEND_BYTES(void *key, void *value, void *array)
+static as_status ADD_LIST_APPEND_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
+/* Wrappers for associating datatype with Map */
 
-static as_status ADD_ASSOC_MAP_NULL(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_NULL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_null(((zval*)array), as_string_get((as_string *) key));
+    ad_assoc_null(*((zval**)array), as_string_get((as_string *) key));
     return (status);
 }
 
-static as_status ADD_ASSOC_MAP_BOOL(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_BOOL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_bool(((zval*)array), as_string_get((as_string *) key),
+    add_assoc_bool(*((zval**)array), as_string_get((as_string *) key),
             (int) as_boolean_get((as_boolean *) value));
     return (status);
 }
 
-as_status ADD_ASSOC_MAP_LONG(void *key, void *value, void *array)
+as_status ADD_MAP_ASSOC_LONG(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_long(((zval*)array),  as_string_get((as_string *) key),
+    add_assoc_long(*((zval**)array),  as_string_get((as_string *) key),
             (long) as_integer_get((as_integer *) value));
     return (status);
 }
 
-static as_status ADD_ASSOC_MAP_STRING(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_STRING(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_stringl(((zval*)array), as_string_get((as_string *) key),
+    add_assoc_stringl(*((zval**)array), as_string_get((as_string *) key),
             as_string_get((as_string *) value),
             strlen(as_string_get((as_string *) value)), 1);
     return (status);
 }
 
-static as_status ADD_ASSOC_MAP_REC(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_REC(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_ASSOC_MAP_PAIR(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_PAIR(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_ASSOC_MAP_BYTES(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_ASSOC_NULL(void *key, void *value, void *array)
+/* Wrappers for associating datatype with Record */
+
+static as_status ADD_DEFAULT_ASSOC_NULL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_null(((zval*)array), as_string_get((as_string *) key));
+    add_assoc_null(((zval*)array), (char *) key);
     return (status);
 }
 
-static as_status ADD_ASSOC_BOOL(void *key, void *value, void *array)
+static as_status ADD_DEFAULT_ASSOC_BOOL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     add_assoc_bool(((zval*)array), (char*) key,
@@ -180,7 +164,7 @@ static as_status ADD_ASSOC_BOOL(void *key, void *value, void *array)
     return (status);
 }
 
-as_status ADD_ASSOC_LONG(void *key, void *value, void *array)
+as_status ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     add_assoc_long(((zval*)array),  (char*) key,
@@ -188,7 +172,7 @@ as_status ADD_ASSOC_LONG(void *key, void *value, void *array)
     return (status);
 }
 
-static as_status ADD_ASSOC_STRING(void *key, void *value, void *array)
+static as_status ADD_DEFAULT_ASSOC_STRING(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     add_assoc_stringl(((zval*)array), (char*) key,
@@ -197,28 +181,70 @@ static as_status ADD_ASSOC_STRING(void *key, void *value, void *array)
     return (status);
 }
 
-static as_status ADD_ASSOC_REC(void *key, void *value, void *array)
+static as_status ADD_DEFAULT_ASSOC_REC(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_ASSOC_PAIR(void *key, void *value, void *array)
+static as_status ADD_DEFAULT_ASSOC_PAIR(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
-static as_status ADD_ASSOC_BYTES(void *key, void *value, void *array)
+static as_status ADD_DEFAULT_ASSOC_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
     return (status);
 }
 
+/* GET helper functions with expanding macros */
 
+static as_status ADD_LIST_APPEND_MAP(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_APPEND_MAP_TO_LIST(key, value, array);
+    return (status);
+}
+static as_status ADD_LIST_APPEND_LIST(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_APPEND_LIST_TO_LIST(key, value, array);
+    return (status);
+}
+static as_status ADD_MAP_ASSOC_MAP(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_ASSOC_MAP_TO_MAP(key, value, array);
+    return (status);
+}
+
+static as_status ADD_MAP_ASSOC_LIST(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_ASSOC_LIST_TO_MAP(key, value, array);
+    return (status);
+}
+
+static as_status ADD_DEFAULT_ASSOC_MAP(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_ASSOC_MAP_TO_DEFAULT(key, value, array);
+    return (status);
+}
+
+static as_status ADD_DEFAULT_ASSOC_LIST(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_ASSOC_LIST_TO_DEFAULT(key, value, array);
+    return (status);
+}
+
+/* GET callback methods where switch case will expand */
 
 bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
 {
@@ -227,14 +253,15 @@ bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
 exit:
     return (true);
 }
-as_status AS_LIST_GET_CALLBACK(void *key, void *value, void *array)
+
+bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(status, NULL, key, value, array, exit);
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(status, NULL, NULL, value, array, exit);
 exit:
-    return (status);
+    return (true);
 }
-as_status AS_MAP_GET_CALLBACK(void *key, void *value, void *array)
+bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, key, value, array, exit);
@@ -242,7 +269,173 @@ exit:
     return (status);
 }
 
+/* End of helper functions for GET */
 
+/* PUT helper functions */
+
+/* Misc SET calls for GET and PUT */
+
+static void AS_ARRAYLIST_SET_APPEND_LIST(void* store, void* data_to_be_added, void* bin_name)
+{
+    as_arraylist_append_list((as_arraylist *)store, (as_list*) data_to_be_added);
+}
+
+static void AS_ARRAYLIST_SET_APPEND_MAP(void* store, void* data_to_be_added, void* bin_name)
+{
+    as_arraylist_append_map((as_arraylist *)store, (as_map*) data_to_be_added);
+}
+
+static void AS_DEFAULT_SET_ASSOC_LIST(void* store, void* data_to_be_added, void* bin_name)
+{
+    as_record_set_list((as_record *)store, (int8_t*)bin_name, (as_list *) data_to_be_added);
+}
+
+static void AS_DEFAULT_SET_ASSOC_MAP(void* store, void* data_to_be_added, void* bin_name)
+{
+    as_record_set_map((as_record *)store, (int8_t*)bin_name, (as_map *) data_to_be_added);
+}
+
+static void AS_STRINGMAP_SET_ASSOC_LIST(void* store, void* data_to_be_added, void* bin_name)
+{
+    as_stringmap_set_list((as_map *)store, bin_name, (as_list *) data_to_be_added);
+}
+
+static void AS_STRINGMAP_SET_ASSOC_MAP(void* store, void* data_to_be_added, void* bin_name)
+{
+    as_stringmap_set_map((as_map *)store, bin_name, (as_map *)data_to_be_added);
+}
+
+/* Wrappers for appeding datatype to List */
+
+static as_status AS_SET_ERROR_CASE(void* key, void* value, void* array, void* static_pool)
+{
+    return AEROSPIKE_ERR;
+}
+
+static as_status AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array, void *static_pool)
+{
+     as_arraylist_append_int64((as_arraylist *)value, (int64_t)Z_LVAL_P((zval*)array));
+     return AEROSPIKE_OK;
+}
+ 
+static as_status AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array, void *static_pool)
+{
+     as_arraylist_append_str((as_arraylist *)value, Z_STRVAL_P((zval*)array));
+}
+
+static as_status AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array, void *static_pool)
+{
+    as_status    status = AEROSPIKE_OK;
+    AS_LIST_PUT(key, value, array, static_pool);
+exit:
+    return status;
+}
+ 
+static as_status AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array, void *static_pool) 
+{
+    as_status    status = AEROSPIKE_OK;
+    AS_LIST_PUT(key, value, array, static_pool);
+exit:
+    return status;
+}
+
+/* Wrappers for associating datatype with Record */
+
+static as_status AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array, void* static_pool)
+{
+    /* value holds the name of the bin*/
+    as_record_set_nil((as_record *)(key), (int8_t *)value);
+    return AEROSPIKE_OK;
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array, void* static_pool)
+{
+    as_record_set_int64((as_record *)array, (int8_t *)key, (int64_t) Z_LVAL_P((zval*)value)); //changed from Z_LVAL_PP to Z_LVAL_P
+    return AEROSPIKE_OK;
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array, void *static_pool)
+{
+    as_record_set_str((as_record *)array, (int8_t *)key, (char *) Z_STRVAL_P((zval*)value));
+    return AEROSPIKE_OK;;
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array, void *static_pool)
+{
+     as_status    status = AEROSPIKE_OK;
+     AS_DEFAULT_PUT(key, value, array, static_pool);
+exit:
+    return status; 
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array, void *static_pool)
+{
+     as_status    status = AEROSPIKE_OK;
+     AS_DEFAULT_PUT(key, value, array, static_pool);
+exit:
+    return status;
+}
+
+/* Wrappers for associating datatype with MAP */
+
+static as_status AS_MAP_PUT_ASSOC_INT64(void *key, void *value, void *store, void *static_pool)
+{
+    as_stringmap_set_int64((as_map*)store, (char *)key, Z_LVAL_PP((zval**)value));
+    return AEROSPIKE_OK;
+}
+
+static as_status AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store, void *static_pool)
+{
+    as_stringmap_set_str((as_map*)store, (char*)key, Z_STRVAL_PP((zval**)value));
+    return AEROSPIKE_ERR;
+}
+
+static as_status AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store, void *static_pool)
+{
+    as_status    status = AEROSPIKE_OK;
+    status = AS_MAP_PUT(key, value, store, static_pool);
+exit:
+    return status;
+}
+
+static as_status AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store, void *static_pool)
+{
+    as_status    status = AEROSPIKE_OK;
+    status = AS_MAP_PUT(key, value, store, static_pool);
+exit:
+     return status;
+}
+
+/* PUT functions whoes macros will expand */
+
+as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool)
+{
+    as_status status;
+    AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(status, static_pool,
+            key, ((zval**)value), record, exit);
+exit:
+    return (true);
+}
+
+as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(status, static_pool,
+            key, ((zval**)value), store, exit);
+exit:
+    return (status);
+}
+
+as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool)
+{
+    as_status status = AEROSPIKE_OK;
+    AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(status, ((as_static_pool*)static_pool),
+            key, ((zval**)value), store, exit);
+exit:
+    return (status);
+}
+
+/* End of PUT helper functions */
 
 typedef as_status (*aerospike_transform_key_callback)(HashTable* ht_p,
                                                       u_int32_t key_data_type_u32, 
@@ -536,25 +729,19 @@ exit:
 }
 
 static as_status
-aerospike_transform_iterate_records(HashTable* ht_p, as_record* record_p, as_data_list_map_struct*  pre_stackalloc_data_p)
+aerospike_transform_iterate_records(zval **record_pp, as_record* record, as_static_pool*  static_pool)
 {
     as_status          status = AEROSPIKE_OK;
-    HashPosition       hashPosition_p = NULL;
-    zval**             record_pp = NULL;
+    char*               key = NULL;
 
-    if ((!ht_p) || !(record_p) || !(pre_stackalloc_data_p)) {
+    if ((!record_pp) || !(record) || !(static_pool)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    foreach_hashtable(ht_p, hashPosition_p, record_pp) {
-        u_int32_t     bin_name_len_u32 = 0;
-        int8_t*       bin_name_p = NULL;
-        u_int64_t     index_u64 = 0;
-        u_int32_t     key_type_u32 = zend_hash_get_current_key_ex(ht_p, (char **)&bin_name_p, &bin_name_len_u32,
-                                                                  &index_u64, 0, &hashPosition_p);
-        /* switch case statements for put for zend related data types */
-        AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(status, pre_stackalloc_data_p, bin_name_p, record_pp, record_p, exit);
+    /* switch case statements for put for zend related data types */
+    if (AEROSPIKE_OK != (status = AS_DEFAULT_PUT(key, record_pp, record, static_pool))) {
+        goto exit;
     }
 
 exit:
@@ -563,27 +750,24 @@ exit:
 
 extern as_status
 aerospike_transform_key_data_put(aerospike* as_object_p,
-                                 HashTable* ht_p,
+                                 zval **record_pp,
                                  as_key* as_key_p,
                                  as_error *error_p,
                                  zval* options_p)
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_write             write_policy;
-    as_data_list_map_struct     list_map_data = {0};
-    as_record                   record;
-    int16_t                     initialize_16 = 0;
+    as_static_pool              static_pool = {0};
+    as_record*                  record;
     u_int32_t                   iter = 0;
 
-    if ((!ht_p) || (!as_key_p) || (!error_p) || (!as_object_p)) {
+    if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    as_record_inita(&record, zend_hash_num_elements(ht_p));
-    initialize_16 = 1; /* indicates record has been initialized*/
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(ht_p, &record, &list_map_data))) {
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(record_pp, record, &static_pool))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
@@ -593,24 +777,24 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, &record))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, record))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
 exit:
     /* clean up the as_* objects that were initialised */
-    for (iter = 0; iter < list_map_data.current_list_idx_u32; iter++) {
-        as_arraylist_destroy(&list_map_data.alloc_list[iter]);
+    for (iter = 0; iter < static_pool.current_list_id; iter++) {
+        as_arraylist_destroy(&static_pool.alloc_list[iter]);
     }
 
-    for (iter = 0; iter < list_map_data.current_map_idx_u32; iter++) {
-        as_hashmap_destroy(&list_map_data.alloc_map[iter]);
+    for (iter = 0; iter < static_pool.current_map_id; iter++) {
+        as_hashmap_destroy(&static_pool.alloc_map[iter]);
     }
 
     /*policy_write, should it be destroyed ??? */
-    if (1 == initialize_16) {
-        as_record_destroy(&record);
+    if (record) {
+        as_record_destroy(record);
     }
 
     return status;
