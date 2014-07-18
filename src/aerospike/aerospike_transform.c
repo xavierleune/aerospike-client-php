@@ -627,6 +627,7 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
     int bins_count = zend_hash_num_elements(bins_array_p);
     const char *select[bins_count];
     HashPosition pointer;
+    as_status    status = AEROSPIKE_OK;
     zval **bin_names;
     uint sel_cnt = 0;
     
@@ -636,18 +637,18 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
                 select[sel_cnt++] = Z_STRVAL_PP(bin_names);
                 break;
             default:
-                error_p->code = AEROSPIKE_ERR_PARAM;
+                status = AEROSPIKE_ERR_PARAM;
                 goto exit;
         }
     }
     
     select[bins_count] = NULL;
-    if (aerospike_key_select(as_object_p, error_p, read_policy_p, get_rec_key_p,
-        select, &get_record_p) != AEROSPIKE_OK) {
-        error_p->code = AEROSPIKE_ERR_PARAM;
+    if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p, error_p, read_policy_p, get_rec_key_p,
+        select, &get_record_p))) {
+        goto exit;
     }
 exit:
-    return (error_p->code);
+    return status;
 }
 
 as_status
@@ -671,17 +672,17 @@ aerospike_transform_get_record(aerospike* as_object_p,
         goto exit;
     }
 
-    if (bins_p != NULL && AEROSPIKE_OK != aerospike_transform_filter_bins_exists(
+    if (bins_p != NULL && (AEROSPIKE_OK != (status = aerospike_transform_filter_bins_exists(
             as_object_p, Z_ARRVAL_P(bins_p), get_record, error_p, get_rec_key_p,
-            &read_policy)) {
+            &read_policy)))) {
         goto exit;
-    } else if (aerospike_key_get(as_object_p, error_p, &read_policy, get_rec_key_p,
-                &get_record) != AEROSPIKE_OK) {
+    } else if (AEROSPIKE_OK != (status = aerospike_key_get(as_object_p, error_p, &read_policy, get_rec_key_p,
+                &get_record))) {
         goto exit;
     }
     if (!as_record_foreach(get_record, (as_rec_foreach_callback) AS_DEFAULT_GET,
         get_record_p)) {
-        error_p->code = AEROSPIKE_ERR_SERVER;
+        status = AEROSPIKE_ERR_SERVER;
         goto exit;
     }
 

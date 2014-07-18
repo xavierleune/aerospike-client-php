@@ -40,6 +40,9 @@ extern as_log_level   php_log_level_set;
 #define DEBUG_PHP_EXT_INFO(var_args, ...)
 #endif
 
+#define AEROSPIKE_CONN_STATE_TRUE   1
+#define AEROSPIKE_CONN_STATE_FALSE  0
+
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p, int16_t* set_val_p);
 
@@ -61,8 +64,8 @@ aerospike_transform_get_record(aerospike* as_object_p,
                                zval* bins_p);
 
 extern as_status
-aerospike_rec_opp_exist(aerospike* as_object_p,as_key* as_key_p,as_error *error_p);
+aerospike_rec_opp_exist(aerospike* as_object_p, as_key* as_key_p, as_error *error_p);
 extern as_status
-aerospike_rec_opp_delete(aerospike* as_object_p,as_key* as_key_p,as_error *error_p);
+aerospike_rec_opp_delete(aerospike* as_object_p, as_key* as_key_p, as_error *error_p);
 
 #endif

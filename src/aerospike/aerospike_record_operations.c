@@ -54,7 +54,6 @@ extern as_status aerospike_rec_opp_delete(aerospike* as_object_p,
 
 
     if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p, NULL, as_key_p))) {
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
