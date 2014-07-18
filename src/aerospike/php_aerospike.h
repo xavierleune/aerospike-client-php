@@ -74,11 +74,12 @@ PHP_METHOD(Aerospike, get);
 PHP_METHOD(Aerospike, getMany);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
+PHP_METHOD(Aerospike, initkey);
+PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, touch);
-PHP_METHOD(Aerospike, initkey);
 // Logging APIs:
 
 PHP_METHOD(Aerospike, setLogLevel);

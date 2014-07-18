@@ -128,11 +128,12 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, exists, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, get, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getHeader, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, increment, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, initkey, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, operate, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, touch, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, initkey, NULL, ZEND_ACC_PUBLIC)
     /*
      *  Logging APIs:
      */
@@ -493,25 +494,71 @@ PHP_METHOD(Aerospike, add)
 }
 
 /* PHP Method:  bool Aerospike::append()
-   Append bin string values to existing record bin values. */
+ *    Append bin string values to existing record bin values. */
 PHP_METHOD(Aerospike, append)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    zval*                  options_p = NULL;
+    zval*                  bin_p = NULL;
+    as_error               err;
+    as_key                 as_key_for_get_record;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p;
+    char*                  append_str_p;
+    long                    bin_name_len;
+    long                    append_str_len;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    // DEBUG
-    log_info("**In Aerospike::append() method**\n");
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
+        goto exit;
+    }
 
-    /*** TO BE IMPLEMENTED ***/
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
+        &key_record_p, &bin_name_p, &bin_name_len,
+        &append_str_p, &append_str_len, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for append function ");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                                                                                  &as_key_for_get_record,
+                                                                                  &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for append function ");
+        goto exit;
+    }
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_p,
+                                                                  &as_key_for_get_record,
+                                                                  options_p,
+                                                                  &err,
+                                                                  bin_name_p,
+                                                                  append_str_p,
+                                                                  0,
+                                                                  0,
+                                                                  0,
+                                                                  AS_OPERATOR_APPEND))) {
+        DEBUG_PHP_EXT_ERROR("Append function returned an error ");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_get_record);
+    }
+    RETURN_LONG(status);
+
 }
+
 
 /* PHP Method:  bool Aerospike::delete()
    Delete record for specified key. */
 PHP_METHOD(Aerospike, delete)
 {
-
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     zval*                  key_record_p = NULL;
@@ -538,7 +585,7 @@ PHP_METHOD(Aerospike, delete)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_rec_opp_delete(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_delete(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
         goto exit;
@@ -549,8 +596,6 @@ exit:
         as_key_destroy(&as_key_for_put_record);
     }
     RETURN_LONG(status);
-
-
 }
 
 /* PHP Method:  bool Aerospike::exists()
@@ -583,7 +628,7 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_rec_opp_exist(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_exist(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
         goto exit;
@@ -594,9 +639,6 @@ exit:
         as_key_destroy(&as_key_for_put_record);
     }
     RETURN_LONG(status);
-
-
-
 }
 
 
@@ -631,34 +673,179 @@ PHP_METHOD(Aerospike, operate)
 }
 
 /* PHP Method:  bool Aerospike::prepend()
-   Prepend bin string values to existing record bin values. */
+ *    Prepend bin string values to existing record bin values. */
 PHP_METHOD(Aerospike, prepend)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    zval*                  options_p = NULL;
+    zval*                  bin_p = NULL;
+    as_error               err;
+    as_key                 as_key_for_get_record;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p;
+    char*                  prepend_str_p;
+    long                   bin_name_len;
+    long                   prepend_str_len;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    // DEBUG
-    log_info("**In Aerospike::prepend() method**\n");
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
+        goto exit;
+    }
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
+        &key_record_p, &bin_name_p, &bin_name_len,
+        &prepend_str_p, &prepend_str_len, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for prepend function ");
+        goto exit;
+    }
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                                                                                  &as_key_for_get_record,
+                                                                                  &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for prepend function ");
+        goto exit;
+    }
 
-    /*** TO BE IMPLEMENTED ***/
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_p,
+                                                                  &as_key_for_get_record,
+                                                                  options_p,
+                                                                  &err,
+                                                                  bin_name_p,
+                                                                  prepend_str_p,
+                                                                  0,
+                                                                  0,
+                                                                  0,
+                                                                  AS_OPERATOR_PREPEND))) {
+        DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_get_record);
+    }
+    RETURN_LONG(status);
 }
 
+/* PHP Method:  bool Aerospike::increment()
+ *  *    Create record if it does not already exist. */
+PHP_METHOD(Aerospike, increment)
+{
+    as_status              status = AEROSPIKE_OK;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    zval*                  options_p = NULL;
+    zval*                  bin_p = NULL;
+    as_error               err;
+    as_key                 as_key_for_get_record;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p;
+    int                    bin_name_len;
+    long                   offset = 0;
+    long                   initial_value = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|la",
+        &key_record_p, &bin_name_p, &bin_name_len,
+        &offset, &initial_value, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for increment function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                                                                                  &as_key_for_get_record,
+                                                                                  &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for increment function ");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_p,
+                                                                  &as_key_for_get_record,
+                                                                  options_p,
+                                                                  &err,
+                                                                  bin_name_p,
+                                                                  NULL,
+                                                                  offset,
+                                                                  initial_value,
+                                                                  0,
+                                                                  AS_OPERATOR_INCR))) {
+        DEBUG_PHP_EXT_ERROR("Increment function returned an error ");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_get_record);
+    }
+    RETURN_LONG(status);
+}
 
 /* PHP Method:  bool Aerospike::touch()
-   Create record if it does not already exist. */
+ *    Create record if it does not already exist. */
 PHP_METHOD(Aerospike, touch)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    zval*                  key_record_p = NULL;
+    zval*                  record_p = NULL;
+    zval*                  options_p = NULL;
+    zval*                  bin_p = NULL;
+    as_error               err;
+    as_key                 as_key_for_get_record;
+    int16_t                initializeKey = 0;
+    long                   time_to_live;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    // DEBUG
-    log_info("**In Aerospike::touch() method**\n");
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
+        goto exit;
+    }
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zl|a",
+        &key_record_p, &time_to_live, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for touch function ");
+        goto exit;
+    }
 
-    /*** TO BE IMPLEMENTED ***/
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                                                                                  &as_key_for_get_record,
+                                                                                  &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for touch function ");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_p,
+                                                                  &as_key_for_get_record,
+                                                                  options_p,
+                                                                  &err,
+                                                                  NULL,
+                                                                  NULL,
+                                                                  0,
+                                                                  0,
+                                                                  time_to_live,
+                                                                  AS_OPERATOR_TOUCH))) {
+        DEBUG_PHP_EXT_ERROR("Touch function returned an error ");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_get_record);
+    }
+    RETURN_LONG(status);
 }
 
 /* PHP Method:  bool Aerospike::initkey()
