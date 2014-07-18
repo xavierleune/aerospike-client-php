@@ -275,34 +275,34 @@ exit:
 
 /* Misc SET calls for GET and PUT */
 
-static void AS_ARRAYLIST_SET_APPEND_LIST(void* store, void* data_to_be_added, void* bin_name)
+static void AS_LIST_SET_APPEND_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_arraylist_append_list((as_arraylist *)store, (as_list*) data_to_be_added);
+    as_arraylist_append_list((as_arraylist *)outer_store, (as_list*) inner_store);
 }
 
-static void AS_ARRAYLIST_SET_APPEND_MAP(void* store, void* data_to_be_added, void* bin_name)
+static void AS_LIST_SET_APPEND_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_arraylist_append_map((as_arraylist *)store, (as_map*) data_to_be_added);
+    as_arraylist_append_map((as_arraylist *)outer_store, (as_map*) inner_store);
 }
 
-static void AS_DEFAULT_SET_ASSOC_LIST(void* store, void* data_to_be_added, void* bin_name)
+static void AS_DEFAULT_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_record_set_list((as_record *)store, (int8_t*)bin_name, (as_list *) data_to_be_added);
+    as_record_set_list((as_record *)outer_store, (int8_t*)bin_name, (as_list *) inner_store);
 }
 
-static void AS_DEFAULT_SET_ASSOC_MAP(void* store, void* data_to_be_added, void* bin_name)
+static void AS_DEFAULT_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_record_set_map((as_record *)store, (int8_t*)bin_name, (as_map *) data_to_be_added);
+    as_record_set_map((as_record *)outer_store, (int8_t*)bin_name, (as_map *) inner_store);
 }
 
-static void AS_STRINGMAP_SET_ASSOC_LIST(void* store, void* data_to_be_added, void* bin_name)
+static void AS_MAP_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_stringmap_set_list((as_map *)store, bin_name, (as_list *) data_to_be_added);
+    as_stringmap_set_list((as_map *)outer_store, bin_name, (as_list *) inner_store);
 }
 
-static void AS_STRINGMAP_SET_ASSOC_MAP(void* store, void* data_to_be_added, void* bin_name)
+static void AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_stringmap_set_map((as_map *)store, bin_name, (as_map *)data_to_be_added);
+    as_stringmap_set_map((as_map *)outer_store, bin_name, (as_map *)inner_store);
 }
 
 /* Wrappers for appeding datatype to List */

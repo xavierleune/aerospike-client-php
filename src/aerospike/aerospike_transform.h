@@ -108,7 +108,7 @@
 #define AS_MAP_KEY record
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action, err,           \
-        static_pool, key, value, record, label)                                \
+        static_pool, key, value, store, label)                                 \
 do {                                                                           \
     HashTable *htable;                                                         \
     int htable_count;                                                          \
@@ -116,10 +116,7 @@ do {                                                                           \
     zval **dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
-    void *store = AS_##level##_STORE;                                          \
-    as_record *rec = (as_record*) record;                                      \
     htable = Z_ARRVAL_PP((zval**) value);                                      \
-    AS_##level##_INIT_STORE(store, htable, static_pool);                       \
     foreach_hashtable(htable, pointer, dataval) {                              \
         AERO_##level##_KEY(htable, key, key_len, index, pointer)               \
         switch (FETCH_VALUE_##method(dataval)) {                               \
@@ -240,6 +237,8 @@ typedef struct list_map_static_pool {
     HashTable *htable;                                                         \
     HashPosition pointer;                                                      \
     char *key = NULL;                                                          \
+    void *inner_store;                                                         \
+    AS_##level##_INIT_STORE(inner_store, htable, static_pool);                 \
     uint key_len;                                                              \
     ulong index;                                                               \
     htable = Z_ARRVAL_PP((zval**)value);                                       \
@@ -247,77 +246,98 @@ typedef struct list_map_static_pool {
     if (IS_##datatype##_TYPE(htable, key, key_len, index, pointer)) {          \
         if ((AEROSPIKE_OK != (status =                                         \
                     AEROSPIKE_##level##_PUT_##action##_##datatype(key,         \
-                        value, store, static_pool)))) {                        \
+                        value, inner_store, static_pool)))) {                  \
             goto label;                                                        \
         }                                                                      \
+        AEROSPIKE_##level##_SET_##action##_##datatype(store, inner_store,      \
+                key);                                                          \
     }                                                                          \
 }
 
-#define AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(exit, key, value, store,     \
-        status, static_bool)                                                   \
-            AEROSPIKE_PROCESS_ARRAY(MAP, DEFAULT, ASSOC, exit, key, value,     \
+#define AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(key, value, store,           \
+        status, static_pool, label)                                            \
+            AEROSPIKE_PROCESS_ARRAY(MAP, DEFAULT, ASSOC, label, key, value,    \
                     store, status, static_pool)
 
-#define AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(exit, key, value, store,     \
-        status, static_bool)                                                    \
-            AEROSPIKE_PROCESS_ARRAY(LIST, DEFAULT, ASSOC, exit, key, value,     \
+#define AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(key, value, store,          \
+        status, static_pool, label)                                            \
+            AEROSPIKE_PROCESS_ARRAY(LIST, DEFAULT, ASSOC, label, key, value,   \
                     store, status, static_pool)
 
 static inline as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key,
         void *value, void *store, void *static_pool)
 {
     as_status status;
-    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(exit, key, value, store, status,
-            static_bool);
-    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(exit, key, value, store, status,
-            static_bool);
+    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(key, value, store, status,
+            static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(key, value, store, status,
+            static_pool, exit);
 exit:
     return (status);
 }
 
-#define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(exit, key, value, store,         \
-        status, static_bool)                                                   \
-            AEROSPIKE_PROCESS_ARRAY(MAP, MAP, ASSOC, exit, key, value,         \
+#define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store,               \
+        status, static_pool, label)                                            \
+            AEROSPIKE_PROCESS_ARRAY(MAP, MAP, ASSOC, label, key, value,        \
                     store, status, static_pool)
 
-#define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(exit, key, value, store,         \
-        status, static_bool)                                                    \
-            AEROSPIKE_PROCESS_ARRAY(LIST, MAP, ASSOC, exit, key, value,         \
+#define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store,              \
+        status, static_pool, label)                                            \
+            AEROSPIKE_PROCESS_ARRAY(LIST, MAP, ASSOC, label, key, value,       \
                     store, status, static_pool)
 
 static inline as_status AS_MAP_PUT_ASSOC_ARRAY(void *key,
         void *value, void *store, void *static_pool)
 {
     as_status status;
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(exit, key, value, store, status,
-            static_bool);
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(exit, key, value, store, status,
-            static_bool);
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
+            static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
+            static_pool, exit);
 exit:
     return (status);
 }
 
-#define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_MAP(exit, key, value, store,       \
-        status, static_bool)                                                   \
-            AEROSPIKE_PROCESS_ARRAY(MAP, LIST, APPEND, exit, key, value,       \
+#define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_MAP(key, value, store,             \
+        status, static_pool, label)                                            \
+            AEROSPIKE_PROCESS_ARRAY(MAP, LIST, APPEND, label, key, value,      \
                     store, status, static_pool)
 
-#define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_LIST(exit, key, value, store,       \
-        status, static_bool)                                                    \
-            AEROSPIKE_PROCESS_ARRAY(LIST, LIST, APPEND, exit, key, value,       \
+#define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_LIST(key, value, store,            \
+        status, static_pool, label)                                            \
+            AEROSPIKE_PROCESS_ARRAY(LIST, LIST, APPEND, label, key, value,     \
                     store, status, static_pool)
 
 static inline as_status AS_LIST_PUT_APPEND_ARRAY(void *key,
         void *value, void *store, void *static_pool)
 {
     as_status status;
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(exit, key, value, store, status,
-            static_bool);
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(exit, key, value, store, status,
-            static_bool);
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
+            static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
+            static_pool, exit);
 exit:
     return (status);
 }
+/* Misc function calls to set inner store  */
+
+#define AEROSPIKE_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name)     \
+    AS_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name)
+
+#define AEROSPIKE_LIST_SET_APPEND_MAP(outer_store, inner_store, bin_name)      \
+    AS_LIST_SET_APPEND_MAP(outer_store, inner_store, bin_name)
+
+#define AEROSPIKE_DEFAULT_SET_ASSOC_LIST(outer_store, inner_store, bin_name)   \
+    AS_DEFAULT_SET_ASSOC_LIST(outer_store, inner_store, bin_name)
+
+#define AEROSPIKE_DEFAULT_SET_ASSOC_MAP(outer_store, inner_store, bin_name)    \
+    AS_DEFAULT_SET_ASSOC_MAP(outer_store, inner_store, bin_name)
+
+#define AEROSPIKE_MAP_SET_ASSOC_LIST(outer_store, inner_store, bin_name)       \
+    AS_MAP_SET_ASSOC_LIST(outer_store, inner_store, bin_name)
+
+#define AEROSPIKE_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name)        \
+    AS_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name)
 
 /* PUT function calls for level = LIST */
 
