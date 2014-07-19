@@ -408,7 +408,6 @@ exit:
 PHP_METHOD(Aerospike, isConnected)
 {
 
-    as_error               err;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
