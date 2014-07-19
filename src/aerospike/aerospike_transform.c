@@ -152,7 +152,7 @@ static as_status ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array)
 static as_status ADD_DEFAULT_ASSOC_NULL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_null(((zval*)array), (char *) key);
+    add_assoc_null(((zval*)array), key);
     return (status);
 }
 

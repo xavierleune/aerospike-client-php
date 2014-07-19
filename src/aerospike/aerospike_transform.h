@@ -59,7 +59,7 @@
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
 
 #define AERO_DEFAULT_KEY(htable, key, key_len, index, pointer)                 \
-    zend_hash_get_current_key_ex(htable, &key, &key_len, &index, 0, &pointer);
+    zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0, &pointer);
 
 #define AERO_LIST_KEY(htable, key, key_len, index, pointer)
 
@@ -226,11 +226,11 @@ typedef struct list_map_static_pool {
 } as_static_pool;
 
 #define IS_MAP_TYPE(htable, key, key_len, index, pointer)                      \
-    (zend_hash_get_current_key_ex(htable, &key, &key_len, &index, 0,           \
+    (zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0,  \
                                   &pointer) == HASH_KEY_IS_STRING)
 
 #define IS_LIST_TYPE(htable, key, key_len, index, pointer)                     \
-    (zend_hash_get_current_key_ex(htable, &key, &key_len, &index, 0,           \
+    (zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0,  \
                                   &pointer) != HASH_KEY_IS_STRING)
 
 

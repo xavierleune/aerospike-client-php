@@ -320,11 +320,21 @@ PHP_METHOD(Aerospike, get)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|aa",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|aa",
         &key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse php parameters for get function");
         goto exit;
+    }
+
+    if (IS_NULL == Z_TYPE_P(record_p)) {
+        zval*         record_arr_p = NULL;
+
+        MAKE_STD_ZVAL(record_arr_p);
+        array_init(record_arr_p);
+        REPLACE_ZVAL_VALUE(&record_p, record_arr_p, 1);
+        zval_copy_ctor(record_p);
+        zval_dtor(record_arr_p);
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
