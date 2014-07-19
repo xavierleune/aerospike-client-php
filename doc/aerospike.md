@@ -177,6 +177,7 @@ class Aerospike
 
     // query and scan methods
     public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
     public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
     public array Aerospike::predicateEquals ( string $bin, int|string $val )
     public array Aerospike::predicateBetween ( string $bin, int $min, int $max )

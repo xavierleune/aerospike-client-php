@@ -52,12 +52,6 @@ See: [citrusleaf.h](https://github.com/citrusleaf/aerospike-client-c/blob/master
 // Client interface to the Aerospike cluster.
 class Aerospike
 {
-    // Query APIs:
-    public function queryApply($set, $where, $callback, $apply, $bins, $options); // apply UDF on the query
-
-    // Scan APIs:
-    public function scanApply($set, $callback, $apply, $bins, $options); // apply UDF on the scan
-
     // helper method for combining predicates, such as predicate1 AND predicate2
     public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
 
