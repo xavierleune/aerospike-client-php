@@ -40,6 +40,10 @@ extern as_log_level   php_log_level_set;
 #define DEBUG_PHP_EXT_INFO(var_args, ...)
 #endif
 
+#define PHP_TYPE_ISNULL(zend_val)     (IS_NULL == Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISARR(zend_val)      (IS_ARRAY == Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTARR(zend_val)   !PHP_TYPE_ISARR(zend_val)
+
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p, int16_t* set_val_p);
 

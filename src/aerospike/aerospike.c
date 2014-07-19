@@ -217,6 +217,7 @@ PHP_METHOD(Aerospike, __construct)
     zval*                  options_p = NULL;
     zval*                  host_arr_p = NULL;
     as_error               error;
+    as_status              status = AEROSPIKE_OK;
     as_config              config;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -228,7 +229,7 @@ PHP_METHOD(Aerospike, __construct)
 
     if (aerospike_obj_p->as_p) {
         error.code = AEROSPIKE_ERR;
-		DEBUG_PHP_EXT_ERROR("already created aerospike object");
+        DEBUG_PHP_EXT_ERROR("already created aerospike object");
         goto exit;
     }
 
@@ -236,6 +237,12 @@ PHP_METHOD(Aerospike, __construct)
         error.code = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse parameters for construct in zend");
         goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(host_p) || 
+        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for construct not proper.");
     }
 
     /* configuration */
@@ -323,11 +330,19 @@ PHP_METHOD(Aerospike, get)
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|aa",
         &key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to parse php parameters for get function");
+        DEBUG_PHP_EXT_ERROR("unable to parse php parameters for get function.");
         goto exit;
     }
 
-    if (IS_NULL == Z_TYPE_P(record_p)) {
+    if (PHP_TYPE_ISNOTARR(key_record_p) || 
+        ((bins_p) && (PHP_TYPE_ISNOTARR(bins_p))) ||
+        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for get function not proper.");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNULL(record_p)) {
         zval*         record_arr_p = NULL;
 
         MAKE_STD_ZVAL(record_arr_p);
@@ -335,6 +350,12 @@ PHP_METHOD(Aerospike, get)
         REPLACE_ZVAL_VALUE(&record_p, record_arr_p, 1);
         zval_copy_ctor(record_p);
         zval_dtor(record_arr_p);
+    }
+
+    if (PHP_TYPE_ISNOTARR(record_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for get function not proper.");
+        goto exit;
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
@@ -384,6 +405,14 @@ PHP_METHOD(Aerospike, put)
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, record_pp, &ttl_u64, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
+
+    if ((PHP_TYPE_ISNOTARR(key_record_p)) ||
+        (PHP_TYPE_ISNOTARR(*record_pp)) ||
+        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for put function not proper.");
         goto exit;
     }
 
