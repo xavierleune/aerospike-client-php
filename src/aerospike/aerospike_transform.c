@@ -152,7 +152,7 @@ static as_status ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array)
 static as_status ADD_DEFAULT_ASSOC_NULL(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    add_assoc_null(((zval*)array), key);
+    add_assoc_null(((zval*)array), (char *) key);
     return (status);
 }
 
@@ -251,7 +251,7 @@ static as_status ADD_DEFAULT_ASSOC_LIST(void *key, void *value, void *array)
 bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, key, value, array, exit);
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, (void *) key, (void *) value, array, exit);
 exit:
     return (true);
 }
@@ -259,14 +259,14 @@ exit:
 bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(status, NULL, NULL, value, array, exit);
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(status, NULL, NULL, (void *) value, array, exit);
 exit:
     return (true);
 }
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, key, value, array, exit);
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, (void *) key, (void *) value, array, exit);
 exit:
     return (status);
 }
