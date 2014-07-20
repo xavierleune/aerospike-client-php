@@ -58,6 +58,17 @@
 #define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
 
+#define AS_MAX_STORE_SIZE 1024
+#define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
+#define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
+
+typedef struct list_map_static_pool {
+    u_int32_t        current_list_id;
+    as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
+    u_int32_t        current_map_id;
+    as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
+} as_static_pool;
+
 #define AERO_DEFAULT_KEY(htable, key, key_len, index, pointer)                 \
     zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0, &pointer);
 
@@ -86,9 +97,11 @@
         store = (void *) CURRENT_##level##_POOL(static_pool)                   \
                 [CURRENT_##level##_SIZE(static_pool)++];                       \
 */
-#define INIT_STORE(store, static_pool, htable, level)                          \
+#define INIT_STORE(store, htable, static_pool, level)                          \
     if (AS_MAX_STORE_SIZE > CURRENT_##level##_SIZE(static_pool)) {             \
-        store = NULL;                                                         \
+        store = NULL;                                                          \
+        store = (void *)&CURRENT_##level##_POOL(static_pool)                   \
+                [CURRENT_##level##_SIZE(static_pool)++];                       \
         INIT_##level##_IN_POOL(store, htable);                                 \
     }
 
@@ -214,16 +227,6 @@ do {                                                                           \
 #define AS_ASSOC_MAP_TO_DEFAULT(key, value, array)                             \
     AS_STORE_ITERATE(GET, DEFAULT, ASSOC, MAP, key, value, array)
 
-#define AS_MAX_STORE_SIZE 1024
-#define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
-#define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
-
-typedef struct list_map_static_pool {
-    u_int32_t        current_list_id;
-    as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
-    u_int32_t        current_map_id;
-    as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
-} as_static_pool;
 
 #define IS_MAP_TYPE(htable, key, key_len, index, pointer)                      \
     (zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0,  \
