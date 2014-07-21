@@ -92,7 +92,7 @@ static as_status ADD_LIST_APPEND_BYTES(void *key, void *value, void *array)
     return (status);
 }
 
-/* Wrappers for associating datatype with Map */
+/* Wrappers for associating datatype with Map with string key*/
 
 static as_status ADD_MAP_ASSOC_NULL(void *key, void *value, void *array)
 {
@@ -144,6 +144,58 @@ static as_status ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
 
+    return (status);
+}
+
+/* Wrappers for associating datatype with Map with integer key */
+
+static as_status ADD_MAP_INDEX_NULL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_index_null(*((zval**)array), (uint) as_integer_get((as_integer *) key));
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_BOOL(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_index_bool(*((zval**)array), (uint) as_integer_get((as_integer *) key),
+            (int) as_boolean_get((as_boolean *) value));
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_LONG(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_index_long(*((zval**)array), (uint) as_integer_get((as_integer *) key),
+            (long) as_integer_get((as_integer *) value));
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_STRING(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    add_index_stringl(*((zval**)array), (uint) as_integer_get((as_integer *) key),
+            as_string_get((as_string *) value),
+            strlen(as_string_get((as_string *) value)), 1);
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_REC(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_PAIR(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_BYTES(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
     return (status);
 }
 
@@ -232,6 +284,20 @@ static as_status ADD_MAP_ASSOC_LIST(void *key, void *value, void *array)
     return (status);
 }
 
+static as_status ADD_MAP_INDEX_MAP(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_INDEX_MAP_TO_MAP(key, value, array);
+    return (status);
+}
+
+static as_status ADD_MAP_INDEX_LIST(void *key, void *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    AS_INDEX_LIST_TO_MAP(key, value, array);
+    return (status);
+}
+
 static as_status ADD_DEFAULT_ASSOC_MAP(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
@@ -263,12 +329,17 @@ bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 exit:
     return (true);
 }
+
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, (void *) key, (void *) value, array, exit);
+    if (FETCH_VALUE_GET(key) == AS_INTEGER) {
+        AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(status, NULL, (void *) key, (void *) value, array, exit);
+    } else {
+        AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(status, NULL, (void *) key, (void *) value, array, exit);
+    }
 exit:
-    return (status);
+    return (true);
 }
 
 /* End of helper functions for GET */
@@ -848,12 +919,12 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
                                        as_key *get_rec_key_p,
                                        as_policy_read *read_policy_p)
 {
-    int bins_count = zend_hash_num_elements(bins_array_p);
-    const char *select[bins_count];
-    HashPosition pointer;
-    as_status    status = AEROSPIKE_OK;
-    zval **bin_names;
-    uint sel_cnt = 0;
+    int                 bins_count = zend_hash_num_elements(bins_array_p);
+    as_status           status = AEROSPIKE_OK;
+    uint                sel_cnt = 0;
+    const char          *select[bins_count];
+    HashPosition        pointer;
+    zval                **bin_names;
     
     foreach_hashtable (bins_array_p, pointer, bin_names) {
         switch (Z_TYPE_PP(bin_names)) {
