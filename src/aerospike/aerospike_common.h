@@ -27,14 +27,14 @@ extern int parseLogParameters(as_log *as_log_p);
 extern as_log_level   php_log_level_set;
 #define __DEBUG_PHP__
 #ifdef __DEBUG_PHP__
-#define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, var_args, ...)      \
+#define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, args...)      \
     if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                  \
         if (php_log_level_set >= log_level)                        \
-            aerospike_helper_log_callback((log_level | 0x08), __func__, __FILE__, __LINE__, var_args); /*replace this with our log function*/
-#define DEBUG_PHP_EXT_ERROR(var_args, ...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_ERROR, var_args, ...)
-#define DEBUG_PHP_EXT_WARNING(var_args, ...)        DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_WARN, var_args, ...)
-#define DEBUG_PHP_EXT_DEBUG(var_args, ...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, var_args, ...)
-#define DEBUG_PHP_EXT_INFO(var_args, ...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, var_args, ...)
+            aerospike_helper_log_callback((log_level | 0x08), __func__, __FILE__, __LINE__, ##args); /*replace this with our log function*/
+#define DEBUG_PHP_EXT_ERROR(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_ERROR, args)
+#define DEBUG_PHP_EXT_WARNING(args...)        DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_WARN, args)
+#define DEBUG_PHP_EXT_DEBUG(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, args)
+#define DEBUG_PHP_EXT_INFO(args...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, args)
 #else
 #define DEBUG_PHP_EXT_ERROR(var_args, ...)
 #define DEBUG_PHP_EXT_WARNING(var_args, ...)
@@ -45,9 +45,11 @@ extern as_log_level   php_log_level_set;
 #define AEROSPIKE_CONN_STATE_TRUE   1
 #define AEROSPIKE_CONN_STATE_FALSE  0
 
-#define PHP_TYPE_ISNULL(zend_val)     (IS_NULL == Z_TYPE_P(zend_val))
-#define PHP_TYPE_ISARR(zend_val)      (IS_ARRAY == Z_TYPE_P(zend_val))
-#define PHP_TYPE_ISNOTARR(zend_val)   !PHP_TYPE_ISARR(zend_val)
+#define PHP_TYPE_ISNULL(zend_val)        (IS_NULL == Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISARR(zend_val)         (IS_ARRAY == Z_TYPE_P(zend_val))
+//#define PHP_TYPE_ISSTRING(zend val)      (IS_STRING == Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTARR(zend_val)      !PHP_TYPE_ISARR(zend_val)
+//#define PHP_TYPE_ISNOTSTRING(zend_val)   !PHP_TYPE_ISSTRING(zend_val)
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p, int16_t* set_val_p);

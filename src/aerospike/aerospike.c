@@ -247,7 +247,8 @@ PHP_METHOD(Aerospike, __construct)
     if (PHP_TYPE_ISNOTARR(host_p) || 
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("input parameters (type) for construct not proper.");
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for construct not proper");
+        goto exit;
     }
 
     /* configuration */
@@ -448,7 +449,7 @@ PHP_METHOD(Aerospike, isConnected)
 
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    if (!aerospike_obj_p) {
+    if ((!aerospike_obj_p) || !(aerospike_obj_p->as_p)) {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         RETURN_FALSE;
     }
@@ -464,7 +465,7 @@ PHP_METHOD(Aerospike, close)
     as_error               err;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    if (!aerospike_obj_p) {
+    if (!aerospike_obj_p || !(aerospike_obj_p->as_p)) {
         status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
         goto exit;
@@ -538,7 +539,6 @@ PHP_METHOD(Aerospike, append)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
-    zval*                  bin_p = NULL;
     as_error               err;
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
@@ -559,6 +559,14 @@ PHP_METHOD(Aerospike, append)
         &append_str_p, &append_str_len, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for append function ");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+        (!bin_name_p) || (!append_str_p) ||
+         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for append function not proper.");
         goto exit;
     }
 
@@ -598,7 +606,6 @@ PHP_METHOD(Aerospike, delete)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     zval*                  key_record_p = NULL;
-    zval*                  record_p = NULL;
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -609,9 +616,15 @@ PHP_METHOD(Aerospike, delete)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa", &key_record_p, &record_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &key_record_p)) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for delete function not proper.");
         goto exit;
     }
 
@@ -641,7 +654,6 @@ PHP_METHOD(Aerospike, exists)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     zval*                  key_record_p = NULL;
-    zval*                  record_p = NULL;
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -652,9 +664,15 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa", &key_record_p, &record_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &key_record_p)) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for exist function not proper.");
         goto exit;
     }
 
@@ -716,7 +734,6 @@ PHP_METHOD(Aerospike, prepend)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
-    zval*                  bin_p = NULL;
     as_error               err;
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
@@ -738,6 +755,15 @@ PHP_METHOD(Aerospike, prepend)
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for prepend function ");
         goto exit;
     }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+        (!bin_name_p) || (!prepend_str_p) ||
+         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for prepend function not proper.");
+        goto exit;
+    }
+
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
                                                                                   &as_key_for_get_record,
                                                                                   &initializeKey))) {
@@ -775,7 +801,6 @@ PHP_METHOD(Aerospike, increment)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
-    zval*                  bin_p = NULL;
     as_error               err;
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
@@ -796,6 +821,14 @@ PHP_METHOD(Aerospike, increment)
         &offset, &initial_value, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for increment function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+        (!bin_name_p) ||
+        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for increment function not proper.");
         goto exit;
     }
 
@@ -836,7 +869,6 @@ PHP_METHOD(Aerospike, touch)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
-    zval*                  bin_p = NULL;
     as_error               err;
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
@@ -852,6 +884,13 @@ PHP_METHOD(Aerospike, touch)
         &key_record_p, &time_to_live, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for touch function ");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for touch function not proper.");
         goto exit;
     }
 
@@ -904,6 +943,12 @@ PHP_METHOD(Aerospike, initkey)
         goto exit;
     }
 
+    if((!ns_p) ||(!set_p) || PHP_TYPE_ISNULL(pk_p) ){
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for initkey function not proper.");
+        goto exit;
+ 
+    }
     add_assoc_stringl(return_value, "ns", ns_p, ns_p_length, 1);
     add_assoc_stringl(return_value, "set", set_p, set_p_length, 1);
 
@@ -921,7 +966,7 @@ PHP_METHOD(Aerospike, initkey)
     }
 
 exit:
-    return;
+    RETURN_LONG(status);
 }
 /*
  *  Scan APIs:

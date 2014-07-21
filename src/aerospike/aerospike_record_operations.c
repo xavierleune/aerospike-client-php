@@ -72,7 +72,9 @@ aerospike_record_operations_ops(aerospike* as_object_p,
     as_policy_operate   operate_policy;
     as_record*          get_rec = NULL;
     as_operations       ops;
-    as_val* value_p = NULL;
+    as_val*             value_p = NULL;
+    as_integer          initial_int_val;
+    int16_t             initialize_int = 0;
     const char *select[] = {bin_name_p, NULL};
 
     as_operations_inita(&ops, 1);
@@ -98,10 +100,12 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             if (aerospike_key_select(as_object_p, error_p, NULL, as_key_p, select, &get_rec) == AEROSPIKE_OK) {
                 if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
                    if (AS_NIL == value_p->type) {
-                       as_integer initial_int_val;
                        as_integer_init(&initial_int_val, initial_value);
-                       as_operations_add_write(&ops, bin_name_p, (as_bin_value*) &initial_int_val);
-                       as_integer_destroy(&initial_int_val);
+                       initialize_int = 1;
+                       if (!as_operations_add_write(&ops, bin_name_p, (as_bin_value*) &initial_int_val)) {
+                           status = AEROSPIKE_ERR;
+                           goto exit;
+                       }
                    } else {
                        as_operations_add_incr(&ops, bin_name_p, offset);
                    }
@@ -129,6 +133,9 @@ exit:
      as_operations_destroy(&ops);
      if (get_rec) {
          as_record_destroy(get_rec);
+     }
+     if (initialize_int) { 
+         as_integer_destroy(&initial_int_val);
      }
      return status;
 }
