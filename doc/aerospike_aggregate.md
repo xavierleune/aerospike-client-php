@@ -61,7 +61,7 @@ Registered module **stream_udf.lua**
 ```lua
 local function having_ge_threshold(bin_having, ge_threshold)
     return function(rec)
-        debug("group_count::thresh_filter: %s >  %s ?", tostring(rec[bin_having]), to_string(ge_threshold))
+        debug("group_count::thresh_filter: %s >  %s ?", tostring(rec[bin_having]), tostring(ge_threshold))
         if rec[bin_having] < ge_threshold then
             return false
         end

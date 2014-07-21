@@ -174,10 +174,10 @@ class Aerospike
     public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
     public int Aerospike::deregister ( string $module )
     public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
+    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
 
     // query and scan methods
     public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
-    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
     public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
     public array Aerospike::predicateEquals ( string $bin, int|string $val )
     public array Aerospike::predicateBetween ( string $bin, int $min, int $max )

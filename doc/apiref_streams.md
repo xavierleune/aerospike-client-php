@@ -6,11 +6,6 @@
 public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
 ```
 
-### [Aerospike::aggregate](aerospike_aggregate.md)
-```
-public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
-```
-
 ### [Aerospike::scan](aerospike_scan.md)
 ```
 public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
