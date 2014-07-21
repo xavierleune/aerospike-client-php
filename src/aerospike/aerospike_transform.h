@@ -204,6 +204,11 @@ do {                                                                           \
             AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, MAP,                         \
                     ASSOC, err, static_pool, key, value, array, label)
 
+#define AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(err, static_pool, key,      \
+        value, array, label)                                                   \
+            AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, MAP,                         \
+                    INDEX, err, static_pool, key, value, array, label)
+
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(err, static_pool, key,    \
         value, array, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, LIST,                        \
@@ -220,6 +225,12 @@ do {                                                                           \
 
 #define AS_ASSOC_MAP_TO_MAP(key, value, array)                                 \
     AS_STORE_ITERATE(GET, MAP, ASSOC, MAP, key, value, *(zval **)array)
+
+#define AS_INDEX_LIST_TO_MAP(key, value, array)                                \
+    AS_STORE_ITERATE(GET, MAP, INDEX, LIST, key, value, *(zval **)array)
+
+#define AS_INDEX_MAP_TO_MAP(key, value, array)                                 \
+    AS_STORE_ITERATE(GET, MAP, INDEX, MAP, key, value, *(zval **)array)
 
 #define AS_ASSOC_LIST_TO_DEFAULT(key, value, array)                            \
     AS_STORE_ITERATE(GET, DEFAULT, ASSOC, LIST, key, value, array)
@@ -439,7 +450,7 @@ do {                                                                           \
 #define AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool)      \
     ADD_DEFAULT_ASSOC_BYTES(key, value, array) 
 
-/* GET function calls for level = MAP */
+/* GET function calls for level = MAP with string key*/
 
 #define AEROSPIKE_MAP_GET_ASSOC_UNDEF(key, value, array, static_pool)          \
     ADD_MAP_ASSOC_NULL(key, value, array)
@@ -474,12 +485,50 @@ do {                                                                           \
 #define AEROSPIKE_MAP_GET_ASSOC_BYTES(key, value, array, static_pool)          \
     ADD_MAP_ASSOC_BYTES(key, value, array) 
 
-#define ADD_MAP_ZVAL(array, key, store)                                        \
+/* GET function calls for level = MAP with integer key*/
+
+#define AEROSPIKE_MAP_GET_INDEX_UNDEF(key, value, array, static_pool)          \
+        ADD_MAP_INDEX_NULL(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_UNKNOWN(key, value, array, static_pool)        \
+        ADD_MAP_INDEX_NULL(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_NIL(key, value, array, static_pool)            \
+        ADD_MAP_INDEX_NULL(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_BOOLEAN(key, value, array, static_pool)        \
+        ADD_MAP_INDEX_BOOL(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_INTEGER(key, value, array, static_pool)        \
+        ADD_MAP_INDEX_LONG(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_STRING(key, value, array, static_pool)         \
+        ADD_MAP_INDEX_STRING(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_LIST(key, value, array, static_pool)           \
+        ADD_MAP_INDEX_LIST(key, value, array)
+ 
+#define AEROSPIKE_MAP_GET_INDEX_MAP(key, value, array, static_pool)            \
+        ADD_MAP_INDEX_MAP(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_REC(key, value, array, static_pool)            \
+        ADD_MAP_INDEX_REC(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_PAIR(key, value, array, static_pool)           \
+        ADD_MAP_INDEX_PAIR(key, value, array)
+
+#define AEROSPIKE_MAP_GET_INDEX_BYTES(key, value, array, static_pool)          \
+        ADD_MAP_INDEX_BYTES(key, value, array)
+
+#define ADD_MAP_ASSOC_ZVAL(array, key, store)                                  \
     add_assoc_zval(array, as_string_get((as_string *) key), store)
 
-#define ADD_DEFAULT_ZVAL(array, key, store) add_assoc_zval(array, key, store)
+#define ADD_MAP_INDEX_ZVAL(array, key, store)                                  \
+    add_index_zval(array, as_integer_get((as_integer *) key), store)
 
-#define ADD_LIST_ZVAL(array, key, store) add_next_index_zval(array, store)
+#define ADD_DEFAULT_ASSOC_ZVAL(array, key, store) add_assoc_zval(array, key, store)
+
+#define ADD_LIST_APPEND_ZVAL(array, key, store) add_next_index_zval(array, store)
 
 #define AS_STORE_ITERATE(method, level, action, datatype, key, value, array)   \
 do {                                                                           \
@@ -489,7 +538,7 @@ do {                                                                           \
     AS_##datatype##_FOREACH((AS_##datatype##_DATATYPE*) value,                 \
             (AS_##datatype##_FOREACH_CALLBACK)                                 \
             AS_##datatype##_##method##_CALLBACK, &store);                      \
-    ADD_##level##_ZVAL(array, key, store);                                    \
+    ADD_##level##_##action##_ZVAL(array, key, store);                          \
 } while(0);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
