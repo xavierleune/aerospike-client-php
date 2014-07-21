@@ -23,11 +23,11 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
         va_list ap;
 
         va_start(ap, fmt);
-        vsnprintf(&msg, 1024, fmt, ap);
+        vsnprintf(msg, 1024, fmt, ap);
         msg[1023] = '\0';
         va_end(ap);
         if (!is_callback_registered) { 
-            fprintf(stderr, "Logging error: level %d func %s file %s line %d msg %s \n", level, func, file, line, msg);
+            fprintf(stderr, "PHP EXTn: level %d func %s file %s line %d msg %s \n", level, func, file, line, msg);
 	}
     }
 

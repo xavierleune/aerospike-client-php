@@ -4,7 +4,6 @@
 #include "aerospike/as_config.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_hashmap.h"
-#include "aerospike/as_stringmap.h"
 #include "aerospike/as_arraylist.h"
 
 #include "aerospike_common.h"
@@ -129,21 +128,18 @@ static as_status ADD_MAP_ASSOC_STRING(void *key, void *value, void *array)
 static as_status ADD_MAP_ASSOC_REC(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
 static as_status ADD_MAP_ASSOC_PAIR(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
 static as_status ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
@@ -236,21 +232,18 @@ static as_status ADD_DEFAULT_ASSOC_STRING(void *key, void *value, void *array)
 static as_status ADD_DEFAULT_ASSOC_REC(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
 static as_status ADD_DEFAULT_ASSOC_PAIR(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
 static as_status ADD_DEFAULT_ASSOC_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
@@ -370,12 +363,12 @@ static void AS_DEFAULT_SET_ASSOC_MAP(void* outer_store, void* inner_store, void*
 
 static void AS_MAP_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_stringmap_set_list((as_map *)outer_store, bin_name, (as_list *) inner_store);
+    as_hashmap_set((as_hashmap*)outer_store, bin_name, (as_val*)((as_list *) inner_store));
 }
 
 static void AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_stringmap_set_map((as_map *)outer_store, bin_name, (as_map *)inner_store);
+    as_hashmap_set((as_hashmap *)outer_store, bin_name, (as_val*)((as_map *)inner_store));
 }
 
 /* Wrappers for appeding datatype to List */
@@ -387,19 +380,26 @@ static as_status AS_SET_ERROR_CASE(void* key, void* value, void* array, void* st
 
 static as_status AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array, void *static_pool)
 {
-     as_arraylist_append_int64((as_arraylist *)value, (int64_t)Z_LVAL_P((zval*)array));
-     return AEROSPIKE_OK;
+    as_status   status = AEROSPIKE_OK;
+    if (AEROSPIKE_OK != (status = as_arraylist_append_int64((as_arraylist *) array, (int64_t)Z_LVAL_PP((zval**) value)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
+    }
+    return status;
 }
  
 static as_status AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array, void *static_pool)
 {
-     as_arraylist_append_str((as_arraylist *)value, Z_STRVAL_P((zval*)array));
+    as_status   status = AEROSPIKE_OK;
+    if (AEROSPIKE_OK != (status = as_arraylist_append_str((as_arraylist *) array, Z_STRVAL_PP((zval**) value)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
+    }
+    return status;
 }
 
 static as_status AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array, void *static_pool)
 {
     as_status    status = AEROSPIKE_OK;
-    AS_LIST_PUT(key, value, array, static_pool);
+    status = AS_LIST_PUT(key, value, array, static_pool);
 exit:
     return status;
 }
@@ -407,7 +407,7 @@ exit:
 static as_status AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array, void *static_pool) 
 {
     as_status    status = AEROSPIKE_OK;
-    AS_LIST_PUT(key, value, array, static_pool);
+    status = AS_LIST_PUT(key, value, array, static_pool);
 exit:
     return status;
 }
@@ -417,26 +417,38 @@ exit:
 static as_status AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array, void* static_pool)
 {
     /* value holds the name of the bin*/
-    as_record_set_nil((as_record *)(key), (int8_t *)value);
-    return AEROSPIKE_OK;
+    as_status    status = AEROSPIKE_OK;
+    if (!(as_record_set_nil((as_record *)(key), (int8_t *) Z_LVAL_PP((zval**) value)))) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to nil");
+    }
+    return status;
 }
 
 static as_status AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array, void* static_pool)
 {
-    as_record_set_int64((as_record *)array, (int8_t *)key, (int64_t) Z_LVAL_P((zval*)value)); //changed from Z_LVAL_PP to Z_LVAL_P
-    return AEROSPIKE_OK;
+    as_status    status = AEROSPIKE_OK;
+    if (!(as_record_set_int64((as_record *)array, (int8_t *)key, (int64_t) Z_LVAL_PP((zval**) value)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to an int");
+        status = AEROSPIKE_ERR;
+    }
+    return status;
 }
 
 static as_status AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array, void *static_pool)
 {
-    as_record_set_str((as_record *)array, (int8_t *)key, (char *) Z_STRVAL_P((zval*)value));
-    return AEROSPIKE_OK;;
+    as_status    status = AEROSPIKE_OK;
+    if (!(as_record_set_str((as_record *)array, (int8_t *)key, (char *) Z_STRVAL_PP((zval**) value)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to a string");
+        status = AEROSPIKE_ERR;
+    }
+    return status;
 }
 
 static as_status AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array, void *static_pool)
 {
-     as_status    status = AEROSPIKE_OK;
-     AS_DEFAULT_PUT(key, value, array, static_pool);
+    as_status    status = AEROSPIKE_OK;
+    status = AS_LIST_PUT(key, value, array, static_pool);
 exit:
     return status; 
 }
@@ -444,7 +456,7 @@ exit:
 static as_status AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array, void *static_pool)
 {
      as_status    status = AEROSPIKE_OK;
-     AS_DEFAULT_PUT(key, value, array, static_pool);
+     AS_MAP_PUT(key, value, array, static_pool);
 exit:
     return status;
 }
@@ -453,14 +465,28 @@ exit:
 
 static as_status AS_MAP_PUT_ASSOC_INT64(void *key, void *value, void *store, void *static_pool)
 {
-    as_stringmap_set_int64((as_map*)store, (char *)key, Z_LVAL_PP((zval**)value));
-    return AEROSPIKE_OK;
+    as_status status = AEROSPIKE_OK;
+    as_integer *map_int;
+    GET_INT_POOL(map_int, static_pool, status, exit);
+    as_integer_init(map_int, Z_LVAL_PP((zval**)value));
+    if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)store, (as_val *) key, (as_val *)(map_int)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set integer value to as_hashmap");
+    }
+exit:
+    return status;
 }
 
 static as_status AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store, void *static_pool)
 {
-    as_stringmap_set_str((as_map*)store, (char*)key, Z_STRVAL_PP((zval**)value));
-    return AEROSPIKE_ERR;
+    as_status status = AEROSPIKE_OK;
+    as_string *map_str;
+    GET_STR_POOL(map_str, static_pool, status, exit);
+    as_string_init(map_str, Z_STRVAL_PP((zval**)value), false);
+    if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)store, (as_val *) key, (as_val *)(map_str)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set string value to as_hashmap");
+    }
+exit:
+    return status;
 }
 
 static as_status AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store, void *static_pool)
@@ -491,7 +517,7 @@ as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(status, static_pool,
             key, ((zval**)value), record, exit);
 exit:
-    return (true);
+    return (status);
 }
 
 as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool)
@@ -506,8 +532,9 @@ exit:
 as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(status, ((as_static_pool*)static_pool),
-            key, ((zval**)value), store, exit);
+    as_val *map_key = NULL;
+    AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(status, static_pool,
+            map_key, ((zval**)value), store, exit);
 exit:
     return (status);
 }
@@ -537,9 +564,9 @@ exit:
 static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
+    AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_MAP(key, value, store, status,
            static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
+    AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_LIST(key, value, store, status,
            static_pool, exit);
 exit:
     return (status);
@@ -843,7 +870,7 @@ static as_status
 aerospike_transform_iterate_records(zval **record_pp, as_record* record, as_static_pool*  static_pool)
 {
     as_status          status = AEROSPIKE_OK;
-    char*               key = NULL;
+    char*              key = NULL;
 
     if ((!record_pp) || !(record) || !(static_pool)) {
         status = AEROSPIKE_ERR;
@@ -869,7 +896,8 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_status                   status = AEROSPIKE_OK;
     as_policy_write             write_policy;
     as_static_pool              static_pool = {0};
-    as_record*                  record;
+    as_record                   record;
+    int16_t                     init_record = 0;
     u_int32_t                   iter = 0;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
@@ -877,8 +905,10 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
+    as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_PP(record_pp)));
+    init_record = 1;
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(record_pp, record, &static_pool))) {
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(record_pp, &record, &static_pool))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
@@ -888,13 +918,21 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, record))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, &record))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
 exit:
     /* clean up the as_* objects that were initialised */
+    for (iter = 0; iter < static_pool.current_str_id; iter++) {
+        as_string_destroy(&static_pool.string_pool[iter]);
+    }
+
+    for (iter = 0; iter < static_pool.current_int_id; iter++) {
+        as_integer_destroy(&static_pool.integer_pool[iter]);
+    }
+
     for (iter = 0; iter < static_pool.current_list_id; iter++) {
         as_arraylist_destroy(&static_pool.alloc_list[iter]);
     }
@@ -904,8 +942,8 @@ exit:
     }
 
     /*policy_write, should it be destroyed ??? */
-    if (record) {
-        as_record_destroy(record);
+    if (init_record) {
+        as_record_destroy(&record);
     }
 
     return status;

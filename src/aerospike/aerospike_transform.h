@@ -67,19 +67,54 @@ typedef struct list_map_static_pool {
     as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
     u_int32_t        current_map_id;
     as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
+    as_string        string_pool[AS_MAX_STORE_SIZE];
+    u_int32_t        current_str_id;
+    as_integer       integer_pool[AS_MAX_STORE_SIZE];
+    u_int32_t        current_int_id;
 } as_static_pool;
 
-#define AERO_DEFAULT_KEY(htable, key, key_len, index, pointer)                 \
-    zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0, &pointer);
+#define AERO_DEFAULT_KEY(hashtable, key, key_len, index, pointer,              \
+        static_pool, status, label)                                            \
+            zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len,   \
+                    &index, 0, &pointer);
 
-#define AERO_LIST_KEY(htable, key, key_len, index, pointer)
+#define AERO_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,    \
+        status, label)
 
-#define AERO_MAP_KEY(htable, key, key_len, index, pointer)
+#define AERO_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,     \
+        status, label)                                                         \
+do {                                                                           \
+    char *local_key;                                                           \
+    zend_hash_get_current_key_ex(hashtable, (char **)&local_key, &key_len,     \
+            &index, 0, &pointer);                                              \
+    if (local_key != NULL) {                                                   \
+        as_string *map_str;                                                    \
+        GET_STR_POOL(map_str, static_pool, status, label);                     \
+        as_string_init(map_str, local_key, false);                             \
+        key = (as_val*) (map_str);                                             \
+    } else { /*Need to check index validity */                                 \
+        as_integer *map_int;                                                   \
+        GET_INT_POOL(map_int, static_pool, status, label);                     \
+        as_integer_init(map_int, index);                                       \
+        key = (as_val*) map_int;                                               \
+    }                                                                          \
+} while(0);
+
 
 #define CURRENT_LIST_SIZE(static_pool)                                         \
     ((as_static_pool *)static_pool)->current_list_id
 #define CURRENT_MAP_SIZE(static_pool)                                          \
     ((as_static_pool *)static_pool)->current_map_id
+#define STR_CNT(static_pool)                                                   \
+    (((as_static_pool *)static_pool)->current_str_id)
+#define INT_CNT(static_pool)                                                   \
+    (((as_static_pool *)static_pool)->current_int_id)
+
+#define STR_POOL(static_pool)                                                  \
+    ((as_static_pool *)static_pool)->string_pool
+
+#define INT_POOL(static_pool)                                                  \
+    ((as_static_pool *)static_pool)->integer_pool
 
 #define CURRENT_LIST_POOL(static_pool)                                         \
     ((as_static_pool *)static_pool)->alloc_list
@@ -87,32 +122,49 @@ typedef struct list_map_static_pool {
 #define CURRENT_MAP_POOL(static_pool)                                          \
     ((as_static_pool *)static_pool)->alloc_map
 
-#define INIT_LIST_IN_POOL(store, htable)                                       \
-    store = as_arraylist_init((as_arraylist *)store,                           \
-            zend_hash_num_elements(htable), AEROSPIKE_ASLIST_BLOCK_SIZE);
-
-#define INIT_MAP_IN_POOL(store, htable)                                        \
-    store = as_hashmap_init((as_hashmap *)store, AEROSPIKE_HASHMAP_BUCKET_SIZE);
-/*
-        store = (void *) CURRENT_##level##_POOL(static_pool)                   \
-                [CURRENT_##level##_SIZE(static_pool)++];                       \
-*/
-#define INIT_STORE(store, htable, static_pool, level)                          \
-    if (AS_MAX_STORE_SIZE > CURRENT_##level##_SIZE(static_pool)) {             \
-        store = NULL;                                                          \
-        store = (void *)&CURRENT_##level##_POOL(static_pool)                   \
-                [CURRENT_##level##_SIZE(static_pool)++];                       \
-        INIT_##level##_IN_POOL(store, htable);                                 \
+#define GET_STR_POOL(map_str, static_pool, status, label)                      \
+    if (AS_MAX_STORE_SIZE > STR_CNT(static_pool)) {                            \
+        map_str = &(STR_POOL(static_pool)[STR_CNT(static_pool)++]);            \
+    } else {                                                                   \
+        status = AEROSPIKE_ERR;                                                \
+        goto label;                                                            \
     }
 
-#define AS_DEFAULT_INIT_STORE(store, htable, static_pool)                      \
-    as_record_inita((as_record*) store, zend_hash_num_elements(htable))
+#define GET_INT_POOL(map_int, static_pool, status, label)                      \
+    if (AS_MAX_STORE_SIZE > INT_CNT(static_pool)) {                            \
+        map_int = &(INT_POOL(static_pool)[INT_CNT(static_pool)++]);            \
+    } else {                                                                   \
+        status = AEROSPIKE_ERR;                                                \
+        goto label;                                                            \
+    }
 
-#define AS_LIST_INIT_STORE(store, htable, static_pool)                         \
-    INIT_STORE(store, static_pool, htable, LIST)
+#define INIT_LIST_IN_POOL(store, hashtable)                                    \
+    store = as_arraylist_init((as_arraylist *)store,                           \
+            zend_hash_num_elements(hashtable), AEROSPIKE_ASLIST_BLOCK_SIZE);
 
-#define AS_MAP_INIT_STORE(store, htable, static_pool)                          \
-    INIT_STORE(store, htable, static_pool, MAP)
+#define INIT_MAP_IN_POOL(store, hashtable_)                                    \
+    store = (as_hashmap *) as_hashmap_init((as_hashmap*)store,                 \
+            AEROSPIKE_HASHMAP_BUCKET_SIZE);       
+
+#define INIT_STORE(store, static_pool, hashtable, level, status, label)        \
+    if (AS_MAX_STORE_SIZE > CURRENT_##level##_SIZE(static_pool)) {             \
+        store = (void *)                                                       \
+        &CURRENT_##level##_POOL(static_pool)[                                  \
+        (CURRENT_##level##_SIZE(static_pool))++];                              \
+        INIT_##level##_IN_POOL(store, hashtable);                              \
+    } else {                                                                   \
+        status = AEROSPIKE_ERR;                                                \
+        goto label;                                                            \
+    }
+
+#define AS_DEFAULT_INIT_STORE(store, hashtable, static_pool, status, label)                      
+/*    as_record_inita((as_record*) store, zend_hash_num_elements(hashtable))*/
+
+#define AS_LIST_INIT_STORE(store, hashtable, static_pool, status, label)       \
+    INIT_STORE(store, static_pool, hashtable, LIST, status, label)
+
+#define AS_MAP_INIT_STORE(store, hashtable, static_pool, status, label)        \
+    INIT_STORE(store, static_pool, hashtable, MAP, status, label)
 
 #define AS_DEFAULT_STORE record
 #define AS_LIST_STORE NULL
@@ -125,15 +177,16 @@ typedef struct list_map_static_pool {
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action, err,           \
         static_pool, key, value, store, label)                                 \
 do {                                                                           \
-    HashTable *htable;                                                         \
+    HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
     zval **dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
-    htable = Z_ARRVAL_PP((zval**) value);                                      \
-    foreach_hashtable(htable, pointer, dataval) {                              \
-        AERO_##level##_KEY(htable, key, key_len, index, pointer)               \
+    hashtable = Z_ARRVAL_PP((zval**) value);                                   \
+    foreach_hashtable(hashtable, pointer, dataval) {                           \
+        AERO_##level##_KEY(hashtable, key, key_len, index, pointer,            \
+                static_pool, err, label)                                       \
         switch (FETCH_VALUE_##method(dataval)) {                               \
             EXPAND_CASE_PUT(level, method, action, ARRAY, key,                 \
                     dataval, store, err, static_pool, label);                  \
@@ -239,29 +292,31 @@ do {                                                                           \
     AS_STORE_ITERATE(GET, DEFAULT, ASSOC, MAP, key, value, array)
 
 
-#define IS_MAP_TYPE(htable, key, key_len, index, pointer)                      \
-    (zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0,  \
-                                  &pointer) == HASH_KEY_IS_STRING)
+#define IS_MAP_TYPE(hashtable, key, key_len, index, pointer)                   \
+    (zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len, &index,  \
+                                  0, &pointer) == HASH_KEY_IS_STRING)
 
-#define IS_LIST_TYPE(htable, key, key_len, index, pointer)                     \
-    (zend_hash_get_current_key_ex(htable, (char **)&key, &key_len, &index, 0,  \
-                                  &pointer) != HASH_KEY_IS_STRING)
+#define IS_LIST_TYPE(hashtable, key, key_len, index, pointer)                  \
+    (zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len, &index,  \
+                                  0, &pointer) == HASH_KEY_IS_LONG)
 
 
 #define AEROSPIKE_PROCESS_ARRAY(datatype, level, action, label, key,           \
         value, store, status, static_pool) {                                   \
-    HashTable *htable;                                                         \
+    HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
-    char *key = NULL;                                                          \
+    char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
-    AS_##level##_INIT_STORE(inner_store, htable, static_pool);                 \
-    uint key_len;                                                              \
+    uint inner_key_len;                                                        \
     ulong index;                                                               \
-    htable = Z_ARRVAL_PP((zval**)value);                                       \
-    zend_hash_internal_pointer_reset_ex(htable, &pointer);                     \
-    if (IS_##datatype##_TYPE(htable, key, key_len, index, pointer)) {          \
+    hashtable = Z_ARRVAL_PP((zval**)value);                                    \
+    zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
+    if (IS_##datatype##_TYPE(hashtable, inner_key, inner_key_len, index,       \
+                pointer)) {                                                    \
+        AS_##datatype##_INIT_STORE(inner_store, hashtable, static_pool,        \
+                status, label);                                                \
         if ((AEROSPIKE_OK != (status =                                         \
-                    AEROSPIKE_##level##_PUT_##action##_##datatype(key,         \
+                    AEROSPIKE_##level##_PUT_##action##_##datatype(inner_key,   \
                         value, inner_store, static_pool)))) {                  \
             goto label;                                                        \
         }                                                                      \
@@ -526,9 +581,11 @@ do {                                                                           \
 #define ADD_MAP_INDEX_ZVAL(array, key, store)                                  \
     add_index_zval(array, as_integer_get((as_integer *) key), store)
 
-#define ADD_DEFAULT_ASSOC_ZVAL(array, key, store) add_assoc_zval(array, key, store)
+#define ADD_DEFAULT_ASSOC_ZVAL(array, key, store)                              \
+    add_assoc_zval(array, key, store)
 
-#define ADD_LIST_APPEND_ZVAL(array, key, store) add_next_index_zval(array, store)
+#define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
+    add_next_index_zval(array, store)
 
 #define AS_STORE_ITERATE(method, level, action, datatype, key, value, array)   \
 do {                                                                           \
