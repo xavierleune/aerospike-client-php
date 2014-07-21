@@ -991,12 +991,6 @@ PHP_METHOD(Aerospike, setLogHandler)
     uint32_t ret_val = -1;
     is_callback_registered = 0;
 
-    //ret_val = parseLogParameters(&aerospike_obj_p->as_p->log);
-    
-    /*if (ret_val == 1)
-	RETURN_TRUE;
-    if(ret_val == 0)
- 	RETURN_FALSE;*/
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
                              &func_call_info, &func_call_info_cache,
                              &func_call_info.params, &func_call_info.param_count) == FAILURE) {
@@ -1008,7 +1002,7 @@ PHP_METHOD(Aerospike, setLogHandler)
 	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         RETURN_TRUE;
-    } else {printf("\n*********\n");
+    } else {
         RETURN_FALSE;
     }
 }
