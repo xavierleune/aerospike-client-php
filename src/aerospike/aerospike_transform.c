@@ -73,21 +73,18 @@ static as_status ADD_LIST_APPEND_STRING(void *key, void *value, void *array)
 static as_status ADD_LIST_APPEND_REC(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
 static as_status ADD_LIST_APPEND_PAIR(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
 static as_status ADD_LIST_APPEND_BYTES(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
-
     return (status);
 }
 
@@ -407,7 +404,7 @@ exit:
 static as_status AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array, void *static_pool) 
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_LIST_PUT(key, value, array, static_pool);
+    status = AS_MAP_PUT(key, value, array, static_pool);
 exit:
     return status;
 }
@@ -500,7 +497,7 @@ exit:
 static as_status AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store, void *static_pool)
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_MAP_PUT(key, value, store, static_pool);
+    status = AS_LIST_PUT(key, value, store, static_pool);
 exit:
      return status;
 }
@@ -542,10 +539,8 @@ exit:
 static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(key, value, store, status,
-           static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(key, value, store, status,
-           static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY(DEFAULT, ASSOC, exit, key, value, store, 
+            status, static_pool);
 exit:
     return (status);
 }
@@ -553,10 +548,8 @@ exit:
 static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store, status,
-           static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store, status,
-           static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY(MAP, ASSOC, exit, key, value, store, 
+            status, static_pool);
 exit:
     return (status);
 }
@@ -564,14 +557,11 @@ exit:
 static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool)
 {
     as_status status = AEROSPIKE_OK;
-    AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_MAP(key, value, store, status,
-           static_pool, exit);
-    AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_LIST(key, value, store, status,
-           static_pool, exit);
+    AEROSPIKE_PROCESS_ARRAY(LIST, APPEND, exit, key, value, store, 
+            status, static_pool);
 exit:
     return (status);
 }
-
 
 /* End of PUT helper functions */
 
@@ -867,7 +857,7 @@ exit:
 }
 
 static as_status
-aerospike_transform_iterate_records(zval **record_pp, as_record* record, as_static_pool*  static_pool)
+aerospike_transform_iterate_records(zval **record_pp, as_record* record, as_static_pool* static_pool)
 {
     as_status          status = AEROSPIKE_OK;
     char*              key = NULL;

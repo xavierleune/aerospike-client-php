@@ -36,10 +36,10 @@ extern as_log_level   php_log_level_set;
 #define DEBUG_PHP_EXT_DEBUG(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, args)
 #define DEBUG_PHP_EXT_INFO(args...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, args)
 #else
-#define DEBUG_PHP_EXT_ERROR(var_args, ...)
-#define DEBUG_PHP_EXT_WARNING(var_args, ...)
-#define DEBUG_PHP_EXT_DEBUG(var_args, ...)
-#define DEBUG_PHP_EXT_INFO(var_args, ...)
+#define DEBUG_PHP_EXT_ERROR(args...)
+#define DEBUG_PHP_EXT_WARNING(args...)
+#define DEBUG_PHP_EXT_DEBUG(args...)
+#define DEBUG_PHP_EXT_INFO(args...)
 #endif
 
 #define AEROSPIKE_CONN_STATE_TRUE   1

@@ -85,14 +85,14 @@ typedef struct list_map_static_pool {
         status, label)                                                         \
 do {                                                                           \
     char *local_key;                                                           \
-    zend_hash_get_current_key_ex(hashtable, (char **)&local_key, &key_len,     \
-            &index, 0, &pointer);                                              \
-    if (local_key != NULL) {                                                   \
+    uint key_type = zend_hash_get_current_key_ex(hashtable,                    \
+            (char **)&local_key, &key_len, &index, 0, &pointer);               \
+    if (key_type == HASH_KEY_IS_STRING) {                                      \
         as_string *map_str;                                                    \
         GET_STR_POOL(map_str, static_pool, status, label);                     \
         as_string_init(map_str, local_key, false);                             \
         key = (as_val*) (map_str);                                             \
-    } else { /*Need to check index validity */                                 \
+    } else if (key_type == HASH_KEY_IS_LONG) {                                 \
         as_integer *map_int;                                                   \
         GET_INT_POOL(map_int, static_pool, status, label);                     \
         as_integer_init(map_int, index);                                       \
@@ -301,59 +301,49 @@ do {                                                                           \
                                   0, &pointer) == HASH_KEY_IS_LONG)
 
 
-#define AEROSPIKE_PROCESS_ARRAY(datatype, level, action, label, key,           \
-        value, store, status, static_pool) {                                   \
+#define TRAVERSE_KEYS(hashtable, key, key_len, index, pointer, key_iterator)   \
+    while ((zend_hash_get_current_key_ex(hashtable, (char **)&key,             \
+            &key_len, &index, 0, &pointer) == HASH_KEY_IS_LONG) &&             \
+            index == key_iterator) {                                           \
+        key_iterator++;                                                        \
+        zend_hash_move_forward_ex(hashtable, &pointer);                        \
+    }                                                                          \
+
+#define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
+                                status, static_pool) {                         \
     HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
     uint inner_key_len;                                                        \
     ulong index;                                                               \
+    uint key_iterator = 0;                                                     \
     hashtable = Z_ARRVAL_PP((zval**)value);                                    \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
-    if (IS_##datatype##_TYPE(hashtable, inner_key, inner_key_len, index,       \
-                pointer)) {                                                    \
-        AS_##datatype##_INIT_STORE(inner_store, hashtable, static_pool,        \
+    TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index, pointer,         \
+            key_iterator)                                                      \
+    if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
+        AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 status, label);                                                \
         if ((AEROSPIKE_OK != (status =                                         \
-                    AEROSPIKE_##level##_PUT_##action##_##datatype(inner_key,   \
+                    AEROSPIKE_##level##_PUT_##action##_LIST(inner_key,         \
                         value, inner_store, static_pool)))) {                  \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_##datatype(store, inner_store,      \
+        AEROSPIKE_##level##_SET_##action##_LIST(store, inner_store,            \
+                key);                                                          \
+    } else {                                                                   \
+        AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
+                status, label);                                                \
+        if ((AEROSPIKE_OK != (status =                                         \
+                    AEROSPIKE_##level##_PUT_##action##_MAP(inner_key,          \
+                        value, inner_store, static_pool)))) {                  \
+            goto label;                                                        \
+        }                                                                      \
+        AEROSPIKE_##level##_SET_##action##_MAP(store, inner_store,             \
                 key);                                                          \
     }                                                                          \
 }
-
-#define AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_MAP(key, value, store,           \
-        status, static_pool, label)                                            \
-            AEROSPIKE_PROCESS_ARRAY(MAP, DEFAULT, ASSOC, label, key, value,    \
-                    store, status, static_pool)
-
-#define AEROSPIKE_PROCESS_ARRAY_DEFAULT_ASSOC_LIST(key, value, store,          \
-        status, static_pool, label)                                            \
-            AEROSPIKE_PROCESS_ARRAY(LIST, DEFAULT, ASSOC, label, key, value,   \
-                    store, status, static_pool)
-
-#define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_MAP(key, value, store,               \
-        status, static_pool, label)                                            \
-            AEROSPIKE_PROCESS_ARRAY(MAP, MAP, ASSOC, label, key, value,        \
-                    store, status, static_pool)
-
-#define AEROSPIKE_PROCESS_ARRAY_MAP_ASSOC_LIST(key, value, store,              \
-        status, static_pool, label)                                            \
-            AEROSPIKE_PROCESS_ARRAY(LIST, MAP, ASSOC, label, key, value,       \
-                    store, status, static_pool)
-
-#define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_MAP(key, value, store,             \
-        status, static_pool, label)                                            \
-            AEROSPIKE_PROCESS_ARRAY(MAP, LIST, APPEND, label, key, value,      \
-                    store, status, static_pool)
-
-#define AEROSPIKE_PROCESS_ARRAY_LIST_APPEND_LIST(key, value, store,            \
-        status, static_pool, label)                                            \
-            AEROSPIKE_PROCESS_ARRAY(LIST, LIST, APPEND, label, key, value,     \
-                    store, status, static_pool)
 
 /* Misc function calls to set inner store  */
 
