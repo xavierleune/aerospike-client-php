@@ -68,7 +68,6 @@ PHP_METHOD(Aerospike, info);
 
 PHP_METHOD(Aerospike, add);
 PHP_METHOD(Aerospike, append);
-PHP_METHOD(Aerospike, delete);
 PHP_METHOD(Aerospike, exists);
 PHP_METHOD(Aerospike, get);
 PHP_METHOD(Aerospike, getMany);
@@ -79,6 +78,8 @@ PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
+PHP_METHOD(Aerospike, remove);
+PHP_METHOD(Aerospike, removeBin);
 PHP_METHOD(Aerospike, touch);
 // Logging APIs:
 

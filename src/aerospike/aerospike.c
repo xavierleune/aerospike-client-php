@@ -124,7 +124,6 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, add, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, append, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, delete, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, exists, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, get, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getHeader, NULL, ZEND_ACC_PUBLIC)
@@ -133,6 +132,8 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, operate, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, remove, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, removeBin, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, touch, NULL, ZEND_ACC_PUBLIC)
     /*
      *  Logging APIs:
@@ -601,7 +602,7 @@ exit:
 
 /* PHP Method:  bool Aerospike::delete()
    Delete record for specified key. */
-PHP_METHOD(Aerospike, delete)
+PHP_METHOD(Aerospike, remove)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
@@ -618,25 +619,23 @@ PHP_METHOD(Aerospike, delete)
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &key_record_p)) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for remove");
         goto exit;
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p)) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("input parameters (type) for delete function not proper.");
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for remove function not proper.");
         goto exit;
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
-        status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to iterate through put key params");
+        DEBUG_PHP_EXT_ERROR("unable to iterate through remove key params");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_delete(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
-        status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_remove(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
+        DEBUG_PHP_EXT_ERROR("unable to remove record");
         goto exit;
     }
 
@@ -654,6 +653,8 @@ PHP_METHOD(Aerospike, exists)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     zval*                  key_record_p = NULL;
+    zval*                  metadata_p = NULL;
+    zval*                  options_p = NULL;
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -664,27 +665,43 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a", &key_record_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, options_p)) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for exists");
         goto exit;
     }
 
-    if (PHP_TYPE_ISNOTARR(key_record_p)) {
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+             ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("input parameters (type) for exist function not proper.");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+    if (PHP_TYPE_ISNULL(metadata_p)) {
+        zval*         metadata_arr_p = NULL;
+
+        MAKE_STD_ZVAL(metadata_arr_p);
+        array_init(metadata_arr_p);
+        REPLACE_ZVAL_VALUE(&metadata_p, metadata_arr_p, 1);
+        zval_copy_ctor(metadata_p);
+        zval_dtor(metadata_arr_p);
+    }
+
+    if (PHP_TYPE_ISNOTARR(metadata_p)) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to iterate through put key params");
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for get function not proper.");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_exist(aerospike_obj_p->as_p, &as_key_for_put_record, &error))) {
-        status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to put key data pair into database");
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+        DEBUG_PHP_EXT_ERROR("unable to iterate through exists key params");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_exists(aerospike_obj_p->as_p, &as_key_for_put_record, &error, metadata_p, metadata_p))) {
+        DEBUG_PHP_EXT_ERROR("unable to fetch the record");
         goto exit;
     }
 
@@ -939,7 +956,7 @@ PHP_METHOD(Aerospike, initkey)
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for initkey");
         goto exit;
     }
 
@@ -954,19 +971,67 @@ PHP_METHOD(Aerospike, initkey)
 
     switch(Z_TYPE_P(pk_p)) {
        case IS_LONG:
-           add_assoc_long(return_value,"key",Z_LVAL_P(pk_p));
+           add_assoc_long(return_value, "key", Z_LVAL_P(pk_p));
            break;
        case IS_STRING:
-           add_assoc_string(return_value,"key",Z_STRVAL_P(pk_p),1);
+           add_assoc_string(return_value, "key", Z_STRVAL_P(pk_p), 1);
            break;
        default:
            status = AEROSPIKE_ERR_PARAM;
-           DEBUG_PHP_EXT_ERROR("unable to parse parameters for put");
+           DEBUG_PHP_EXT_ERROR("unable to parse parameters for initkey");
            goto exit;
     }
+exit:
+    if (status != AEROSPIKE_OK) {
+        RETURN_LONG(status);
+    }
+}
+
+PHP_METHOD(Aerospike, removeBin) 
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    zval*                  key_record_p = NULL;
+    zval*                  bins_p;
+    zval*                  options_p = NULL;
+    as_key                 as_key_for_put_record;
+    int16_t                initializeKey = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a", &key_record_p, &bins_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for removeBin");
+        goto exit;
+    }
+   
+    if (PHP_TYPE_ISNOTARR(key_record_p) || PHP_TYPE_ISNOTARR(bins_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for removeBin function not proper.");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                                                                                  &as_key_for_put_record,
+                                                                                  &initializeKey))) {
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for removeBin function ");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_remove_bin(aerospike_obj_p->as_p, &as_key_for_put_record, bins_p, &error, options_p))) {
+        DEBUG_PHP_EXT_ERROR("unable to remove bin");
+        goto exit;
+    }
+    
 
 exit:
     RETURN_LONG(status);
+
 }
 /*
  *  Scan APIs:

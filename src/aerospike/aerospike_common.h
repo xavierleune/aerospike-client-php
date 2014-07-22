@@ -72,9 +72,9 @@ aerospike_transform_get_record(aerospike* as_object_p,
                                zval* bins_p);
 
 extern as_status
-aerospike_record_operations_exist(aerospike* as_object_p, as_key* as_key_p, as_error *error_p);
+aerospike_record_operations_exists(aerospike* as_object_p, as_key* as_key_p, as_error *error_p, zval* metadata_p, zval* options_p);
 extern as_status
-aerospike_record_operations_delete(aerospike* as_object_p, as_key* as_key_p, as_error *error_p);
+aerospike_record_operations_remove(aerospike* as_object_p, as_key* as_key_p, as_error *error_p);
 extern as_status
 aerospike_record_operations_ops(aerospike* as_object_p,
                                 as_key* as_key_p,
@@ -86,4 +86,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 u_int64_t initial_value,
                                 u_int64_t time_to_live,
                                 u_int64_t operation);
+extern as_status
+aerospike_record_operations_remove_bin(aerospike* as_object_p, as_key* as_key_p, zval* bin_name_p, as_error* error_p, zval* options_p);
+
 #endif

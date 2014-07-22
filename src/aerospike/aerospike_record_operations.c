@@ -7,27 +7,27 @@
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
 
-extern as_status aerospike_record_operations_exist(aerospike* as_object_p,
-                                 as_key* as_key_p,
-                                 as_error *error_p)
+extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
+                                                    as_key* as_key_p,
+                                                    as_error *error_p,
+                                                    zval* metadata_p,
+                                                    zval* options_p)
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_read              read_policy;
     as_record*                  record_p;
 
     if ( (!as_key_p) || (!error_p) ||
-         (!as_object_p)) {
+         (!as_object_p) || (!metadata_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, NULL))) {
-        status = AEROSPIKE_ERR;
         goto exit;
     }
   
     if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p, NULL, as_key_p, &record_p))) {
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
@@ -36,9 +36,10 @@ exit:
 }
 
 
-extern as_status aerospike_record_operations_delete(aerospike* as_object_p,
-                                 as_key* as_key_p,
-                                 as_error *error_p)
+extern as_status 
+aerospike_record_operations_remove(aerospike* as_object_p,
+                                   as_key* as_key_p,
+                                   as_error *error_p)
 {
     as_status                   status = AEROSPIKE_OK;
 
@@ -51,7 +52,6 @@ extern as_status aerospike_record_operations_delete(aerospike* as_object_p,
     if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p, NULL, as_key_p))) {
         goto exit;
     }
-
 exit: 
     return(status);
 }
@@ -138,5 +138,47 @@ exit:
          as_integer_destroy(&initial_int_val);
      }
      return status;
+}
+
+extern as_status 
+aerospike_record_operations_remove_bin(aerospike* as_object_p,
+                                       as_key* as_key_p,
+                                       zval* bins_p,
+                                       as_error* error_p,
+                                       zval* options_p)
+{
+    as_status           status = AEROSPIKE_OK;
+    as_record           rec;
+    HashTable           *bins_array_p = Z_ARRVAL_P(bins_p);
+    HashPosition        pointer;
+    zval                **bin_names;
+
+    as_record_inita(&rec, zend_hash_num_elements(bins_array_p));
+    
+    if ((!as_object_p) || (!error_p) || (!as_key_p) || (!bins_array_p)) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    foreach_hashtable(bins_array_p, pointer, bin_names) {
+        if (IS_STRING == Z_TYPE_PP(bin_names)) {
+            if (!(as_record_set_nil(&rec, Z_STRVAL_PP(bin_names)))) {
+                status = AEROSPIKE_ERR;
+                goto exit;
+            }
+        } else {
+             status = AEROSPIKE_ERR;
+             goto exit;
+        }
+    }         
+
+    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, NULL, as_key_p, &rec))) {
+         as_record_destroy(&rec);
+         goto exit;
+    }
+    as_record_destroy(&rec);
+
+exit:
+    return(status);
 }
 
