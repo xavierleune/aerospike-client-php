@@ -1,7 +1,3 @@
----
-title: Aerospike PHP Client Internals
-description: Learn about the internal architecture of the Aerospike PHP Client for the Aerospike database.
----
 
 # Aerospike PHP Client Internal Architecture
 
