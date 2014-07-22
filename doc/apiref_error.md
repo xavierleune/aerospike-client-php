@@ -53,7 +53,7 @@ Aerospike::setLogHandler(function ($level, $file, $function, $line) {
     error_log("[$lvl_str] in $function at $file:$line");
 });
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
 $db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
