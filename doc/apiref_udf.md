@@ -16,6 +16,11 @@ public int Aerospike::deregister ( string $module )
 public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
 ```
 
+### [Aerospike::aggregate](aerospike_aggregate.md)
+```
+public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+```
+
 ## Example
 
 ```php

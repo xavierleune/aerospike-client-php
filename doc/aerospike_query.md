@@ -1,7 +1,7 @@
 
 # Aerospike::query
 
-Aerospike::query - queries a set in the Aerospike database
+Aerospike::query - queries a secondary index on a set in the Aerospike database
 
 ## Description
 
