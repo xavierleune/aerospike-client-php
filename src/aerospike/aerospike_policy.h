@@ -29,6 +29,8 @@ enum Aerospike_values {
 };
 
 extern as_status set_policy(as_policy_read *read_policy, as_policy_write *write_policy, zval *options);
+extern as_status set_policy_operations(as_policy_operate *operate_policy, zval *options);
+extern as_status set_general_policies(as_config* as_config_p, zval *options);
 extern as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce);
 
 #endif /* end of __AEROSPIKE_POLICY_H__ */

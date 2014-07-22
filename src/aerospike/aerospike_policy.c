@@ -9,6 +9,12 @@
 #include "aerospike_policy.h"
 
 #define MAX_CONSTANT_STR_SIZE 512
+#define NESTING_DEPTH_PHP_INI INI_STR("aerospike.nesting_depth") ? atoi(INI_STR("aerospike.nesting_depth")) : 0
+#define CONNECT_TIMEOUT_PHP_INI INI_STR("aerospike.connect_timeout") ? (uint32_t) atoi(INI_STR("aerospike.connect_timeout")) : 0
+#define READ_TIMEOUT_PHP_INI INI_STR("aerospike.read_timeout") ? (uint32_t) atoi(INI_STR("aerospike.read_timeout")) : 0
+#define WRITE_TIMEOUT_PHP_INI INI_STR("aerospike.write_timeout") ? (uint32_t) atoi(INI_STR("aerospike.write_timeout")) : 0
+#define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
+#define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
 
 typedef struct Aerospike_Constants {
     int constantno;
@@ -56,112 +62,174 @@ exit:
     return status;
 }
 
-as_status set_policy(as_policy_read *read_policy, as_policy_write *write_policy, zval *options)
+/*
+ * as_config_p, read_policy, write_policy pointers and not checked.
+ * Calling functions should check them.
+ */
+static void
+check_and_set_default_policies(as_config *as_config_p, as_policy_read *read_policy, as_policy_write *write_policy, as_policy_operate *operate_policy)
+{
+    uint32_t ini_timeout = 0;
+    if ((ini_timeout = READ_TIMEOUT_PHP_INI) && read_policy) {
+        read_policy->timeout = ini_timeout;
+    }
+    if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && write_policy) {
+        write_policy->timeout = ini_timeout;
+    }
+    if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && operate_policy) {
+        operate_policy->timeout = ini_timeout;
+    }
+    if ((ini_timeout = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
+        as_config_p->conn_timeout_ms = ini_timeout;
+    }
+}
+
+static as_status
+set_policy_ex(as_config *as_config_p, as_policy_read *read_policy, as_policy_write *write_policy, as_policy_operate *operate_policy, zval *options)
 {
     as_status error_code = AEROSPIKE_OK;
     int32_t initialize = 1;
 
-    if ((!read_policy) && (!write_policy)) {
+    if ((!read_policy) && (!write_policy) && (!operate_policy)) {
         error_code = AEROSPIKE_ERR;
         goto failure;
     }
 
+    // case: connect
     if ((read_policy) && (write_policy)) {
         initialize = 0;
     }
 
+    // case: get
     if (read_policy && initialize) {
         as_policy_read_init(read_policy);
     }
 
+    // case: put
     if (write_policy && initialize) {
         as_policy_write_init(write_policy);
     }
     
-    if (options != NULL) {
+    if (options == NULL) {
+        check_and_set_default_policies(as_config_p, read_policy, write_policy, operate_policy);
+    } else {
         HashTable *options_array = Z_ARRVAL_P(options);
         HashPosition options_pointer;
         zval **options_value;
         char *options_key;
+        int read_flag = 0, write_flag = 0, connect_flag = 0;
 
         foreach_hashtable(options_array, options_pointer, options_value) {
             uint options_key_len;
             ulong options_index;
 
             if (zend_hash_get_current_key_ex(options_array, &options_key, &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
-                /*
-                 * For now, using AEROSPIKE_ERR. Need to have specific
-                 * error code here.
-                 */
                 error_code = AEROSPIKE_ERR;
                 goto failure;
             }
             switch((int) options_index) {
+                case OPT_CONNECT_TIMEOUT:
+                    if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        error_code = AEROSPIKE_ERR_TIMEOUT;
+                        goto failure;
+                    }
+                    as_config_p->conn_timeout_ms = (uint32_t) Z_LVAL_PP(options_value);
+                    connect_flag = 1;
+                    break;
                 case OPT_READ_TIMEOUT:
                     if ((!read_policy) || (Z_TYPE_PP(options_value) != IS_LONG)) {
                         error_code = AEROSPIKE_ERR_TIMEOUT;
                         goto failure;
                     }
                     read_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    read_flag = 1;
                     break;
                 case OPT_WRITE_TIMEOUT:
-                    if ((!write_policy) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                    if ((Z_TYPE_PP(options_value) != IS_LONG)) {
                         error_code = AEROSPIKE_ERR_TIMEOUT;
                         goto failure;
                     }
-                    write_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    if (write_policy) {
+                        write_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if(operate_policy) {
+                        operate_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    }
+                    else {
+                        goto failure;
+                    }
+                    write_flag = 1;
                     break;
                 case OPT_POLICY_EXISTS:
                     if ((!write_policy) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        /*
-                         * For now, using AEROSPIKE_ERR. Need to have specific
-                         * error code here.
-                         */
                         error_code = AEROSPIKE_ERR;
                         goto failure;
                     }
                     if ((Z_LVAL_PP(options_value) & AS_POLICY_EXISTS) == AS_POLICY_EXISTS) {
                         write_policy->exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS + 1;
                     } else {
-                        /*
-                         * For now, using AEROSPIKE_ERR. Need to have specific
-                         * error code here.
-                         */
                         error_code = AEROSPIKE_ERR;
                         goto failure;
                     }
                     break;
                 case OPT_POLICY_RETRY:
-                    if ((!write_policy) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        /*
-                         * For now, using AEROSPIKE_ERR. Need to have specific
-                         * error code here.
-                         */
+                    if((Z_TYPE_PP(options_value) != IS_LONG) && ((Z_LVAL_PP(options_value) & AS_POLICY_RETRY) != AS_POLICY_RETRY)) {
                         error_code = AEROSPIKE_ERR;
                         goto failure;
                     }
-                    if ((Z_LVAL_PP(options_value) & AS_POLICY_RETRY) == AS_POLICY_RETRY) {
+                    if (write_policy) {
                         write_policy->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
+                    } else if(operate_policy) {
+                        operate_policy->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
                     } else {
-                        /*
-                         * For now, using AEROSPIKE_ERR. Need to have specific
-                         * error code here.
-                         */
                         error_code = AEROSPIKE_ERR;
                         goto failure;
                     }
                     break;
                 default:
-                    /*
-                     * For now, using AEROSPIKE_ERR. Need to have specific
-                     * error code here.
-                     */
                     error_code = AEROSPIKE_ERR;
                     goto failure;
             }
+        }
+        if (!write_flag && write_policy) {
+            check_and_set_default_policies((connect_flag ? NULL : as_config_p), NULL, write_policy, NULL);
+            connect_flag = 1;
+        } 
+        if (!read_flag && read_policy) {
+            check_and_set_default_policies((connect_flag ? NULL : as_config_p), read_policy, NULL, NULL);
+            connect_flag = 1;
+        } 
+        if (!connect_flag && as_config_p) {
+            check_and_set_default_policies(as_config_p, NULL, NULL, NULL);
         }
     }
 failure:
     return error_code;
 }
 
+extern as_status
+set_policy(as_policy_read *read_policy, as_policy_write *write_policy, zval *options)
+{
+    return set_policy_ex(NULL, read_policy, write_policy, NULL, options);
+}
+
+extern as_status
+set_policy_operations(as_policy_operate *operate_policy, zval *options)
+{
+    return set_policy_ex(NULL, NULL, NULL, operate_policy, options);
+}
+
+extern as_status
+set_general_policies(as_config *as_config_p, zval *options)
+{
+    as_status     status = AEROSPIKE_OK;
+
+    if (!as_config_p) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    status = set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write, 
+                           NULL, options);
+exit:
+    return status;
+}

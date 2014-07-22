@@ -6,20 +6,20 @@ Aerospike::exists - check if a record exists in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
 
 is an alias for
 
-public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::getMetadata ( array $key, array &$metadata [, array $options ] )
 ```
 
 **Aerospike::exists()** will check if a record with a given *key* exists in the database.
 If such a key exists its metadata will be returned in the *metadata* variable,
-otherwise it will be an empty array.
+otherwise it will be NULL.
 
 ## Parameters
 
-**key** the key for the record.
+**key** the key for the record. An associative array with keys 'ns','set','key'.
 
 **metadata** filled by an associative array of metadata.
 
@@ -33,23 +33,21 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## Examples
 
-### Example #1 Aerospike::exists()
-
 ```php
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => "1234");
+$key = $db->initKey("test", "users", 1234);
 $res = $db->exists($key, $metadata);
 if ($res == Aerospike::OK) {
     var_dump($metadata);
-elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

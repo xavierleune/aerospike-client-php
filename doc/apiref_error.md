@@ -1,5 +1,5 @@
 
-# Error Handling Methods
+# Error Handling and Logging Methods
 
 ### [Aerospike::error](aerospike_error.md)
 ```
@@ -14,13 +14,47 @@ public int Aerospike::errorno ( void )
 The error codes returned are constants of the **Aerospike** class, and map to
 the client and server error codes defined in the C client (in as_status.h).
 
+### [Aerospike::setLogLevel](aerospike_setloglevel.md)
+```
+public static void Aerospike::setLogLevel ( int $log_level )
+```
+
+### [Aerospike::setLogHandler](aerospike_setloghandler.md)
+```
+public static void Aerospike::setLogHandler ( callback $log_handler )
+```
+
 ## Example
 
 ```php
 <?php
 
+Aerospike::setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
+Aerospike::setLogHandler(function ($level, $file, $function, $line) {
+    switch ($level) {
+        case Aerospike::LOG_LEVEL_ERROR:
+            $lvl_str = 'ERROR';
+            break;
+        case Aerospike::LOG_LEVEL_WARN:
+            $lvl_str = 'WARN';
+            break;
+        case Aerospike::LOG_LEVEL_INFO:
+            $lvl_str = 'INFO';
+            break;
+        case Aerospike::LOG_LEVEL_DEBUG:
+            $lvl_str = 'DEBUG';
+            break;
+        case Aerospike::LOG_LEVEL_TRACE:
+            $lvl_str = 'TRACE';
+            break;
+        default:
+            $lvl_str = '???';
+    }
+    error_log("[$lvl_str] in $function at $file:$line");
+});
+
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
@@ -32,7 +66,7 @@ $put_val = array("email" => "hey@example.com", "name" => "Hey There");
 $res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike:POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::KEY_FOUND_ERROR) {
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

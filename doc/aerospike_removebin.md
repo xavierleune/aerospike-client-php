@@ -1,22 +1,22 @@
 
-# Aerospike::touch
+# Aerospike::removeBin
 
-Aerospike::touch - touch a record in the Aerospike DB
+Aerospike::removeBin - removes a bin from a record
 
 ## Description
 
 ```
-public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
+public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 ```
 
-**Aerospike::touch()** will touch the given record, resetting its time-to-live
-and incrementing its generation.
+**Aerospike::removeBin()** will remove the specified *bins* from the record* with
+ a given *key*.
 
 ## Parameters
 
 **key** the key for the record. An associative array with keys 'ns','set','key'.
 
-**ttl** the time-to-live in seconds for the record.
+**bins** the name of the bins to be removed from the record.
 
 **options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 
@@ -38,12 +38,12 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
-$res = $db->touch($key, 120);
+$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$res = $db->removeBin($key, array("age"));
 if ($res == Aerospike::OK) {
-    echo "Added 120 seconds to the record's expiration.\n"
+    echo "Removed bin 'age' from the record.\n";
 } elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo "A user with key ". $key['key']. " does not exist in the database\n";
+    echo "The database has no record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }
@@ -54,10 +54,12 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-Added 120 seconds to the record's expiration.
+Removed bin 'age' from the record.
 ```
-**or**
+
+or
+
 ```
-A user with key 1234 does not exist in the database.
+The database has no record with the given key.
 ```
 

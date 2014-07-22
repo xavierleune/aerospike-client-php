@@ -6,7 +6,7 @@ Aerospike::increment - increments a numeric value in a bin
 ## Description
 
 ```
-public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
 ```
 
 **Aerospike::increment()** will increment a *bin* containing a numeric value by the *offest* or
@@ -14,7 +14,7 @@ set it to the *initial_value* if it does not exist.
 
 ## Parameters
 
-**key** the key under which the bin can be found.
+**key** the key under which the bin can be found. An associative array with keys 'ns','set','key'.
 
 **bin** the name of the bin in which we have a numeric value.
 
@@ -22,7 +22,7 @@ set it to the *initial_value* if it does not exist.
 
 **initial_value** the integer to set in the bin if it is empty
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_RETRY**, and **Aerospike::OPT_SERIALIZER**.
 
 ## Return Values
 
@@ -36,13 +36,13 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$key = $db->initKey("test", "users", 1234);
 $res = $db->increment($key, 'pto', -4);
 if ($res == Aerospike::OK) {
     echo "Decremented four vacation days from the user's PTO balance.\n";

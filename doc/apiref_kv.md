@@ -1,46 +1,82 @@
 
 # Key-Value Methods
 
+### [Aerospike::initKey](aerospike_initkey.md)
+```
+public array Aerospike::initKey ( string $ns, string $set, string $pk )
+```
+
 ### [Aerospike::put](aerospike_put.md)
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
+public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
 ```
 
 ### [Aerospike::get](aerospike_get.md)
 ```
-public int Aerospike::get ( string $key, array &$record [, array $filter [, array $options ]] )
+public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options ]] )
 ```
 
 ### [Aerospike::remove](aerospike_remove.md)
 ```
-public int Aerospike::remove ( string $key [, array $options ] )
+public int Aerospike::remove ( array $key [, array $options ] )
+```
+
+### [Aerospike::removeBin](aerospike_removebin.md)
+```
+public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 ```
 
 ### [Aerospike::exists](aerospike_exists.md)
 ```
-public int Aerospike::exists ( string $key, array &$metadata [, array $options ] )
-public int Aerospike::getMetadata ( string $key, array &$metadata [, array $options ] )
+public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
+public int Aerospike::getMetadata ( array $key, array &$metadata [, array $options ] )
 ```
 
 ### [Aerospike::touch](aerospike_touch.md)
 ```
-public int Aerospike::touch ( string $key, int $ttl = 0 [, array $options ] )
+public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
 ```
 
 ### [Aerospike::increment](aerospike_increment.md)
 ```
-public int Aerospike::increment ( string $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
 ```
 
 ### [Aerospike::append](aerospike_append.md)
 ```
-public int Aerospike::append ( string $key, string $bin, string $value [, array $options ] )
+public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
 ```
 
 ### [Aerospike::prepend](aerospike_prepend.md)
 ```
-public int Aerospike::prepend ( string $key, string $bin, string $value [, array $options ] )
+public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 ```
+
+### [Aerospike::operate](aerospike_operate.md)
+```
+public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+```
+
+### [Aerospike::getMany](aerospike_getmany.md)
+```
+public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
+```
+
+### [Aerospike::existsMany](aerospike_existsmany.md)
+```
+public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
+```
+
+### [Aerospike::setSerializer](aerospike_setserializer.md)
+```
+public static void Aerospike::setSerializer ( callback $serialize_cb )
+```
+
+### [Aerospike::setDeserializer](aerospike_setdeserializer.md)
+```
+public static void Aerospike::setDeserializer ( callback $unserialize_cb )
+```
+
 
 ## Example
 
@@ -48,19 +84,19 @@ public int Aerospike::prepend ( string $key, string $bin, string $value [, array
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$key = $db->initKey("test", "users", 1234);
 $put_val = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
 $res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::KEY_FOUND_ERROR) {
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

@@ -6,7 +6,7 @@ Aerospike::put - writes a record to the Aerospike database
 ## Description
 
 ```
-public int Aerospike::put ( string $key, array $record [, int $ttl = 0 [, array $options ]] )
+public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
 ```
 
 **Aerospike::put()** will write a *record* with a given *key*, where the _record_
@@ -19,7 +19,7 @@ associative array keys and values. This behavior can be modified using the
 
 ## Parameters
 
-**key** the key under which to store the record.
+**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
 
 **record** the associative array of bins and values to write.
 
@@ -41,13 +41,13 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
-$db = new Aerospike($config);
+$db = new Aerospike($config, 'prod-db');
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$key = $db->initKey("test", "users", 1234);
 $put_vals = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
 $res = $db->put($key, $put_vals);
@@ -88,7 +88,7 @@ $res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospi
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::KEY_FOUND_ERROR) {
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

@@ -1,0 +1,98 @@
+
+# Aerospike::apply
+
+Aerospike::apply - Applies a UDF to a record at the Aerospike DB
+
+## Description
+
+```
+public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
+```
+
+**Aerospike::apply()** will apply the UDF *module*.*function* to a record with
+a given *key*. A list of *args* can be passed to the UDF and any *returned*
+value captured optionally.
+
+Currently the only UDF language supported is Lua.  See the
+[UDF Developer Guide](http://www.aerospike.com/docs/udf/udf_guide.html) on the Aerospike website.
+
+## Parameters
+
+**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
+
+**module** the name of the UDF module registered against the Aerospike DB.
+
+**function** the name of the function to be applied to the record.
+
+**args** an array of arguments for the UDF.
+
+**returned** if passed will contain the result value (integer, string, array) of
+calling the UDF.
+
+## Return Values
+
+Returns an integer status code.  Compare to the Aerospike class status
+constants.  When non-zero the **Aerospike::error()** and
+**Aerospike::errorno()** methods can be used.
+
+## Examples
+
+### Example UDF
+
+Registered module **my_udf.lua**
+```lua
+function startswith(rec, bin_name, prefix)
+  if not aerospike:exists(rec) then
+    return false
+  end
+  if not prefix then
+    return true
+  end
+  if not rec[bin_name] then
+    return false
+  end
+  local bin_val = rec[bin_name]
+  l = prefix:len()
+  if l > bin_val:len() then
+    return false
+  end
+  ret = bin_val:sub(1, l) == prefix
+  return ret
+end
+```
+
+## Example of applying the UDF on a record
+
+```php
+<?php
+
+$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000));
+$db = new Aerospike($config, 'prod-db');
+if (!$db->isConnected()) {
+   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+   exit(1);
+}
+
+$key = array("ns" => "test", "set" => "users", "key" => "1234");
+$res = $db->apply($key, 'my_udf', 'startswith', array('email', 'hey@'), $returned);
+if ($res == Aerospike::OK) {
+    if ($returned) {
+        echo "The email of the user with key {$key['key']} starts with 'hey@'.\n";
+    } else {
+        echo "The email of the user with key {$key['key']} does not start with 'hey@'.\n";
+    }
+} elseif ($res == Aerospike::ERR_UDF_NOT_FOUND) {
+    echo "The UDF module my_udf.lua was not registered with the Aerospike DB.\n";
+} else {
+    echo "[{$db->errorno()}] ".$db->error();
+}
+
+?>
+```
+
+We expect to see:
+
+```
+The email of the user with key 1234 starts with 'hey@'.
+```
+
