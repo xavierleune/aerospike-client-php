@@ -37,7 +37,7 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## Examples
 
-### Example UDF
+### Example Record UDF
 
 Registered module **my_udf.lua**
 ```lua
