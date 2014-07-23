@@ -82,10 +82,16 @@ PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, remove);
 PHP_METHOD(Aerospike, removeBin);
 PHP_METHOD(Aerospike, touch);
+
 // Logging APIs:
 
 PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
+
+// Error Handling APIs:
+
+PHP_METHOD(Aerospike, error);
+PHP_METHOD(Aerospike, errorno);
 
 // TBD
 

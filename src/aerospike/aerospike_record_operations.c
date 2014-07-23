@@ -110,7 +110,9 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             as_operations_add_prepend_str(&ops, bin_name_p, str);
             break;
         case AS_OPERATOR_INCR:
-            if (aerospike_key_select(as_object_p, error_p, NULL, as_key_p, select, &get_rec) == AEROSPIKE_OK) {
+            if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p, error_p, NULL, as_key_p, select, &get_rec))) {
+                goto exit;
+            } else {
                 if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
                    if (AS_NIL == value_p->type) {
                        as_integer_init(&initial_int_val, initial_value);
@@ -202,10 +204,13 @@ exit:
 }
 
 extern as_status 
-aerospike_php_exists_metadata(aerospike* as_object_p, zval* key_record_p, zval* metadata_p, zval* options_p) {
+aerospike_php_exists_metadata(aerospike* as_object_p, 
+                              zval* key_record_p, 
+                              zval* metadata_p, 
+                              zval* options_p,
+                              as_error* error_p) {
 
     as_status              status = AEROSPIKE_OK;
-    as_error               error;
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
 
@@ -234,7 +239,7 @@ aerospike_php_exists_metadata(aerospike* as_object_p, zval* key_record_p, zval* 
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_exists(as_object_p, &as_key_for_put_record, &error, metadata_p, options_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_exists(as_object_p, &as_key_for_put_record, error_p, metadata_p, options_p))) {
         DEBUG_PHP_EXT_ERROR("exists/getMetadata: unable to fetch the record");
         goto exit;
     }

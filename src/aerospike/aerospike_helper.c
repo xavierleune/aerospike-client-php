@@ -80,12 +80,6 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
 
 extern int parseLogParameters(as_log* as_log_p)
 {
-    /*if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                            &func_call_info, &func_call_info_cache,
-                            &func_call_info.params, &func_call_info.param_count) == FAILURE) {    
-	DEBUG_PHP_EXT_ERROR("invalid aerospike object");
-        return 0;
-    }*/
     if (as_log_set_callback(as_log_p, &aerospike_helper_log_callback)) {
 	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
@@ -95,4 +89,27 @@ extern int parseLogParameters(as_log* as_log_p)
     }	
 }
 
-    
+extern void 
+aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *error_p, bool reset_flag TSRMLS_DC)
+{
+    zval*    err_code_p = NULL;
+    zval*    err_msg_p = NULL;
+
+    MAKE_STD_ZVAL(err_code_p);
+    MAKE_STD_ZVAL(err_msg_p);
+
+    if (reset_flag) {
+        ZVAL_STRINGL(err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
+        ZVAL_LONG(err_code_p, DEFAULT_ERRORNO);
+    } else {
+        ZVAL_STRINGL(err_msg_p, error_p->message, strlen(error_p->message), 1);
+        ZVAL_LONG(err_code_p, error_p->code);
+    }
+
+    zend_update_property(ce_p, object_p, "error", strlen("error"), err_msg_p TSRMLS_DC);
+    zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), err_code_p TSRMLS_DC);
+
+    zval_ptr_dtor(&err_code_p);
+    zval_ptr_dtor(&err_msg_p);
+}
+ 

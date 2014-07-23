@@ -49,7 +49,6 @@
                 break;
 
 
-
 #define AEROSPIKE_WALKER_SWITCH_CASE(method, level, action,                    \
         err, static_pool, key, value, array, label)                            \
         AEROSPIKE_WALKER_SWITCH_CASE_##method(method, level, action,           \
