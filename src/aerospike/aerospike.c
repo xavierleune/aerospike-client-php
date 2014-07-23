@@ -129,7 +129,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, getHeader, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getMetadata, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, increment, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, initkey, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, initKey, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, operate, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
@@ -1056,9 +1056,9 @@ exit:
     RETURN_LONG(status);
 }
 
-/* PHP Method:  bool Aerospike::initkey()
+/* PHP Method:  bool Aerospike::initKey()
    helper method for building the key array. */
-PHP_METHOD(Aerospike, initkey)
+PHP_METHOD(Aerospike, initKey)
 {
 
     as_status              status = AEROSPIKE_OK;
@@ -1068,20 +1068,20 @@ PHP_METHOD(Aerospike, initkey)
     char                   *set_p = NULL;
     int                    set_p_length;
     zval                   *pk_p ;
-    
+
     array_init(return_value);
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for initkey");
-        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for initkey");
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for initKey");
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for initKey");
         goto exit;
     }
 
     if((!ns_p) ||(!set_p) || PHP_TYPE_ISNULL(pk_p) ){
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for initkey function not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for initkey function not proper");
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for initKey function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for initKey function not proper");
         goto exit;
     }
 
@@ -1097,8 +1097,8 @@ PHP_METHOD(Aerospike, initkey)
            break;
        default:
            status = AEROSPIKE_ERR_PARAM;
-           PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for initkey");
-           DEBUG_PHP_EXT_ERROR("Unable to parse parameters for initkey");
+           PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for initKey");
+           DEBUG_PHP_EXT_ERROR("Unable to parse parameters for initKey");
            goto exit;
     }
 exit:
@@ -1222,7 +1222,7 @@ PHP_METHOD(Aerospike, predicateBetween)
     int                    bin_name_len;
     long                   *min_p;
     long                   *max_p;
-    HashTable              *minmax_arr = NULL;
+    zval                   *minmax_arr;
 
     array_init(return_value);
 
