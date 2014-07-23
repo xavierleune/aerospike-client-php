@@ -67,7 +67,11 @@ exit:
  * Calling functions should check them.
  */
 static void
-check_and_set_default_policies(as_config *as_config_p, as_policy_read *read_policy, as_policy_write *write_policy, as_policy_operate *operate_policy)
+check_and_set_default_policies(as_config *as_config_p, 
+                               as_policy_read *read_policy, 
+                               as_policy_write *write_policy, 
+                               as_policy_operate *operate_policy,
+                               as_policy_remove *remove_policy)
 {
     uint32_t ini_timeout = 0;
     if ((ini_timeout = READ_TIMEOUT_PHP_INI) && read_policy) {
@@ -79,18 +83,27 @@ check_and_set_default_policies(as_config *as_config_p, as_policy_read *read_poli
     if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && operate_policy) {
         operate_policy->timeout = ini_timeout;
     }
+    if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && remove_policy) {
+        remove_policy->timeout = ini_timeout;
+    }
     if ((ini_timeout = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
         as_config_p->conn_timeout_ms = ini_timeout;
     }
 }
 
 static as_status
-set_policy_ex(as_config *as_config_p, as_policy_read *read_policy, as_policy_write *write_policy, as_policy_operate *operate_policy, zval *options)
+set_policy_ex(as_config *as_config_p, 
+              as_policy_read *read_policy, 
+              as_policy_write *write_policy, 
+              as_policy_operate *operate_policy, 
+              as_policy_remove *remove_policy,
+              zval *options)
 {
     as_status error_code = AEROSPIKE_OK;
     int32_t initialize = 1;
 
-    if ((!read_policy) && (!write_policy) && (!operate_policy)) {
+    if ((!read_policy) && (!write_policy) && 
+        (!operate_policy) && (!remove_policy)) {
         error_code = AEROSPIKE_ERR;
         goto failure;
     }
@@ -110,8 +123,18 @@ set_policy_ex(as_config *as_config_p, as_policy_read *read_policy, as_policy_wri
         as_policy_write_init(write_policy);
     }
     
+    // case: operate
+    if (operate_policy && initialize) {
+        as_policy_operate_init(operate_policy);
+    }
+
+    // case: remove
+    if (remove_policy && initialize) {
+        as_policy_remove_init(remove_policy);
+    }
+
     if (options == NULL) {
-        check_and_set_default_policies(as_config_p, read_policy, write_policy, operate_policy);
+        check_and_set_default_policies(as_config_p, read_policy, write_policy, operate_policy, remove_policy);
     } else {
         HashTable *options_array = Z_ARRVAL_P(options);
         HashPosition options_pointer;
@@ -153,8 +176,9 @@ set_policy_ex(as_config *as_config_p, as_policy_read *read_policy, as_policy_wri
                         write_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if(operate_policy) {
                         operate_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
-                    }
-                    else {
+                    } else if(remove_policy) {
+                        remove_policy->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else {
                         goto failure;
                     }
                     write_flag = 1;
@@ -180,6 +204,8 @@ set_policy_ex(as_config *as_config_p, as_policy_read *read_policy, as_policy_wri
                         write_policy->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
                     } else if(operate_policy) {
                         operate_policy->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
+                    } else if(remove_policy) {
+                        remove_policy->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
                     } else {
                         error_code = AEROSPIKE_ERR;
                         goto failure;
@@ -191,15 +217,15 @@ set_policy_ex(as_config *as_config_p, as_policy_read *read_policy, as_policy_wri
             }
         }
         if (!write_flag && write_policy) {
-            check_and_set_default_policies((connect_flag ? NULL : as_config_p), NULL, write_policy, NULL);
+            check_and_set_default_policies((connect_flag ? NULL : as_config_p), NULL, write_policy, NULL, NULL);
             connect_flag = 1;
         } 
         if (!read_flag && read_policy) {
-            check_and_set_default_policies((connect_flag ? NULL : as_config_p), read_policy, NULL, NULL);
+            check_and_set_default_policies((connect_flag ? NULL : as_config_p), read_policy, NULL, NULL, NULL);
             connect_flag = 1;
         } 
         if (!connect_flag && as_config_p) {
-            check_and_set_default_policies(as_config_p, NULL, NULL, NULL);
+            check_and_set_default_policies(as_config_p, NULL, NULL, NULL, NULL);
         }
     }
 failure:
@@ -209,13 +235,19 @@ failure:
 extern as_status
 set_policy(as_policy_read *read_policy, as_policy_write *write_policy, zval *options)
 {
-    return set_policy_ex(NULL, read_policy, write_policy, NULL, options);
+    return set_policy_ex(NULL, read_policy, write_policy, NULL, NULL, options);
 }
 
 extern as_status
 set_policy_operations(as_policy_operate *operate_policy, zval *options)
 {
-    return set_policy_ex(NULL, NULL, NULL, operate_policy, options);
+    return set_policy_ex(NULL, NULL, NULL, operate_policy, NULL, options);
+}
+
+extern as_status
+set_policy_remove(as_policy_remove *remove_policy, zval *options)
+{
+    return set_policy_ex(NULL, NULL, NULL, NULL, remove_policy, options);
 }
 
 extern as_status
@@ -229,7 +261,7 @@ set_general_policies(as_config *as_config_p, zval *options)
     }
 
     status = set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write, 
-                           NULL, options);
+                           NULL, NULL, options);
 exit:
     return status;
 }

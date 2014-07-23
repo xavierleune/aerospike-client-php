@@ -15,7 +15,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_read              read_policy;
-    as_record*                  record_p;
+    as_record*                  record_p = NULL;
 
     if ( (!as_key_p) || (!error_p) ||
          (!as_object_p) || (!metadata_p)) {
@@ -23,15 +23,22 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, NULL))) {
+    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, options_p))) {
         goto exit;
     }
   
-    if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p, NULL, as_key_p, &record_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p, &read_policy, as_key_p, &record_p))) {
         goto exit;
     }
 
+    add_assoc_long(metadata_p, "generation", record_p->gen);
+    add_assoc_long(metadata_p, "ttl", record_p->ttl);
+
 exit:
+    if (record_p) {
+        as_record_destroy(record_p);
+    }
+
     return(status);   
 }
 
@@ -39,9 +46,11 @@ exit:
 extern as_status 
 aerospike_record_operations_remove(aerospike* as_object_p,
                                    as_key* as_key_p,
-                                   as_error *error_p)
+                                   as_error *error_p,
+                                   zval* options_p)
 {
     as_status                   status = AEROSPIKE_OK;
+    as_policy_remove            remove_policy;
 
     if ( (!as_key_p) || (!error_p) ||
          (!as_object_p)) {
@@ -49,7 +58,11 @@ aerospike_record_operations_remove(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p, NULL, as_key_p))) {
+    if (AEROSPIKE_OK != (status = set_policy_remove(&remove_policy, options_p))) {
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p, &remove_policy, as_key_p))) {
         goto exit;
     }
 exit: 
@@ -97,7 +110,9 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             as_operations_add_prepend_str(&ops, bin_name_p, str);
             break;
         case AS_OPERATOR_INCR:
-            if (aerospike_key_select(as_object_p, error_p, NULL, as_key_p, select, &get_rec) == AEROSPIKE_OK) {
+            if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p, error_p, NULL, as_key_p, select, &get_rec))) {
+                goto exit;
+            } else {
                 if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
                    if (AS_NIL == value_p->type) {
                        as_integer_init(&initial_int_val, initial_value);
@@ -152,6 +167,7 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
     HashTable           *bins_array_p = Z_ARRVAL_P(bins_p);
     HashPosition        pointer;
     zval                **bin_names;
+    as_policy_write     write_policy;
 
     as_record_inita(&rec, zend_hash_num_elements(bins_array_p));
     
@@ -159,6 +175,11 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
         status = AEROSPIKE_ERR;
         goto exit;
     }
+
+    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, options_p))) {
+        goto exit;
+    }
+
 
     foreach_hashtable(bins_array_p, pointer, bin_names) {
         if (IS_STRING == Z_TYPE_PP(bin_names)) {
@@ -176,9 +197,58 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
          as_record_destroy(&rec);
          goto exit;
     }
-    as_record_destroy(&rec);
 
 exit:
+    as_record_destroy(&rec);
     return(status);
+}
+
+extern as_status 
+aerospike_php_exists_metadata(aerospike* as_object_p, 
+                              zval* key_record_p, 
+                              zval* metadata_p, 
+                              zval* options_p,
+                              as_error* error_p) {
+
+    as_status              status = AEROSPIKE_OK;
+    as_key                 as_key_for_put_record;
+    int16_t                initializeKey = 0;
+
+    if ((!as_object_p) || (!key_record_p)) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+             ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for exist/getMetdata function not proper.");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(metadata_p)) {
+        zval*         metadata_arr_p = NULL;
+
+        MAKE_STD_ZVAL(metadata_arr_p);
+        array_init(metadata_arr_p);
+        ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1)
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+        DEBUG_PHP_EXT_ERROR("unable to iterate through exists/getMetadata key params");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_exists(as_object_p, &as_key_for_put_record, error_p, metadata_p, options_p))) {
+        DEBUG_PHP_EXT_ERROR("exists/getMetadata: unable to fetch the record");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_put_record);
+    }
+
+    return status;
 }
 

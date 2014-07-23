@@ -71,6 +71,7 @@ PHP_METHOD(Aerospike, append);
 PHP_METHOD(Aerospike, exists);
 PHP_METHOD(Aerospike, get);
 PHP_METHOD(Aerospike, getMany);
+PHP_METHOD(Aerospike, getMetadata);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
 PHP_METHOD(Aerospike, initKey);
@@ -86,6 +87,11 @@ PHP_METHOD(Aerospike, touch);
 
 PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
+
+// Error Handling APIs:
+
+PHP_METHOD(Aerospike, error);
+PHP_METHOD(Aerospike, errorno);
 
 // Query and Scan APIs:
 
