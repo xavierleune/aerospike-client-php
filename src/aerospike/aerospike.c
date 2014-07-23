@@ -142,15 +142,18 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, setLogLevel, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, setLogHandler, NULL, ZEND_ACC_PUBLIC)
     /*
+     * Query and Scan APIs:
+     */
+    PHP_ME(Aerospike, predicateBetween, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC)
+    /*
      * Error Handling APIs:
      */
     PHP_ME(Aerospike, error, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, errorno, NULL, ZEND_ACC_PUBLIC)
 #if 0 // TBD
 
-    // Scan APIs:
     // Secondary Index APIs:
-    // Query APIs:
     // User Defined Function (UDF) APIs:
     // Large Data Type (LDT) APIs:
     // Logging APIs:
@@ -1080,8 +1083,8 @@ PHP_METHOD(Aerospike, initkey)
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for initkey function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for initkey function not proper");
         goto exit;
- 
     }
+
     add_assoc_stringl(return_value, "ns", ns_p, ns_p_length, 1);
     add_assoc_stringl(return_value, "set", set_p, set_p_length, 1);
 
@@ -1163,19 +1166,96 @@ exit:
     RETURN_LONG(status);
 }
 /*
- *  Scan APIs:
+ *  Scan and Query APIs:
  */
+
+/* PHP Method: array Aerospike::predicateEquals ( string $bin, int|string $val )
+   helper method for building the EQUALS predicate. */
+PHP_METHOD(Aerospike, predicateEquals)
+{
+    as_status              status = AEROSPIKE_OK;
+    char                   *bin_name_p  =  NULL;
+    int                    bin_name_len;
+    zval                   *val_p;
+
+    array_init(return_value);
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &bin_name_p, &bin_name_len, &val_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for predicateEquals");
+        goto exit;
+    }
+
+    if ((!bin_name_p) || PHP_TYPE_ISNULL(val_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for predicateEquals function not proper.");
+        goto exit;
+
+    }
+    add_assoc_stringl(return_value, "bin", bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, "op", "=", sizeof("="), 1);
+
+    switch(Z_TYPE_P(val_p)) {
+       case IS_LONG:
+           add_assoc_long(return_value, "val", Z_LVAL_P(val_p));
+           break;
+       case IS_STRING:
+           add_assoc_string(return_value, "val", Z_STRVAL_P(val_p), 1);
+           break;
+       default:
+           status = AEROSPIKE_ERR_PARAM;
+           DEBUG_PHP_EXT_ERROR("unable to parse parameters for predicateEquals");
+           goto exit;
+    }
+exit:
+    if (status != AEROSPIKE_OK) {
+        RETURN_LONG(status);
+    }
+}
+
+/* PHP Method: array Aerospike::predicateBetween ( string $bin, int $min, int $max )
+   helper method for building the BETWEEN predicate. */
+PHP_METHOD(Aerospike, predicateBetween)
+{
+    as_status              status = AEROSPIKE_OK;
+    char                   *bin_name_p  =  NULL;
+    int                    bin_name_len;
+    long                   *min_p;
+    long                   *max_p;
+    HashTable              *minmax_arr = NULL;
+
+    array_init(return_value);
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &bin_name_p, &bin_name_len, &min_p, &max_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("unable to parse parameters for predicateBetween");
+        goto exit;
+    }
+
+    if (!bin_name_p) {
+        status = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_ERROR("input parameters (type) for predicateBetween function not proper.");
+        goto exit;
+
+    }
+    add_assoc_stringl(return_value, "bin", bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, "op", "BETWEEN", sizeof("BETWEEN"), 1);
+    array_init_size(minmax_arr, 2);
+    add_next_index_long(minmax_arr, min_p);
+    add_next_index_long(minmax_arr, max_p);
+    add_assoc_zval(return_value, "val", minmax_arr);
+
+exit:
+    if (status != AEROSPIKE_OK) {
+        RETURN_LONG(status);
+    }
+}
+
 
 /*** TBD ***/
 
 /*
  *  Secondary Index APIs:
- */
-
-/*** TBD ***/
-
-/*
- *  Query APIs:
  */
 
 /*** TBD ***/
@@ -1370,6 +1450,9 @@ PHP_MINIT_FUNCTION(aerospike)
 
     EXPOSE_LOGGER_CONSTANTS_STR_ZEND(Aerospike_ce);
     EXPOSE_STATUS_CODE_ZEND(Aerospike_ce);
+    // Query predicate operators
+    zend_declare_class_constant_string(Aerospike_ce, "OP_EQ", sizeof("OP_EQ") - 1, "=" TSRMLS_CC);
+    zend_declare_class_constant_string(Aerospike_ce, "OP_BETWEEN", sizeof("OP_BETWEEN") - 1, "BETWEEN" TSRMLS_CC);
     return SUCCESS;
 }
 
