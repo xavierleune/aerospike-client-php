@@ -73,7 +73,7 @@ PHP_METHOD(Aerospike, get);
 PHP_METHOD(Aerospike, getMany);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
-PHP_METHOD(Aerospike, initkey);
+PHP_METHOD(Aerospike, initKey);
 PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);
@@ -81,16 +81,19 @@ PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, remove);
 PHP_METHOD(Aerospike, removeBin);
 PHP_METHOD(Aerospike, touch);
+
 // Logging APIs:
 
 PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
 
-// TBD
+// Query and Scan APIs:
 
-// Scan APIs:
+PHP_METHOD(Aerospike, predicateBetween);
+PHP_METHOD(Aerospike, predicateEquals);
+
+// TBD
 // Secondary Index APIs:
-// Query APIs:
 // User Defined Function (UDF) APIs:
 // Large Data Type (LDT) APIs:
 // Shared Memory APIs:
