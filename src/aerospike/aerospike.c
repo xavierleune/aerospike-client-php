@@ -225,6 +225,8 @@ PHP_METHOD(Aerospike, __construct)
     zval*                  host_p = NULL;
     zval*                  options_p = NULL;
     zval*                  host_arr_p = NULL;
+    int8_t*                persistence_alias_p = NULL;
+    int16_t                persistence_alias_len = 0;
     as_error               error;
     as_status              status = AEROSPIKE_OK;
     as_config              config;
@@ -247,12 +249,17 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &host_p, &options_p) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|sa",
+                &host_p, &persistence_alias_p, &persistence_alias_len, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for construct in zend");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for construct in zend");
         goto exit;
     }
+
+    /*
+     * TODO: persistence_alias is yet to be handled for cluster initialization
+     */
 
     if (PHP_TYPE_ISNOTARR(host_p) || 
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
