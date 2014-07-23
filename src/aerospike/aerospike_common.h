@@ -47,9 +47,9 @@ extern as_log_level   php_log_level_set;
 
 #define PHP_TYPE_ISNULL(zend_val)        (IS_NULL == Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISARR(zend_val)         (IS_ARRAY == Z_TYPE_P(zend_val))
-//#define PHP_TYPE_ISSTRING(zend val)      (IS_STRING == Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      !PHP_TYPE_ISARR(zend_val)
-//#define PHP_TYPE_ISNOTSTRING(zend_val)   !PHP_TYPE_ISSTRING(zend_val)
+
+#define PHP_IS_CONN_NOT_ESTABLISHED(conn_state)   (conn_state == AEROSPIKE_CONN_STATE_FALSE)
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p, int16_t* set_val_p);
@@ -74,7 +74,7 @@ aerospike_transform_get_record(aerospike* as_object_p,
 extern as_status
 aerospike_record_operations_exists(aerospike* as_object_p, as_key* as_key_p, as_error *error_p, zval* metadata_p, zval* options_p);
 extern as_status
-aerospike_record_operations_remove(aerospike* as_object_p, as_key* as_key_p, as_error *error_p);
+aerospike_record_operations_remove(aerospike* as_object_p, as_key* as_key_p, as_error *error_p, zval* options_p);
 extern as_status
 aerospike_record_operations_ops(aerospike* as_object_p,
                                 as_key* as_key_p,
@@ -88,5 +88,8 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 u_int64_t operation);
 extern as_status
 aerospike_record_operations_remove_bin(aerospike* as_object_p, as_key* as_key_p, zval* bin_name_p, as_error* error_p, zval* options_p);
+
+extern as_status
+aerospike_php_exists_metadata(aerospike*  as_object_p, zval* key_record_p, zval* metadata_p, zval* options_p);
 
 #endif
