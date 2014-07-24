@@ -1072,10 +1072,15 @@ PHP_METHOD(Aerospike, initKey)
     array_init(return_value);
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
         RETURN_NULL();
     }
     if (ns_p_length == 0 || set_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
-        zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings.");
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
         RETURN_NULL();
     }
 
@@ -1088,15 +1093,20 @@ PHP_METHOD(Aerospike, initKey)
             break;
         case IS_STRING:
             if (strlen(Z_STRVAL_P(pk_p)) == 0) {
-                zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings.");
+                PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+                PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+                DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
                 RETURN_NULL();
             }
             add_assoc_string(return_value, "key", Z_STRVAL_P(pk_p), 1);
             break;
         default:
-            zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings.");
+            PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+            PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+            DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
             RETURN_NULL();
     }
+    PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
 }
 
 PHP_METHOD(Aerospike, removeBin)
