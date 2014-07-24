@@ -23,7 +23,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, NULL, NULL, options_p))) {
         goto exit;
     }
   
@@ -58,7 +58,7 @@ aerospike_record_operations_remove(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy_remove(&remove_policy, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(NULL, NULL, NULL, &remove_policy, options_p))) {
         goto exit;
     }
 
@@ -98,7 +98,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy_operations(&operate_policy, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(NULL, NULL, &operate_policy, NULL, options_p))) {
         goto exit;
     }
 
@@ -176,7 +176,7 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, NULL, NULL, options_p))) {
         goto exit;
     }
 

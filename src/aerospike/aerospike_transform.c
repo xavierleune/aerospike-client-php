@@ -903,7 +903,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, NULL, NULL, options_p))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
@@ -991,7 +991,7 @@ aerospike_transform_get_record(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, NULL, NULL, options_p))) {
         goto exit;
     }
 
