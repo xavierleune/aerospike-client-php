@@ -100,7 +100,6 @@ set_policy_ex(as_config *as_config_p,
               zval *options_p)
 {
     as_status error_code = AEROSPIKE_OK;
-    int32_t initialize = 1;
 
     if ((!read_policy_p) && (!write_policy_p) && 
         (!operate_policy_p) && (!remove_policy_p)) {
@@ -108,28 +107,19 @@ set_policy_ex(as_config *as_config_p,
         goto failure;
     }
 
-    // case: connect
-    if ((read_policy_p) && (write_policy_p)) {
-        initialize = 0;
-    }
+    // case: connect => (read_policy_p != NULL && write_policy_p != NULL)
 
-    // case: get
-    if (read_policy_p && initialize) {
+    if (read_policy_p && (!write_policy_p)) {
+        // case: get
         as_policy_read_init(read_policy_p);
-    }
-
-    // case: put
-    if (write_policy_p && initialize) {
+    } else if (write_policy_p && (!read_policy_p)) {
+        // case: put
         as_policy_write_init(write_policy_p);
-    }
-    
-    // case: operate
-    if (operate_policy_p && initialize) {
+    } else if (operate_policy_p) {
+        // case: operate
         as_policy_operate_init(operate_policy_p);
-    }
-
-    // case: remove
-    if (remove_policy_p && initialize) {
+    } else if (remove_policy_p) {
+        // case: remove
         as_policy_remove_init(remove_policy_p);
     }
 

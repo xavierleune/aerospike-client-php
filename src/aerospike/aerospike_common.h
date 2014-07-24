@@ -51,8 +51,8 @@ extern as_log_level   php_log_level_set;
 
 #define PHP_IS_CONN_NOT_ESTABLISHED(conn_state)   (conn_state == AEROSPIKE_CONN_STATE_FALSE)
 
-#define DEFAULT_ERRORNO -1
-#define DEFAULT_ERROR "No error"
+#define DEFAULT_ERRORNO 0
+#define DEFAULT_ERROR ""
 
 #define PHP_EXT_SET_AS_ERR(as_err_obj, code, msg)                       as_error_setall(&as_err_obj, code, msg, __func__, __FILE__, __LINE__)
 #define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj)      aerospike_helper_set_error(aerospike_class_p, getThis(), &as_err_obj, false)
