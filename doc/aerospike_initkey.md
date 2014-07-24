@@ -29,6 +29,7 @@ Associative Array:
   set => string set name
   key => the record's primary key value
 ```
+or *NULL* on failure.
 
 ## Examples
 

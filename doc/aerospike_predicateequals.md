@@ -28,6 +28,7 @@ Associative Array:
   op => Aerospike::OP_EQ
   val => scalar integer/string value
 ```
+or *NULL* on failure.
 
 ## Examples
 

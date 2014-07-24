@@ -97,6 +97,7 @@ PHP_METHOD(Aerospike, errorno);
 
 PHP_METHOD(Aerospike, predicateBetween);
 PHP_METHOD(Aerospike, predicateEquals);
+PHP_METHOD(Aerospike, query);
 
 // TBD
 // Secondary Index APIs:

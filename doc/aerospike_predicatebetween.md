@@ -30,6 +30,7 @@ Associative Array:
   op => Aerospike::OP_BETWEEN
   val => array
 ```
+or *NULL* on failure.
 
 ## Examples
 
