@@ -502,12 +502,11 @@ exit:
      return status;
 }
 
-/* PUT functions whoes macros will expand */
-
 static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool);
 static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool);
 static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool);
 
+/* PUT functions whose macros will expand */
 as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool)
 {
     as_status status;

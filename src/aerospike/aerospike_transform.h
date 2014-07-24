@@ -1,13 +1,83 @@
 /*
- * For GET and PUT method.  Both methods may have LIST and MAP datatypes.  To
- * iterate over it, we need to have callbacks.  To use below macros for code
- * generation, callbacks should have specific nomenclature.
+ * DESIGN CONSIDERATIONS:
+ *      Looking at the earlier version of the code, we found similarities at
+ *      various levels of code. Only changes were the naming terminologies for
+ *      different methods, but the overall structuring and orchestration was
+ *      pretty much similar at various levels.
  *
- * Following are the basic actions beased on caller.  callback for LIST =>
- * APPEND callback for MAP => ASSOC initial call for this macro => ASSOC
+ *      With this in mind, the immediate thought process in mind was to work
+ *      with macros and its concatenation with '##'. It will help us to generate
+ *      similar code at various levels, but from the same location. Advantages
+ *      of this approach are:
+ *      1. Modularity of the code
+ *      2. Code maintenance is easy as nomenclature and set of methods to write
+ *          is unified and generic for all new enhancements.
+ *      3. Reduces number of lines of visible code and easy to understand for
+ *          developers once they get acquainted with the terminologies used.
  *
- * Callback name has following specification:
- * "AEROSPIKE_##level_##method_##action_##datatype"
+ *      Disadvantages:
+ *      1. Macros are not debug friendly, but the function calls called within
+ *          the macros can be debugged.
+ *      2. Macro backbone should be stable enough. Then any issue occurred in
+ *          the future can be debugged at the function level as we are trusting
+ *          the backbone.
+ *      3. Developers need to have clear understanding about the expansion of
+ *          macros and location of their function calls which will be generated
+ *          during the expansion with '##'.
+ *
+ *          (In case, if developer wants to see the expanded code of macro,
+ *          gcc provides an option flag '-E'.
+ *          This can be updated before the ".c" file name in Makefile.
+ *          The ".c" file should have the Macro call which developer expects to
+ *          expand.)
+ *
+ ***********************************************************************************
+ *
+ *  Here is the overall view of architecture terminologies used to write macros:
+ *  level => It represents the processing level in the code flow and can take
+ *          following values. e.g. DEFAULT, MAP, LIST.
+ *      DEFAULT represents that we are processing Record.
+ *      MAP represents that we are processing Map.
+ *      LIST represents that we are processing List.
+ *
+ *  method => It represents the method we are processing. viz. GET OR PUT.
+ *           It can take any other method values in future sharing similar
+ *           infrastructure.
+ *
+ *  action => It represents the action to be taken on that 'level' for that
+ *           'method'.
+ *           e.g. ASSOC, APPEND, INDEX
+ *           ASSOC => All set(PUT) and/or assoc(GET) operations in Record and
+ *              Map(with string keys for GET) are represented by action 'ASSOC'.
+ *           INDEX => All assoc(GET) operations in Map(with integer keys for GET)
+ *              are represented by action 'INDEX'.
+ *           APPEND => All append(PUT) and/or get next (GET) operations in List
+ *              are represented by action 'APPEND'.
+ *
+ *  datatype => It represents the actual data type which needs to be processed
+ *  at particular 'level' for particular 'method' with particular 'action'.
+ *  The datatypes will vary for GET as well as PUT method.
+ *  The data types in GET method are inherited from the data types of CSDK.
+ *  The data types in PUT method corresponds to the PHP data types.
+ *
+ *  Method name call will look like following as per the specification::
+ *  "AEROSPIKE_##level_##method_##action_##datatype"
+ *
+ *  It can be derived to following names,
+ *  for example,
+ *  
+ *  AEROSPIKE_MAP_GET_ASSOC_STRING
+ *  AEROSPIKE_LIST_PUT_APPEND_INTEGER
+ *  AEROSPIKE_DEFAULT_GET_ASSOC_MAP
+ *
+ *  Special Case:
+ *  AEROSPIKE_##level##_PUT_##action##_ARRAY
+ *
+ *  In the PHP code, Map and List are interpreted as an Array.
+ *  In order to differentiate the incoming Array, and categorize them into
+ *  List and Map, we have special implementation inside the switch case of Array
+ *  to handle this case for method 'PUT'.
+ *
  *
  */
 
@@ -26,8 +96,41 @@
 
 #define FETCH_VALUE_GET(val) as_val_type(val)
 #define FETCH_VALUE_PUT(val) Z_TYPE_PP(val)
-// do we want to keep it Z_TYPE_P
 
+/*
+ * Macro Expansion for data type LONG for method PUT:
+ * ************************************************************************
+ * => For level = DEFAULT, action = ASSOC
+ * ************************************************************************
+ * case IS_LONG:
+ *      if (AEROSPIKE_OK != (err =
+ *          AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array,
+ *              static_pool))) {
+ *                  goto label;
+ *      }
+ *      break;
+ * ************************************************************************
+ * => For level = MAP, action = ASSOC
+ * ************************************************************************
+ * case IS_LONG:
+ *      if (AEROSPIKE_OK != (err =
+ *          AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array,
+ *              static_pool))) {
+ *                  goto label;
+ *      }
+ *      break;
+ * ************************************************************************
+ * => For level = LIST, action = APPEND
+ * ************************************************************************
+ * case IS_LONG:
+ *      if (AEROSPIKE_OK != (err =
+ *          AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array,
+ *              static_pool))) {
+ *                  goto label;
+ *      }
+ *      break;
+ * ************************************************************************
+ */
 #define EXPAND_CASE_PUT(level, method, action, datatype, key, value,           \
         array, err, static_pool, label)                                        \
     case IS_##datatype:                                                        \
@@ -38,6 +141,40 @@
         }                                                                      \
         break;
 
+/*
+ * Macro Expansion for data type STRING for method GET:
+ * ************************************************************************
+ * => For level = DEFAULT, action = ASSOC
+ * ************************************************************************
+ * case AS_STRING:
+ *      if (AEROSPIKE_OK != (err =
+ *          AEROSPIKE_DEFAULT_GET_ASSOC_STRING(key, value, array,
+ *              static_pool))) {
+ *                  goto label;
+ *      }
+ *      break;
+ * ************************************************************************
+ * => For level = MAP, action = ASSOC
+ * ************************************************************************
+ * case AS_STRING:
+ *      if (AEROSPIKE_OK != (err =
+ *          AEROSPIKE_MAP_GET_ASSOC_STRING(key, value, array,
+ *              static_pool))) {
+ *                  goto label;
+ *      }
+ *      break;
+ * ************************************************************************
+ * => For level = LIST, action = APPEND
+ * ************************************************************************
+ * case AS_STRING:
+ *      if (AEROSPIKE_OK != (err =
+ *          AEROSPIKE_LIST_GET_APPEND_STRING(key, value, array,
+ *              static_pool))) {
+ *                  goto label;
+ *      }
+ *      break;
+ * ************************************************************************
+ */
 #define EXPAND_CASE_GET(level, method, action, datatype, key, value,           \
         array, err, static_pool, label)                                        \
             case AS_##datatype:                                                \
@@ -48,7 +185,11 @@
                 }                                                              \
                 break;
 
-
+/*
+ * This is the main walker which will walk over all datatypes for all actions in
+ * all methods at all levels.
+ * You will find the wrapper macros over this one for particular tasks.
+ */
 #define AEROSPIKE_WALKER_SWITCH_CASE(method, level, action,                    \
         err, static_pool, key, value, array, label)                            \
         AEROSPIKE_WALKER_SWITCH_CASE_##method(method, level, action,           \
@@ -61,6 +202,15 @@
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
 
+/*
+ * Static pool maintained to avoid runtime mallocs.
+ * It comprises of following pools:
+ * 1. Pool for Arraylist
+ * 2. Pool for Hashmap
+ * 3. Pool for Strings
+ * 4. Pool for Integers
+ *
+ */
 typedef struct list_map_static_pool {
     u_int32_t        current_list_id;
     as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
@@ -72,15 +222,21 @@ typedef struct list_map_static_pool {
     u_int32_t        current_int_id;
 } as_static_pool;
 
-#define AERO_DEFAULT_KEY(hashtable, key, key_len, index, pointer,              \
+/*
+ * For the case of method PUT, we need to deduce the key for Record as well as
+ * Map when we iterate over array sent by PHP.
+ *
+ * These methods will generalise the key generation.
+ */
+#define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, status, label)                                            \
             zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len,   \
                     &index, 0, &pointer);
 
-#define AERO_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,    \
+#define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
         status, label)
 
-#define AERO_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,     \
+#define AS_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,       \
         status, label)                                                         \
 do {                                                                           \
     char *local_key;                                                           \
@@ -99,13 +255,18 @@ do {                                                                           \
     }                                                                          \
 } while(0);
 
+/* End of key deduction methods for Record, List and Map. */
 
+/* Macros to access Static Pool */
 #define CURRENT_LIST_SIZE(static_pool)                                         \
     ((as_static_pool *)static_pool)->current_list_id
+
 #define CURRENT_MAP_SIZE(static_pool)                                          \
     ((as_static_pool *)static_pool)->current_map_id
+
 #define STR_CNT(static_pool)                                                   \
     (((as_static_pool *)static_pool)->current_str_id)
+
 #define INT_CNT(static_pool)                                                   \
     (((as_static_pool *)static_pool)->current_int_id)
 
@@ -157,7 +318,6 @@ do {                                                                           \
     }
 
 #define AS_DEFAULT_INIT_STORE(store, hashtable, static_pool, status, label)                      
-/*    as_record_inita((as_record*) store, zend_hash_num_elements(hashtable))*/
 
 #define AS_LIST_INIT_STORE(store, hashtable, static_pool, status, label)       \
     INIT_STORE(store, static_pool, hashtable, LIST, status, label)
@@ -165,14 +325,14 @@ do {                                                                           \
 #define AS_MAP_INIT_STORE(store, hashtable, static_pool, status, label)        \
     INIT_STORE(store, static_pool, hashtable, MAP, status, label)
 
-#define AS_DEFAULT_STORE record
-#define AS_LIST_STORE NULL
-#define AS_MAP_STORE NULL
+/* End of macros for accessing Static Pools */
 
-#define AS_DEFAULT_KEY key
-#define AS_LIST_KEY record
-#define AS_MAP_KEY record
-
+/*
+ * Walker for PUT:
+ * It will loop over all the complex datatypes(record, map, list) and generate
+ * the code for various levels. It will populate switch case to classify the
+ * datatypes and deduce respective methods from each case (expanded above).
+ */
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action, err,           \
         static_pool, key, value, store, label)                                 \
 do {                                                                           \
@@ -184,7 +344,7 @@ do {                                                                           \
     ulong index;                                                               \
     hashtable = Z_ARRVAL_PP((zval**) value);                                   \
     foreach_hashtable(hashtable, pointer, dataval) {                           \
-        AERO_##level##_KEY(hashtable, key, key_len, index, pointer,            \
+        AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
         switch (FETCH_VALUE_##method(dataval)) {                               \
             EXPAND_CASE_PUT(level, method, action, ARRAY, key,                 \
@@ -202,6 +362,7 @@ do {                                                                           \
     }                                                                          \
 } while(0)
 
+/* Wrappers over the walker of PUT for all levels with all actions */
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(err, static_pool, key,  \
         value, store, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(PUT, DEFAULT, ASSOC, err,             \
@@ -216,8 +377,15 @@ do {                                                                           \
         value, store, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(PUT, MAP, ASSOC, err,                 \
                     static_pool, key, value, store, label)
+/* End of Wrappers over the walker of PUT */
 
-/*note : INTEGER, it does not translate to IS_LONG ??? */
+
+/*
+ * Walker for GET:
+ * It will provide callbacks for complex datatypes(map, list) and generate
+ * the code for various levels. It will populate switch case to classify the
+ * datatypes and deduce respective methods from each case (expanded above).
+ */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET(method, level, action, err,           \
         static_pool, key, value, array, label)                                 \
     switch (FETCH_VALUE_##method(value)) {                                     \
@@ -246,26 +414,32 @@ do {                                                                           \
             goto label;                                                        \
     }
 
+/* Wrappers over the walker of GET for all levels with all actions */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(err, static_pool, key,  \
         value, array, label)                                                   \
-            AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, DEFAULT,                     \
-                    ASSOC, err, static_pool, key, value, array, label)
+            AEROSPIKE_WALKER_SWITCH_CASE(GET, DEFAULT, ASSOC, err,             \
+                    static_pool, key, value, array, label)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(err, static_pool, key,      \
         value, array, label)                                                   \
-            AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, MAP,                         \
-                    ASSOC, err, static_pool, key, value, array, label)
+            AEROSPIKE_WALKER_SWITCH_CASE(GET, MAP, ASSOC, err,                 \
+                    static_pool, key, value, array, label)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(err, static_pool, key,      \
         value, array, label)                                                   \
-            AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, MAP,                         \
-                    INDEX, err, static_pool, key, value, array, label)
+            AEROSPIKE_WALKER_SWITCH_CASE(GET, MAP, INDEX, err,                 \
+                    static_pool, key, value, array, label)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(err, static_pool, key,    \
         value, array, label)                                                   \
-            AEROSPIKE_WALKER_SWITCH_CASE_GET(GET, LIST,                        \
-                    APPEND, err, static_pool, key, value, array, label) 
+            AEROSPIKE_WALKER_SWITCH_CASE(GET, LIST, APPEND, err,               \
+                    static_pool, key, value, array, label) 
 
+/* End of Wrappers over the walker of PUT */
+
+/* Macros for GET to iterate over complex datatypes and handle internal complex
+ * datatypes with callbacks.
+ */
 #define AS_APPEND_LIST_TO_LIST(key, value, array)                              \
     AS_STORE_ITERATE(GET, LIST, APPEND, LIST, key, value, *(zval **)array)
 
@@ -290,16 +464,25 @@ do {                                                                           \
 #define AS_ASSOC_MAP_TO_DEFAULT(key, value, array)                             \
     AS_STORE_ITERATE(GET, DEFAULT, ASSOC, MAP, key, value, array)
 
+#define AS_STORE_ITERATE(method, level, action, datatype, key, value, array)   \
+do {                                                                           \
+    zval *store;                                                               \
+    MAKE_STD_ZVAL(store);                                                      \
+    array_init(store);                                                         \
+    AS_##datatype##_FOREACH((AS_##datatype##_DATATYPE*) value,                 \
+            (AS_##datatype##_FOREACH_CALLBACK)                                 \
+            AS_##datatype##_##method##_CALLBACK, &store);                      \
+    ADD_##level##_##action##_ZVAL(array, key, store);                          \
+} while(0);
 
-#define IS_MAP_TYPE(hashtable, key, key_len, index, pointer)                   \
-    (zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len, &index,  \
-                                  0, &pointer) == HASH_KEY_IS_STRING)
+/* End of Macros for GET iteration over complex datatypes. */
 
-#define IS_LIST_TYPE(hashtable, key, key_len, index, pointer)                  \
-    (zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len, &index,  \
-                                  0, &pointer) == HASH_KEY_IS_LONG)
-
-
+/*
+ * It iterates over the keys of an array.
+ * If number of iterations matches the length of array,
+ * then we can say that it is a LIST.
+ * Else, it is a MAP.
+ */
 #define TRAVERSE_KEYS(hashtable, key, key_len, index, pointer, key_iterator)   \
     while ((zend_hash_get_current_key_ex(hashtable, (char **)&key,             \
             &key_len, &index, 0, &pointer) == HASH_KEY_IS_LONG) &&             \
@@ -308,6 +491,12 @@ do {                                                                           \
         zend_hash_move_forward_ex(hashtable, &pointer);                        \
     }                                                                          \
 
+/*
+ * Special implementation for Array:
+ * This macro will deduce whether given array is of type LIST OR MAP.
+ * It will call respective functions for LIST and MAP to iterate over them.
+ * After iteration, it will set those values to the parent store.
+ */
 #define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
                                 status, static_pool) {                         \
     HashTable *hashtable;                                                      \
@@ -343,9 +532,9 @@ do {                                                                           \
                 key);                                                          \
     }                                                                          \
 }
+/* End of macro for special implementation of Array */
 
-/* Misc function calls to set inner store  */
-
+/* Miscellaneous function calls to set inner store  */
 #define AEROSPIKE_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name)     \
     AS_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name)
 
@@ -365,7 +554,6 @@ do {                                                                           \
     AS_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name)
 
 /* PUT function calls for level = LIST */
-
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool)         \
     AS_SET_ERROR_CASE(key, value, array, static_pool)
 
@@ -385,7 +573,6 @@ do {                                                                           \
     AS_LIST_PUT_APPEND_MAP(key, value, array, static_pool)
 
 /* PUT function calls for level = DEFAULT */
-
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool)       \
     AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool)
 
@@ -405,7 +592,6 @@ do {                                                                           \
     AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)
 
 /* PUT function calls for level = MAP */
-
 #define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool)           \
     AS_SET_ERROR_CASE(key, value, array, static_pool)
 
@@ -425,7 +611,6 @@ do {                                                                           \
     AS_MAP_PUT_ASSOC_MAP(key, value, array, static_pool)
 
 /* GET function calls for level = LIST */
-
 #define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool)        \
     ADD_LIST_APPEND_NULL(key, value, array)
 
@@ -460,7 +645,6 @@ do {                                                                           \
     ADD_LIST_APPEND_BYTES(key, value, array) 
 
 /* GET function calls for level = DEFAULT */
-
 #define AEROSPIKE_DEFAULT_GET_ASSOC_UNDEF(key, value, array, static_pool)      \
     ADD_DEFAULT_ASSOC_NULL(key, value, array)
 
@@ -495,7 +679,6 @@ do {                                                                           \
     ADD_DEFAULT_ASSOC_BYTES(key, value, array) 
 
 /* GET function calls for level = MAP with string key*/
-
 #define AEROSPIKE_MAP_GET_ASSOC_UNDEF(key, value, array, static_pool)          \
     ADD_MAP_ASSOC_NULL(key, value, array)
 
@@ -530,7 +713,6 @@ do {                                                                           \
     ADD_MAP_ASSOC_BYTES(key, value, array) 
 
 /* GET function calls for level = MAP with integer key*/
-
 #define AEROSPIKE_MAP_GET_INDEX_UNDEF(key, value, array, static_pool)          \
         ADD_MAP_INDEX_NULL(key, value, array)
 
@@ -564,6 +746,7 @@ do {                                                                           \
 #define AEROSPIKE_MAP_GET_INDEX_BYTES(key, value, array, static_pool)          \
         ADD_MAP_INDEX_BYTES(key, value, array)
 
+/* Macros for ZVAL processing at different levels */
 #define ADD_MAP_ASSOC_ZVAL(array, key, store)                                  \
     add_assoc_zval(array, as_string_get((as_string *) key), store)
 
@@ -575,16 +758,5 @@ do {                                                                           \
 
 #define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
     add_next_index_zval(array, store)
-
-#define AS_STORE_ITERATE(method, level, action, datatype, key, value, array)   \
-do {                                                                           \
-    zval *store;                                                               \
-    MAKE_STD_ZVAL(store);                                                      \
-    array_init(store);                                                         \
-    AS_##datatype##_FOREACH((AS_##datatype##_DATATYPE*) value,                 \
-            (AS_##datatype##_FOREACH_CALLBACK)                                 \
-            AS_##datatype##_##method##_CALLBACK, &store);                      \
-    ADD_##level##_##action##_ZVAL(array, key, store);                          \
-} while(0);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
