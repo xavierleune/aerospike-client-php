@@ -194,7 +194,6 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
     }         
 
     if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, NULL, as_key_p, &rec))) {
-         as_record_destroy(&rec);
          goto exit;
     }
 

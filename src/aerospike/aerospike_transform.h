@@ -498,7 +498,7 @@ do {                                                                           \
  * After iteration, it will set those values to the parent store.
  */
 #define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
-                                status, static_pool) {                         \
+                                status, static_pool)                           \
     HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
@@ -513,25 +513,30 @@ do {                                                                           \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
         AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 status, label);                                                \
-        if ((AEROSPIKE_OK != (status =                                         \
+        if (AEROSPIKE_OK != (status =                                          \
                     AEROSPIKE_##level##_PUT_##action##_LIST(inner_key,         \
-                        value, inner_store, static_pool)))) {                  \
+                        value, inner_store, static_pool))) {                   \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_LIST(store, inner_store,            \
-                key);                                                          \
+        if (AEROSPIKE_OK != (status =                                          \
+                   AEROSPIKE_##level##_SET_##action##_LIST(store,              \
+                       inner_store, key))) {                                   \
+            goto label;                                                        \
+        }                                                                      \
     } else {                                                                   \
         AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
                 status, label);                                                \
-        if ((AEROSPIKE_OK != (status =                                         \
+        if (AEROSPIKE_OK != (status =                                          \
                     AEROSPIKE_##level##_PUT_##action##_MAP(inner_key,          \
-                        value, inner_store, static_pool)))) {                  \
+                        value, inner_store, static_pool))) {                   \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_MAP(store, inner_store,             \
-                key);                                                          \
-    }                                                                          \
-}
+        if (AEROSPIKE_OK != (status =                                          \
+                   AEROSPIKE_##level##_SET_##action##_MAP(store,               \
+                       inner_store, key))) {                                   \
+            goto label;                                                        \
+        }                                                                      \
+    }                                                                          
 /* End of macro for special implementation of Array */
 
 /* Miscellaneous function calls to set inner store  */
@@ -760,3 +765,4 @@ do {                                                                           \
     add_next_index_zval(array, store)
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
+

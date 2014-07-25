@@ -139,7 +139,7 @@ set_policy_ex(as_config *as_config_p,
             uint options_key_len;
             ulong options_index;
 
-            if (zend_hash_get_current_key_ex(options_array, &options_key, 
+            if (zend_hash_get_current_key_ex(options_array, (char **) &options_key, 
                         &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
                 error_code = AEROSPIKE_ERR;
                 goto failure;

@@ -45,9 +45,15 @@ extern as_log_level   php_log_level_set;
 #define AEROSPIKE_CONN_STATE_TRUE   1
 #define AEROSPIKE_CONN_STATE_FALSE  0
 
-#define PHP_TYPE_ISNULL(zend_val)        (IS_NULL == Z_TYPE_P(zend_val))
-#define PHP_TYPE_ISARR(zend_val)         (IS_ARRAY == Z_TYPE_P(zend_val))
-#define PHP_TYPE_ISNOTARR(zend_val)      !PHP_TYPE_ISARR(zend_val)
+#define PHP_IS_NULL(type)      (IS_NULL == type)
+#define PHP_IS_ARRAY(type)     (IS_ARRAY == type)
+#define PHP_IS_NOT_ARRAY(type) (IS_ARRAY != type)
+#define PHP_IS_STRING(type)    (IS_STRING == type)
+#define PHP_IS_LONG(type)      (IS_LONG == type)
+
+#define PHP_TYPE_ISNULL(zend_val)        PHP_IS_NULL(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISARR(zend_val)         PHP_IS_ARRAY(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
 
 #define PHP_IS_CONN_NOT_ESTABLISHED(conn_state)   (conn_state == AEROSPIKE_CONN_STATE_FALSE)
 
@@ -64,21 +70,18 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
                                                int16_t* set_val_p);
 
 extern as_status
-aerospike_transform_iteratefor_name_port(HashTable* ht_p, 
-                                         as_config* as_config_p);
+aerospike_transform_check_and_set_config(HashTable* ht_p, 
+                                         zval** retdata_pp,
+                                         as_config* config_p);
 
 extern as_status
-aerospike_transform_iteratefor_hostkey(HashTable* ht_p, 
-                                       zval** retdata_pp);
-
-extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p, 
+aerospike_transform_key_data_put(aerospike* as_object_p,
                                  zval **record_pp, 
-                                 as_key* as_key_p, 
-                                 as_error *error_p, 
+                                 as_key* as_key_p,
+                                 as_error *error_p,
                                  zval* options_p);
 
-as_status
+extern as_status
 aerospike_transform_get_record(aerospike* as_object_p,
                                as_key* get_rec_key_p,
                                zval* options_p,

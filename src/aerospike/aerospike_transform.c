@@ -11,6 +11,10 @@
 
 #define PHP_AS_KEY_DEFINE_FOR_HOSTS                   "hosts"
 #define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN               5
+#define PHP_AS_KEY_DEFINE_FOR_USER                    "user"
+#define PHP_AS_KEY_DEFINE_FOR_USER_LEN                4
+#define PHP_AS_KEY_DEFINE_FOR_PASSWORD                "pass"
+#define PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN            4
 #define PHP_AS_KEY_DEFINE_FOR_ADDR                    "addr"
 #define PHP_AS_KEY_DEFINE_FOR_ADDR_LEN                4
 #define PHP_AS_KEY_DEFINE_FOR_PORT                    "port"
@@ -22,17 +26,16 @@
 #define PHP_AS_KEY_DEFINE_FOR_KEY                     "key"
 #define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                 3
 
-#define PHP_IS_NOT_ARRAY(type) (IS_ARRAY != type)
 #define PHP_COMPARE_KEY(key_const, key_const_len, key_obtained, key_obtained_len)    \
      ((key_const_len == key_obtained_len) && (0 == memcmp(key_obtained, key_const, key_const_len)))
-#define PHP_IS_STRING(type) (IS_STRING == type)
-#define PHP_IS_LONG(type) (IS_LONG == type)
 
 as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool);
 as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool);
 as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool);
 bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
+static as_status
+aerospike_transform_iteratefor_addr_port(HashTable* ht_p, as_config* as_config_p);
 
 /* GET helper functions */
 
@@ -105,7 +108,7 @@ static as_status ADD_MAP_ASSOC_BOOL(void *key, void *value, void *array)
     return (status);
 }
 
-as_status ADD_MAP_ASSOC_LONG(void *key, void *value, void *array)
+static as_status ADD_MAP_ASSOC_LONG(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     add_assoc_long(*((zval**)array),  as_string_get((as_string *) key),
@@ -209,7 +212,7 @@ static as_status ADD_DEFAULT_ASSOC_BOOL(void *key, void *value, void *array)
     return (status);
 }
 
-as_status ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array)
+static as_status ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     add_assoc_long(((zval*)array),  (char*) key,
@@ -338,34 +341,60 @@ exit:
 
 /* Misc SET calls for GET and PUT */
 
-static void AS_LIST_SET_APPEND_LIST(void* outer_store, void* inner_store, void* bin_name)
+static as_status AS_LIST_SET_APPEND_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_arraylist_append_list((as_arraylist *)outer_store, (as_list*) inner_store);
+    as_status       status = AEROSPIKE_OK;
+    if (AEROSPIKE_OK != (status = as_arraylist_append_list((as_arraylist *)outer_store, (as_list*) inner_store))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append list to list");
+    }
+    return status;
 }
 
-static void AS_LIST_SET_APPEND_MAP(void* outer_store, void* inner_store, void* bin_name)
+static as_status AS_LIST_SET_APPEND_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_arraylist_append_map((as_arraylist *)outer_store, (as_map*) inner_store);
+    as_status       status = AEROSPIKE_OK;
+    if (AEROSPIKE_OK != (status = as_arraylist_append_map((as_arraylist *)outer_store, (as_map*) inner_store))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append map to list");
+    }
+    return status;
 }
 
-static void AS_DEFAULT_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
+static as_status AS_DEFAULT_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_record_set_list((as_record *)outer_store, (int8_t*)bin_name, (as_list *) inner_store);
+    as_status       status = AEROSPIKE_OK;
+    if (!(as_record_set_list((as_record *)outer_store, (int8_t*)bin_name, (as_list *) inner_store))) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to a list");
+    }
+    return status;
 }
 
-static void AS_DEFAULT_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
+static as_status AS_DEFAULT_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_record_set_map((as_record *)outer_store, (int8_t*)bin_name, (as_map *) inner_store);
+    as_status       status = AEROSPIKE_OK;
+    if (!(as_record_set_map((as_record *)outer_store, (int8_t*)bin_name, (as_map *) inner_store))) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to a map");
+    }
+    return status;
 }
 
-static void AS_MAP_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
+static as_status AS_MAP_SET_ASSOC_LIST(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_hashmap_set((as_hashmap*)outer_store, bin_name, (as_val*)((as_list *) inner_store));
+    as_status       status = AEROSPIKE_OK;
+    if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)outer_store, bin_name, (as_val*)((as_list *) inner_store)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set list to as_hashmap");
+    }
+    return status;
 }
 
-static void AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
+static as_status AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store, void* bin_name)
 {
-    as_hashmap_set((as_hashmap *)outer_store, bin_name, (as_val*)((as_map *)inner_store));
+    as_status       status = AEROSPIKE_OK;
+    if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)outer_store, bin_name, (as_val*)((as_map *) inner_store)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set map to as_hashmap");
+    }
+    return status;
 }
 
 /* Wrappers for appeding datatype to List */
@@ -388,7 +417,7 @@ static as_status AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array, voi
 {
     as_status   status = AEROSPIKE_OK;
     if (AEROSPIKE_OK != (status = as_arraylist_append_str((as_arraylist *) array, Z_STRVAL_PP((zval**) value)))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
+        DEBUG_PHP_EXT_DEBUG("Unable to append string to list");
     }
     return status;
 }
@@ -580,15 +609,53 @@ typedef struct asconfig_iter {
     as_config*    as_config_p;
 }as_config_iter_map;
 
-#define AS_CONFIG_ITER_MAP_SET_ADDR(map_p, val) map_p->as_config_p->hosts[map_p->iter_count_u32].addr = val
-#define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val) map_p->as_config_p->hosts[map_p->iter_count_u32].port = val
-#define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].addr)
-#define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)   (map_p->as_config_p->hosts[map_p->iter_count_u32].port)
+#define AS_CONFIG_ITER_MAP_SET_ADDR(map_p, val)  map_p->as_config_p->hosts[map_p->iter_count_u32].addr = val
+#define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val)  map_p->as_config_p->hosts[map_p->iter_count_u32].port = val
+#define AS_CONFIG_SET_USER(as_config_p, val)     strcpy(as_config_p->user, val)
+#define AS_CONFIG_SET_PASSWORD(as_config_p, val) strcpy(as_config_p->password, val)
+#define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->as_config_p->hosts[map_p->iter_count_u32].addr)
+#define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->as_config_p->hosts[map_p->iter_count_u32].port)
+
+static as_status
+aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
+{
+    as_status      status = AEROSPIKE_OK;
+    
+    if (!user_p || !config_p) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    /*
+     * TODO: Uncomment below line to set the user_p in config_p
+     */
+    /*AS_CONFIG_SET_USER(config_p, user_p);*/
+
+exit:
+    return status;
+}
+
+static as_status
+aerospike_transform_set_password_in_config(char *password_p, as_config *config_p)
+{
+    as_status      status = AEROSPIKE_OK;
+    
+    if (!password_p || !config_p) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    /*
+     * TODO: Uncomment below line to set the password_p in config_p
+     */
+    /*AS_CONFIG_SET_PASSWORD(config_p, password_p);*/
+
+exit:
+    return status;
+}
 
 static as_status 
 aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp, 
                                aerospike_transform_key_callback keycallback_p,
-                               void* data_p, int16_t single_iter_16t)
+                               void* data_p)
 {
     as_status        status = AEROSPIKE_OK;
     HashPosition     hashPosition_p = NULL;
@@ -614,10 +681,6 @@ aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp,
                 goto exit;
             }
         }
-
-        if (single_iter_16t) {
-            break;
-        }
     }
 exit:
 
@@ -629,15 +692,23 @@ exit:
 }
 
 static as_status
-aerospike_transform_hostkey_callback(HashTable* ht_p,
-                                     u_int32_t key_data_type_u32,
-                                     int8_t* key_p, u_int32_t key_len_u32,
-                                     void* data_p, zval** retdata_pp)
+aerospike_transform_config_callback(HashTable* ht_p,
+                                    u_int32_t key_data_type_u32,
+                                    int8_t* key_p, u_int32_t key_len_u32,
+                                    void* data_p, zval** retdata_pp)
 {
     as_status      status = AEROSPIKE_OK;
 
-    if (PHP_IS_NOT_ARRAY(key_data_type_u32) || 
-        !PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
+    if (PHP_IS_ARRAY(key_data_type_u32) && 
+        PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
+            aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(retdata_pp), (as_config *) data_p);
+    } else if (PHP_IS_STRING(key_data_type_u32) && 
+        PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_USER, PHP_AS_KEY_DEFINE_FOR_USER_LEN, key_p, key_len_u32 -1)) {
+            aerospike_transform_set_user_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+    } else if (PHP_IS_STRING(key_data_type_u32) && 
+        PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD, PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
+            aerospike_transform_set_password_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+    } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
     }
@@ -647,7 +718,7 @@ exit:
 }
 
 extern as_status
-aerospike_transform_iteratefor_hostkey(HashTable* ht_p, zval** retdata_pp)
+aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, as_config *config_p)
 {
     as_status      status = AEROSPIKE_OK;
 
@@ -656,9 +727,9 @@ aerospike_transform_iteratefor_hostkey(HashTable* ht_p, zval** retdata_pp)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, retdata_pp, 
-                                                                 &aerospike_transform_hostkey_callback,
-                                                                 NULL, 1))) {
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/, 
+                                                                 &aerospike_transform_config_callback,
+                                                                 config_p))) {
         goto exit;
     }
 
@@ -667,7 +738,7 @@ exit:
 }
 
 static
-as_status aerospike_transform_nameport_callback(HashTable* ht_p,
+as_status aerospike_transform_addrport_callback(HashTable* ht_p,
                                                 u_int32_t key_data_type_u32,
                                                 int8_t* key_p, u_int32_t key_len_u32,
                                                 void* data_p, zval** retdata_pp)
@@ -711,8 +782,8 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(Z_ARRVAL_PP(retdata_pp),
                                                                  nameport_data_pp, 
-                                                                 &aerospike_transform_nameport_callback,
-                                                                 (void *)data_p, 0))) {
+                                                                 &aerospike_transform_addrport_callback,
+                                                                 (void *)data_p))) {
         goto exit;
     }
 
@@ -729,8 +800,8 @@ exit:
     return status;
 }
 
-extern as_status
-aerospike_transform_iteratefor_name_port(HashTable* ht_p, as_config* as_config_p)
+static as_status
+aerospike_transform_iteratefor_addr_port(HashTable* ht_p, as_config* as_config_p)
 {
     as_status             status = AEROSPIKE_OK;
     as_config_iter_map    config_iter_map;
@@ -744,7 +815,7 @@ aerospike_transform_iteratefor_name_port(HashTable* ht_p, as_config* as_config_p
     config_iter_map.as_config_p    = as_config_p;
     if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
                                                                  &aerospike_transform_array_callback,
-                                                                 (void *)&config_iter_map, 0))) {
+                                                                 (void *)&config_iter_map))) {
         goto exit;
     }
 
@@ -831,7 +902,7 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
     foreach_hashtable(ht_p, hashPosition_p, index_u64) {
         if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, &key_record_p,
                                                                      &aerospike_transform_putkey_callback,
-                                                                     (void *)&put_key_data_map, 0))) {
+                                                                     (void *)&put_key_data_map))) {
             goto exit;
         }
     }
@@ -973,7 +1044,7 @@ exit:
     return status;
 }
 
-as_status
+extern as_status
 aerospike_transform_get_record(aerospike* as_object_p,
                                as_key* get_rec_key_p,
                                zval* options_p,

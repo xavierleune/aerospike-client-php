@@ -226,9 +226,8 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
    Constructs a new "aerospike" object. */
 PHP_METHOD(Aerospike, __construct)
 {
-    zval*                  host_p = NULL;
+    zval*                  config_p = NULL;
     zval*                  options_p = NULL;
-    zval*                  host_arr_p = NULL;
     int8_t*                persistence_alias_p = NULL;
     int16_t                persistence_alias_len = 0;
     as_error               error;
@@ -254,7 +253,7 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|sa",
-                &host_p, &persistence_alias_p, &persistence_alias_len, &options_p) == FAILURE) {
+                &config_p, &persistence_alias_p, &persistence_alias_len, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for construct in zend");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for construct in zend");
@@ -265,7 +264,7 @@ PHP_METHOD(Aerospike, __construct)
      * TODO: persistence_alias is yet to be handled for cluster initialization
      */
 
-    if (PHP_TYPE_ISNOTARR(host_p) || 
+    if (PHP_TYPE_ISNOTARR(config_p) || 
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for construct not proper"); 
@@ -276,19 +275,11 @@ PHP_METHOD(Aerospike, __construct)
     /* configuration */
     as_config_init(&config);
 
-    /* check for hosts */
-    if (AEROSPIKE_OK != (aerospike_transform_iteratefor_hostkey(Z_ARRVAL_P(host_p), &host_arr_p))) {
+    /* check for hosts, user and pass within config*/
+    if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p), NULL, &config))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to find host parameter");
         DEBUG_PHP_EXT_ERROR("Unable to find host parameter");
-        goto exit;
-    }
-
-    /* check for name, port */
-    if (AEROSPIKE_OK != (status = aerospike_transform_iteratefor_name_port(Z_ARRVAL_P(host_arr_p), &config))) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to find name addr/port parameter");
-        DEBUG_PHP_EXT_ERROR("Unable to find name addr/port parameter");
         goto exit;
     }
 
@@ -386,11 +377,8 @@ PHP_METHOD(Aerospike, get)
     }
 
     if (PHP_TYPE_ISNOTARR(record_p)) {
-        zval*         record_arr_p = NULL;
-
-        MAKE_STD_ZVAL(record_arr_p);
-        array_init(record_arr_p);
-        ZVAL_ZVAL(record_p, record_arr_p, 1, 1);
+        zval_dtor(record_p);
+        array_init(record_p);
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
@@ -1072,14 +1060,12 @@ PHP_METHOD(Aerospike, initKey)
     array_init(return_value);
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+        zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
         DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
         RETURN_NULL();
     }
     if (ns_p_length == 0 || set_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+        zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
         DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
         RETURN_NULL();
     }
@@ -1093,20 +1079,17 @@ PHP_METHOD(Aerospike, initKey)
             break;
         case IS_STRING:
             if (strlen(Z_STRVAL_P(pk_p)) == 0) {
-                PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-                PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+                zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
                 DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
                 RETURN_NULL();
             }
             add_assoc_string(return_value, "key", Z_STRVAL_P(pk_p), 1);
             break;
         default:
-            PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-            PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+            zend_error(E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
             DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
             RETURN_NULL();
     }
-    PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
 }
 
 PHP_METHOD(Aerospike, removeBin)
@@ -1221,8 +1204,8 @@ PHP_METHOD(Aerospike, predicateBetween)
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
     int                    bin_name_len = 0;
-    long                   *min_p;
-    long                   *max_p;
+    long                   min_p;
+    long                   max_p;
     zval                   *minmax_arr;
 
     array_init(return_value);
