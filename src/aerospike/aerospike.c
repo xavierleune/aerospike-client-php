@@ -79,6 +79,16 @@ static PHP_GINIT_FUNCTION(aerospike)
 {
 }
 
+/*
+ * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts second argument of the
+ * corresponding functions by reference and rest by value
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
+
 zend_module_entry aerospike_module_entry =
 {
 #if ZEND_MODULE_API_NO >= 20010901
@@ -124,10 +134,10 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, add, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, append, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, exists, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, get, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, exists, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, get, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getHeader, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, getMetadata, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, getMetadata, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, increment, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, initKey, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, operate, NULL, ZEND_ACC_PUBLIC)
