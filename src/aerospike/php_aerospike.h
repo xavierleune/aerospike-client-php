@@ -33,9 +33,14 @@
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
 /* N.B.:  No globals defined for now. */
-	char *default_path;
-	int default_fd;
-	zend_bool debug;
+    int nesting_depth;
+    int connect_timeout;
+    int read_timeout;
+    int write_timeout;
+    char *log_path;
+    char *log_level;
+    int serializer;
+	//zend_bool debug;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS
@@ -64,6 +69,11 @@ PHP_METHOD(Aerospike, close);
 PHP_METHOD(Aerospike, getNodes);
 PHP_METHOD(Aerospike, info);
 
+// Error Handling APIs:
+
+PHP_METHOD(Aerospike, error);
+PHP_METHOD(Aerospike, errorno);
+
 // Key Value Store (KVS) APIs:
 
 PHP_METHOD(Aerospike, add);
@@ -81,17 +91,14 @@ PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, remove);
 PHP_METHOD(Aerospike, removeBin);
+PHP_METHOD(Aerospike, setDeserializer);
+PHP_METHOD(Aerospike, setSerializer);
 PHP_METHOD(Aerospike, touch);
 
 // Logging APIs:
 
 PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
-
-// Error Handling APIs:
-
-PHP_METHOD(Aerospike, error);
-PHP_METHOD(Aerospike, errorno);
 
 // Query and Scan APIs:
 

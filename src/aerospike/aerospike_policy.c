@@ -15,6 +15,7 @@
 #define WRITE_TIMEOUT_PHP_INI INI_STR("aerospike.write_timeout") ? (uint32_t) atoi(INI_STR("aerospike.write_timeout")) : 0
 #define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
+#define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) INI_STR("aerospike.serializer") : 0
 
 typedef struct Aerospike_Constants {
     int constantno;
@@ -29,13 +30,18 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
     { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
     { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
+    { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
     { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
     { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
     { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
     { POLICY_EXISTS_CREATE              ,   "POLICY_EXISTS_CREATE"              },
     { POLICY_EXISTS_UPDATE              ,   "POLICY_EXISTS_UPDATE"              },
     { POLICY_EXISTS_REPLACE             ,   "POLICY_EXISTS_REPLACE"             },
-    { POLICY_EXISTS_CREATE_OR_REPLACE   ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   }
+    { POLICY_EXISTS_CREATE_OR_REPLACE   ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   },
+    { SERIALIZER_NONE                   ,   "SERIALIZER_NONE"                   },
+    { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
+    { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
+    { SERIALIZER_UDF                    ,   "SERIALIZER_UDF"                    }
 };
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
@@ -68,26 +74,36 @@ exit:
  */
 static void
 check_and_set_default_policies(as_config *as_config_p, 
-                               as_policy_read *read_policy, 
-                               as_policy_write *write_policy, 
-                               as_policy_operate *operate_policy,
-                               as_policy_remove *remove_policy)
+                               as_policy_read *read_policy_p, 
+                               as_policy_write *write_policy_p, 
+                               as_policy_operate *operate_policy_p,
+                               as_policy_remove *remove_policy_p,
+                               uint32_t *serializer_policy_p)
 {
-    uint32_t ini_timeout = 0;
-    if ((ini_timeout = READ_TIMEOUT_PHP_INI) && read_policy) {
-        read_policy->timeout = ini_timeout;
+    uint32_t ini_value = 0;
+
+    if ((ini_value = READ_TIMEOUT_PHP_INI) && read_policy_p) {
+        read_policy_p->timeout = ini_value;
     }
-    if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && write_policy) {
-        write_policy->timeout = ini_timeout;
+
+    if ((ini_value = WRITE_TIMEOUT_PHP_INI) && write_policy_p) {
+        write_policy_p->timeout = ini_value;
     }
-    if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && operate_policy) {
-        operate_policy->timeout = ini_timeout;
+
+    if ((ini_value = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
+        as_config_p->conn_timeout_ms = ini_value;
     }
-    if ((ini_timeout = WRITE_TIMEOUT_PHP_INI) && remove_policy) {
-        remove_policy->timeout = ini_timeout;
+
+    if ((ini_value = WRITE_TIMEOUT_PHP_INI) && operate_policy_p) {
+        operate_policy_p->timeout = ini_value;
     }
-    if ((ini_timeout = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
-        as_config_p->conn_timeout_ms = ini_timeout;
+
+    if ((ini_value = WRITE_TIMEOUT_PHP_INI) && remove_policy_p) {
+        remove_policy_p->timeout = ini_value;
+    }
+
+    if ((ini_value = SERIALIZER_PHP_INI) && serializer_policy_p) {
+        *serializer_policy_p = ini_value;
     }
 }
 
@@ -97,12 +113,13 @@ set_policy_ex(as_config *as_config_p,
               as_policy_write *write_policy_p, 
               as_policy_operate *operate_policy_p, 
               as_policy_remove *remove_policy_p,
+              uint32_t *serializer_policy_p,
               zval *options_p)
 {
     as_status error_code = AEROSPIKE_OK;
 
     if ((!read_policy_p) && (!write_policy_p) && 
-        (!operate_policy_p) && (!remove_policy_p)) {
+        (!operate_policy_p) && (!remove_policy_p) && (!serializer_policy_p)) {
         error_code = AEROSPIKE_ERR;
         goto failure;
     }
@@ -125,7 +142,8 @@ set_policy_ex(as_config *as_config_p,
 
     if (options_p == NULL) {
         check_and_set_default_policies(as_config_p, read_policy_p, 
-                       write_policy_p, operate_policy_p, remove_policy_p);
+                       write_policy_p, operate_policy_p, remove_policy_p, 
+                       serializer_policy_p);
     } else {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -134,6 +152,7 @@ set_policy_ex(as_config *as_config_p,
         int16_t             read_flag = 0;
         int16_t             write_flag = 0;
         int16_t             connect_flag = 0;
+        int16_t             serializer_flag = 0;
 
         foreach_hashtable(options_array, options_pointer, options_value) {
             uint options_key_len;
@@ -205,21 +224,39 @@ set_policy_ex(as_config *as_config_p,
                         goto failure;
                     }
                     break;
+                case OPT_SERIALIZER:
+                    if ((!serializer_policy_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        error_code = AEROSPIKE_ERR;
+                        goto failure;
+                    }
+                    if ((Z_LVAL_PP(options_value) & AS_SERIALIZER_TYPE) == AS_SERIALIZER_TYPE) {
+                        *serializer_policy_p = Z_LVAL_PP(options_value) - AS_SERIALIZER_TYPE;
+                    } else {
+                        error_code = AEROSPIKE_ERR;
+                        goto failure;
+                    }
+                    serializer_flag = 1;
+                    break;
                 default:
                     error_code = AEROSPIKE_ERR;
                     goto failure;
             }
         }
         if (!write_flag && write_policy_p) {
-            check_and_set_default_policies((connect_flag ? NULL : as_config_p), NULL, write_policy_p, NULL, NULL);
+            check_and_set_default_policies((connect_flag ? NULL : as_config_p),
+                    NULL, write_policy_p, NULL, NULL, NULL);
             connect_flag = 1;
         } 
         if (!read_flag && read_policy_p) {
-            check_and_set_default_policies((connect_flag ? NULL : as_config_p), read_policy_p, NULL, NULL, NULL);
+            check_and_set_default_policies((connect_flag ? NULL : as_config_p), 
+                    read_policy_p, NULL, NULL, NULL, NULL);
             connect_flag = 1;
         } 
         if (!connect_flag && as_config_p) {
-            check_and_set_default_policies(as_config_p, NULL, NULL, NULL, NULL);
+            check_and_set_default_policies(as_config_p, NULL, NULL, NULL, NULL, NULL);
+        }
+        if (!serializer_flag && serializer_policy_p) {
+            check_and_set_default_policies(NULL, NULL, NULL, NULL, NULL, serializer_policy_p);
         }
     }
 failure:
@@ -230,10 +267,12 @@ extern as_status
 set_policy(as_policy_read *read_policy_p, 
            as_policy_write *write_policy_p, 
            as_policy_operate *operate_policy_p, 
-           as_policy_remove *remove_policy_p, 
+           as_policy_remove *remove_policy_p,
+           uint32_t *serializer_policy_p,
            zval *options_p)
 {
-    return set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p, remove_policy_p, options_p);
+    return set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p, remove_policy_p, 
+            serializer_policy_p, options_p);
 }
 
 extern as_status
@@ -248,7 +287,7 @@ set_general_policies(as_config *as_config_p,
     }
 
     status = set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write, 
-                           NULL, NULL, options_p);
+                           NULL, NULL, NULL, options_p);
 exit:
     return status;
 }
