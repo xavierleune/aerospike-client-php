@@ -1,4 +1,6 @@
 #include "php.h"
+#include "ext/standard/php_var.h"
+#include "ext/standard/php_smart_str.h"
 
 #include "aerospike/as_status.h"
 #include "aerospike/as_config.h"
@@ -8,6 +10,7 @@
 
 #include "aerospike_common.h"
 #include "aerospike_transform.h"
+#include "aerospike_policy.h"
 
 #define PHP_AS_KEY_DEFINE_FOR_HOSTS                   "hosts"
 #define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN               5
@@ -29,9 +32,9 @@
 #define PHP_COMPARE_KEY(key_const, key_const_len, key_obtained, key_obtained_len)    \
      ((key_const_len == key_obtained_len) && (0 == memcmp(key_obtained, key_const, key_const_len)))
 
-as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool);
-as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool);
-as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool);
+as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool, uint32_t serializer_policy);
+as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
+as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
 bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
 static as_status
@@ -399,12 +402,12 @@ static as_status AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store, void
 
 /* Wrappers for appeding datatype to List */
 
-static as_status AS_SET_ERROR_CASE(void* key, void* value, void* array, void* static_pool)
+static as_status AS_SET_ERROR_CASE(void* key, void* value, void* array, void* static_pool, uint32_t serializer_policy)
 {
     return AEROSPIKE_ERR;
 }
 
-static as_status AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array, void *static_pool)
+static as_status AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
     as_status   status = AEROSPIKE_OK;
     if (AEROSPIKE_OK != (status = as_arraylist_append_int64((as_arraylist *) array, (int64_t)Z_LVAL_PP((zval**) value)))) {
@@ -413,7 +416,7 @@ static as_status AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array, v
     return status;
 }
  
-static as_status AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array, void *static_pool)
+static as_status AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
     as_status   status = AEROSPIKE_OK;
     if (AEROSPIKE_OK != (status = as_arraylist_append_str((as_arraylist *) array, Z_STRVAL_PP((zval**) value)))) {
@@ -422,25 +425,25 @@ static as_status AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array, voi
     return status;
 }
 
-static as_status AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array, void *static_pool)
+static as_status AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_LIST_PUT(key, value, array, static_pool);
+    status = AS_LIST_PUT(key, value, array, static_pool, serializer_policy);
 exit:
     return status;
 }
  
-static as_status AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array, void *static_pool) 
+static as_status AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy) 
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_MAP_PUT(key, value, array, static_pool);
+    status = AS_MAP_PUT(key, value, array, static_pool, serializer_policy);
 exit:
     return status;
 }
 
 /* Wrappers for associating datatype with Record */
 
-static as_status AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array, void* static_pool)
+static as_status AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array, void* static_pool, uint32_t serializer_policy)
 {
     /* value holds the name of the bin*/
     as_status    status = AEROSPIKE_OK;
@@ -451,7 +454,72 @@ static as_status AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array, v
     return status;
 }
 
-static as_status AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array, void* static_pool)
+static as_status set_as_bytes_based_on_serializer_policy(int32_t serializer_policy,
+                                                         as_bytes *bytes,
+                                                         zval **value)
+{
+    as_status    status = AEROSPIKE_OK;
+
+    switch(serializer_policy) {
+        case SERIALIZER_NONE:
+            status = AEROSPIKE_ERR_PARAM;
+            break;
+        case SERIALIZER_PHP:
+            {
+                php_serialize_data_t var_hash;
+                smart_str buf = {0};
+                PHP_VAR_SERIALIZE_INIT(var_hash);
+                php_var_serialize(&buf, value, &var_hash TSRMLS_CC);
+                PHP_VAR_SERIALIZE_DESTROY(var_hash);
+                if (EG(exception)) {
+                    smart_str_free(&buf);
+                    status = AEROSPIKE_ERR;
+                    DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
+                } else if (buf.c) {
+                    as_bytes_init(bytes, buf.len);
+                    if (!as_bytes_set(bytes, 0, (uint8_t *) buf.c, buf.len)) {
+                        status = AEROSPIKE_ERR;
+                        DEBUG_PHP_EXT_ERROR("Unable to set as_bytes");
+                    } else {
+                        as_bytes_set_type(bytes, AS_BYTES_PHP);
+                    }
+                } else {
+                    status = AEROSPIKE_ERR;
+                    DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
+                }
+            }
+            break;
+        case SERIALIZER_JSON:
+            break;
+        case SERIALIZER_UDF:
+            break;
+        default:
+            DEBUG_PHP_EXT_ERROR("Unsupported serializer");
+            status = AEROSPIKE_ERR;
+    }
+    return status;
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value, void* array, void* static_pool, uint32_t serializer_policy)
+{
+    as_status    status = AEROSPIKE_OK;
+    as_bytes     *bytes;
+    GET_BYTES_POOL(bytes, static_pool, status, exit);
+
+    if (AEROSPIKE_OK != (status = set_as_bytes_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
+        goto exit;
+    }
+
+    if (!(as_record_set_bytes((as_record *)array, (int8_t *)key, bytes))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to bytes");
+        status = AEROSPIKE_ERR;
+    }
+
+exit:
+    return status;
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array, void* static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
     if (!(as_record_set_int64((as_record *)array, (int8_t *)key, (int64_t) Z_LVAL_PP((zval**) value)))) {
@@ -461,7 +529,7 @@ static as_status AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array,
     return status;
 }
 
-static as_status AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array, void *static_pool)
+static as_status AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
     if (!(as_record_set_str((as_record *)array, (int8_t *)key, (char *) Z_STRVAL_PP((zval**) value)))) {
@@ -471,28 +539,28 @@ static as_status AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array, v
     return status;
 }
 
-static as_status AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array, void *static_pool)
+static as_status AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_LIST_PUT(key, value, array, static_pool);
+    status = AS_LIST_PUT(key, value, array, static_pool, serializer_policy);
 exit:
     return status; 
 }
 
-static as_status AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array, void *static_pool)
+static as_status AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
      as_status    status = AEROSPIKE_OK;
-     AS_MAP_PUT(key, value, array, static_pool);
+     AS_MAP_PUT(key, value, array, static_pool, serializer_policy);
 exit:
     return status;
 }
 
 /* Wrappers for associating datatype with MAP */
 
-static as_status AS_MAP_PUT_ASSOC_INT64(void *key, void *value, void *store, void *static_pool)
+static as_status AS_MAP_PUT_ASSOC_INT64(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
-    as_status status = AEROSPIKE_OK;
-    as_integer *map_int;
+    as_status   status = AEROSPIKE_OK;
+    as_integer  *map_int;
     GET_INT_POOL(map_int, static_pool, status, exit);
     as_integer_init(map_int, Z_LVAL_PP((zval**)value));
     if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)store, (as_val *) key, (as_val *)(map_int)))) {
@@ -502,10 +570,10 @@ exit:
     return status;
 }
 
-static as_status AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store, void *static_pool)
+static as_status AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
-    as_status status = AEROSPIKE_OK;
-    as_string *map_str;
+    as_status   status = AEROSPIKE_OK;
+    as_string   *map_str;
     GET_STR_POOL(map_str, static_pool, status, exit);
     as_string_init(map_str, Z_STRVAL_PP((zval**)value), false);
     if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)store, (as_val *) key, (as_val *)(map_str)))) {
@@ -515,80 +583,117 @@ exit:
     return status;
 }
 
-static as_status AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store, void *static_pool)
+static as_status AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_MAP_PUT(key, value, store, static_pool);
+    status = AS_MAP_PUT(key, value, store, static_pool, serializer_policy);
 exit:
     return status;
 }
 
-static as_status AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store, void *static_pool)
+static as_status AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
-    status = AS_LIST_PUT(key, value, store, static_pool);
+    status = AS_LIST_PUT(key, value, store, static_pool, serializer_policy);
 exit:
      return status;
 }
 
-static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool);
-static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool);
-static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool);
+static as_status AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
+{
+    as_status    status = AEROSPIKE_OK;
+    as_bytes     *bytes;
+    GET_BYTES_POOL(bytes, static_pool, status, exit);
+
+    if (AEROSPIKE_OK != (status = set_as_bytes_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = as_hashmap_set((as_hashmap*)store, (as_val *) key, (as_val *)(bytes)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set byte value to as_hashmap");
+    }
+exit:
+    return status;
+}
+
+static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
+static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
+static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
+static as_status AS_DEFAULT_PUT_ASSOC_BYTES(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
+static as_status AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy);
+static as_status AS_LIST_PUT_APPEND_BYTES(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy);
 
 /* PUT functions whose macros will expand */
-as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool)
+as_status AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool, uint32_t serializer_policy)
 {
     as_status status;
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(status, static_pool,
-            key, ((zval**)value), record, exit);
+            key, ((zval**)value), record, exit, serializer_policy);
 exit:
     return (status);
 }
 
-as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool)
+as_status AS_LIST_PUT(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status status = AEROSPIKE_OK;
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(status, static_pool,
-            key, ((zval**)value), store, exit);
+            key, ((zval**)value), store, exit, serializer_policy);
 exit:
     return (status);
 }
 
-as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool)
+as_status AS_MAP_PUT(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status status = AEROSPIKE_OK;
     as_val *map_key = NULL;
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(status, static_pool,
-            map_key, ((zval**)value), store, exit);
+            map_key, ((zval**)value), store, exit, serializer_policy);
 exit:
     return (status);
 }
 
-static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool)
+static as_status AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status status = AEROSPIKE_OK;
     AEROSPIKE_PROCESS_ARRAY(DEFAULT, ASSOC, exit, key, value, store, 
-            status, static_pool);
+            status, static_pool, serializer_policy);
 exit:
     return (status);
 }
 
-static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool)
+static as_status AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status status = AEROSPIKE_OK;
     AEROSPIKE_PROCESS_ARRAY(MAP, ASSOC, exit, key, value, store, 
-            status, static_pool);
+            status, static_pool, serializer_policy);
 exit:
     return (status);
 }
 
-static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool)
+static as_status AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store, void *static_pool, uint32_t serializer_policy)
 {
     as_status status = AEROSPIKE_OK;
     AEROSPIKE_PROCESS_ARRAY(LIST, APPEND, exit, key, value, store, 
-            status, static_pool);
+            status, static_pool, serializer_policy);
 exit:
     return (status);
+}
+
+static as_status AS_LIST_PUT_APPEND_BYTES(void* key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
+{
+    as_status    status = AEROSPIKE_OK;
+    as_bytes     *bytes;
+    GET_BYTES_POOL(bytes, static_pool, status, exit);
+
+    if (AEROSPIKE_OK != (status = set_as_bytes_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = as_arraylist_append_bytes((as_arraylist *) array, bytes))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
+    }
+exit:
+    return status;
 }
 
 /* End of PUT helper functions */
@@ -927,7 +1032,10 @@ exit:
 }
 
 static as_status
-aerospike_transform_iterate_records(zval **record_pp, as_record* record, as_static_pool* static_pool)
+aerospike_transform_iterate_records(zval **record_pp,
+                                    as_record* record,
+                                    as_static_pool* static_pool,
+                                    uint32_t serializer_policy)
 {
     as_status          status = AEROSPIKE_OK;
     char*              key = NULL;
@@ -938,7 +1046,7 @@ aerospike_transform_iterate_records(zval **record_pp, as_record* record, as_stat
     }
 
     /* switch case statements for put for zend related data types */
-    if (AEROSPIKE_OK != (status = AS_DEFAULT_PUT(key, record_pp, record, static_pool))) {
+    if (AEROSPIKE_OK != (status = AS_DEFAULT_PUT(key, record_pp, record, static_pool, serializer_policy))) {
         goto exit;
     }
 
@@ -955,6 +1063,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_write             write_policy;
+    uint32_t                    serializer_policy = -1;
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;
@@ -968,12 +1077,12 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_PP(record_pp)));
     init_record = 1;
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(record_pp, &record, &static_pool))) {
+    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, NULL, NULL, &serializer_policy, options_p))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(NULL, &write_policy, NULL, NULL, options_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_records(record_pp, &record, &static_pool, serializer_policy))) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
@@ -991,6 +1100,10 @@ exit:
 
     for (iter = 0; iter < static_pool.current_int_id; iter++) {
         as_integer_destroy(&static_pool.integer_pool[iter]);
+    }
+
+    for (iter = 0; iter < static_pool.current_bytes_id; iter++) {
+        as_bytes_destroy(&static_pool.bytes_pool[iter]);
     }
 
     for (iter = 0; iter < static_pool.current_list_id; iter++) {
@@ -1061,7 +1174,7 @@ aerospike_transform_get_record(aerospike* as_object_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, NULL, NULL, options_p))) {
+    if (AEROSPIKE_OK != (status = set_policy(&read_policy, NULL, NULL, NULL, NULL, options_p))) {
         goto exit;
     }
 

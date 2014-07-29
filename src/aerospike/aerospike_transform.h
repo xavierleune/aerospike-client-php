@@ -131,14 +131,14 @@
  *      break;
  * ************************************************************************
  */
-#define EXPAND_CASE_PUT(level, method, action, datatype, key, value,           \
-        array, err, static_pool, label)                                        \
-    case IS_##datatype:                                                        \
-        if (AEROSPIKE_OK != (err =                                             \
-                AEROSPIKE_##level##_##method##_##action##_##datatype(          \
-                    key, value, array, static_pool))) {                        \
-            goto label;                                                        \
-        }                                                                      \
+#define EXPAND_CASE_PUT(level, method, action, datatype, key, value,             \
+        array, err, static_pool, label, serializer_policy)                       \
+    case IS_##datatype:                                                          \
+        if (AEROSPIKE_OK != (err =                                               \
+                AEROSPIKE_##level##_##method##_##action##_##datatype(            \
+                    key, value, array, static_pool, serializer_policy))) {       \
+            goto label;                                                          \
+        }                                                                        \
         break;
 
 /*
@@ -190,10 +190,10 @@
  * all methods at all levels.
  * You will find the wrapper macros over this one for particular tasks.
  */
-#define AEROSPIKE_WALKER_SWITCH_CASE(method, level, action,                    \
-        err, static_pool, key, value, array, label)                            \
-        AEROSPIKE_WALKER_SWITCH_CASE_##method(method, level, action,           \
-                err, static_pool, key, value, array, label)
+#define AEROSPIKE_WALKER_SWITCH_CASE(method, level, action,                       \
+        err, static_pool, key, value, array, label, serializer_policy)            \
+        AEROSPIKE_WALKER_SWITCH_CASE_##method(method, level, action,              \
+                err, static_pool, key, value, array, label, serializer_policy)
 
 #define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
@@ -220,6 +220,8 @@ typedef struct list_map_static_pool {
     u_int32_t        current_str_id;
     as_integer       integer_pool[AS_MAX_STORE_SIZE];
     u_int32_t        current_int_id;
+    as_bytes         bytes_pool[AS_MAX_STORE_SIZE];
+    u_int32_t        current_bytes_id;
 } as_static_pool;
 
 /*
@@ -270,11 +272,17 @@ do {                                                                           \
 #define INT_CNT(static_pool)                                                   \
     (((as_static_pool *)static_pool)->current_int_id)
 
+#define BYTES_CNT(static_pool)                                                 \
+    (((as_static_pool *)static_pool)->current_bytes_id)
+
 #define STR_POOL(static_pool)                                                  \
     ((as_static_pool *)static_pool)->string_pool
 
 #define INT_POOL(static_pool)                                                  \
     ((as_static_pool *)static_pool)->integer_pool
+
+#define BYTES_POOL(static_pool)                                                \
+    ((as_static_pool *)static_pool)->bytes_pool
 
 #define CURRENT_LIST_POOL(static_pool)                                         \
     ((as_static_pool *)static_pool)->alloc_list
@@ -293,6 +301,14 @@ do {                                                                           \
 #define GET_INT_POOL(map_int, static_pool, status, label)                      \
     if (AS_MAX_STORE_SIZE > INT_CNT(static_pool)) {                            \
         map_int = &(INT_POOL(static_pool)[INT_CNT(static_pool)++]);            \
+    } else {                                                                   \
+        status = AEROSPIKE_ERR;                                                \
+        goto label;                                                            \
+    }
+
+#define GET_BYTES_POOL(map_bytes, static_pool, status, label)                  \
+    if (AS_MAX_STORE_SIZE > BYTES_CNT(static_pool)) {                          \
+        map_bytes = &(BYTES_POOL(static_pool)[BYTES_CNT(static_pool)++]);      \
     } else {                                                                   \
         status = AEROSPIKE_ERR;                                                \
         goto label;                                                            \
@@ -334,7 +350,7 @@ do {                                                                           \
  * datatypes and deduce respective methods from each case (expanded above).
  */
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action, err,           \
-        static_pool, key, value, store, label)                                 \
+        static_pool, key, value, store, label, serializer_policy)              \
 do {                                                                           \
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
@@ -348,13 +364,20 @@ do {                                                                           \
                 static_pool, err, label)                                       \
         switch (FETCH_VALUE_##method(dataval)) {                               \
             EXPAND_CASE_PUT(level, method, action, ARRAY, key,                 \
-                    dataval, store, err, static_pool, label);                  \
+                    dataval, store, err, static_pool, label,                   \
+                    serializer_policy);                                        \
             EXPAND_CASE_PUT(level, method, action, STRING, key,                \
-                    dataval, store, err, static_pool, label);                  \
+                    dataval, store, err, static_pool, label, -1);              \
             EXPAND_CASE_PUT(level, method, action, LONG, key,                  \
-                    dataval, store, err, static_pool, label);                  \
+                    dataval, store, err, static_pool, label, -1);              \
             EXPAND_CASE_PUT(level, method, action, NULL, key,                  \
-                    dataval, store, err, static_pool, label);                  \
+                    dataval, store, err, static_pool, label, -1);              \
+            EXPAND_CASE_PUT(level, method, action, OBJECT, key,                \
+                    dataval, store, err, static_pool, label,                   \
+                    serializer_policy);                                        \
+            EXPAND_CASE_PUT(level, method, action, BOOL, key,                  \
+                    dataval, store, err, static_pool, label,                   \
+                    serializer_policy);                                        \
             default:                                                           \
                 err = AEROSPIKE_ERR_PARAM;                                     \
                 goto label;                                                    \
@@ -364,19 +387,19 @@ do {                                                                           \
 
 /* Wrappers over the walker of PUT for all levels with all actions */
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(err, static_pool, key,  \
-        value, store, label)                                                   \
+        value, store, label, serializer_policy)                                \
             AEROSPIKE_WALKER_SWITCH_CASE(PUT, DEFAULT, ASSOC, err,             \
-                    static_pool, key, value, store, label)
+                    static_pool, key, value, store, label, serializer_policy)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(err, static_pool, key,    \
-        value, store, label)                                                   \
+        value, store, label, serializer_policy)                                \
             AEROSPIKE_WALKER_SWITCH_CASE(PUT, LIST, APPEND, err,               \
-                    static_pool, key, value, store, label)
+                    static_pool, key, value, store, label, serializer_policy)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(err, static_pool, key,      \
-        value, store, label)                                                   \
+        value, store, label, serializer_policy)                                \
             AEROSPIKE_WALKER_SWITCH_CASE(PUT, MAP, ASSOC, err,                 \
-                    static_pool, key, value, store, label)
+                    static_pool, key, value, store, label, serializer_policy)
 /* End of Wrappers over the walker of PUT */
 
 
@@ -387,7 +410,7 @@ do {                                                                           \
  * datatypes and deduce respective methods from each case (expanded above).
  */
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET(method, level, action, err,           \
-        static_pool, key, value, array, label)                                 \
+        static_pool, key, value, array, label, serializer_policy)              \
     switch (FETCH_VALUE_##method(value)) {                                     \
         EXPAND_CASE_GET(level, method, action, UNDEF, key, value,              \
                 array, err, static_pool, label)                                \
@@ -418,22 +441,22 @@ do {                                                                           \
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(err, static_pool, key,  \
         value, array, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(GET, DEFAULT, ASSOC, err,             \
-                    static_pool, key, value, array, label)
+                    static_pool, key, value, array, label, -1)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(err, static_pool, key,      \
         value, array, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(GET, MAP, ASSOC, err,                 \
-                    static_pool, key, value, array, label)
+                    static_pool, key, value, array, label, -1)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(err, static_pool, key,      \
         value, array, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(GET, MAP, INDEX, err,                 \
-                    static_pool, key, value, array, label)
+                    static_pool, key, value, array, label, -1)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(err, static_pool, key,    \
         value, array, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(GET, LIST, APPEND, err,               \
-                    static_pool, key, value, array, label) 
+                    static_pool, key, value, array, label, -1) 
 
 /* End of Wrappers over the walker of PUT */
 
@@ -498,7 +521,7 @@ do {                                                                           \
  * After iteration, it will set those values to the parent store.
  */
 #define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
-                                status, static_pool)                           \
+                                status, static_pool, serializer_policy)        \
     HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
@@ -515,7 +538,8 @@ do {                                                                           \
                 status, label);                                                \
         if (AEROSPIKE_OK != (status =                                          \
                     AEROSPIKE_##level##_PUT_##action##_LIST(inner_key,         \
-                        value, inner_store, static_pool))) {                   \
+                        value, inner_store, static_pool,                       \
+                            serializer_policy))) {                             \
             goto label;                                                        \
         }                                                                      \
         if (AEROSPIKE_OK != (status =                                          \
@@ -528,7 +552,8 @@ do {                                                                           \
                 status, label);                                                \
         if (AEROSPIKE_OK != (status =                                          \
                     AEROSPIKE_##level##_PUT_##action##_MAP(inner_key,          \
-                        value, inner_store, static_pool))) {                   \
+                        value, inner_store, static_pool,                       \
+                            serializer_policy))) {                             \
             goto label;                                                        \
         }                                                                      \
         if (AEROSPIKE_OK != (status =                                          \
@@ -559,61 +584,127 @@ do {                                                                           \
     AS_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name)
 
 /* PUT function calls for level = LIST */
-#define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool)         \
-    AS_SET_ERROR_CASE(key, value, array, static_pool)
+#define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool,         \
+           serializer_policy)                                                  \
+    AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
+        serializer_policy)
 
-#define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool)         \
-    AS_LIST_PUT_APPEND_INT64(key, value, array, static_pool)
+#define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool,         \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_INT64(key, value, array, static_pool,                   \
+        serializer_policy)
 
-#define AEROSPIKE_LIST_PUT_APPEND_STRING(key, value, array, static_pool)       \
-    AS_LIST_PUT_APPEND_STR(key, value, array, static_pool)
+#define AEROSPIKE_LIST_PUT_APPEND_STRING(key, value, array, static_pool,       \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_STR(key, value, array, static_pool,                     \
+        serializer_policy)
 
-#define AEROSPIKE_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool)        \
-    AS_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool)
+#define AEROSPIKE_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool,        \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool,                   \
+        serializer_policy)
 
-#define AEROSPIKE_LIST_PUT_APPEND_LIST(key, value, array, static_pool)         \
-    AS_LIST_PUT_APPEND_LIST(key, value, array, static_pool)
+#define AEROSPIKE_LIST_PUT_APPEND_LIST(key, value, array, static_pool,         \
+            erializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_LIST(key, value, array, static_pool,                    \
+        serializer_policy)
 
-#define AEROSPIKE_LIST_PUT_APPEND_MAP(key, value, array, static_pool)          \
-    AS_LIST_PUT_APPEND_MAP(key, value, array, static_pool)
+#define AEROSPIKE_LIST_PUT_APPEND_MAP(key, value, array, static_pool,          \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_MAP(key, value, array, static_pool,                     \
+        serializer_policy)
+
+#define AEROSPIKE_LIST_PUT_APPEND_OBJECT(key, value, array, static_pool,       \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
+        serializer_policy)
+
+#define AEROSPIKE_LIST_PUT_APPEND_BOOL(key, value, array, static_pool,         \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
+        serializer_policy)
 
 /* PUT function calls for level = DEFAULT */
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool)       \
-    AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool,       \
+           serializer_policy)                                                  \
+    AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool,                   \
+        serializer_policy)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool)       \
-    AS_DEFAULT_PUT_ASSOC_INT64(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool,       \
+            erializer_policy)                                                  \
+    AS_DEFAULT_PUT_ASSOC_INT64(key, value, array, static_pool,                 \
+        serializer_policy)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_STRING(key, value, array, static_pool)     \
-    AS_DEFAULT_PUT_ASSOC_STR(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_STRING(key, value, array, static_pool,     \
+           serializer_policy)                                                  \
+    AS_DEFAULT_PUT_ASSOC_STR(key, value, array, static_pool,                   \
+        serializer_policy)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool)      \
-    AS_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool,      \
+           serializer_policy)                                                  \
+    AS_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool,                 \
+        serializer_policy)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool)       \
-    AS_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool,       \
+            serializer_policy)                                                 \
+    AS_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool,                  \
+        serializer_policy)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)        \
-    AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool)
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool,        \
+            serializer_policy)                                                 \
+    AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool,                   \
+        serializer_policy)
+
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_OBJECT(key, value, array, static_pool,     \
+            serializer_policy)                                                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+        serializer_policy)
+
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_BOOL(key, value, array, static_pool,       \
+            serializer_policy)                                                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+        serializer_policy)
 
 /* PUT function calls for level = MAP */
-#define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool)           \
-    AS_SET_ERROR_CASE(key, value, array, static_pool)
+#define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool,           \
+           serializer_policy)                                                  \
+    AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
+        serializer_policy)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array, static_pool)           \
-    AS_MAP_PUT_ASSOC_INT64(key, value, array, static_pool)
+#define AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array, static_pool,           \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_INT64(key, value, array, static_pool,                     \
+        serializer_policy)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_STRING(key, value, array, static_pool)         \
-    AS_MAP_PUT_ASSOC_STR(key, value, array, static_pool)
+#define AEROSPIKE_MAP_PUT_ASSOC_STRING(key, value, array, static_pool,         \
+            erializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_STR(key, value, array, static_pool,                       \
+        serializer_policy)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)          \
-    AS_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool)
+#define AEROSPIKE_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool,          \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool,                     \
+        serializer_policy)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_LIST(key, value, array, static_pool)           \
-    AS_MAP_PUT_ASSOC_LIST(key, value, array, static_pool)
+#define AEROSPIKE_MAP_PUT_ASSOC_LIST(key, value, array, static_pool,           \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_LIST(key, value, array, static_pool,                      \
+        serializer_policy)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_MAP(key, value, array, static_pool)            \
-    AS_MAP_PUT_ASSOC_MAP(key, value, array, static_pool)
+#define AEROSPIKE_MAP_PUT_ASSOC_MAP(key, value, array, static_pool,            \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_MAP(key, value, array, static_pool,                       \
+        serializer_policy)
+
+#define AEROSPIKE_MAP_PUT_ASSOC_OBJECT(key, value, array, static_pool,         \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+        serializer_policy)
+
+#define AEROSPIKE_MAP_PUT_ASSOC_BOOL(key, value, array, static_pool,           \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+        serializer_policy)
 
 /* GET function calls for level = LIST */
 #define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool)        \

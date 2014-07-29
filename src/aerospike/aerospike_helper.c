@@ -70,9 +70,6 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
         for (iter = 0; iter < 4; iter++) {
             zval_ptr_dtor(params[iter]);
         }
-        //zval_ptr_dtor(&z_file);
-        //zval_ptr_dtor(&z_line);
-        //zval_ptr_dtor(&z_level);
     }
 
     return true;

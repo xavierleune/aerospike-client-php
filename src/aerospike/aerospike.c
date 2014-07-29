@@ -61,8 +61,15 @@ typedef struct Aerospike_object {
 static zend_class_entry *Aerospike_ce;
 static zend_object_handlers Aerospike_handlers;
 /*-----------------------------------------------------------*/
+
 PHP_INI_BEGIN()
-    //PHP_INI_ENTRY()
+   STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.connect_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, connect_timeout, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.read_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, read_timeout, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.write_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, write_timeout, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_PHP, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
@@ -130,6 +137,11 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, info, NULL, ZEND_ACC_PUBLIC)
     /*
+     * Error Handling APIs:
+     */
+    PHP_ME(Aerospike, error, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, errorno, NULL, ZEND_ACC_PUBLIC)
+    /*
      *  Key Value Store (KVS) APIs:
      */
     PHP_ME(Aerospike, add, NULL, ZEND_ACC_PUBLIC)
@@ -145,6 +157,8 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, remove, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, removeBin, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, setDeserializer, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, setSerializer, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, touch, NULL, ZEND_ACC_PUBLIC)
     /*
      *  Logging APIs:
@@ -157,11 +171,6 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, predicateBetween, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
-    /*
-     * Error Handling APIs:
-     */
-    PHP_ME(Aerospike, error, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, errorno, NULL, ZEND_ACC_PUBLIC)
 #if 0 // TBD
 
     // Secondary Index APIs:
@@ -1102,6 +1111,20 @@ PHP_METHOD(Aerospike, initKey)
     }
 }
 
+PHP_METHOD(Aerospike, setDeserializer)
+{
+    /*
+     * TBD: Set a deserialization handler for unsupported types
+     */
+}
+
+PHP_METHOD(Aerospike, setSerializer)
+{
+    /*
+     * TBD: Set a serialization handler for unsupported types
+     */
+}
+
 PHP_METHOD(Aerospike, removeBin)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1382,7 +1405,7 @@ PHP_METHOD(Aerospike, setLogHandler)
     }
 	
     if (as_log_set_callback(&aerospike_obj_p->as_p->log, &aerospike_helper_log_callback)) {
-	is_callback_registered = 1;
+	    is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
         RETURN_TRUE;
