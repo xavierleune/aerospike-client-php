@@ -25,7 +25,7 @@ associative array keys and values. This behavior can be modified using the
 
 **ttl** the time-to-live in seconds for the record.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_EXISTS** and **Aerospike::OPT_POLICY_RETRY**.
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_EXISTS**, **Aerospike::OPT_POLICY_RETRY**, and **Aerospike::OPT_SERIALIZER**.
 
 ## Return Values
 

@@ -32,7 +32,7 @@ class Aerospike
     const SERIALIZER_NONE = 0;
     const SERIALIZER_PHP  = 1; // default handler
     const SERIALIZER_JSON = 2;
-    const SERIALIZER_UDF  = 3;
+    const SERIALIZER_USER = 3;
 
     //
     // Options can be assigned values that modify default behavior
@@ -146,8 +146,8 @@ class Aerospike
     // error handling methods
     public string Aerospike::error ( void )
     public int Aerospike::errorno ( void )
-    public static void Aerospike::setLogLevel ( int $log_level )
-    public static void Aerospike::setLogHandler ( callback $log_handler )
+    public void Aerospike::setLogLevel ( int $log_level )
+    public void Aerospike::setLogHandler ( callback $log_handler )
 
     // key-value methods
     public array Aerospike::initKey ( string $ns, string $set, int|string $pk )

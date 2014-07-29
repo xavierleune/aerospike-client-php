@@ -22,7 +22,7 @@ set it to the *initial_value* if it does not exist.
 
 **initial_value** the integer to set in the bin if it is empty
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_RETRY**, and **Aerospike::OPT_SERIALIZER**.
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_RETRY**.
 
 ## Return Values
 
