@@ -550,7 +550,7 @@ exit:
 static as_status AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array, void *static_pool, uint32_t serializer_policy)
 {
      as_status    status = AEROSPIKE_OK;
-     AS_MAP_PUT(key, value, array, static_pool, serializer_policy);
+     status = AS_MAP_PUT(key, value, array, static_pool, serializer_policy);
 exit:
     return status;
 }
