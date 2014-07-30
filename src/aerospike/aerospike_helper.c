@@ -109,4 +109,125 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *err
     zval_ptr_dtor(&err_code_p);
     zval_ptr_dtor(&err_msg_p);
 }
- 
+
+/* This macro is defined to register a new resource and to add hash to it 
+ */
+#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len)                          \
+do {                                                                          \
+    as_object_p->as_ref_p->as_p = aerospike_new(conf);                        \
+    ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,          \
+            val_persist);                                                     \
+    as_object_p->as_ref_p->ref_as_p = 1;                                      \
+    new_le.ptr = as_object_p->as_ref_p;                                       \
+    zend_hash_add(&EG(persistent_list), alias, alias_len + 1,                 \
+            (void *) &new_le, sizeof(list_entry), NULL);                      \
+} while(0)
+
+
+/* This macro is defined to match the config details with the stored object
+ * details in the resource and if match use the existing one. 
+ */
+#define ZEND_CONFIG_MATCH_USER_STORED()                                       \
+do {                                                                          \
+    tmp_ref = le->ptr;                                                        \
+    for(itr_user=0; itr_user < conf->hosts_size; itr_user++ ) {               \
+        for(itr_stored=0; itr_stored < tmp_ref->as_p->config.hosts_size;      \
+                itr_stored++) {                                               \
+            if(strlen(conf->hosts[itr_user].addr) ==                          \
+                    strlen(tmp_ref->as_p->config.hosts[itr_stored].addr) &&   \
+                    (conf->hosts[itr_user].port ==                            \
+                     tmp_ref->as_p->config.hosts[itr_stored].port &&          \
+                     (strncasecmp(conf->hosts[itr_user].addr,                 \
+                                  tmp_ref->as_p->config.hosts[                \
+                                  itr_stored].addr,                           \
+                                  strlen(conf->hosts[itr_user].addr           \
+                                      )) == 0))) {                            \
+                goto use_existing;                                            \
+            }                                                                 \
+        }                                                                     \
+    }                                                                         \
+} while(0)
+
+extern as_status
+aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
+                                        int8_t * persistence_alias_p,
+                                        int16_t persistence_alias_len,
+                                        as_config* conf,
+                                        HashTable persistent_list,
+                                        int val_persist)
+{
+    list_entry *le, new_le;
+    zval* rsrc_result = NULL;
+    as_status status = AEROSPIKE_OK;
+    int itr_user = 0, itr_stored = 0;
+    aerospike_ref *tmp_ref = NULL;
+
+    if (!(as_object_p) && !(conf))
+    {
+        status = AEROSPIKE_ERR_PARAM;
+        goto exit;
+    }
+
+    if (persistence_alias_len == 0) {
+        /*TODO
+         * Alias name is not given by User.
+         * Most effective way is to use host as an alias
+         * for empty alias case.
+         * An algorithm needs to be written to iterate over
+         * list of hosts and check if the one of them is already
+         * hashed and can be reused.
+         */
+#ifdef __AEROSPIKE_ALIAS_COMP_IPADDR__
+        for(itr_user=0; itr_user < conf->hosts_size; itr_user++ ) {
+            if (zend_hash_find(&EG(persistent_list), conf->hosts[itr_user].addr,
+                        strlen(conf->hosts[itr_user].addr) + 1, (void **) &le) == SUCCESS) {
+                ZEND_CONFIG_MATCH_USER_STORED();
+            }
+        }
+        ZEND_HASH_CREATE_ALIAS_NEW((conf->hosts[0].addr), (strlen(conf->hosts[0].addr)));
+        for(itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
+            zend_hash_add(&EG(persistent_list),  conf->hosts[itr_user].addr,
+                    strlen(conf->hosts[itr_user].addr) + 1, (void *) &new_le, sizeof(list_entry), NULL);
+        }
+#else
+        /* Alias is not given by the User.
+         * For such scenerio we will create a generic alias for the user and 
+         * then use that alias for adding and fetching the value from the store
+         */
+        persistence_alias_len = strlen(aerospike_alias);
+        strcpy(persistence_alias_p, aerospike_alias);
+        if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
+                    persistence_alias_len + 1, (void **) &le) == SUCCESS) {
+            ZEND_CONFIG_MATCH_USER_STORED();
+        }
+        goto create_new;
+
+
+#endif
+        goto exit;
+    }
+
+    /* if we are here then we are having alias passed in.
+     * Lets check if the alias is already present in the storage and if yes then
+     * check for the config details if match use the existing object else create
+     * a new one 
+     */
+    if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
+                persistence_alias_len + 1, (void **) &le) == SUCCESS) {
+        ZEND_CONFIG_MATCH_USER_STORED();
+    }
+    goto create_new;
+use_existing:
+    /* config details are matched, use the existing one obtained from the
+     * storage
+     */
+    as_object_p->as_ref_p = tmp_ref;
+    as_object_p->as_ref_p->ref_as_p++;
+    goto exit;
+create_new:
+    /* Create a new object in the resorce.
+     */
+    ZEND_HASH_CREATE_ALIAS_NEW(persistence_alias_p, persistence_alias_len);
+exit:
+    return (status);
+}

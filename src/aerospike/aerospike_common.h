@@ -11,6 +11,18 @@
                 (void **) &datavalue, &position) == SUCCESS;     \
          zend_hash_move_forward_ex(ht, &position))
 
+typedef struct csdk_aerospike_obj {
+    aerospike *as_p;
+    int ref_as_p;
+} aerospike_ref;
+
+typedef struct Aerospike_object {
+    zend_object std;
+    int value;
+    aerospike_ref *as_ref_p;
+    u_int16_t is_conn_16;
+} Aerospike_object;
+
 extern zend_fcall_info       func_call_info;
 extern zend_fcall_info_cache func_call_info_cache;
 extern zval                  *func_callback_retval_p;
@@ -45,15 +57,18 @@ extern as_log_level   php_log_level_set;
 #define AEROSPIKE_CONN_STATE_TRUE   1
 #define AEROSPIKE_CONN_STATE_FALSE  0
 
-#define PHP_IS_NULL(type)      (IS_NULL == type)
-#define PHP_IS_ARRAY(type)     (IS_ARRAY == type)
-#define PHP_IS_NOT_ARRAY(type) (IS_ARRAY != type)
-#define PHP_IS_STRING(type)    (IS_STRING == type)
-#define PHP_IS_LONG(type)      (IS_LONG == type)
+#define PHP_IS_NULL(type)        (IS_NULL == type)
+#define PHP_IS_ARRAY(type)       (IS_ARRAY == type)
+#define PHP_IS_NOT_ARRAY(type)   (IS_ARRAY != type)
+#define PHP_IS_STRING(type)      (IS_STRING == type)
+#define PHP_IS_NOT_STRING(type)  (IS_STRING != type)
+#define PHP_IS_LONG(type)        (IS_LONG == type)
+
 
 #define PHP_TYPE_ISNULL(zend_val)        PHP_IS_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISARR(zend_val)         PHP_IS_ARRAY(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
 
 #define PHP_IS_CONN_NOT_ESTABLISHED(conn_state)   (conn_state == AEROSPIKE_CONN_STATE_FALSE)
 
@@ -63,6 +78,8 @@ extern as_log_level   php_log_level_set;
 #define PHP_EXT_SET_AS_ERR(as_err_obj, code, msg)                       as_error_setall(&as_err_obj, code, msg, __func__, __FILE__, __LINE__)
 #define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj)      aerospike_helper_set_error(aerospike_class_p, getThis(), &as_err_obj, false)
 #define PHP_EXT_RESET_AS_ERR_IN_CLASS(aerospike_class_p)                aerospike_helper_set_error(aerospike_class_p, getThis(), NULL, true)
+
+#define aerospike_alias "aerospike"
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, 
@@ -130,4 +147,12 @@ aerospike_helper_set_error(zend_class_entry *ce_p,
                            zval *object_p, 
                            as_error *error_p, 
                            bool reset_flag TSRMLS_DC);
+
+extern as_status
+aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
+                                        int8_t* persistence_alias_p,
+                                        int16_t persistence_alias_len,
+                                        as_config* conf,
+                                        HashTable persistent_list,
+                                        int persist);
 #endif

@@ -714,7 +714,12 @@ typedef struct asconfig_iter {
     as_config*    as_config_p;
 }as_config_iter_map;
 
-#define AS_CONFIG_ITER_MAP_SET_ADDR(map_p, val)  map_p->as_config_p->hosts[map_p->iter_count_u32].addr = val
+#define AS_CONFIG_ITER_MAP_SET_ADDR(map_p, val)                                \
+do {                                                                           \
+    map_p->as_config_p->hosts[map_p->iter_count_u32].addr = val;               \
+    map_p->as_config_p->hosts_size++;                                          \
+} while(0)    
+
 #define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val)  map_p->as_config_p->hosts[map_p->iter_count_u32].port = val
 #define AS_CONFIG_SET_USER(as_config_p, val)     strcpy(as_config_p->user, val)
 #define AS_CONFIG_SET_PASSWORD(as_config_p, val) strcpy(as_config_p->password, val)
