@@ -64,7 +64,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.write_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, write_timeout, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_PHP, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.serializer", "4097", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
@@ -1128,18 +1128,48 @@ PHP_METHOD(Aerospike, initKey)
     }
 }
 
+/* PHP Method:  bool Aerospike::setDeserializer()
+ * set a php userland callback for deserialization
+ * of datatypes which are not supported by aerospike db
+ */
 PHP_METHOD(Aerospike, setDeserializer)
 {
-    /*
-     * TBD: Set a deserialization handler for unsupported types
-     */
+    as_status              status = AEROSPIKE_OK;
+
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
+                             &user_deserializer_call_info,
+                             &user_deserializer_call_info_cache,
+                             &user_deserializer_call_info.params,
+                             &user_deserializer_call_info.param_count) == FAILURE) {
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setDeserializer");
+        RETURN_FALSE;
+    }
+	
+    is_user_deserializer_registered = 1;
+    Z_ADDREF_P(user_deserializer_call_info.function_name);
+    RETURN_TRUE;
 }
 
+/* PHP Method:  bool Aerospike::setSerializer()
+ * set a php userland callback for serialization
+ * of datatypes which are not supported by aerospike db
+ */
 PHP_METHOD(Aerospike, setSerializer)
 {
-    /*
-     * TBD: Set a serialization handler for unsupported types
-     */
+    as_status              status = AEROSPIKE_OK;
+
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
+                             &user_serializer_call_info,
+                             &user_serializer_call_info_cache,
+                             &user_serializer_call_info.params,
+                             &user_serializer_call_info.param_count) == FAILURE) {
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setSerializer");
+        RETURN_FALSE;
+    }
+	
+    is_user_serializer_registered = 1;
+    Z_ADDREF_P(user_serializer_call_info.function_name);
+    RETURN_TRUE;
 }
 
 PHP_METHOD(Aerospike, removeBin)
@@ -1472,7 +1502,7 @@ PHP_METHOD(Aerospike, setLogHandler)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     as_status              status = AEROSPIKE_OK;
     as_error               error;
-    uint32_t ret_val = -1;
+    uint32_t               ret_val = -1;
     is_callback_registered = 0;
 
     if (!aerospike_obj_p) {
