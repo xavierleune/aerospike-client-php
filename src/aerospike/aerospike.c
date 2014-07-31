@@ -291,15 +291,17 @@ PHP_METHOD(Aerospike, __construct)
 
     if (PHP_TYPE_ISNOTARR(config_p) || 
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
-        (PHP_TYPE_ISNOTSTR(alias))) {
+        ((alias) && (PHP_TYPE_ISNOTSTR(alias)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for construct not proper"); 
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for construct not proper");
         goto exit;
     }
 
-    persistence_alias_p = Z_STRVAL_P(alias);
-    persistence_alias_len = Z_STRLEN_P(alias);
+    if (alias) {
+        persistence_alias_p = Z_STRVAL_P(alias);
+        persistence_alias_len = Z_STRLEN_P(alias);
+    }
 
     /* configuration */
     as_config_init(&config);

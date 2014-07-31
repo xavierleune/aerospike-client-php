@@ -161,6 +161,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
     as_status status = AEROSPIKE_OK;
     int itr_user = 0, itr_stored = 0;
     aerospike_ref *tmp_ref = NULL;
+    char* alias_null_p = "aerospike";
 
     if (!(as_object_p) && !(conf))
     {
@@ -194,8 +195,8 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
          * For such scenerio we will create a generic alias for the user and 
          * then use that alias for adding and fetching the value from the store
          */
-        persistence_alias_len = strlen(aerospike_alias);
-        strcpy(persistence_alias_p, aerospike_alias);
+        persistence_alias_p = (int8_t*) alias_null_p;
+        persistence_alias_len = strlen(alias_null_p);
         if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
                     persistence_alias_len + 1, (void **) &le) == SUCCESS) {
             ZEND_CONFIG_MATCH_USER_STORED();
