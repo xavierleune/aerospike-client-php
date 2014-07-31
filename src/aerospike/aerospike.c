@@ -1495,7 +1495,7 @@ PHP_METHOD(Aerospike, setLogHandler)
         RETURN_FALSE;
     }
 	
-    if (as_log_set_callback(&aerospike_obj_p->as_p->log, &aerospike_helper_log_callback)) {
+    if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, &aerospike_helper_log_callback)) {
 	    is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
