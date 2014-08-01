@@ -23,10 +23,29 @@ typedef struct Aerospike_object {
     u_int16_t is_conn_16;
 } Aerospike_object;
 
+/* 
+ * PHP Userland Logger callback
+ */
 extern zend_fcall_info       func_call_info;
 extern zend_fcall_info_cache func_call_info_cache;
 extern zval                  *func_callback_retval_p;
 extern uint32_t              is_callback_registered;
+
+/* 
+ * PHP Userland Serializer callback
+ */
+extern zend_fcall_info       user_serializer_call_info;
+extern zend_fcall_info_cache user_serializer_call_info_cache;
+extern zval                  *user_serializer_callback_retval_p;
+extern uint32_t              is_user_serializer_registered;
+
+/* 
+ * PHP Userland Deserializer callback
+ */
+extern zend_fcall_info       user_deserializer_call_info;
+extern zend_fcall_info_cache user_deserializer_call_info_cache;
+extern zval                  *user_deserializer_callback_retval_p;
+extern uint32_t              is_user_deserializer_registered;
 
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);

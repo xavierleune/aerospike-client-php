@@ -7,6 +7,7 @@
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_arraylist.h"
+#include "aerospike/as_bytes.h"
 
 #include "aerospike_common.h"
 #include "aerospike_transform.h"
@@ -39,6 +40,215 @@ bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
 static as_status
 aerospike_transform_iteratefor_addr_port(HashTable* ht_p, as_config* as_config_p);
+
+/* 
+ * PHP Userland Serializer callback
+ */
+zend_fcall_info       user_serializer_call_info;
+zend_fcall_info_cache user_serializer_call_info_cache;
+zval                  *user_serializer_callback_retval_p;
+uint32_t              is_user_serializer_registered = 0;
+
+/* 
+ * PHP Userland Deserializer callback
+ */
+zend_fcall_info       user_deserializer_call_info;
+zend_fcall_info_cache user_deserializer_call_info_cache;
+zval                  *user_deserializer_callback_retval_p;
+uint32_t              is_user_deserializer_registered = 0;
+
+/*
+ * Sets value of as_bytes with bytes from bytes_string.
+ * Sets type of as_bytes to bytes_type.
+ */
+static as_status set_as_bytes(as_bytes *bytes,
+                              uint8_t *bytes_string,
+                              int32_t bytes_string_len,
+                              int32_t bytes_type)
+{
+    as_status   status = AEROSPIKE_OK;
+
+    if((!bytes) || (!bytes_string)) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Unable to set as_bytes");
+        goto exit;
+    }
+
+    as_bytes_init(bytes, bytes_string_len);
+
+    if (!as_bytes_set(bytes, 0, bytes_string, bytes_string_len)) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Unable to set as_bytes");
+    } else {
+        as_bytes_set_type(bytes, bytes_type);
+    }
+exit:
+    return status;
+}
+
+/*
+ * Checks serializer_policy.
+ * Serializes zval (value) into as_bytes using serialization logic
+ * based on serializer_policy.
+ */
+static as_status serialize_based_on_serializer_policy(int32_t serializer_policy,
+                                                      as_bytes *bytes,
+                                                      zval **value)
+{
+    as_status    status = AEROSPIKE_OK;
+
+    switch(serializer_policy) {
+        case SERIALIZER_NONE:
+            status = AEROSPIKE_ERR_PARAM;
+            break;
+        case SERIALIZER_PHP:
+            {
+                php_serialize_data_t var_hash;
+                smart_str buf = {0};
+                PHP_VAR_SERIALIZE_INIT(var_hash);
+                php_var_serialize(&buf, value, &var_hash TSRMLS_CC);
+                PHP_VAR_SERIALIZE_DESTROY(var_hash);
+                if (EG(exception)) {
+                    smart_str_free(&buf);
+                    status = AEROSPIKE_ERR;
+                    DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
+                } else if (buf.c) {
+                    status = set_as_bytes(bytes, buf.c, buf.len, AS_BYTES_PHP);
+                } else {
+                    status = AEROSPIKE_ERR;
+                    DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
+                }
+            }
+            break;
+        case SERIALIZER_JSON:
+                /*
+                 *   TODO:
+                 *     Handle JSON serialization after support for AS_BYTES_JSON
+                 *     is added in aerospike-client-c
+                 */
+            break;
+        case SERIALIZER_UDF:
+            if (is_user_serializer_registered) {
+                zval**    params[1];
+                zval*     bytes_string = NULL;
+
+                ALLOC_INIT_ZVAL(bytes_string);
+                ZVAL_STRINGL(bytes_string, NULL, 0, 1);
+
+                params[0] = value;
+                user_serializer_call_info.param_count = 1;
+                user_serializer_call_info.params = params;
+                user_serializer_call_info.retval_ptr_ptr = &user_serializer_callback_retval_p;
+
+                if (zend_call_function(&user_serializer_call_info, &user_serializer_call_info_cache TSRMLS_CC) == SUCCESS &&
+                    user_serializer_call_info.retval_ptr_ptr && *user_serializer_call_info.retval_ptr_ptr) {
+                        COPY_PZVAL_TO_ZVAL(*bytes_string, *user_serializer_call_info.retval_ptr_ptr);
+                        status = set_as_bytes(bytes, Z_STRVAL_P(bytes_string), bytes_string->value.str.len, AS_BYTES_BLOB);
+                } else {
+                    status = AEROSPIKE_ERR;
+                    DEBUG_PHP_EXT_ERROR("Unable to call user's registered serializer callback");
+                }
+
+                zval_ptr_dtor(&bytes_string);
+
+            } else {
+                status = AEROSPIKE_ERR;
+                DEBUG_PHP_EXT_ERROR("No serializer callback registered");
+            }
+
+            break;
+        default:
+            DEBUG_PHP_EXT_ERROR("Unsupported serializer");
+            status = AEROSPIKE_ERR;
+    }
+    return status;
+}
+
+/*
+ * Checks as_bytes->type.
+ * Unserializes as_bytes into zval (retval) using unserialization logic
+ * based on as_bytes->type. 
+ */
+static as_status unserialize_based_on_as_bytes_type(as_bytes *bytes, zval **retval)
+{
+    as_status   status = AEROSPIKE_OK;
+    int8_t*     bytes_val_p = NULL;
+
+    if (!bytes || !(bytes->value)) {
+        DEBUG_PHP_EXT_DEBUG("Invalid bytes");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    bytes_val_p = bytes->value;
+
+    ALLOC_INIT_ZVAL(*retval);
+
+    switch(as_bytes_get_type(bytes)) {
+        case AS_BYTES_PHP: {
+                php_unserialize_data_t var_hash;
+                PHP_VAR_UNSERIALIZE_INIT(var_hash);
+                if (1 != php_var_unserialize(retval, (const unsigned char **) &(bytes_val_p),
+                         (char *) bytes_val_p + bytes->size, &var_hash TSRMLS_CC)) {
+                    DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes using standard php unserializer");
+                    status = AEROSPIKE_ERR;
+                }
+                PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
+            }
+            break;
+        case AS_BYTES_BLOB: {
+                if (is_user_deserializer_registered) {
+                    zval**    params[1];
+                    zval*     bytes_string = NULL;
+
+                    ALLOC_INIT_ZVAL(bytes_string);
+                    ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 1);
+
+                    params[0] = &bytes_string;
+                    user_deserializer_call_info.param_count = 1;
+                    user_deserializer_call_info.params = params;
+                    user_deserializer_call_info.retval_ptr_ptr = &user_deserializer_callback_retval_p;
+
+                    if (zend_call_function(&user_deserializer_call_info, &user_deserializer_call_info_cache TSRMLS_CC) == SUCCESS &&
+                        user_deserializer_call_info.retval_ptr_ptr && *user_deserializer_call_info.retval_ptr_ptr) {
+                            COPY_PZVAL_TO_ZVAL(**retval, *user_deserializer_call_info.retval_ptr_ptr);
+                    } else {
+                        status = AEROSPIKE_ERR;
+                        DEBUG_PHP_EXT_ERROR("Unable to call user's registered serializer callback");
+                    }
+
+                    zval_ptr_dtor(&bytes_string);
+
+                } else {
+                    /*
+                     * TODO: If no userland deserializer callback is registered,
+                     * we use the default php unserialization.
+                     * Once the retrieval of bytes type AS_BYTES_PHP is
+                     * resolved, this code needs to be eliminated and uncomment
+                     * the error handling code below.
+                     */
+
+                    /* status = AEROSPIKE_ERR;
+                    DEBUG_PHP_EXT_ERROR("No unserializer callback registered"); */
+
+                    php_unserialize_data_t var_hash;
+                    PHP_VAR_UNSERIALIZE_INIT(var_hash);
+                    if (1 != php_var_unserialize(retval, (const unsigned char **) &(bytes_val_p),
+                             (char *) bytes_val_p + bytes->size, &var_hash TSRMLS_CC)) {
+                        DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes using standard php unserializer");
+                        status = AEROSPIKE_ERR;
+                    }
+                    PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
+                }
+            }
+            break;
+        default:
+            status = AEROSPIKE_ERR;
+            DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
+    }
+exit:
+    return status;
+}
 
 /* GET helper functions */
 
@@ -90,7 +300,17 @@ static as_status ADD_LIST_APPEND_PAIR(void *key, void *value, void *array)
 
 static as_status ADD_LIST_APPEND_BYTES(void *key, void *value, void *array)
 {
-    as_status status = AEROSPIKE_OK;
+    as_status   status = AEROSPIKE_OK;
+    zval        *unserialized_zval = NULL;
+
+    if (AEROSPIKE_OK != (status = unserialize_based_on_as_bytes_type((as_bytes *) value,
+                    &unserialized_zval))) {
+        DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
+        goto exit;
+    }
+    add_next_index_zval(*((zval**)array), unserialized_zval);
+
+exit:
     return (status);
 }
 
@@ -142,7 +362,17 @@ static as_status ADD_MAP_ASSOC_PAIR(void *key, void *value, void *array)
 
 static as_status ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array)
 {
-    as_status status = AEROSPIKE_OK;
+    as_status   status = AEROSPIKE_OK;
+    zval        *unserialized_zval = NULL;
+
+    if (AEROSPIKE_OK != (status = unserialize_based_on_as_bytes_type((as_bytes *) value,
+                    &unserialized_zval))) {
+        DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
+        goto exit;
+    }
+    add_assoc_zval(*((zval**)array), as_string_get((as_string *) key), unserialized_zval);
+
+exit:
     return (status);
 }
 
@@ -194,7 +424,18 @@ static as_status ADD_MAP_INDEX_PAIR(void *key, void *value, void *array)
 
 static as_status ADD_MAP_INDEX_BYTES(void *key, void *value, void *array)
 {
-    as_status status = AEROSPIKE_OK;
+    as_status   status = AEROSPIKE_OK;
+    zval        *unserialized_zval = NULL;
+
+    if (AEROSPIKE_OK != (status = unserialize_based_on_as_bytes_type((as_bytes *) value,
+                    &unserialized_zval))) {
+        DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
+        goto exit;
+    }
+    add_index_zval(*((zval**)array), (uint) as_integer_get((as_integer *) key), 
+            unserialized_zval);
+
+exit:
     return (status);
 }
 
@@ -246,7 +487,17 @@ static as_status ADD_DEFAULT_ASSOC_PAIR(void *key, void *value, void *array)
 
 static as_status ADD_DEFAULT_ASSOC_BYTES(void *key, void *value, void *array)
 {
-    as_status status = AEROSPIKE_OK;
+    as_status   status = AEROSPIKE_OK;
+    zval        *unserialized_zval = NULL;
+
+    if (AEROSPIKE_OK != (status = unserialize_based_on_as_bytes_type((as_bytes *) value,
+                    &unserialized_zval))) {
+        DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
+        goto exit;
+    }
+    add_assoc_zval(((zval*)array), (char*) key, unserialized_zval);
+
+exit:
     return (status);
 }
 
@@ -454,59 +705,13 @@ static as_status AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array, v
     return status;
 }
 
-static as_status set_as_bytes_based_on_serializer_policy(int32_t serializer_policy,
-                                                         as_bytes *bytes,
-                                                         zval **value)
-{
-    as_status    status = AEROSPIKE_OK;
-
-    switch(serializer_policy) {
-        case SERIALIZER_NONE:
-            status = AEROSPIKE_ERR_PARAM;
-            break;
-        case SERIALIZER_PHP:
-            {
-                php_serialize_data_t var_hash;
-                smart_str buf = {0};
-                PHP_VAR_SERIALIZE_INIT(var_hash);
-                php_var_serialize(&buf, value, &var_hash TSRMLS_CC);
-                PHP_VAR_SERIALIZE_DESTROY(var_hash);
-                if (EG(exception)) {
-                    smart_str_free(&buf);
-                    status = AEROSPIKE_ERR;
-                    DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
-                } else if (buf.c) {
-                    as_bytes_init(bytes, buf.len);
-                    if (!as_bytes_set(bytes, 0, (uint8_t *) buf.c, buf.len)) {
-                        status = AEROSPIKE_ERR;
-                        DEBUG_PHP_EXT_ERROR("Unable to set as_bytes");
-                    } else {
-                        as_bytes_set_type(bytes, AS_BYTES_PHP);
-                    }
-                } else {
-                    status = AEROSPIKE_ERR;
-                    DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
-                }
-            }
-            break;
-        case SERIALIZER_JSON:
-            break;
-        case SERIALIZER_UDF:
-            break;
-        default:
-            DEBUG_PHP_EXT_ERROR("Unsupported serializer");
-            status = AEROSPIKE_ERR;
-    }
-    return status;
-}
-
 static as_status AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value, void* array, void* static_pool, uint32_t serializer_policy)
 {
     as_status    status = AEROSPIKE_OK;
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, status, exit);
 
-    if (AEROSPIKE_OK != (status = set_as_bytes_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
+    if (AEROSPIKE_OK != (status = serialize_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
         goto exit;
     }
 
@@ -605,7 +810,7 @@ static as_status AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store, voi
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, status, exit);
 
-    if (AEROSPIKE_OK != (status = set_as_bytes_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
+    if (AEROSPIKE_OK != (status = serialize_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
         goto exit;
     }
 
@@ -685,7 +890,7 @@ static as_status AS_LIST_PUT_APPEND_BYTES(void* key, void *value, void *array, v
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, status, exit);
 
-    if (AEROSPIKE_OK != (status = set_as_bytes_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
+    if (AEROSPIKE_OK != (status = serialize_based_on_serializer_policy(serializer_policy, bytes, (zval **) value))) {
         goto exit;
     }
 

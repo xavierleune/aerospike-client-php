@@ -370,6 +370,9 @@ do {                                                                           \
                     dataval, store, err, static_pool, label, -1);              \
             EXPAND_CASE_PUT(level, method, action, LONG, key,                  \
                     dataval, store, err, static_pool, label, -1);              \
+            EXPAND_CASE_PUT(level, method, action, DOUBLE, key,                \
+                    dataval, store, err, static_pool, label,                   \
+                    serializer_policy);                                        \
             EXPAND_CASE_PUT(level, method, action, NULL, key,                  \
                     dataval, store, err, static_pool, label, -1);              \
             EXPAND_CASE_PUT(level, method, action, OBJECT, key,                \
@@ -605,7 +608,7 @@ do {                                                                           \
         serializer_policy)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LIST(key, value, array, static_pool,         \
-            erializer_policy)                                                  \
+            serializer_policy)                                                 \
     AS_LIST_PUT_APPEND_LIST(key, value, array, static_pool,                    \
         serializer_policy)
 
@@ -615,6 +618,11 @@ do {                                                                           \
         serializer_policy)
 
 #define AEROSPIKE_LIST_PUT_APPEND_OBJECT(key, value, array, static_pool,       \
+           serializer_policy)                                                  \
+    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
+        serializer_policy)
+
+#define AEROSPIKE_LIST_PUT_APPEND_DOUBLE(key, value, array, static_pool,       \
            serializer_policy)                                                  \
     AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
         serializer_policy)
@@ -660,6 +668,11 @@ do {                                                                           \
     AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
         serializer_policy)
 
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_DOUBLE(key, value, array, static_pool,     \
+            serializer_policy)                                                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+        serializer_policy)
+
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_BOOL(key, value, array, static_pool,       \
             serializer_policy)                                                 \
     AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
@@ -697,6 +710,11 @@ do {                                                                           \
         serializer_policy)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_OBJECT(key, value, array, static_pool,         \
+           serializer_policy)                                                  \
+    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+        serializer_policy)
+
+#define AEROSPIKE_MAP_PUT_ASSOC_DOUBLE(key, value, array, static_pool,         \
            serializer_policy)                                                  \
     AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
         serializer_policy)
