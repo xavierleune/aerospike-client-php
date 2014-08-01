@@ -127,7 +127,7 @@ do {                                                                          \
 /* This macro is defined to match the config details with the stored object
  * details in the resource and if match use the existing one. 
  */
-#define ZEND_CONFIG_MATCH_USER_STORED()                                       \
+#define ZEND_CONFIG_MATCH_USER_STORED(alias, alias_len)                       \
 do {                                                                          \
     tmp_ref = le->ptr;                                                        \
     for(itr_user=0; itr_user < conf->hosts_size; itr_user++ ) {               \
@@ -146,6 +146,7 @@ do {                                                                          \
             }                                                                 \
         }                                                                     \
     }                                                                         \
+    zend_hash_del(&EG(persistent_list), alias, alias_len);                    \
 } while(0)
 
 extern as_status
@@ -182,7 +183,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         for(itr_user=0; itr_user < conf->hosts_size; itr_user++ ) {
             if (zend_hash_find(&EG(persistent_list), conf->hosts[itr_user].addr,
                         strlen(conf->hosts[itr_user].addr) + 1, (void **) &le) == SUCCESS) {
-                ZEND_CONFIG_MATCH_USER_STORED();
+                ZEND_CONFIG_MATCH_USER_STORED(conf->hosts[itr_user].addr, (strlen(conf->hosts[itr_user].addr) + 1));
             }
         }
         ZEND_HASH_CREATE_ALIAS_NEW((conf->hosts[0].addr), (strlen(conf->hosts[0].addr)));
@@ -199,7 +200,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         persistence_alias_len = strlen(alias_null_p);
         if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
                     persistence_alias_len + 1, (void **) &le) == SUCCESS) {
-            ZEND_CONFIG_MATCH_USER_STORED();
+            ZEND_CONFIG_MATCH_USER_STORED(persistence_alias_p, (persistence_alias_len + 1));
         }
         goto create_new;
 
@@ -215,7 +216,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
      */
     if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
                 persistence_alias_len + 1, (void **) &le) == SUCCESS) {
-        ZEND_CONFIG_MATCH_USER_STORED();
+        ZEND_CONFIG_MATCH_USER_STORED(persistence_alias_p, (persistence_alias_len + 1));
     }
     goto create_new;
 use_existing:

@@ -39,14 +39,17 @@ extern int parseLogParameters(as_log *as_log_p);
 extern as_log_level   php_log_level_set;
 #define __DEBUG_PHP__
 #ifdef __DEBUG_PHP__
-#define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, args...)      \
-    if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                  \
-        if (php_log_level_set >= log_level)                        \
-            aerospike_helper_log_callback((log_level | 0x08), __func__, __FILE__, __LINE__, ##args); /*replace this with our log function*/
-#define DEBUG_PHP_EXT_ERROR(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_ERROR, args)
-#define DEBUG_PHP_EXT_WARNING(args...)        DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_WARN, args)
-#define DEBUG_PHP_EXT_DEBUG(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, args)
-#define DEBUG_PHP_EXT_INFO(args...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, args)
+#define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, php_log_level, args...)                                \
+    if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                                                     \
+        if (php_log_level_set >= log_level) {                                                         \
+            php_error_docref(NULL TSRMLS_CC, php_log_level, ##args);                                  \
+            aerospike_helper_log_callback((log_level | 0x08), __func__, __FILE__, __LINE__, ##args);  \
+        }
+
+#define DEBUG_PHP_EXT_ERROR(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_ERROR, E_ERROR, args)
+#define DEBUG_PHP_EXT_WARNING(args...)        DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_WARN, E_WARNING, args)
+#define DEBUG_PHP_EXT_DEBUG(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, E_NOTICE, args)
+#define DEBUG_PHP_EXT_INFO(args...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, E_NOTICE, args)
 #else
 #define DEBUG_PHP_EXT_ERROR(args...)
 #define DEBUG_PHP_EXT_WARNING(args...)
