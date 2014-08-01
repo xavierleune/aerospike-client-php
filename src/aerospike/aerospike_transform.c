@@ -1016,13 +1016,13 @@ aerospike_transform_config_callback(HashTable* ht_p,
 
     if (PHP_IS_ARRAY(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
-            aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(retdata_pp), (as_config *) data_p);
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_USER, PHP_AS_KEY_DEFINE_FOR_USER_LEN, key_p, key_len_u32 -1)) {
-            aerospike_transform_set_user_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD, PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
-            aerospike_transform_set_password_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;

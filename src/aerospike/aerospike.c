@@ -190,8 +190,8 @@ static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS
     Aerospike_object *intern_obj_p = (Aerospike_object *) object;
 
     if (intern_obj_p && intern_obj_p->as_ref_p) {
-        if (intern_obj_p->as_ref_p->ref_as_p == 0) {
-    	    intern_obj_p->as_ref_p->as_p = NULL;
+        if (intern_obj_p->as_ref_p->ref_as_p > 1) {
+            intern_obj_p->as_ref_p->ref_as_p--;
         } else {
             if (intern_obj_p->as_ref_p->as_p) {
                 aerospike_destroy(intern_obj_p->as_ref_p->as_p);
@@ -234,10 +234,7 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 
         retval.handle = zend_objects_store_put(intern_obj_p, Aerospike_object_dtor, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
         retval.handlers = &Aerospike_handlers;
-        if (NULL != (intern_obj_p->as_ref_p = ecalloc(1, sizeof(aerospike_ref)))) {
-            intern_obj_p->as_ref_p->as_p = NULL;
-            intern_obj_p->as_ref_p->ref_as_p = 0;
-        }
+        intern_obj_p->as_ref_p = NULL;
         return (retval);
     } else {
     	DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
@@ -274,7 +271,7 @@ PHP_METHOD(Aerospike, __construct)
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
-    if (aerospike_obj_p->as_ref_p->as_p) {
+    if (aerospike_obj_p->as_ref_p) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Already created aerospike object");
         DEBUG_PHP_EXT_ERROR("Already created aerospike object");
@@ -331,7 +328,8 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* Connect to the cluster */
-    if (AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error))) {
+    if (aerospike_obj_p->as_ref_p &&
+            AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error))) {
         DEBUG_PHP_EXT_ERROR("Unable to make connection");
         goto exit;
     }

@@ -114,6 +114,11 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *err
  */
 #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len)                          \
 do {                                                                          \
+    if (NULL != (as_object_p->as_ref_p = ecalloc(1,                           \
+                    sizeof(aerospike_ref)))) {                                \
+        as_object_p->as_ref_p->as_p = NULL;                                   \
+        as_object_p->as_ref_p->ref_as_p = 0;                                  \
+    }                                                                         \
     as_object_p->as_ref_p->as_p = aerospike_new(conf);                        \
     ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,          \
             val_persist);                                                     \
