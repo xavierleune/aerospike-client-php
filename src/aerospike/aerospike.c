@@ -1442,7 +1442,7 @@ PHP_METHOD(Aerospike, query)
     userland_callback user_func;
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
-    if (aerospike_query_foreach(aerospike_obj_p->as_p, &error, NULL, &query, record_stream_callback, &user_func) != AEROSPIKE_OK) {
+    if (aerospike_query_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &query, record_stream_callback, &user_func) != AEROSPIKE_OK) {
         e_level = E_WARNING;
         PHP_EXT_SET_AS_ERR(error, error.code, error.message);
         goto exit;
@@ -1572,7 +1572,7 @@ PHP_METHOD(Aerospike, scan)
     userland_callback user_func;
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
-    if (aerospike_scan_foreach(aerospike_obj_p->as_p, &error, NULL, &scan, record_stream_callback, &user_func) != AEROSPIKE_OK) {
+    if (aerospike_scan_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &scan, record_stream_callback, &user_func) != AEROSPIKE_OK) {
         e_level = E_WARNING;
         PHP_EXT_SET_AS_ERR(error, error.code, error.message);
         goto exit;
