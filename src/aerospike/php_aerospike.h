@@ -32,7 +32,6 @@
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
-/* N.B.:  No globals defined for now. */
     int nesting_depth;
     int connect_timeout;
     int read_timeout;
@@ -40,7 +39,6 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     char *log_path;
     char *log_level;
     int serializer;
-	//zend_bool debug;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS

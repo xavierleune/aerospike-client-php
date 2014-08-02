@@ -15,7 +15,7 @@
 #define WRITE_TIMEOUT_PHP_INI INI_STR("aerospike.write_timeout") ? (uint32_t) atoi(INI_STR("aerospike.write_timeout")) : 0
 #define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
-#define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) INI_STR("aerospike.serializer") : 0
+#define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
 
 typedef struct Aerospike_Constants {
     int constantno;
@@ -230,7 +230,7 @@ set_policy_ex(as_config *as_config_p,
                         goto failure;
                     }
                     if ((Z_LVAL_PP(options_value) & AS_SERIALIZER_TYPE) == AS_SERIALIZER_TYPE) {
-                        *serializer_policy_p = Z_LVAL_PP(options_value) - AS_SERIALIZER_TYPE;
+                        *serializer_policy_p = Z_LVAL_PP(options_value);
                     } else {
                         error_code = AEROSPIKE_ERR;
                         goto failure;
