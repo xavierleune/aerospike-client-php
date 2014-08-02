@@ -310,7 +310,7 @@ static as_status ADD_DEFAULT_ASSOC_LIST(void *key, void *value, void *array)
 
 /* GET callback methods where switch case will expand */
 
-bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
+extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(status, NULL, (void *) key, (void *) value, array, exit);

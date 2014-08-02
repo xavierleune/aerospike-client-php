@@ -64,6 +64,8 @@ extern as_log_level   php_log_level_set;
 #define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj)      aerospike_helper_set_error(aerospike_class_p, getThis(), &as_err_obj, false)
 #define PHP_EXT_RESET_AS_ERR_IN_CLASS(aerospike_class_p)                aerospike_helper_set_error(aerospike_class_p, getThis(), NULL, true)
 
+extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);
+
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, 
                                                as_key* as_key_p, 

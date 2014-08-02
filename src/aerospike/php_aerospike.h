@@ -105,6 +105,7 @@ PHP_METHOD(Aerospike, setLogHandler);
 PHP_METHOD(Aerospike, predicateBetween);
 PHP_METHOD(Aerospike, predicateEquals);
 PHP_METHOD(Aerospike, query);
+PHP_METHOD(Aerospike, scan);
 
 // TBD
 // Secondary Index APIs:

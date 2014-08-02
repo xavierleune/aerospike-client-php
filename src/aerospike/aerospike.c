@@ -43,6 +43,7 @@
 #include "aerospike/as_stringmap.h"
 #include "aerospike/as_status.h"
 #include "aerospike/as_query.h"
+#include "aerospike/as_scan.h"
 
 #include <stdbool.h>
 
@@ -59,9 +60,21 @@ typedef struct Aerospike_object {
     u_int16_t is_conn_16;
 } Aerospike_object;
 
+/**
+ * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
+ * that allows for userland function callbacks from within a C-callback
+ * context, by having both passed within this struct as a void *udata.
+ */
+typedef struct _userland_callback {
+    zend_fcall_info *fci_p;
+    zend_fcall_info_cache *fcc_p;
+} userland_callback;
+
 static zend_class_entry *Aerospike_ce;
 static zend_object_handlers Aerospike_handlers;
 /*-----------------------------------------------------------*/
+
+bool record_stream_callback(const as_val* p_val, void* udata);
 
 PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
@@ -172,6 +185,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, predicateBetween, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
 #if 0 // TBD
 
     // Secondary Index APIs:
@@ -1276,6 +1290,7 @@ PHP_METHOD(Aerospike, query)
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     zval                   *retval_ptr = NULL;
+    zval                   *bins_p = NULL;
 
     /* initialized to 'no error' (status AEROSPIKE_OK, empty message) */
     as_error_init(&error);
@@ -1289,9 +1304,9 @@ PHP_METHOD(Aerospike, query)
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_CLUSTER, "Aerospike::query() has no connection to the database");
         goto exit;
     }
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssaf",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssaf|a",
         &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
-        &fci, &fcc) == FAILURE) {
+        &fci, &fcc, &bins_p) == FAILURE) {
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unable to parse parameters");
         goto exit;
     }
@@ -1312,24 +1327,31 @@ PHP_METHOD(Aerospike, query)
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Aerospike::query() expects parameter 3 to include the keys 'bin','op', and 'val'.");
         goto exit;
     }
-    /*zend_fcall_info_args(&fci, predicate_p TSRMLS_CC);
- *     fci.retval_ptr_ptr = &retval_ptr;
- *         if (zend_call_function(&fci, &fci_cache TSRMLS_CC) == SUCCESS && fci.retval_ptr_ptr && *fci.retval_ptr_ptr) {
- *                 COPY_PZVAL_TO_ZVAL(*return_value, *fci.retval_ptr_ptr);
- *                     }*/
     zval **op_pp = NULL;
     zval **bin_pp = NULL;
     zval **val_pp = NULL;
     as_query query;
     as_query_init(&query, ns_p, set_p);
     as_query_where_inita(&query, 1);
+    if (bins_p) {
+        as_query_select_inita(&query, zend_hash_num_elements(Z_ARRVAL_P(bins_p)));
+        HashPosition pos;
+        zval **data;
+        for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(bins_p), &pos);
+            zend_hash_get_current_data_ex(Z_ARRVAL_P(bins_p), (void **) &data, &pos) == SUCCESS;
+            zend_hash_move_forward_ex(Z_ARRVAL_P(bins_p), &pos)) {
+            if (Z_TYPE_PP(data) != IS_STRING) {
+                convert_to_string_ex(data);
+            }
+            as_query_select(&query, Z_STRVAL_PP(data));
+        }
+    }
     zend_hash_find(Z_ARRVAL_P(predicate_p), "op", sizeof("op"), (void **) &op_pp);
     convert_to_string_ex(op_pp);
     zend_hash_find(Z_ARRVAL_P(predicate_p), "bin", sizeof("bin"), (void **) &bin_pp);
     convert_to_string_ex(bin_pp);
     zend_hash_find(Z_ARRVAL_P(predicate_p), "val", sizeof("val"), (void **) &val_pp);
     if (strncmp(Z_STRVAL_PP(op_pp), "=", 1) == 0) {
-        php_printf("we have the equal operation");
         switch(Z_TYPE_PP(val_pp)) {
             case IS_STRING:
                 convert_to_string_ex(val_pp);
@@ -1371,6 +1393,16 @@ PHP_METHOD(Aerospike, query)
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unsupported 'op' in parameter 3.");
         goto exit;
     }
+
+    userland_callback user_func;
+    user_func.fci_p =  &fci;
+    user_func.fcc_p = &fcc;
+    if (aerospike_query_foreach(aerospike_obj_p->as_p, &error, NULL, &query, record_stream_callback, &user_func) != AEROSPIKE_OK) {
+        e_level = E_WARNING;
+        PHP_EXT_SET_AS_ERR(error, error.code, error.message);
+        goto exit;
+    }
+
 exit:
     if (e_level > 0) {
         php_error_docref(NULL TSRMLS_CC, e_level, error.message);
@@ -1380,6 +1412,137 @@ exit:
         DEBUG_PHP_EXT_ERROR(error.message);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+    as_query_destroy(&query);
+    RETURN_LONG(status);
+}
+
+bool record_stream_callback(const as_val* p_val, void* udata)
+{
+    userland_callback      *user_func_p;
+    zend_fcall_info        *fci_p = NULL;
+    zend_fcall_info_cache  *fcc_p = NULL;
+    zval                   *record_p = NULL;
+    zval                   **args[1];
+    zval                   *retval = NULL;
+    bool                   do_continue = true;
+
+    if (!p_val) {
+        DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
+        return true;
+    }
+    as_record* current_as_rec = as_record_fromval(p_val);
+    if (!current_as_rec) {
+        DEBUG_PHP_EXT_WARNING("stream returned a non-as_record object to the callback.");
+        return true;
+    }
+    MAKE_STD_ZVAL(record_p);
+    array_init(record_p);
+    if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET, record_p)) {
+        DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
+        zval_ptr_dtor(&record_p);
+        return true;
+    }
+
+    /* call the userland function with the array representing the record */
+    user_func_p = (userland_callback *) udata;
+    fci_p = user_func_p->fci_p;
+    fcc_p = user_func_p->fcc_p;
+    args[0] = &record_p;
+    fci_p->param_count = 1;
+    fci_p->params = args;
+    fci_p->retval_ptr_ptr = &retval;
+    if (zend_call_function(fci_p, fcc_p TSRMLS_CC) == FAILURE) {
+        DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "stream callback could not invoke userland function.");
+        zval_ptr_dtor(&record_p);
+        return true;
+    }
+    zval_ptr_dtor(&record_p);
+    if (retval) {
+        if ((Z_TYPE_P(retval) == IS_BOOL) && !Z_BVAL_P(retval)) {
+                do_continue = false;
+        } else {
+                do_continue = true;
+        }
+        zval_ptr_dtor(&retval);
+    }
+    return do_continue;
+}
+
+PHP_METHOD(Aerospike, scan)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    int                    e_level = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    char                   *ns_p = NULL;
+    int                    ns_p_length = 0;
+    char                   *set_p = NULL;
+    int                    set_p_length = 0;
+    char                   *bin_name = NULL;
+    zend_fcall_info        fci = empty_fcall_info;
+    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
+    zval                   *retval_ptr = NULL;
+    zval                   *bins_p = NULL;
+
+    /* initialized to 'no error' (status AEROSPIKE_OK, empty message) */
+    as_error_init(&error);
+    if (!aerospike_obj_p) {
+        e_level = E_WARNING;
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Aerospike::scan() has no valid aerospike object");
+        goto exit;
+    }
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        e_level = E_WARNING;
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_CLUSTER, "Aerospike::scan() has no connection to the database");
+        goto exit;
+    }
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|a",
+        &ns_p, &ns_p_length, &set_p, &set_p_length,
+        &fci, &fcc, &bins_p) == FAILURE) {
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
+        goto exit;
+    }
+    if (ns_p_length == 0 || set_p_length == 0) {
+        e_level = E_WARNING;
+        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects parameter 1 & 2 to be a non-empty strings.");
+        goto exit;
+    }
+    as_scan scan;
+    as_scan_init(&scan, ns_p, set_p);
+    if (bins_p) {
+        as_scan_select_inita(&scan, zend_hash_num_elements(Z_ARRVAL_P(bins_p)));
+        HashPosition pos;
+        zval **data;
+        for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(bins_p), &pos);
+            zend_hash_get_current_data_ex(Z_ARRVAL_P(bins_p), (void **) &data, &pos) == SUCCESS;
+            zend_hash_move_forward_ex(Z_ARRVAL_P(bins_p), &pos)) {
+            if (Z_TYPE_PP(data) != IS_STRING) {
+                convert_to_string_ex(data);
+            }
+            as_scan_select(&scan, Z_STRVAL_PP(data));
+        }
+    }
+
+    userland_callback user_func;
+    user_func.fci_p =  &fci;
+    user_func.fcc_p = &fcc;
+    if (aerospike_scan_foreach(aerospike_obj_p->as_p, &error, NULL, &scan, record_stream_callback, &user_func) != AEROSPIKE_OK) {
+        e_level = E_WARNING;
+        PHP_EXT_SET_AS_ERR(error, error.code, error.message);
+        goto exit;
+    }
+
+exit:
+    if (e_level > 0) {
+        php_error_docref(NULL TSRMLS_CC, e_level, error.message);
+    }
+    status = error.code;
+    if (status != AEROSPIKE_OK) {
+        DEBUG_PHP_EXT_ERROR(error.message);
+    }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+    as_scan_destroy(&scan);
     RETURN_LONG(status);
 }
 
