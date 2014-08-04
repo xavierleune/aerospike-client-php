@@ -1795,13 +1795,10 @@ PHP_MINIT_FUNCTION(aerospike)
 PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
     DEBUG_PHP_EXT_INFO("In aerospike mshutdown");
-    printf ("\n\nBefore dtor");
 #ifndef ZTS
     aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
 #endif
-    printf ("\n\nAfter dtor");
     UNREGISTER_INI_ENTRIES();
-    printf ("\n\nAfter INI");
     return SUCCESS;
 }
 
