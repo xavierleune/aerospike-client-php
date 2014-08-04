@@ -20,15 +20,19 @@ abstract class AerospikeTestCommon extends ASTestFramework
 
     }
 
-    protected function setUp() {
+    protected function setUp(&$db, &$key) {
         $this->setErrorsRaiseException(true);
         $this->handle = make_handle();
         $this->oo = make_handle_oo();
         $this->skipALL();
     }
 
+    protected function tearDown(&$db, &$key) {
+
+    }
+
     /**
-     * Returns a Couchbase resource
+     * Returns a resource
      */
     protected function getPersistHandle() {
         if (!self::$_handle) {
@@ -38,7 +42,7 @@ abstract class AerospikeTestCommon extends ASTestFramework
     }
 
     /**
-     * return a Couchbase handle
+     * return a handle
      */
     protected function getPersistOO() {
         if (!self::$_oo) {

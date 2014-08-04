@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <string.h>
 
-//#undef NDEBUG
+#undef NDEBUG
 
 #ifdef NDEBUG
 #define debug(M, ...)

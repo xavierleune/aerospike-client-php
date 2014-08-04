@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Connection", "testMultipleHostsArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testMultipleHostsArray");
 --EXPECT--
-PHP_AEROSPIKE_OK
+0

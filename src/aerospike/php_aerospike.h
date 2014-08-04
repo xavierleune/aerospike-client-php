@@ -32,7 +32,13 @@
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
-/* N.B.:  No globals defined for now. */
+    int nesting_depth;
+    int connect_timeout;
+    int read_timeout;
+    int write_timeout;
+    char *log_path;
+    char *log_level;
+    int serializer;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS
@@ -61,29 +67,48 @@ PHP_METHOD(Aerospike, close);
 PHP_METHOD(Aerospike, getNodes);
 PHP_METHOD(Aerospike, info);
 
+// Error Handling APIs:
+
+PHP_METHOD(Aerospike, error);
+PHP_METHOD(Aerospike, errorno);
+
 // Key Value Store (KVS) APIs:
 
 PHP_METHOD(Aerospike, add);
 PHP_METHOD(Aerospike, append);
-PHP_METHOD(Aerospike, delete);
 PHP_METHOD(Aerospike, exists);
 PHP_METHOD(Aerospike, get);
 PHP_METHOD(Aerospike, getMany);
+PHP_METHOD(Aerospike, getMetadata);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
+PHP_METHOD(Aerospike, initKey);
+PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
+PHP_METHOD(Aerospike, remove);
+PHP_METHOD(Aerospike, removeBin);
+PHP_METHOD(Aerospike, setDeserializer);
+PHP_METHOD(Aerospike, setSerializer);
 PHP_METHOD(Aerospike, touch);
 
-// TBD
+// Logging APIs:
 
-// Scan APIs:
+PHP_METHOD(Aerospike, setLogLevel);
+PHP_METHOD(Aerospike, setLogHandler);
+
+// Query and Scan APIs:
+
+PHP_METHOD(Aerospike, predicateBetween);
+PHP_METHOD(Aerospike, predicateEquals);
+PHP_METHOD(Aerospike, query);
+PHP_METHOD(Aerospike, scan);
+
+// TBD
 // Secondary Index APIs:
-// Query APIs:
 // User Defined Function (UDF) APIs:
 // Large Data Type (LDT) APIs:
-// Logging APIs:
 // Shared Memory APIs:
 
 extern zend_module_entry aerospike_module_entry;

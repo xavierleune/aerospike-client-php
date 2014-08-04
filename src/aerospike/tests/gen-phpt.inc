@@ -45,14 +45,14 @@ $clsname - $test_base
 --SKIPIF--
 <?php
 $inc_line
-couchbase_phpt_skipif("$clsname", "$name");
+aerospike_phpt_skipif("$clsname", "$name");
 
 --FILE--
 <?php
 $inc_line
-couchbase_phpt_runtest("$clsname", "$name");
+aerospike_phpt_runtest("$clsname", "$name");
 --EXPECT--
-PHP_COUCHBASE_OK
+AEROSPIKE__OK
 EOF
 );
 	}
