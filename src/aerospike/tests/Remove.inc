@@ -7,6 +7,24 @@ require_once 'Common.inc';
 
 class Remove extends AerospikeTestCommon
 {
+
+    protected function setUp(&$db, &$key) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config);
+        $key = $db->initKey("test", "demo", "remove_test");
+        if ($db->isConnected()) {
+            $db->put($key,array("bin1"=>"1"));
+        }
+    }
+
+    protected function tearDown(&$db, &$key) {
+        if ($db->isConnected()) {
+            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+                =>Aerospike::POLICY_RETRY_NONE));
+        }
+    }
+
     /**
      * @test
      * Basic key remove operation
@@ -22,12 +40,11 @@ class Remove extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testKeyRemove() {
-	$config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-	$res = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
-	$this->assertTrue($res, $msg = "Key removed.");
+    function testKeyRemove($db, $key) {
+        if ($db->isConnected()) {
+            return ($db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+                =>Aerospike::POLICY_RETRY_NONE)));
+        }
     }
     /**
      * @test
@@ -44,12 +61,12 @@ class Remove extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testKeyRemoveKeyNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "-----10000");
-        $res = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
-        $this->assertTrue($res, $msg = "Key not exists.");
+    function testKeyRemoveKeyNotExist($db, $key) {
+        $key1 = array("ns" => "test", "set" => "demo", "key" => "-----ss-----");
+        if ($db->isConnected()) {
+            return ($db->remove($key1, array(Aerospike::OPT_POLICY_RETRY =>
+                Aerospike::POLICY_RETRY_NONE)));
+        }
     }
     /**
      * @test
@@ -66,12 +83,10 @@ class Remove extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinRemove() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res= $db->removeBin($key, "bin1");
-        $this->assertTrue($res, $msg = "Bin removed.");
+    function testBinRemove($db, $key) {
+        if ($db->isConnected()) {
+            return $db->removeBin($key, array("bin1"));
+        }
     }
     /**
      * @test
@@ -88,12 +103,10 @@ class Remove extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinRemoveBinNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res= $db->removeBin($key, "-------------bin1------------");
-        $this->assertTrue($res, $msg = "Bin not exists.");
+    function testBinRemoveBinNotExist($db, $key) {
+        if ($db->isConnected()) {
+            return($db->removeBin($key, array("-------------bin1------------")));
+        }
     }
 }
 ?>

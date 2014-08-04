@@ -7,6 +7,18 @@ require_once 'Common.inc';
 
 class Append  extends AerospikeTestCommon
 {
+    protected function setUp(&$db, &$key) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config);
+        $key = array("ns" => "test", "set" => "demo","key" =>"Append_key");
+        $db->put($key,array("Greet"=>"World_end"));
+   }
+
+   function tearDown(&$db, &$key) {
+        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+   }
+    
     /**
      * @test
      * Basic append opeartion on bin value
@@ -22,13 +34,8 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendOnBinValue() {
-	$config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-	$db->put($key,array("Greet"=>"Hello"));
-	$res = $db->append($key, 'Greet', ' World');
-	$this->assertTrue($res, $msg = "Append Success.");
+    function testAppendOnBinValue($db, $key) {
+        return($db->append($key, 'Greet', ' World'));
     }
     /**
      * @test
@@ -45,12 +52,10 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendKeyNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "-----10000");
-        $res = $db->append($key, 'Greet', ' World');
-        $this->assertTrue($res, $msg = "Key not exists.");
+    function testAppendKeyNotExist($db, $key) {
+        $key1 = array("ns" => "test", "set" => "demo", "key" =>
+            "---------AppendKey-------");
+        return($db->append($key1, 'Greet', ' World'));
     }
     /**
      * @test
@@ -67,12 +72,8 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendBinNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res = $db->append($key, 'Greet1234', ' World');
-        $this->assertTrue($res, $msg = "Bin not exists.");
+    function testAppendBinNotExist($db, $key) {
+        return($db->append($key, 'Greet1234', ' World'));
     }
     /**
      * @test
@@ -89,12 +90,8 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendValueNotString() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res = $db->append($key, 'Greet', 888888);
-        $this->assertTrue($res, $msg = "Append value not string ");
+    function testAppendValueNotString($db, $key) {
+        return($db->append($key, 'Greet', 888888));
     }
 }
 ?>

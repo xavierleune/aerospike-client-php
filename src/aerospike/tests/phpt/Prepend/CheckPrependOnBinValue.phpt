@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Prepend", "testPrependOnBinValue");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Prepend", "testPrependOnBinValue");
 --EXPECT--
+0

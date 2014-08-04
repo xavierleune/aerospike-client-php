@@ -26,7 +26,6 @@ class InitKey extends AerospikeTestCommon
 	$config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("demo", "test", 10000);
-	$this->assertTrue($res, $msg = "Key array returned.");
     }
     /**
      * @test
@@ -47,7 +46,6 @@ class InitKey extends AerospikeTestCommon
         $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey(2312312, "test", 10000);
-        $this->assertTrue($res, $msg = "Namespace value must not  be integer.");
     }
     /**
      * @test
@@ -68,7 +66,6 @@ class InitKey extends AerospikeTestCommon
         $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("demo", 12312312, 10000);
-        $this->assertTrue($res, $msg = "Set value must not be integer.");
     }
 }
 ?>

@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Get", "testCheckBinMissing");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckBinMissing");
 --EXPECT--
+201

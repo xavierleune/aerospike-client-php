@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Remove", "testKeyRemove");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Remove", "testKeyRemove");
 --EXPECT--
+0

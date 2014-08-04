@@ -7,6 +7,26 @@ require_once 'Common.inc';
 
 class Increment extends AerospikeTestCommon
 {
+    /*
+     * TODO: Remove these constants and map with actual Aerospike class
+     * constants.
+     */
+    static $status_ok = 0;
+    static $status_err = 201;
+
+    function setUp(&$db, &$key) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config);
+        $key = $db->initKey("test", "demo", "increment_test");
+        $db->put($key,array("bin1"=>"1"));
+   }
+
+   function tearDown(&$db, &$key) {
+       $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+           =>Aerospike::POLICY_RETRY_NONE));
+   }
+
     /**
      * @test
      * Basic bin increment operation
@@ -22,12 +42,8 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementByOffsetValue() {
-	$config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-	$res = $db->increment($key, 'bin1', 4);
-	$this->assertTrue($res, $msg = "Bin value increment by 4.");
+    function testBinIncrementByOffsetValue($db, $key) {
+        return($db->increment($key, 'bin1', 4));
     }
     /**
      * @test
@@ -44,12 +60,9 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementKeyNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "-----10000");
-	$res = $db->increment($key, 'bin1', 4);
-        $this->assertTrue($res, $msg = "Key not exists.");
+    function testBinIncrementKeyNotExist($db, $key) {
+        $key1 = array("ns" => "test", "set" => "demo", "key" => "----ssss----");
+        return($db->increment($key1, 'bin1', 4));
     }
     /**
      * @test
@@ -66,12 +79,8 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementBinNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res = $db->increment($key, 'abc', 4);
-        $this->assertTrue($res, $msg = "Bin created with default initial value.");
+    function testBinIncrementBinNotExist($db, $key) {
+        return($db->increment($key, 'abc', 4));
     }
     /**
      * @test
@@ -88,12 +97,14 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementOffsetValueString() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res = $db->increment($key, 'bin10001', "abc");
-        $this->assertTrue($res, $msg = "Offset value must be integer.");
+    function testBinIncrementOffsetValueString($db, $key)
+    {
+        try {
+            $db->increment($key, 'bin1', "abc");
+        } catch (ErrorException $e) {
+            return self::$status_ok;
+        }
+        return self::$status_err;
     }
 }
 ?>

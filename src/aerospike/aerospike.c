@@ -198,6 +198,10 @@ static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS
             }
             intern_obj_p->as_ref_p->ref_as_p = 0;
     	    intern_obj_p->as_ref_p->as_p = NULL;
+            if (intern_obj_p->as_ref_p) {
+                efree(intern_obj_p->as_ref_p);
+            }
+            intern_obj_p->as_ref_p = NULL;
         }
         DEBUG_PHP_EXT_INFO("aerospike c sdk object destroyed");
     } else {
@@ -211,9 +215,6 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
 
     if (intern_obj_p) {
     	zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
-        if (intern_obj_p->as_ref_p) {
-            efree(intern_obj_p->as_ref_p);
-        }
         efree(intern_obj_p);
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
@@ -271,13 +272,6 @@ PHP_METHOD(Aerospike, __construct)
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
-    if (aerospike_obj_p->as_ref_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR, "Already created aerospike object");
-        DEBUG_PHP_EXT_ERROR("Already created aerospike object");
-        goto exit;
-    }
-
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|za",
                 &config_p, &alias, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -328,7 +322,7 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* Connect to the cluster */
-    if (aerospike_obj_p->as_ref_p &&
+    if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
             AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error))) {
         DEBUG_PHP_EXT_ERROR("Unable to make connection");
         goto exit;
@@ -356,8 +350,6 @@ PHP_METHOD(Aerospike, __destruct)
         goto exit;
     }
 
-    aerospike_destroy(aerospike_obj_p->as_ref_p->as_p);
-    aerospike_obj_p->as_ref_p->as_p = NULL;
 
     DEBUG_PHP_EXT_INFO("Destruct method of aerospike object executed")
 exit:
@@ -513,20 +505,20 @@ PHP_METHOD(Aerospike, isConnected)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     as_error               error;
 
-    if ((!aerospike_obj_p) || !(aerospike_obj_p->as_ref_p->as_p)) {
+    if (!(aerospike_obj_p && aerospike_obj_p->as_ref_p && aerospike_obj_p->as_ref_p->as_p)) {
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
         PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         RETURN_FALSE;
     }
 
-   if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
-       PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
-       RETURN_TRUE;
-   } else {
-       PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
-       RETURN_FALSE;
-   }
+    if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
+        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
+        RETURN_TRUE;
+    } else {
+        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
+        RETURN_FALSE;
+    }
 }
 
 /* PHP Method:  bool Aerospike::close()
@@ -1639,11 +1631,13 @@ PHP_MINIT_FUNCTION(aerospike)
 PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
     DEBUG_PHP_EXT_INFO("In aerospike mshutdown");
-
+    printf ("\n\nBefore dtor");
 #ifndef ZTS
     aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
 #endif
+    printf ("\n\nAfter dtor");
     UNREGISTER_INI_ENTRIES();
+    printf ("\n\nAfter INI");
     return SUCCESS;
 }
 

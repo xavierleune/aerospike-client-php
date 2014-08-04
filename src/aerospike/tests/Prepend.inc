@@ -7,6 +7,17 @@ require_once 'Common.inc';
 
 class Prepend extends AerospikeTestCommon
 {
+    protected function setUp(&$db, &$key) {
+	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config);
+        $key = $db->initKey("test", "demo", "Prepend_key");
+	    $db->put($key,array("Greet"=>"World_end"));
+    }
+
+    protected function tearDown(&$db, &$key) {
+        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+            =>Aerospike::POLICY_RETRY_NONE));
+    }
     /**
      * @test
      * Basic prepend opeartion on bin value
@@ -22,13 +33,8 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependOnBinValue() {
-	$config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-	$db->put($key,array("Greet"=>"World"));
-	$res = $db->prepend($key, 'Greet', 'Hello ');
-	$this->assertTrue($res, $msg = "Prepend Success.");
+    function testPrependOnBinValue($db, $key) {
+        return($db->prepend($key, 'Greet', 'Hello '));
     }
     /**
      * @test
@@ -45,12 +51,9 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependKeyNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "-----10000");
-        $res = $db->prepend($key, 'Greet', ' World');
-        $this->assertTrue($res, $msg = "Key not exists.");
+    function testPrependKeyNotExist($db, $key) {
+        $key1 = $db->initKey("test", "demo", "---sss----");
+        return($db->prepend($key1, 'Greet', ' World'));
     }
     /**
      * @test
@@ -67,12 +70,8 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependBinNotExist() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res = $db->prepend($key, 'Greet1234', ' World');
-        $this->assertTrue($res, $msg = "Bin not exists.");
+    function testPrependBinNotExist($db, $key) {
+        return($db->prepend($key, 'sssssssssss', ' World'));
     }
     /**
      * @test
@@ -89,12 +88,8 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependValueNotString() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = array("ns" => "demo", "set" => "test", "key" => "10000");
-        $res = $db->prepend($key, 'Greet', 888888);
-        $this->assertTrue($res, $msg = "Prepend value not string ");
+    function testPrependValueNotString($db, $key) {
+        return($db->prepend($key, 'Greet', 888888));
     }
 }
 ?>

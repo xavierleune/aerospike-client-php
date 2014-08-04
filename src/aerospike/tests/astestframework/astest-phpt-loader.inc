@@ -16,8 +16,8 @@ function aerospike_phpt_runtest($clsname, $name) {
 
     # If any assertions fail here, PHPUnitCompat will fail the test
     # and complain.
-    $obj->runSingleTest($name);
-    printf("PHP_AEROSPIKE_OK\n");
+    $rv= $obj->runSingleTest($name);
+    printf("%d", $rv);
 }
 
 function aerospike_phpt_skipif($clsname, $name) {

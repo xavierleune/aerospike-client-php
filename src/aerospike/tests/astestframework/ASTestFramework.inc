@@ -179,11 +179,11 @@ class ASTestFramework {
         return true;
     }
 
-    protected function setUp() {
+    protected function setUp(&$db, &$key) {
 
     }
 
-    protected function tearDown() {
+    protected function tearDown(&$db, &$key) {
 
     }
 
@@ -195,12 +195,12 @@ class ASTestFramework {
             fprintf(STDERR, "Running $name..\n");
         }
 
-        $this->setUp();
+        $this->setUp($db, $key);
 
         $uncaught = NULL;
 
         try {
-            $meth->invoke($this);
+            $status = $meth->invoke($this, $db, $key);
         } catch (ASTestFramework_PrematureGracefulException $exc) {
 
             if (self::$verbose) {
@@ -209,9 +209,10 @@ class ASTestFramework {
 
         } catch (Exception $exc) {
             $uncaught = $exc;
+            $status = 201;
         }
 
-        $this->tearDown();
+        $this->tearDown($db, $key);
 
         if (self::$verbose) {
             fprintf(STDERR, "\tDone..\n");
@@ -220,6 +221,7 @@ class ASTestFramework {
         if ($uncaught) {
             throw $uncaught;
         }
+        return $status;
     }
 
     public function runAllTests() {

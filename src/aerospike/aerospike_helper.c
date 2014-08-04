@@ -228,6 +228,7 @@ use_existing:
     /* config details are matched, use the existing one obtained from the
      * storage
      */
+    as_object_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
     as_object_p->as_ref_p = tmp_ref;
     as_object_p->as_ref_p->ref_as_p++;
     goto exit;

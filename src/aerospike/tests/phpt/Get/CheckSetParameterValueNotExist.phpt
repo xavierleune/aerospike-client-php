@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Get", "testCheckSetValueNotExistInDB");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckSetValueNotExistInDB");
 --EXPECT--
+602

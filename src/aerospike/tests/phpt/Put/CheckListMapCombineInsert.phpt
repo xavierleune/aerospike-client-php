@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Put", "testCheckListMapCombineInsert");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testCheckListMapCombineInsert");
 --EXPECT--
+0

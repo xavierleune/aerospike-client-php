@@ -1,14 +1,14 @@
 --TEST--
-Connection - ConnectBasic
+Get - PUT With Second Parameter not an array.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Connection", "testConnectBasic");
+aerospike_phpt_skipif("Put", "testIntlistStringlist");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Connection", "testConnectBasic");
+aerospike_phpt_runtest("Put", "testIntlistStringlist");
 --EXPECT--
-PHP_AEROSPIKE_OK
+0

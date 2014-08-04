@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Increment", "testBinIncrementBinNotExist");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Increment", "testBinIncrementBinNotExist");
 --EXPECT--
+0

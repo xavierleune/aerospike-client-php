@@ -11,3 +11,4 @@ aerospike_phpt_skipif("Put", "testCheckNameSpaceParameterMissingInKeyArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testCheckNameSpaceParameterMissingInKeyArray");
 --EXPECT--
+201
