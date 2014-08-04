@@ -87,6 +87,61 @@ exit:
 }
 
 /*
+ * If serialize_flag == true, executes the passed userland serializer callback,
+ * by creating as_bytes (bytes) from the passed zval (value).
+ * Else executes the passed userland deserializer callback,
+ * by passing the as_bytes (bytes) to the deserializer and getting back
+ * the corresponding zval (value)
+ */
+static as_status execute_user_callback(zend_fcall_info *user_callback_info,
+                                       zend_fcall_info_cache *user_callback_info_cache,
+                                       zval *user_callback_retval_p,
+                                       as_bytes *bytes,
+                                       zval **value,
+                                       bool serialize_flag)
+{
+    as_status   status = AEROSPIKE_OK;
+    zval**      params[1];
+    zval*       bytes_string = NULL;
+    int8_t*     bytes_val_p = bytes->value;
+
+    ALLOC_INIT_ZVAL(bytes_string);
+    ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 1);
+
+    if (serialize_flag) {
+        params[0] = value;
+    } else {
+        params[0] = &bytes_string;
+    }
+
+    user_callback_info->param_count = 1;
+    user_callback_info->params = params;
+    user_callback_info->retval_ptr_ptr = &user_callback_retval_p;
+
+    if (zend_call_function(user_callback_info, user_callback_info_cache TSRMLS_CC) == SUCCESS &&
+        user_callback_info->retval_ptr_ptr && *user_callback_info->retval_ptr_ptr) {
+
+        if (serialize_flag) {
+            COPY_PZVAL_TO_ZVAL(*bytes_string, *user_callback_info->retval_ptr_ptr);
+            status = set_as_bytes(bytes, Z_STRVAL_P(bytes_string), bytes_string->value.str.len, AS_BYTES_BLOB);
+        } else {
+            COPY_PZVAL_TO_ZVAL(**value, *user_callback_info->retval_ptr_ptr);
+        }
+
+    } else {
+        status = AEROSPIKE_ERR;
+        if (serialize_flag) {
+            DEBUG_PHP_EXT_ERROR("Unable to call user's registered serializer callback");
+        } else {
+            DEBUG_PHP_EXT_ERROR("Unable to call user's registered deserializer callback");
+        }
+    }
+
+    zval_ptr_dtor(&bytes_string);
+    return status;
+}
+
+/*
  * Checks serializer_policy.
  * Serializes zval (value) into as_bytes using serialization logic
  * based on serializer_policy.
@@ -129,28 +184,10 @@ static as_status serialize_based_on_serializer_policy(int32_t serializer_policy,
             break;
         case SERIALIZER_UDF:
             if (is_user_serializer_registered) {
-                zval**    params[1];
-                zval*     bytes_string = NULL;
-
-                ALLOC_INIT_ZVAL(bytes_string);
-                ZVAL_STRINGL(bytes_string, NULL, 0, 1);
-
-                params[0] = value;
-                user_serializer_call_info.param_count = 1;
-                user_serializer_call_info.params = params;
-                user_serializer_call_info.retval_ptr_ptr = &user_serializer_callback_retval_p;
-
-                if (zend_call_function(&user_serializer_call_info, &user_serializer_call_info_cache TSRMLS_CC) == SUCCESS &&
-                    user_serializer_call_info.retval_ptr_ptr && *user_serializer_call_info.retval_ptr_ptr) {
-                        COPY_PZVAL_TO_ZVAL(*bytes_string, *user_serializer_call_info.retval_ptr_ptr);
-                        status = set_as_bytes(bytes, Z_STRVAL_P(bytes_string), bytes_string->value.str.len, AS_BYTES_BLOB);
-                } else {
-                    status = AEROSPIKE_ERR;
-                    DEBUG_PHP_EXT_ERROR("Unable to call user's registered serializer callback");
-                }
-
-                zval_ptr_dtor(&bytes_string);
-
+                status = execute_user_callback(&user_serializer_call_info,
+                                               &user_serializer_call_info_cache,
+                                               user_serializer_callback_retval_p,
+                                               bytes, value, true);
             } else {
                 status = AEROSPIKE_ERR;
                 DEBUG_PHP_EXT_ERROR("No serializer callback registered");
@@ -198,26 +235,10 @@ static as_status unserialize_based_on_as_bytes_type(as_bytes *bytes, zval **retv
             break;
         case AS_BYTES_BLOB: {
                 if (is_user_deserializer_registered) {
-                    zval**    params[1];
-                    zval*     bytes_string = NULL;
-
-                    ALLOC_INIT_ZVAL(bytes_string);
-                    ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 1);
-
-                    params[0] = &bytes_string;
-                    user_deserializer_call_info.param_count = 1;
-                    user_deserializer_call_info.params = params;
-                    user_deserializer_call_info.retval_ptr_ptr = &user_deserializer_callback_retval_p;
-
-                    if (zend_call_function(&user_deserializer_call_info, &user_deserializer_call_info_cache TSRMLS_CC) == SUCCESS &&
-                        user_deserializer_call_info.retval_ptr_ptr && *user_deserializer_call_info.retval_ptr_ptr) {
-                            COPY_PZVAL_TO_ZVAL(**retval, *user_deserializer_call_info.retval_ptr_ptr);
-                    } else {
-                        status = AEROSPIKE_ERR;
-                        DEBUG_PHP_EXT_ERROR("Unable to call user's registered serializer callback");
-                    }
-
-                    zval_ptr_dtor(&bytes_string);
+                    status = execute_user_callback(&user_deserializer_call_info,
+                                                   &user_deserializer_call_info_cache,
+                                                   user_deserializer_callback_retval_p,
+                                                   bytes, retval, false);
 
                 } else {
                     /*
