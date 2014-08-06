@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Increment", "testBinIncrementKeyNotExist");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Increment", "testBinIncrementKeyNotExist");
 --EXPECT--
-602
+ERR_RECORD_NOT_FOUND

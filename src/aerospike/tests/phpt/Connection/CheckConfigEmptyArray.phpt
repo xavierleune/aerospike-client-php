@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Connection", "testEmptyArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testEmptyArray");
 --EXPECT--
-201
+ERR_PARAM

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Connection", "testConnect");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testConnect");
 --EXPECT--
-0
+OK

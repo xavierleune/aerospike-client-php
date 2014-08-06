@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Connection", "testMissingHostsKeyFromConfigArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testMissingHostsKeyFromConfigArray");
 --EXPECT--
-201
+ERR_PARAM

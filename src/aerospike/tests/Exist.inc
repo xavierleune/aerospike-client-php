@@ -33,8 +33,12 @@ class Exist extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testKeyExist($db, $key) {
-        return($db->exists($key, $metadata));
+   function testKeyExist($db, $key) {
+        if ($db->isConnected()) {
+            return($db->exists($key, $metadata));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -53,6 +57,10 @@ class Exist extends AerospikeTestCommon
      */
     function testKeyNotExist($db, $key) {
         $key1 = $db->initKey("test", "demo", "----sss---------");
+        if ($db->isConnected()) {
         return($db->exists($key1, $metadata));
+        } else {
+            return($db->errorno());
+        }
     }
 }

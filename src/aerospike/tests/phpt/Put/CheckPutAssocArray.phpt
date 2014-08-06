@@ -1,5 +1,5 @@
 --TEST--
-Get - PUT With Second Parameter not an array.
+Put - PUT With Associated Array.
 
 --SKIPIF--
 <?php
@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testPutAssocArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testPutAssocArray");
 --EXPECT--
-0
+OK

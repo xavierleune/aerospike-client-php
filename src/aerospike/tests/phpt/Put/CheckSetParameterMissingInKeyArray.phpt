@@ -1,5 +1,5 @@
 --TEST--
-Get - NameSpace Parameter missing in key array.
+Put - NameSpace Parameter missing in key array.
 
 --SKIPIF--
 <?php
@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testCheckSetParameterMissingInKeyArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testCheckSetParameterMissingInKeyArray");
 --EXPECT--
-201
+ERR_PARAM

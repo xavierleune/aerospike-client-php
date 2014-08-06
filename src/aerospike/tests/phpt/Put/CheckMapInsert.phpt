@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testCheckMapInsert");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testCheckMapInsert");
 --EXPECT--
-0
+OK

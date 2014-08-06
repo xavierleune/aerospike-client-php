@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Get", "testCheckListInsert");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckListInsert");
 --EXPECT--
-0
+OK

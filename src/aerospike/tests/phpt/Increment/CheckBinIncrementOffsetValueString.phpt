@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Increment", "testBinIncrementOffsetValueString");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Increment", "testBinIncrementOffsetValueString");
 --EXPECT--
-0
+OK

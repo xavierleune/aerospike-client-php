@@ -1,5 +1,5 @@
 --TEST--
-Connection - Check Config parameter must contains port key
+Connection - Check Config different alias partially different Config
 
 --SKIPIF--
 <?php
@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Connection", "testDiffAliasPartiallyDiffConfig");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testDiffAliasPartiallyDiffConfig");
 --EXPECT--
-0
+OK

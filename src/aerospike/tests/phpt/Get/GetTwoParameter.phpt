@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Get", "testGETTwoParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testGETTwoParameter");
 --EXPECT--
-0
+OK

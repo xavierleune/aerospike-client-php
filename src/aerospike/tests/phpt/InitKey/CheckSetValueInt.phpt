@@ -11,4 +11,4 @@ aerospike_phpt_skipif("InitKey", "testSetValueInt");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("InitKey", "testSetValueInt");
 --EXPECT--
-0
+OK

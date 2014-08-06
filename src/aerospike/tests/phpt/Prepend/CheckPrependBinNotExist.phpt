@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Prepend", "testPrependBinNotExist");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Prepend", "testPrependBinNotExist");
 --EXPECT--
-0
+OK

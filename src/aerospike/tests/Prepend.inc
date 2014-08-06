@@ -34,7 +34,11 @@ class Prepend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPrependOnBinValue($db, $key) {
-        return($db->prepend($key, 'Greet', 'Hello '));
+        if ($db->isConnected()) {
+            return($db->prepend($key, 'Greet', 'Hello '));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -53,7 +57,11 @@ class Prepend extends AerospikeTestCommon
      */
     function testPrependKeyNotExist($db, $key) {
         $key1 = $db->initKey("test", "demo", "---sss----");
-        return($db->prepend($key1, 'Greet', ' World'));
+        if ($db->isConnected()) {
+            return($db->prepend($key1, 'Greet', ' World'));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -70,8 +78,12 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependBinNotExist($db, $key) {
-        return($db->prepend($key, 'sssssssssss', ' World'));
+        function testPrependBinNotExist($db, $key) {
+        if ($db->isConnected()) {
+            return($db->prepend($key, 'sssssssssss', ' World'));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -88,8 +100,12 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependValueNotString($db, $key) {
-        return($db->prepend($key, 'Greet', 888888));
+        function testPrependValueNotString($db, $key) {
+        if ($db->isConnected()) {
+            return($db->prepend($key, 'Greet', 888888));
+        } else {
+            return($db->errorno());
+        }
     }
 }
 ?>

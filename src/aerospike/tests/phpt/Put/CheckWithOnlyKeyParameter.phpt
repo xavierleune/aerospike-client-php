@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testPUTWithOnlyKeyParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testPUTWithOnlyKeyParameter");
 --EXPECT--
-0
+Parameter_Exception

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Exist", "testKeyExist");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Exist", "testKeyExist");
 --EXPECT--
-0
+OK

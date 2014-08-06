@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Get", "testCheckThirdParameterTypeArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckThirdParameterTypeArray");
 --EXPECT--
-0
+Parameter_Exception

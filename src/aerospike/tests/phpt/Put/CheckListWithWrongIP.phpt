@@ -1,5 +1,5 @@
 --TEST--
-Get - PUT With Second Parameter not an array.
+Put - PUT List on Wrong IP
 
 --SKIPIF--
 <?php
@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testListWithWrongIP");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testListWithWrongIP");
 --EXPECT--
-201
+ERR_PARAM

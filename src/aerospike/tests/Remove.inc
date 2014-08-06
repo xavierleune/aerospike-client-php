@@ -44,7 +44,10 @@ class Remove extends AerospikeTestCommon
         if ($db->isConnected()) {
             return ($db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE)));
+        } else {
+            return($db->errorno());
         }
+
     }
     /**
      * @test
@@ -66,6 +69,8 @@ class Remove extends AerospikeTestCommon
         if ($db->isConnected()) {
             return ($db->remove($key1, array(Aerospike::OPT_POLICY_RETRY =>
                 Aerospike::POLICY_RETRY_NONE)));
+        } else {
+            return($db->errorno());
         }
     }
     /**
@@ -86,6 +91,8 @@ class Remove extends AerospikeTestCommon
     function testBinRemove($db, $key) {
         if ($db->isConnected()) {
             return $db->removeBin($key, array("bin1"));
+        } else {
+            return($db->errorno());
         }
     }
     /**
@@ -106,6 +113,8 @@ class Remove extends AerospikeTestCommon
     function testBinRemoveBinNotExist($db, $key) {
         if ($db->isConnected()) {
             return($db->removeBin($key, array("-------------bin1------------")));
+        } else {
+            return($db->errorno());
         }
     }
 }

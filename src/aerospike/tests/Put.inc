@@ -11,8 +11,8 @@ class Put extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    static $status_ok = 0;
-    static $status_err = 201;
+    static $status_ok = 2000;
+    static $status_err = 2001;
 
 	/**
      * @test
@@ -32,14 +32,22 @@ class Put extends AerospikeTestCommon
 	function testPUT($dummydb, $dummykey) 
     {
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-		$as = new Aerospike($config);
-        $key = $as->initKey("test", "demo", "put_test");
-        $status = $as->put($key,array("bin1"=>"Hello World"));
+		$db = new Aerospike($config);
+        $key = $db->initKey("test", "demo", "put_test");
+        if ($db->isConnected()) {
+            $status = $db->put($key,array("bin1"=>"Hello World"));
+        } else{
+            return($db->errorno());
+        }
         if ($status != Aerospike::OK) {
             return($status);
         }
-        $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        if ($db->isConnected()) {
+            $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                             =>Aerospike::POLICY_RETRY_NONE));
+        } else{
+            return($db->errorno());
+        }
         return($status);
     }
 	/**
@@ -60,14 +68,22 @@ class Put extends AerospikeTestCommon
 	function testMultiPUT($dummydb, $dummykey) 
 	{
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-		$as = new Aerospike($config);
+		$db = new Aerospike($config);
 		$key = array("ns"=>"test", "set"=>"demo", "key"=>"key_multi");
-        $status = $as->put($key,array("bin1"=>"Hello World","bin2"=>123456));
+        if ($db->isConnected()) {
+            $status = $db->put($key,array("bin1"=>"Hello World","bin2"=>123456));
+        } else{
+            return($db->errorno());
+        }
         if ($status != Aerospike::OK) {
             return($status);
         }
-        $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        if ($db->isConnected()) {
+            $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                             =>Aerospike::POLICY_RETRY_NONE));
+        } else{
+            return($db->errorno());
+        }
         return($status);
     }
 	/**
@@ -89,9 +105,13 @@ class Put extends AerospikeTestCommon
     {
         try {
     		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-    		$as = new Aerospike($config);
+    		$db = new Aerospike($config);
     		$key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
-            $status = $as->put();
+            if ($db->isConnected()) {
+                $status = $db->put();
+            } else{
+                return($db->errorno());
+            }
         } catch (ErrorException $e) {
             return self::$status_ok;
         }
@@ -116,9 +136,13 @@ class Put extends AerospikeTestCommon
     {
         try {
     		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-    		$as = new Aerospike($config);
+    		$db = new Aerospike($config);
     		$key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
-            $status = $as->put($key);
+            if ($db->isConnected()) {
+                $status = $db->put($key);
+            } else{
+                return($db->errorno());
+            }
         } catch (ErrorException $e) {
             return self::$status_ok;
         }
@@ -140,16 +164,20 @@ class Put extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 	function testPUTWithOnlyDataParameter($dummydb, $dummykey) 
-    {
+    {    
         try {
     		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-    		$as = new Aerospike($config);
+    		$db = new Aerospike($config);
     		$key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
-            $status = $as->put(array("bin1"=>"Hello World"));
+            if ($db->isConnected()) {
+                $status = $db->put(array("bin1"=>"Hello World"));
+            } else{
+                return($db->errorno());
+            }
         } catch (ErrorException $e) {
             return self::$status_ok;
         }
-        return self::$status_err;
+            return self::$status_err;
     }
 	/**
      * @test
@@ -169,14 +197,22 @@ class Put extends AerospikeTestCommon
 	function testPUTWithNormalpPutDataArrayParameter($dummydb, $dummykey) 
 	{
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-		$as = new Aerospike($config);
+		$db = new Aerospike($config);
         $key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
-        $status = $as->put($key, array("Hello World"));
+        if ($db->isConnected()) {
+            $status = $db->put($key, array("Hello World"));
+        } else{
+            return($db->errorno());
+        }
         if ($status != Aerospike::OK) {
             return($status);
         }
-        $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        if ($db->isConnected()) {
+            $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
+        } else{
+            return($db->errorno());
+        }
         return($status);
     }
 	/**
@@ -197,14 +233,22 @@ class Put extends AerospikeTestCommon
 	function testCheckKeyParameterMissingInKeyArray($dummydb, $dummykey) 
 	{
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-		$as = new Aerospike($config);
+		$db = new Aerospike($config);
 		$key = array("ns"=>"test", "set"=>"demo");
-        $status = $as->put($key,array("bin1"=>"Hello World"));
+        if ($db->isConnected()) {
+            $status = $db->put($key,array("bin1"=>"Hello World"));
+        } else{
+            return($db->errorno());
+        }
         if ($status != Aerospike::OK) {
             return($status);
         }
-        $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        if ($db->isConnected()) {
+            $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
+        } else{
+            return($db->errorno());
+        }
         return($status);
     }
     /**
@@ -225,14 +269,22 @@ class Put extends AerospikeTestCommon
 	function testCheckNameSpaceParameterMissingInKeyArray($dummydb, $dummykey) 
 	{
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-		$as = new Aerospike($config);
+		$db = new Aerospike($config);
 		$key = array("set"=>"demo","key"=>"10000");
-        $status = $as->put($key,array("bin1"=>"Hello World"));
+        if ($db->isConnected()) {
+            $status = $db->put($key,array("bin1"=>"Hello World"));
+        } else{
+            return($db->errorno());
+        }
         if ($status != Aerospike::OK) {
             return($status);
         }
-        $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        if ($db->isConnected()) {
+            $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
               =>Aerospike::POLICY_RETRY_NONE));
+        } else{
+            return($db->errorno());
+        }
         return($status);
     }
 	/**
@@ -253,14 +305,22 @@ class Put extends AerospikeTestCommon
 	function testCheckSetParameterMissingInKeyArray($dummydb, $dummykey) 
 	{
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-		$as = new Aerospike($config);
+		$db = new Aerospike($config);
 		$key = array("ns"=>"test","key"=>"10000");
-        $status = $as->put($key,array("bin1"=>"Hello World"));
+        if ($db->isConnected()) {
+            $status = $db->put($key,array("bin1"=>"Hello World"));
+        } else{
+            return($db->errorno());
+        }
         if ($status != Aerospike::OK) {
             return($status);
         }
-        $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        if ($db->isConnected()) {
+            $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
+        } else{
+            return($db->errorno());
+        }
         return($status);
     }
 	/**
@@ -279,13 +339,17 @@ class Put extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 	function testCheckSecondParameterTypeArray($dummydb, $dummykey) 
-    {
+    {    
         try {
     		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-    		$as = new Aerospike($config);
+    		$db = new Aerospike($config);
     		$key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
     		$bin_arr = "";
-            $status = $as->put($key,$bin_arr);
+            if ($db->isConnected()) {
+                $status = $db->put($key,$bin_arr);
+            } else {
+                return($db->errorno());
+            }
         } catch (ErrorException $e) {
             return self::$status_ok;
         }
@@ -309,16 +373,24 @@ class Put extends AerospikeTestCommon
         function testCheckParameterSequenceChangeInKeyArray($dummydb, $dummykey)
         {
              $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-             $as = new Aerospike($config);
-             $key = $as->initKey("demo", "test", "key_int1");
-             $status = $as->put($key,array("bin1"=>"Hello World"));
+             $db = new Aerospike($config);
+             $key = $db->initKey("demo", "test", "key_int1");
+             if ($db->isConnected()) {
+                 $status = $db->put($key,array("bin1"=>"Hello World"));
+             } else{
+                 return($db->errorno());
+             }
              if($status != Aerospike::OK) {
                  return($status);
              }
-             $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+             if ($db->isConnected()) {
+                  $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                      =>Aerospike::POLICY_RETRY_NONE));
-             return($status);
-    	}
+             } else {
+                return($db->errorno());
+             }
+                return($status);
+       }
 /**
   * @test
   * Basic PUT Check key parameter value non exist in database
@@ -337,14 +409,22 @@ class Put extends AerospikeTestCommon
   function testCheckKeyValueNotExistInDB($dummydb, $dummykey)
   {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $as = new Aerospike($config);
+      $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"-------------");
-      $status = $as->put($key,array("bin1"=>"Hello World"));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>"Hello World"));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 
@@ -366,14 +446,22 @@ class Put extends AerospikeTestCommon
   function testCheckNameSpaceValueNotExistInDB($dummydb, $dummykey)
   {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $as = new Aerospike($config);
+      $db = new Aerospike($config);
       $key = array("ns"=>"aksdksajfasjk","set"=>"demo","key"=>"10000");
-      $status = $as->put($key,array("bin1"=>"Hello World"));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>"Hello World"));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 
@@ -395,14 +483,22 @@ class Put extends AerospikeTestCommon
   function testCheckSetValueNotExistInDB($dummydb, $dummykey)
   {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $as = new Aerospike($config);
+      $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"sadklasndaasd","key"=>"10000");
-      $status = $as->put($key,array("bin1"=>"Hello World"));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>"Hello World"));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 /**
@@ -423,14 +519,22 @@ class Put extends AerospikeTestCommon
   function testCheckListInsert($dummydb, $dummykey)
   {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $as = new Aerospike($config);
+      $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
-      $status = $as->put($key,array("bin1"=>array("speaking", "reading", "writing")));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>array("speaking", "reading", "writing")));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 /**
@@ -451,15 +555,23 @@ class Put extends AerospikeTestCommon
   function testCheckMapInsert($dummydb, $dummykey)
   {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $as = new Aerospike($config);
+      $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"key_map");
       $map1= array("k1"=>10,"k2"=>5,"k3"=>6,"k4"=>7,"k5"=>8);
-      $status = $as->put($key,array("bin1"=>$map1));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>$map1));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 /**
@@ -480,7 +592,7 @@ class Put extends AerospikeTestCommon
   function testCheckListMapCombineInsert($dummydb, $dummykey)
   {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $as = new Aerospike($config);
+      $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
       $softskills = array("speaking", "reading", "writing");
       $skills = array("python", "c", "java",$softskills);
@@ -492,15 +604,38 @@ class Put extends AerospikeTestCommon
       $innerlist = array(1,2,"facebook", $innermostlist);
       $mylist = array(10, 20, "whatsup", $innerlist, $mymap);
       $rec = array("bin1"=>$mylist);	
-      $status = $as->put($key,$rec);
+      if ($db->isConnected()) {
+          $status = $db->put($key,$rec);
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $as->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 
+/**
+  * @test
+  * Basic PUT Nested List  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
   function testNestedList($dummydb, $dummykey) {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
           "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -509,15 +644,38 @@ class Put extends AerospikeTestCommon
       $list2 = array("aa");
       $list3 = array($list2,1,"kk");
       $list4 = array(46,$list3);
-      $status = $db->put($key,array("bin1"=>$list4));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>$list4));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 
+/**
+  * @test
+  * Basic PUT Insert Int List and string List combine 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
   function testIntlistStringlist($dummydb, $dummykey) {
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
           "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -525,15 +683,38 @@ class Put extends AerospikeTestCommon
       $key = $db->initKey("test", "demo", "st");
       $list1 = array("aa","vv","hh");
       $list2 = array(100,566,52,$list1);
-      $status = $db->put($key,array("bin1"=>$list2));
+      if ($db->isConnected()) {
+          $status = $db->put($key,array("bin1"=>$list2));
+      } else {
+          return($db->errorno());
+      }
       if($status != Aerospike::OK) {
           return($status);
       }
-      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+      if ($db->isConnected()) {
+          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
+      } else {
+          return($db->errorno());
+      }
       return($status);
   }
 
+/**
+  * @test
+  * Insert List with wrong IP
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
   function testListWithWrongIP($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>"10.43.3.695",
          "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -541,56 +722,133 @@ class Put extends AerospikeTestCommon
      $key = $db->initKey("test", "demo", "list_list_strval");
      $list1 = array("p","q","r","s","d","op",12,56,89,55);
      $list2 = array(105,"r","s","t","p",$list1);
-     $status = $db->put($key,array("bin1"=>$list2));
+     if ($db->isConnected()) {
+         $status = $db->put($key,array("bin1"=>$list2));
+     } else {
+         return($db->errorno());
+     }
      if($status != Aerospike::OK) {
          return($status);
      }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+     if ($db->isConnected()) {
+         $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
          =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db->errorno());
+     }
      return($status);
  }
 
+/**
+  * @test
+  * Basic PUT Insert Map with int value 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
  function testMapWithIntval($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "reival");
      $map1 = array("k10"=>10);
      $map2 = array(1,"k6"=>"abc",$map1);
-     $status = $db->put($key,array("bin1"=>$map2));
+     if ($db->isConnected()) {
+         $status = $db->put($key,array("bin1"=>$map2));
+     } else {
+         return($db->errorno());
+     }
      if($status != Aerospike::OK) {
          return($status);
      }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+     if ($db->isConnected()) {
+         $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
          =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db->errorno());
+     }
      return($status);
  }
 
+/**
+  * @test
+  * Basic PUT Insert List int and string 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
  function testIntStringList($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "list6_key");
      $list1 = array("aa",2);
      $list2 = array(3,"k1","k4"=>$list1);
-     $status = $db->put($key,array("bin1"=>$list2));
+     if ($db->isConnected()) {
+         $status = $db->put($key,array("bin1"=>$list2));
+     } else {
+         return($db->errorno());
+     }
      if($status != Aerospike::OK) {
          return($status);
      }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+     if ($db->isConnected()) {
+         $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
          =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db->errorno());
+     }
      return($status);
  }
 
+/**
+  * @test
+  * Basic PUT AssocArray 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
  function testPutAssocArray($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "key_val_int");
      $map2 = array("k10"=>89,85);
-     $status = $db->put($key,array("bin1"=>$map2));
+     if ($db->isConnected()) {
+         $status = $db->put($key,array("bin1"=>$map2));
+     } else {
+         return($db->errorno());
+     }
      if($status != Aerospike::OK) {
          return($status);
      }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+     if ($db->isConnected()) {
+         $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
          =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db->errorno());
+     }
      return($status);
  }
 }

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Connection", "testMissingNameKeyFromConfigArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testMissingNameKeyFromConfigArray");
 --EXPECT--
-201
+ERR_PARAM

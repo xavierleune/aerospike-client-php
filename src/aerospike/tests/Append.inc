@@ -15,8 +15,10 @@ class Append  extends AerospikeTestCommon
         $db->put($key,array("Greet"=>"World_end"));
    }
 
-   function tearDown(&$db, &$key) {
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+    function tearDown(&$db, &$key) {
+        if ($db->isConnected()) {
+               $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+        }
    }
     
     /**
@@ -34,8 +36,12 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendOnBinValue($db, $key) {
-        return($db->append($key, 'Greet', ' World'));
+        function testAppendOnBinValue($db, $key) {
+        if ($db->isConnected()) {
+            return($db->append($key, 'Greet', ' World'));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -54,8 +60,12 @@ class Append  extends AerospikeTestCommon
      */
     function testAppendKeyNotExist($db, $key) {
         $key1 = array("ns" => "test", "set" => "demo", "key" =>
-            "---------AppendKey-------");
-        return($db->append($key1, 'Greet', ' World'));
+              "---------AppendKey-------");
+        if ($db->isConnected()) {
+            return($db->append($key1, 'Greet', ' World'));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -73,7 +83,11 @@ class Append  extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testAppendBinNotExist($db, $key) {
-        return($db->append($key, 'Greet1234', ' World'));
+        if ($db->isConnected()) {
+            return($db->append($key, 'Greet1234', ' World'));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -91,7 +105,11 @@ class Append  extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testAppendValueNotString($db, $key) {
-        return($db->append($key, 'Greet', 888888));
+        if ($db->isConnected()) {
+            return($db->append($key, 'Greet', 888888));
+        } else {
+            return($db->errorno());
+        }
     }
 }
 ?>

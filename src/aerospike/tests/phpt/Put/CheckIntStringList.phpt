@@ -1,5 +1,5 @@
 --TEST--
-Get - PUT With Second Parameter not an array.
+Put - PUT With Int String List
 
 --SKIPIF--
 <?php
@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testIntStringList");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testIntStringList");
 --EXPECT--
-0
+OK

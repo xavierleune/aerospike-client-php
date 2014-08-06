@@ -43,7 +43,11 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementByOffsetValue($db, $key) {
+        if ($db->isConnected()) {
         return($db->increment($key, 'bin1', 4));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -62,7 +66,11 @@ class Increment extends AerospikeTestCommon
      */
     function testBinIncrementKeyNotExist($db, $key) {
         $key1 = array("ns" => "test", "set" => "demo", "key" => "----ssss----");
+        if ($db->isConnected()) {
         return($db->increment($key1, 'bin1', 4));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -80,7 +88,11 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementBinNotExist($db, $key) {
-        return($db->increment($key, 'abc', 4));
+        if ($db->isConnected()) {
+            return($db->increment($key, 'abc', 4));
+        } else {
+            return($db->errorno());
+        }
     }
     /**
      * @test
@@ -98,13 +110,17 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementOffsetValueString($db, $key)
-    {
+    {   
+        if ($db->isConnected()) {
         try {
             $db->increment($key, 'bin1', "abc");
         } catch (ErrorException $e) {
             return self::$status_ok;
         }
         return self::$status_err;
+        } else {
+            return($db->errorno());
+        }
     }
 }
 ?>

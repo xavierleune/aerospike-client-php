@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testMultiPUT");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testMultiPUT");
 --EXPECT--
-0
+OK

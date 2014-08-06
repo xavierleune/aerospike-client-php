@@ -441,6 +441,7 @@ class Connection extends AerospikeTestCommon
         if (!$db1->isConnected()) {
             return (self::$status_ok);
         }
+        return (self::$status_ok);
     }
     /**
      * @test

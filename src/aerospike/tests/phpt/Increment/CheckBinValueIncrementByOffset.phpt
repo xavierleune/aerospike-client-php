@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Increment", "testBinIncrementByOffsetValue");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Increment", "testBinIncrementByOffsetValue");
 --EXPECT--
-606
+ERR_BIN_INCOMPATIBLE_TYPE

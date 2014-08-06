@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testPUTWithOnlyDataParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testPUTWithOnlyDataParameter");
 --EXPECT--
-0
+Parameter_Exception
