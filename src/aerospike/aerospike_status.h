@@ -60,9 +60,6 @@ AerospikeStatus aerospike_status[] = {
 do {                                                                \
     int32_t i;                                                      \
     for (i = 0; i <= AEROSPIKE_STATUS_ARR_SIZE; i++) {              \
-        printf("\nDeclaring const %d:%s\n",                         \
-                aerospike_status[i].statusno,                       \
-                aerospike_status[i].status_msg);\
         zend_declare_class_constant_long(                           \
                 Aerospike_ce, aerospike_status[i].status_msg,       \
                     strlen(aerospike_status[i].status_msg),         \
