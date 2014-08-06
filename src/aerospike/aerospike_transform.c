@@ -182,7 +182,7 @@ static as_status serialize_based_on_serializer_policy(int32_t serializer_policy,
                  *     is added in aerospike-client-c
                  */
             break;
-        case SERIALIZER_UDF:
+        case SERIALIZER_USER:
             if (is_user_serializer_registered) {
                 status = execute_user_callback(&user_serializer_call_info,
                                                &user_serializer_call_info_cache,

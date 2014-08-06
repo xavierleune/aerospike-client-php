@@ -20,7 +20,7 @@ enum Aerospike_constants {
 #define AS_POLICY_EXISTS 0x00000100
 #define AS_SERIALIZER_TYPE 0x00001000
 
-enum Aerospike_values {	
+enum Aerospike_values {
     POLICY_RETRY_NONE      = AS_POLICY_RETRY,       /* do not retry an operation (default behavior for policy_retry) */
     POLICY_RETRY_ONCE,                              /* allow for a single retry on an operation */
     POLICY_EXISTS_IGNORE   = AS_POLICY_EXISTS,      /* write record regardless of existence */
@@ -29,9 +29,9 @@ enum Aerospike_values {
     POLICY_EXISTS_REPLACE,                          /* replace a record ONLY if it exists */
     POLICY_EXISTS_CREATE_OR_REPLACE,                /* default behavior for policy_exists*/
     SERIALIZER_NONE        = AS_SERIALIZER_TYPE,
-    SERIALIZER_PHP,                                 /* default handler for serializer type*/       
+    SERIALIZER_PHP,                                 /* default handler for serializer type*/
     SERIALIZER_JSON,
-    SERIALIZER_UDF
+    SERIALIZER_USER
 };
 
 extern as_status 

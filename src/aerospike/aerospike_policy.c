@@ -41,7 +41,7 @@ AerospikeConstants aerospike_constants[] = {
     { SERIALIZER_NONE                   ,   "SERIALIZER_NONE"                   },
     { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
     { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
-    { SERIALIZER_UDF                    ,   "SERIALIZER_UDF"                    }
+    { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   }
 };
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
