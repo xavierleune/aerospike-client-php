@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ ! -f php_aerospike.h ]; then
+  echo "This script needs to run inside src/aerospike"
+  exit
+fi
+find tests/ -name "*\.out" -exec rm {} \;
+find tests/ -name "*\.diff" -exec rm {} \;
+find tests/ -name "*\.exp" -exec rm {} \;
+find tests/ -name "*\.log" -exec rm {} \;
+find tests/ -name "*\.php" -exec rm {} \;
+

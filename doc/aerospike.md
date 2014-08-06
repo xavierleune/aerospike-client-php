@@ -193,6 +193,6 @@ class Aerospike
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
-### [User Defined Methods](apiref_udf.md)
-### [Admin Methods](apiref_admin.md)
+### [User Defined Methods](apiref_udf.md) \[to be implemented\]
+### [Admin Methods](apiref_admin.md) \[to be implemented\]
 

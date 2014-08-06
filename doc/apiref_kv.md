@@ -52,17 +52,17 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
 ```
 
-### [Aerospike::operate](aerospike_operate.md)
+### [Aerospike::operate](aerospike_operate.md) \[to be implemented\]
 ```
 public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
 ```
 
-### [Aerospike::getMany](aerospike_getmany.md)
+### [Aerospike::getMany](aerospike_getmany.md) \[to be implemented\]
 ```
 public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
 ```
 
-### [Aerospike::existsMany](aerospike_existsmany.md)
+### [Aerospike::existsMany](aerospike_existsmany.md)  \[to be implemented\]
 ```
 public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
 ```

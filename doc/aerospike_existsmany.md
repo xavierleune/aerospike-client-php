@@ -1,5 +1,5 @@
 
-# Aerospike::existsMany
+# Aerospike::existsMany \[to be implemented\]
 
 Aerospike::existsMany - check if a batch of records exist in the Aerospike database
 

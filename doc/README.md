@@ -8,8 +8,21 @@ The Aerospike PHP client API may be described as follows:
 ### [Error Handling Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
-### [User Defined Methods](apiref_udf.md)
-### [Admin Methods](apiref_admin.md)
+### [User Defined Methods](apiref_udf.md) \[to be implemented\]
+### [Admin Methods](apiref_admin.md) \[to be implemented\]
+
+## Implementation Status
+So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
+*Handling and Logging Methods*, and parts of *Key-Value Methods* and *Query and*
+*Scan Methods* have been implemented.
+
+The *User Defined Methods* and *Admin Methods* are yet to be implemented.
+
+The *Large Data Type Methods* are to be determined (no spec available, yet).
+
+We expect the specification of the PHP client to be very close to our next
+release, including the unimplemented methods.  However, itt is possible that
+some changes to the client will occur.
 
 # Client instance caching
 
@@ -31,18 +44,18 @@ streaming results, effectively halting it.
 
 # Handling Unsupported Types
 
-See: [citrusleaf.h](https://github.com/citrusleaf/aerospike-client-c/blob/master/src/include/citrusleaf/cl_object.h)
+See: [as_bytes.h](https://github.com/aerospike/aerospike-common/blob/master/src/include/aerospike/as_bytes.h)
 * Allow the user to configure their serializer through an option.
- - OPT\_SERIALIZER : SERIALIZER\_PHP (default), SERIALIZER\_NONE, SERIALIZER\_USER, SERIALIZER\_JSON
+ - OPT\_SERIALIZER : SERIALIZER\_PHP (default), SERIALIZER\_NONE, SERIALIZER\_USER, *(SERIALIZER\_JSON)*
 * when a write operation runs into types that do not map directly to Aerospike DB types it checks the OPT\_SERIALIZER setting:
  - if SERIALIZER\_NONE it returns an Aerospike::ERR\_PARAM error
- - if SERIALIZER\_PHP it calls the PHP serializer, sets the object's cl\_type to CL\_PHP_BLOB
- - if SERIALIZER\_JSON it calls json\_encode, sets the object's cl\_type CL\_JSON_BLOB
- - if SERIALIZER\_USER it calls the PHP function the user registered a callback with Aerospike::setSerializer(), and sets cl\_type to CL\_BLOB
-* when a read operation extracts a value from a BLOB type bin:
- - if it’s a CL\_PHP\_BLOB use the PHP unserialize function
- - if it’s a CL\_JSON\_BLOB call json_decode
- - if it’s a CL\_BLOB and the user registered a callback with Aerospike::setSerializer() call that function, otherwise place it in a PHP string
+ - if SERIALIZER\_PHP it calls the PHP serializer, sets the object's as\_bytes\_type to AS\_BYTES_PHP
+ - *(if SERIALIZER\_JSON it calls json\_encode, sets the object's as\_bytes\_type AS\_BYTES_JSON)*
+ - if SERIALIZER\_USER it calls the PHP function the user registered a callback with Aerospike::setSerializer(), and sets as\_bytes\_type to AS\_BYTES\_BLOB
+* when a read operation extracts a value from an AS\_BYTES type bin:
+ - if it’s a AS\_BYTES\_PHP use the PHP unserialize function
+ - *(if it’s a AS\_BYTES\_JSON call json_decode)*
+ - if it’s a AS\_BYTES\_BLOB and the user registered a callback with Aerospike::setSerializer() call that function, otherwise place it in a PHP string
 
 ## TBD
 

@@ -1,5 +1,5 @@
 
-# Aerospike::getMany
+# Aerospike::getMany  \[to be implemented\]
 
 Aerospike::getMany - gets a batch of record from the Aerospike database
 

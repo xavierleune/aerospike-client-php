@@ -23,16 +23,47 @@ necessary:
 
 	$ . scripts/setup
 
-This will set the `CLIENTREPO_3X` environment variable, add the
-`scripts` directory to the path, and change to the `src/aerospike`
-directory.  Next, to build the Aerospike PHP Zend extension, do:
+This will set the `CLIENTREPO_3X` environment variable, add the `scripts` 
+directory to the path, and change to the `src/aerospike` directory.
+To grab the latest release of the C-client SDK modify the `AEROSPIKE_C_CLIENT`
+variable to *latest*.
+
+Next, to build the Aerospike PHP extension, do:
 
 	$ build
 
-The Zend extension will be built as: `modules/aerospike.so`
+The PHP extension will be built as `modules/aerospike.so`
 
-## Running Instructions
+## Confirming The Build
 
-To run the Aerospike PHP Client interactively after building, do:
+To test the Aerospike PHP Client interactively after building, do:
 
 	$ php -dextension=modules/aerospike.so -a
+
+## Installing The PHP Module
+
+To install the PHP extension do:
+
+	$ sudo make install
+
+Then edit the aerospike.ini file which is usually in `/etc/php.d/`:
+
+	extension=aerospike.so
+
+The *aerospike* module should now be available to the PHP CLI:
+
+	$ php -m | head -5
+	[PHP Modules]
+	aerospike
+	bz2
+	calendar
+	Core
+
+## Cleanup
+
+To clean up artifacts created by the build process you can do:
+
+	$ build-cleanup
+
+At this point if you want to use **make** you will need rebuild.
+

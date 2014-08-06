@@ -1,0 +1,31 @@
+#!/bin/bash
+
+if [ ! -f php_aerospike.h ]; then
+  echo "This script needs to run inside src/aerospike"
+  exit
+fi
+if [ -x git ]; then
+  git clean -fd
+else
+  clean-tests
+  rm -f Makefile*
+  rm -f ac*m4
+  rm -rf autom4te.cache/
+  rm -rf build/
+  rm -f config.guess
+  rm -f config.h*
+  rm -f config.log
+  rm -f config.nice
+  rm -f config.status
+  rm -f config.sub
+  rm -f configure*
+  rm -f .deps
+  rm -f install-sh
+  rm -f libtool
+  rm -f ltmain.sh
+  rm -f missing
+  rm -f mkinstalldirs
+  rm -f run-tests.php
+  rm -f tmp-php.ini
+fi
+

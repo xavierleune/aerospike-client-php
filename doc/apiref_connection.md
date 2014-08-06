@@ -26,7 +26,7 @@ public void Aerospike::close ( void )
 public void Aerospike::reconnect ( void )
 ```
 
-### [Aerospike::getNodes](aerospike_getnodes.md)
+### [Aerospike::getNodes](aerospike_getnodes.md) \[to be implemented\]
 ```
 public int Aerospike::getNodes ( array &$metadata [, array $options ] )
 ```
