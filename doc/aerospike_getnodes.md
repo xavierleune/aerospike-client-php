@@ -1,5 +1,5 @@
 
-# Aerospike::getNodes
+# Aerospike::getNodes \[to be implemented\]
 
 Aerospike::getNodes - get node metadata from the cluster
 

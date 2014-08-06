@@ -40,7 +40,7 @@ To test the Aerospike PHP Client interactively after building, do:
 
 	$ php -dextension=modules/aerospike.so -a
 
-## Installing The PHP Module
+## Installing The PHP Extension
 
 To install the PHP extension do:
 
@@ -65,5 +65,5 @@ To clean up artifacts created by the build process you can do:
 
 	$ build-cleanup
 
-At this point if you want to use **make** you will need rebuild.
+At this point if you want to use **make** you will need to rebuild.
 

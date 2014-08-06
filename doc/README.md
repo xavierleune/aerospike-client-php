@@ -20,9 +20,9 @@ The *User Defined Methods* and *Admin Methods* are yet to be implemented.
 
 The *Large Data Type Methods* are to be determined (no spec available, yet).
 
-We expect the specification of the PHP client to be very close to our next
-release, including the unimplemented methods.  However, itt is possible that
-some changes to the client will occur.
+We expect the specification of the PHP client to closely describe our next
+release, including the unimplemented methods.  However, it is possible that
+some changes to the client spec will occur.
 
 # Client instance caching
 
