@@ -13,7 +13,13 @@ zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
 
-as_log_level   php_log_level_set = AS_LOG_LEVEL_DEBUG;
+as_log_level   php_log_level_set;
+
+#ifndef __ENABLE_AEROSPIKE_PHP_DEBUG_ON__
+php_log_level_set = AS_LOG_LEVEL_OFF;
+#else
+php_log_level_set = AS_LOG_LEVEL_DEBUG;
+#endif
 
 extern bool 
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
