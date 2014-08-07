@@ -151,7 +151,8 @@ class Connection extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testMultipleHostsArray($dummydb, $dummykey) {
-	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>"10.43.3.69","port"=>4000)));
+	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT),
+                  array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT2)));
         $db = new Aerospike($config);
         return ($db->errorno()); 
     }
@@ -171,7 +172,8 @@ class Connection extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPortValueIsString($dummydb, $dummykey) {
-	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>"3000")));
+	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>"3000")));
         $db = new Aerospike($config);
         return ($db->errorno()); 
     }
@@ -242,10 +244,10 @@ class Connection extends AerospikeTestCommon
      */
     
     function testNoAliasDifferentConfigCase2($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME3, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -272,8 +274,8 @@ class Connection extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testTwoConfigWithNoAlias($dummydb, $dummykey) {
-        $config = array("hosts"=>array(array("addr"=>"10.43.3.69","port"=>3000)));
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69","port"=>3000)));
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -301,8 +303,10 @@ class Connection extends AerospikeTestCommon
      */
 
     function testTwoConfigMultihostNoAlias($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69","port"=>3000),array("addr"=>"172.20.25.179", "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"10.43.3.69","port"=>3000),array("addr"=>"172.20.25.179", "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT),
+                   array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT),
+                   array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -330,10 +334,10 @@ class Connection extends AerospikeTestCommon
      */
     
     function testTwoConfigWithNoMatchNoAlias($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME3, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -361,12 +365,12 @@ class Connection extends AerospikeTestCommon
      */
     
     function testWithAliasEmptyString($dummydb, $dummykey) {
-        $config = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000)));
-        $config1 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000)));
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, "\n");
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -429,10 +433,10 @@ class Connection extends AerospikeTestCommon
      */
 
     function testSameConfigSameAlias($dummydb, $dummykey) {
-        $config = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000)));
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000)));
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, "alias1");
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -460,10 +464,10 @@ class Connection extends AerospikeTestCommon
      */
     
     function testDifferentConfigSameAlias($dummydb, $dummykey){
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME3, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "alias1");
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -491,10 +495,10 @@ class Connection extends AerospikeTestCommon
      */
 
     function testDiffrentConfigDifferentAlias($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME3, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "aliaseee1");
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -522,10 +526,10 @@ class Connection extends AerospikeTestCommon
      */
 
     function testDiffAliasPartiallyDiffConfig($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
-        $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>3000), array("addr"=>"10.43.3.69", "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME3, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+            "port"=>AEROSPIKE_CONFIG_PORT), array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "alias1");
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -553,8 +557,8 @@ class Connection extends AerospikeTestCommon
      */
 
     function testAliasPasssedasBlank($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
-            "port"=>3000),array("addr"=>"10.43.3.69", "port"=>3000)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "alias");
         if (!$db->isConnected()) {
             return (self::$status_err);

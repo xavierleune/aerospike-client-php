@@ -716,7 +716,7 @@ class Put extends AerospikeTestCommon
   * @test_plans{1.1}
   */
   function testListWithWrongIP($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>"10.43.3.695",
+     $config = array("hosts"=>array(array("addr"=>"X.X.X.X",
          "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "list_list_strval");
@@ -870,8 +870,9 @@ class Put extends AerospikeTestCommon
  function testPutwithDifferentConfigSamealias(){
     
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-    "port"=>AEROSPIKE_CONFIG_PORT)));
-     $config1 = array("hosts"=>array(array("addr"=>"172.20.25.179", "port"=>3000)));
+         "port"=>AEROSPIKE_CONFIG_PORT)));
+     $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+         "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config,'alias1');
      $db1 = new Aerospike($config1,'alias1');
      $key = $db->initKey("test", "demo", "SameAlias");
@@ -919,8 +920,9 @@ class Put extends AerospikeTestCommon
  function testPutwithDifferentConfigDifferentAlias(){
     
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-    "port"=>AEROSPIKE_CONFIG_PORT)));
-     $config1 = array("hosts"=>array(array("addr"=>"172.20.25.179", "port"=>3000)));
+         "port"=>AEROSPIKE_CONFIG_PORT)));
+     $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
+         "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config,'alias1');
      $db1 = new Aerospike($config1,'alias2');
      $key = $db->initKey("test", "demo", "DifferentAlias");
