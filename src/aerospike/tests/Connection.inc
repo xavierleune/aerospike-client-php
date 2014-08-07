@@ -240,12 +240,12 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    /*
+    
     function testNoAliasDifferentConfigCase2($dummydb, $dummykey) {
         $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
             "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
         $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>4000)));
+            "port"=>3000)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
             return (self::$status_err);
@@ -255,7 +255,7 @@ class Connection extends AerospikeTestCommon
             return (self::$status_err);
         }
         return (self::$status_ok);
-    }*/
+    }
     /**
      * @test
      * two same config with no alias
@@ -328,7 +328,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    /*
+    
     function testTwoConfigWithNoMatchNoAlias($dummydb, $dummykey) {
         $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
             "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
@@ -343,7 +343,7 @@ class Connection extends AerospikeTestCommon
             return (self::$status_err);
         }
         return (self::$status_ok);
-    }*/
+    }
     /**
      * @test
      * Alias Empty string test
@@ -359,7 +359,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    /*
+    
     function testWithAliasEmptyString($dummydb, $dummykey) {
         $config = array("hosts"=>array(array("addr"=>"10.43.3.69",
             "port"=>3000)));
@@ -380,7 +380,7 @@ class Connection extends AerospikeTestCommon
             return (self::$status_err);
         }
         return (self::$status_ok);
-    }*/
+    }
     /**
      * @test
      * check limit of list with alias
@@ -458,7 +458,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    /*
+    
     function testDifferentConfigSameAlias($dummydb, $dummykey){
         $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
             "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
@@ -473,7 +473,7 @@ class Connection extends AerospikeTestCommon
             return (self::$status_err);
         }
         return (self::$status_ok);
-    }*/
+    }
     /**
      * @test
      * Both config and alais are different
@@ -525,7 +525,7 @@ class Connection extends AerospikeTestCommon
         $config1 = array("hosts"=>array(array("addr"=>"10.43.3.69",
             "port"=>3000),array("addr"=>"172.20.25.180", "port"=>3000)));
         $config2 = array("hosts"=>array(array("addr"=>"172.20.25.179",
-            "port"=>4000), array("addr"=>"10.43.3.69", "port"=>3000)));
+            "port"=>3000), array("addr"=>"10.43.3.69", "port"=>3000)));
         $db = new Aerospike($config1, "alias1");
         if (!$db->isConnected()) {
             return (self::$status_err);

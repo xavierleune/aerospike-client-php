@@ -18,7 +18,7 @@ class Get extends AerospikeTestCommon
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("test", "demo", "Get_key");
-            $db->put($key,array("Greet"=>"World_end"));
+        $db->put($key,array("Greet"=>"World_end"));
     }
 
     protected function tearDown(&$db, &$key) {

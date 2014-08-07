@@ -1743,8 +1743,6 @@ static int zend_std_cast_object_tostring(zval *readobj, zval *writeobj, int type
 
 PHP_MINIT_FUNCTION(aerospike)
 {
-    DEBUG_PHP_EXT_INFO("In aerospike minit");
-
     REGISTER_INI_ENTRIES();
 
     ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
@@ -1794,7 +1792,6 @@ PHP_MINIT_FUNCTION(aerospike)
 
 PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
-    DEBUG_PHP_EXT_INFO("In aerospike mshutdown");
 #ifndef ZTS
     aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
 #endif
@@ -1804,8 +1801,6 @@ PHP_MSHUTDOWN_FUNCTION(aerospike)
 
 PHP_RINIT_FUNCTION(aerospike)
 {
-    DEBUG_PHP_EXT_INFO("In aerospike rinit");
-
     /*** TO BE IMPLEMENTED ***/
 
     return SUCCESS;
@@ -1813,8 +1808,6 @@ PHP_RINIT_FUNCTION(aerospike)
 
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
-    DEBUG_PHP_EXT_INFO("In aerospike rshutdown");
-
     /*** TO BE IMPLEMENTED ***/
 
     return SUCCESS;
@@ -1822,8 +1815,6 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
 
 PHP_MINFO_FUNCTION(aerospike)
 {
-    DEBUG_PHP_EXT_INFO("In aerospike info");
-
     php_info_print_table_start();
     php_info_print_table_row(2, "aerospike support", "enabled");
     php_info_print_table_row(2, "aerospike version", PHP_AEROSPIKE_VERSION);
