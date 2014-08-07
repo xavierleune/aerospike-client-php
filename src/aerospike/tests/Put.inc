@@ -851,5 +851,102 @@ class Put extends AerospikeTestCommon
      }
      return($status);
  }
+
+/**
+  * @test
+  * Basic PUT with Different Config Same Alias 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  * */        
+ function testPutwithDifferentConfigSamealias(){
+    
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+    "port"=>AEROSPIKE_CONFIG_PORT)));
+     $config1 = array("hosts"=>array(array("addr"=>"172.20.25.179", "port"=>3000)));
+     $db = new Aerospike($config,'alias1');
+     $db1 = new Aerospike($config1,'alias1');
+     $key = $db->initKey("test", "demo", "SameAlias");
+     if ($db->isConnected()) {
+         $status = $db->put($key,array("bin1"=>"Hello"));
+     } else {
+         return($db->errorno());
+     }
+     if ($db1->isConnected()) {
+         $status = $db1->put($key,array("bin1"=>"Hello"));
+     } else {
+         return($db1->errorno());
+     }
+     if ($db->isConnected()) {
+         $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+         =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db->errorno());
+     }
+     if ($db1->isConnected()) {
+         $status = $db1->remove($key, array(Aerospike::OPT_POLICY_RETRY
+         =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db1->errorno());
+     }
+     return($status);
+ }
+
+
+/**
+  * @test
+  * PUT with Same config same alias.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testCheckListMapCombineInsert)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutwithDifferentConfigDifferentAlias(){
+    
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+    "port"=>AEROSPIKE_CONFIG_PORT)));
+     $config1 = array("hosts"=>array(array("addr"=>"172.20.25.179", "port"=>3000)));
+     $db = new Aerospike($config,'alias1');
+     $db1 = new Aerospike($config1,'alias2');
+     $key = $db->initKey("test", "demo", "DifferentAlias");
+     if ($db->isConnected()) {
+         $status = $db->put($key,array("bin1"=>"Hello"));
+     } else {
+         return($db->errorno());
+     }
+     if ($db1->isConnected()) {
+         $status = $db1->put($key,array("bin1"=>"Hello"));
+     } else {
+         return($db1->errorno());
+     }
+     if ($db->isConnected()) {
+         $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+         =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db->errorno());
+     }
+     if ($db1->isConnected()) {
+         $status = $db1->remove($key, array(Aerospike::OPT_POLICY_RETRY
+         =>Aerospike::POLICY_RETRY_NONE));
+     } else {
+         return($db1->errorno());
+     }
+     return($status);
+ }     
 }
 ?>
