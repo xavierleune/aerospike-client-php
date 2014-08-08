@@ -338,7 +338,7 @@ PHP_METHOD(Aerospike, __construct)
 
     /* Connect to the cluster */
     if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
-            AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error))) {
+            (AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error)))) {
         DEBUG_PHP_EXT_ERROR("Unable to make connection");
         goto exit;
     }
@@ -521,17 +521,13 @@ PHP_METHOD(Aerospike, isConnected)
     as_error               error;
 
     if (!(aerospike_obj_p && aerospike_obj_p->as_ref_p && aerospike_obj_p->as_ref_p->as_p)) {
-        PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         RETURN_FALSE;
     }
 
     if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
-        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
         RETURN_TRUE;
     } else {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, error);
         RETURN_FALSE;
     }
 }
