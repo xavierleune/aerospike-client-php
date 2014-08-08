@@ -18,6 +18,7 @@ class Get extends AerospikeTestCommon
     static $status_ok = 2000;
     static $status_err = 2001;
     static $status_get_record_fail = 2002; 
+    static $put_rec = array("Greet"=>"World_end");
 
     protected function setUp(&$db, &$key) {
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -76,10 +77,18 @@ class Get extends AerospikeTestCommon
 	function testGETTwoParameter($db, $key) 
 	{
         if ($db->isConnected()) {  
-            return($db->get($key,$bin_arr));
+            $status = $db->get($key,$bin_arr);
         } else {
             return($db->errorno());
         }
+        if($status != Aerospike::OK) {
+            return($status);
+        }
+        $comp_res = array_diff_assoc(self::$put_rec, $bin_arr);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        return ($status);
     }
 	/**
 	 * @test
@@ -98,16 +107,24 @@ class Get extends AerospikeTestCommon
 	 */
 	function testGETThreeParameter($db, $key) 
 	{
-		$bin_arr = array("bin1");
+		$bin_arr = array("Greet");
         if ($db->isConnected()) {  
-            return($db->get($key,$rec_arr,$bin_arr));
+            $status = $db->get($key,$rec_arr,$bin_arr);
         } else {
             return($db->errorno());
         }
+        if($status != Aerospike::OK) {
+            return($status);
+        }
+        $comp_res = array_diff_assoc(self::$put_rec, $rec_arr);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        return ($status);
     }
 	/**
 	 * @test
-	 * Basic GET Three Parameter
+	 * Basic GET wrong Parameter
 	 *
 	 * @pre
 	 * Connect using aerospike object to the specified node
@@ -152,10 +169,18 @@ class Get extends AerospikeTestCommon
     {
         $rec_array = "";
         if ($db->isConnected()) {  
-            return($db->get($key, $rec_array));
+            $status = $db->get($key, $rec_array);
         } else {
             return($db->errorno());
         }
+        if($status != Aerospike::OK) {
+            return($status);
+        }
+        $comp_res = array_diff_assoc(self::$put_rec, $rec_array);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        return ($status);
     }
 	/**
 	 * @test
@@ -174,7 +199,6 @@ class Get extends AerospikeTestCommon
 	 */
 	function testCheckThirdParameterTypeArray($db, $key) 
     {
-          
         if ($db->isConnected()) {  
         try {
             $db->get($key, $rec, "");
@@ -392,13 +416,17 @@ class Get extends AerospikeTestCommon
           return($status);
       }
       if ($db->isConnected()) {  
-          $status = $db->get($key1,$rec);
+          $status = $db->get($key1,$get_rec);
       } else {
           return($db->errorno());
       }
-
       if($status != Aerospike::OK) {
           return($status);
+      }
+      $comp_res = array_diff_assoc(array("bin1"=>array("speaking", "reading",
+          "writing")), $get_rec);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR;
       }
       if ($db->isConnected()) {  
       $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
@@ -436,12 +464,16 @@ class Get extends AerospikeTestCommon
           return($status);
       }
       if ($db->isConnected()) {  
-          $status = $db->get($key1,$ret);
+          $status = $db->get($key1,$get_rec);
       } else {
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
           return($status);
+      }
+      $comp_res = array_diff_assoc(array("bin1"=>$map1), $get_rec);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR;
       }
       if ($db->isConnected()) {  
       $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
@@ -488,12 +520,16 @@ class Get extends AerospikeTestCommon
           return($status);
       }
       if ($db->isConnected()) {  
-          $status = $db->get($key1,$ret);
+          $status = $db->get($key1,$get_rec);
       } else {
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
           return($status);
+      }
+      $comp_res = array_diff_assoc($rec, $get_rec);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR;
       }
       if ($db->isConnected()) {  
       $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
