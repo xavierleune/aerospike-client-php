@@ -4,6 +4,10 @@ require_once 'Common.inc';
 /**
  *Basic Get tests
 */
+class Employee
+{
+        public $desg = 'Manager';
+}
 
 class Get extends AerospikeTestCommon
 {
@@ -13,6 +17,7 @@ class Get extends AerospikeTestCommon
      */
     static $status_ok = 2000;
     static $status_err = 2001;
+    static $status_get_record_fail = 2002; 
 
     protected function setUp(&$db, &$key) {
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -521,5 +526,1975 @@ class Get extends AerospikeTestCommon
           return($db->errorno());
       }
   }
+
+/**
+  * @test
+  * Get Nested List of objects with PHP Serializer.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedListOfObjectsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ #Testcases for object 
+ function testGetNestedListOfObjectsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_of_objects_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list1 = array(12, $obj1, $obj3);
+     $list2 = array($list1, $obj2, " ");
+     $list3 = array("k1", $obj4, $list2);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+ 
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested List of objects with UDF Serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedListOfObjectsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedListOfObjectsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_of_objects_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list1 = array(12, $obj1, $obj3);
+     $list2 = array($list1, $obj2, " ");
+     $list3 = array("k1", $obj4, $list2);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key,$put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested map of objects with PHP Serializer.   
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedMapOfObjectsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedMapOfObjectsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_objects_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map1 = array(12=>$obj1, $obj3);
+     $map2 = array($map1, $obj2, " ");
+     $map3 = array("k1", $obj4, 56=>$map2);
+
+     $put_record = array("bin1"=>$map3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested map of objects with UDF Serializer.   
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedMapOfObjectsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedMapOfObjectsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_objects_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map1 = array(12=>$obj1, $obj3);
+     $map2 = array($map1, $obj2, " ");
+     $map3 = array("k1", $obj4, 56=>$map2);
+
+     $put_record = array("bin1"=>$map3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET List containing Map of objects with PHP Serializer.    
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetListMapObjectsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetListMapObjectsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+
+     $map = array(12=>"k5", "k78"=>$obj1, $obj2);
+     $list = array("k1", $obj3, $map);
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET List containing Map of objects with UDF Serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetListMapObjectsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetListMapObjectsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_objects_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map = array(12=>$obj1, $obj2, "aa"=>$obj3);
+     $list = array("k1", $obj4, $map, 55);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET Map containing List of objects with PHP Serializer.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapListObjectsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapListObjectsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+
+     $map = array(12=>"k5", "k78"=>$obj1);
+     $list = array("k1", $obj3, $obj2, $map);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+ 
+/**
+  * @test
+  * GET Map containing List of objects with UDF Serializer.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapListObjectsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapListObjectsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 56, " ", $obj4);
+     $map = array("k1"=>$obj3, $obj1, 56=>$list);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET PUT Nested List of bools with PHP serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedListOfBoolsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ #Testcases for bool
+ function testGetNestedListOfBoolsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_of_bools_with_PHP_serializer");
+
+     $list1 = array(12, TRUE);
+     $list2 = array($list1, " ");
+     $list3 = array("k1", 56, $list2, FALSE);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested List of bools with UDF serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedListOfBoolsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedListOfBoolsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_of_bools_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     $list1 = array(12, TRUE);
+     $list2 = array($list1, " ");
+     $list3 = array("k1", 56, $list2, FALSE);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested Map of bools with PHP serializer.   
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedMapOfBoolsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedMapOfBoolsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_bools_with_PHP_serializer");
+
+     $map1 = array(12=>TRUE, FALSE);
+     $map2 = array($map1, "K5"=>" ");
+     $map3 = array("k1", TRUE, 56=>$map2);
+
+     $put_record = array("bin1"=>$map3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested Map of bools with UDF serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedMapOfBoolsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedMapOfBoolsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_bools_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     $map1 = array(12=>TRUE, FALSE);
+     $map2 = array($map1, "K5"=>" ");
+     $map3 = array("k1", TRUE, 56=>$map2);
+
+     $put_record = array("bin1"=>$map3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET List containing Map of bools with PHP serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetListMapBoolsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetListMapBoolsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_bools_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map = array(12=>$obj1, FALSE, $obj2, "aa"=>$obj3);
+     $list = array("k1", $obj4, $map, 55=>TRUE);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET List containing Map of bools with UDF serializer. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetListMapBoolsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetListMapBoolsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_bools_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map = array(12=>$obj1, FALSE, $obj2, "aa"=>$obj3);
+     $list = array("k1", $obj4, $map, 55=>TRUE);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET Map containig List of bools with PHP serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapListBoolsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapListBoolsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_bools_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 56, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+ 
+/**
+  * @test
+  * GET Map containing List of bools with UDF Serializer.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapListBoolsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapListBoolsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 56, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET Nested List of floats with PHP serializer.   
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedListOfFloatsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ #Testcases for float
+ function testGetNestedListOfFloatsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_of_floats_with_PHP_serializer");
+
+     $list1 = array(12, 11.2);
+     $list2 = array($list1, " ");
+     $list3 = array("k1", 56, $list2, 56.896);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested List of floats with UDF serializer. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedListOfFloatsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedListOfFloatsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_of_floats_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     $list1 = array(12, 11.2);
+     $list2 = array($list1, " ");
+     $list3 = array("k1", 56, $list2, 56.896);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested Map of floats with PHP serializer. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedMapOfFloatsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedMapOfFloatsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_floats_with_PHP_serializer");
+
+     $map1 = array(12=>89.4, 55.44);
+     $map2 = array($map1, "K5"=>" ");
+     $map3 = array("k1", TRUE, 56=>$map2);
+
+     $put_record = array("bin1"=>$map3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET Nested Map of floats with UDF serializer.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetNestedMapOfFloatsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetNestedMapOfFloatsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_floats_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     $map1 = array(12=>89.4, 55.44);
+     $map2 = array($map1, "K5"=>" ");
+     $map3 = array("k1", TRUE, 56=>$map2);
+
+     $put_record = array("bin1"=>$map3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return($status);
+ }
+
+/**
+  * @test
+  * GET List containing Map of floats with PHP serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetListMapFloatsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetListMapFloatsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_floats_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map = array(12=>$obj1, $obj2, "aa"=>25.6, "k10"=>TRUE);
+     $list = array("k1", $obj4, $map, 55=>89.56, FALSE, 45.78);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET List containing Map of floats with UDF serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetListMapFloatsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetListMapFloatsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "list_map_floats_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $map = array(12=>$obj1, $obj2, "aa"=>25.6, "k10"=>TRUE);
+     $list = array("k1", $obj4, $map, 55=>89.56, FALSE, 45.78);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET Map containing List of floats with PHP serializer.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapListFloatsWithPHPSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapListFloatsWithPHPSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_floats_with_PHP_serializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 63.2, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
+
+     $put_record = array("bin1"=>$list);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+ 
+/**
+  * @test
+  * GET Map containing List of floats with UDF Serializer.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapListFloatsWithUDFSerializer)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapListFloatsWithUDFSerializer($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 63.2, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET object which is serialized using SERIALIZER_PHP and deserialized 
+  * with SERIALIZER_USER.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetObjectPHPSerializedAndUDFDeserialized)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetObjectPHPSerializedAndUDFDeserialized($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo",
+         "list_of_objects_with_PHP_SERIALIZER_USER_deserializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list1 = array(12, $obj1, $obj3);
+     $list2 = array($list1, $obj2, " ");
+     $list3 = array("k1", $obj4, $list2);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+ 
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET object which is serialized using SERIALIZER_USER and deserialized 
+  * with SERIALIZER_PHP.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetObjectUDFSerializedAndPHPDeserialized)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetObjectUDFSerializedAndPHPDeserialized($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 63.2, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET bool which is serialized using SERIALIZER_PHP and deserialized 
+  * with SERIALIZER_USER.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetBoolPHPSerializedAndUDFDeserialized)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetBoolPHPSerializedAndUDFDeserialized($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo",
+         "list_of_bools_with_PHP_SERIALIZER_USER_deserializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list1 = array(12, $obj1, $obj3);
+     $list2 = array($list1, $obj2, " ");
+     $list3 = array("k1", $obj4, $list2);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+ 
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET bool which is serialized using SERIALIZER_USER and deserialized 
+  * with SERIALIZER_PHP.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetBoolUDFSerializedAndPHPDeserialized)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetBoolUDFSerializedAndPHPDeserialized($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 63.2, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET float which is serialized using SERIALIZER_PHP and deserialized 
+  * with SERIALIZER_USER.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetFloattPHPSerializedAndUDFDeserialized)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetFloatPHPSerializedAndUDFDeserialized($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo",
+         "list_of_floats_with_PHP_SERIALIZER_USER_deserializer");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list1 = array(12, $obj1, $obj3);
+     $list2 = array($list1, $obj2, " ");
+     $list3 = array("k1", $obj4, $list2);
+
+     $put_record = array("bin1"=>$list3);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+ 
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     #Set Deserializer
+     Aerospike::setDeserializer(function ($val) {
+         $prefix = substr($val, 0, 3);
+         if ($prefix !== 'r||') {
+             return unserialize(substr ($val, 3));
+         }
+         return unserialize(substr ($val, 3));
+     });
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test
+  * GET float which is serialized using SERIALIZER_USER and deserialized 
+  * with SERIALIZER_PHP.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetFloatUDFSerializedAndPHPDeserialized)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetFloatUDFSerializedAndPHPDeserialized($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
+
+     #Set Serializer
+     Aerospike::setSerializer(function ($val) {
+         if (is_bool ($val)) {
+             return "b||". serialize($val);
+         }
+         if (is_object ($val)) {
+             return "o||". serialize($val);
+         }
+         if (is_double ($val)) {
+             return "d||". serialize($val);
+         }
+         return "r||". $val;
+     });
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+     $obj3 = new Employee();
+     $obj4 = new Employee();
+
+     $list = array(12, $obj2, 63.2, " ", $obj4, FALSE);
+     $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
+
+     $put_record = array("bin1"=>$map);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res))
+     {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
 }  
 ?>
