@@ -23,7 +23,7 @@ function parse_args() {
     $args = parse_args();
 
     if (isset($args["help"])) {
-        echo("./connect.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER>]\n");
+        echo("php get.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER>]\n");
         exit(1);
     }
 
