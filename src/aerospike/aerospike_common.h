@@ -80,6 +80,7 @@ extern as_log_level   php_log_level_set;
 #define AEROSPIKE_CONN_STATE_FALSE  0
 
 #define PHP_IS_NULL(type)        (IS_NULL == type)
+#define PHP_IS_NOT_NULL(type)    (IS_NULL != type)
 #define PHP_IS_ARRAY(type)       (IS_ARRAY == type)
 #define PHP_IS_NOT_ARRAY(type)   (IS_ARRAY != type)
 #define PHP_IS_STRING(type)      (IS_STRING == type)
@@ -88,9 +89,11 @@ extern as_log_level   php_log_level_set;
 
 
 #define PHP_TYPE_ISNULL(zend_val)        PHP_IS_NULL(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISSTR(zend_val)         PHP_IS_STRING(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISARR(zend_val)         PHP_IS_ARRAY(Z_TYPE_P(zend_val))
-#define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTNULL(zend_val)     PHP_IS_NOT_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
 
 #define PHP_IS_CONN_NOT_ESTABLISHED(conn_state)   (conn_state == AEROSPIKE_CONN_STATE_FALSE)
 

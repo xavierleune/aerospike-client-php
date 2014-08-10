@@ -295,6 +295,10 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
 
+    if (alias && PHP_TYPE_ISNULL(alias)) {
+        alias = NULL;
+    }
+
     if (PHP_TYPE_ISNOTARR(config_p) || 
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
         ((alias) && (PHP_TYPE_ISNOTSTR(alias)))) {
@@ -763,7 +767,7 @@ PHP_METHOD(Aerospike, exists)
         DEBUG_PHP_EXT_ERROR("exists: connection not established");
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for exists");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for exists");
