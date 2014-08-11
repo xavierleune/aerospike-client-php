@@ -213,7 +213,7 @@ class Put extends AerospikeTestCommon
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                =>Aerospike::POLICY_RETRY_NONE));
+                => Aerospike::POLICY_RETRY_NONE));
         } else{
             return($db->errorno());
         }
@@ -271,7 +271,7 @@ class Put extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 	function testCheckNameSpaceParameterMissingInKeyArray($dummydb, $dummykey) 
-	{
+    {
 		$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
 		$db = new Aerospike($config);
 		$key = array("set"=>"demo","key"=>"10000");

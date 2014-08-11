@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testPUTWithNormalpPutDataArrayParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testPUTWithNormalpPutDataArrayParameter");
 --EXPECT--
-ERR_PARAM
+ERR

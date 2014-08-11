@@ -107,21 +107,21 @@ check_and_set_default_policies(as_config *as_config_p,
     }
 }
 
-static as_status
+static void
 set_policy_ex(as_config *as_config_p, 
               as_policy_read *read_policy_p, 
               as_policy_write *write_policy_p, 
               as_policy_operate *operate_policy_p, 
               as_policy_remove *remove_policy_p,
               uint32_t *serializer_policy_p,
-              zval *options_p)
+              zval *options_p,
+              as_error *error_p)
 {
-    as_status error_code = AEROSPIKE_OK;
-
     if ((!read_policy_p) && (!write_policy_p) && 
         (!operate_policy_p) && (!remove_policy_p) && (!serializer_policy_p)) {
-        error_code = AEROSPIKE_ERR;
-        goto failure;
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy");
+        goto exit;
     }
 
     // case: connect => (read_policy_p != NULL && write_policy_p != NULL)
@@ -160,30 +160,34 @@ set_policy_ex(as_config *as_config_p,
 
             if (zend_hash_get_current_key_ex(options_array, (char **) &options_key, 
                         &options_key_len, &options_index, 0, &options_pointer) != HASH_KEY_IS_LONG) {
-                error_code = AEROSPIKE_ERR;
-                goto failure;
+                DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Policy Constant Key");
+                goto exit;
             }
             switch((int) options_index) {
                 case OPT_CONNECT_TIMEOUT:
                     if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        error_code = AEROSPIKE_ERR_TIMEOUT;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
+                        goto exit;
                     }
                     as_config_p->conn_timeout_ms = (uint32_t) Z_LVAL_PP(options_value);
                     connect_flag = 1;
                     break;
                 case OPT_READ_TIMEOUT:
                     if ((!read_policy_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        error_code = AEROSPIKE_ERR_TIMEOUT;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        goto exit;
                     }
                     read_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     read_flag = 1;
                     break;
                 case OPT_WRITE_TIMEOUT:
                     if ((Z_TYPE_PP(options_value) != IS_LONG)) {
-                        error_code = AEROSPIKE_ERR_TIMEOUT;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
+                        goto exit;
                     }
                     if (write_policy_p) {
                         write_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
@@ -192,26 +196,31 @@ set_policy_ex(as_config *as_config_p,
                     } else if(remove_policy_p) {
                         remove_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
+                        goto exit;
                     }
                     write_flag = 1;
                     break;
                 case OPT_POLICY_EXISTS:
                     if ((!write_policy_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        error_code = AEROSPIKE_ERR;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_EXISTS");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_EXISTS");
+                        goto exit;
                     }
                     if ((Z_LVAL_PP(options_value) & AS_POLICY_EXISTS) == AS_POLICY_EXISTS) {
                         write_policy_p->exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS + 1;
                     } else {
-                        error_code = AEROSPIKE_ERR;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_EXISTS");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_EXISTS");
+                        goto exit;
                     }
                     break;
                 case OPT_POLICY_RETRY:
                     if((Z_TYPE_PP(options_value) != IS_LONG) && ((Z_LVAL_PP(options_value) & AS_POLICY_RETRY) != AS_POLICY_RETRY)) {
-                        error_code = AEROSPIKE_ERR;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        goto exit;
                     }
                     if (write_policy_p) {
                         write_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
@@ -220,26 +229,30 @@ set_policy_ex(as_config *as_config_p,
                     } else if(remove_policy_p) {
                         remove_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
                     } else {
-                        error_code = AEROSPIKE_ERR;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        goto exit;
                     }
                     break;
                 case OPT_SERIALIZER:
                     if ((!serializer_policy_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        error_code = AEROSPIKE_ERR;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        goto exit;
                     }
                     if ((Z_LVAL_PP(options_value) & AS_SERIALIZER_TYPE) == AS_SERIALIZER_TYPE) {
                         *serializer_policy_p = Z_LVAL_PP(options_value);
                     } else {
-                        error_code = AEROSPIKE_ERR;
-                        goto failure;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        goto exit;
                     }
                     serializer_flag = 1;
                     break;
                 default:
-                    error_code = AEROSPIKE_ERR;
-                    goto failure;
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Policy Constant Key");
+                    goto exit;
             }
         }
         if (!write_flag && write_policy_p) {
@@ -259,35 +272,37 @@ set_policy_ex(as_config *as_config_p,
             check_and_set_default_policies(NULL, NULL, NULL, NULL, NULL, serializer_policy_p);
         }
     }
-failure:
-    return error_code;
+    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
+exit:
+    return;
 }
 
-extern as_status
+extern void
 set_policy(as_policy_read *read_policy_p, 
            as_policy_write *write_policy_p, 
            as_policy_operate *operate_policy_p, 
            as_policy_remove *remove_policy_p,
            uint32_t *serializer_policy_p,
-           zval *options_p)
+           zval *options_p,
+           as_error *error_p)
 {
-    return set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p, remove_policy_p, 
-            serializer_policy_p, options_p);
+    set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p, remove_policy_p, 
+            serializer_policy_p, options_p, error_p);
 }
 
-extern as_status
+extern void
 set_general_policies(as_config *as_config_p, 
-                     zval *options_p)
+                     zval *options_p,
+                     as_error *error_p)
 {
-    as_status     status = AEROSPIKE_OK;
-
     if (!as_config_p) {
-        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid as_config");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid as_config");
         goto exit;
     }
 
-    status = set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write, 
-                           NULL, NULL, NULL, options_p);
+    set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write, 
+                           NULL, NULL, NULL, options_p, error_p);
 exit:
-    return status;
+    return;
 }
