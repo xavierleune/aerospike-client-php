@@ -34,16 +34,18 @@ enum Aerospike_values {
     SERIALIZER_USER
 };
 
-extern as_status 
+extern void
 set_policy(as_policy_read *read_policy_p,
            as_policy_write *write_policy_p,
            as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            uint32_t *serializer_policy_p,
-           zval *options_p);
-extern as_status 
+           zval *options_p,
+           as_error *error_p);
+extern void 
 set_general_policies(as_config* as_config_p, 
-                     zval *options_p);
+                     zval *options_p,
+                     as_error *error_p);
 extern as_status 
 declare_policy_constants_php(zend_class_entry *Aerospike_ce);
 

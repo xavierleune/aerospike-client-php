@@ -1,14 +1,14 @@
 --TEST--
-Put - data as normal array ex. array("hi","hello");
+PUT Nested Map of floats with PHP serializer.  
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Put", "testPUTWithNormalpPutDataArrayParameter");
+aerospike_phpt_skipif("Put", "testPutNestedMapOfFloatsWithPHPSerializer");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Put", "testPUTWithNormalpPutDataArrayParameter");
+aerospike_phpt_runtest("Put", "testPutNestedMapOfFloatsWithPHPSerializer");
 --EXPECT--
-ERR
+OK

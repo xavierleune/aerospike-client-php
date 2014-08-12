@@ -39,7 +39,8 @@ $status_codes = array(0=>"OK",
                       1300=>"AEROSPIKE_ERR_UDF",
                       1301=>"ERR_UDF_NOT_FOUND",
                       2000=> "Parameter_Exception", 
-                      2001=>"Undefined_Error");
+                      2001=>"Undefined_Error",
+                      2002=>"ERR_GET_RECORD");
 
 function aerospike_phpt_runtest($clsname, $name) {
     require_once(dirname(__FILE__)."/../$clsname.inc");

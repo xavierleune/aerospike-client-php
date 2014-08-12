@@ -23,6 +23,16 @@ typedef struct Aerospike_object {
     u_int16_t is_conn_16;
 } Aerospike_object;
 
+/*
+ * Struct for user data to be passed to aerospike foreach callbacks.
+ * (For example, to as_rec_foreach, as_list_foreach, as_map_foreach).
+ * It contains the actual udata and as_error object.
+ */
+typedef struct foreach_callback_udata_t {
+    zval        *udata_p;
+    as_error    *error_p;
+} foreach_callback_udata;
+
 /* 
  * PHP Userland Logger callback
  */
@@ -80,6 +90,7 @@ extern as_log_level   php_log_level_set;
 #define AEROSPIKE_CONN_STATE_FALSE  0
 
 #define PHP_IS_NULL(type)        (IS_NULL == type)
+#define PHP_IS_NOT_NULL(type)    (IS_NULL != type)
 #define PHP_IS_ARRAY(type)       (IS_ARRAY == type)
 #define PHP_IS_NOT_ARRAY(type)   (IS_ARRAY != type)
 #define PHP_IS_STRING(type)      (IS_STRING == type)
@@ -88,17 +99,19 @@ extern as_log_level   php_log_level_set;
 
 
 #define PHP_TYPE_ISNULL(zend_val)        PHP_IS_NULL(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISSTR(zend_val)         PHP_IS_STRING(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISARR(zend_val)         PHP_IS_ARRAY(Z_TYPE_P(zend_val))
-#define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTNULL(zend_val)     PHP_IS_NOT_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
 
 #define PHP_IS_CONN_NOT_ESTABLISHED(conn_state)   (conn_state == AEROSPIKE_CONN_STATE_FALSE)
 
 #define DEFAULT_ERRORNO 0
 #define DEFAULT_ERROR ""
 
-#define PHP_EXT_SET_AS_ERR(as_err_obj, code, msg)                       as_error_setall(&as_err_obj, code, msg, __func__, __FILE__, __LINE__)
-#define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj)      aerospike_helper_set_error(aerospike_class_p, getThis(), &as_err_obj, false)
+#define PHP_EXT_SET_AS_ERR(as_err_obj_p, code, msg)                     as_error_setall(as_err_obj_p, code, msg, __func__, __FILE__, __LINE__)
+#define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj_p)    aerospike_helper_set_error(aerospike_class_p, getThis(), as_err_obj_p, false)
 #define PHP_EXT_RESET_AS_ERR_IN_CLASS(aerospike_class_p)                aerospike_helper_set_error(aerospike_class_p, getThis(), NULL, true)
 
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);

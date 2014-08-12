@@ -1,14 +1,14 @@
 --TEST--
-Put - data as normal array ex. array("hi","hello");
+PUT List containing Map of floats with UDF serializer.  
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Put", "testPUTWithNormalpPutDataArrayParameter");
+aerospike_phpt_skipif("Put", "testPutListMapFloatsWithUDFSerializer");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Put", "testPUTWithNormalpPutDataArrayParameter");
+aerospike_phpt_runtest("Put", "testPutListMapFloatsWithUDFSerializer");
 --EXPECT--
-ERR
+OK
