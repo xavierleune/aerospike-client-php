@@ -30,7 +30,11 @@ variable to *latest*.
 
 Next, to build the Aerospike PHP extension, do:
 
-	$ build
+    To build using default log level (OFF), use:
+	    $ build
+
+    To enable specific log level, use:
+        $ build [-l|--loglevel <Desired log level: one among TRACE, DEBUG, INFO, WARN, ERROR, OFF>] [--help]
 
 The PHP extension will be built as `modules/aerospike.so`
 

@@ -203,12 +203,16 @@ static zend_function_entry Aerospike_class_functions[] =
 static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS_DC)
 {
     Aerospike_object *intern_obj_p = (Aerospike_object *) object;
+    as_error error;
 
     if (intern_obj_p && intern_obj_p->as_ref_p) {
         if (intern_obj_p->as_ref_p->ref_as_p > 1) {
             intern_obj_p->as_ref_p->ref_as_p--;
         } else {
             if (intern_obj_p->as_ref_p->as_p) {
+                if (AEROSPIKE_OK != aerospike_close(intern_obj_p->as_ref_p->as_p, &error)) {
+                    DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
+                }
                 aerospike_destroy(intern_obj_p->as_ref_p->as_p);
             }
             intern_obj_p->as_ref_p->ref_as_p = 0;
