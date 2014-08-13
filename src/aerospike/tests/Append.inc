@@ -17,7 +17,8 @@ class Append  extends AerospikeTestCommon
 
     function tearDown(&$db, &$key) {
         if ($db->isConnected()) {
-               $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         }
    }
     

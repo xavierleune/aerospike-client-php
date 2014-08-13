@@ -23,6 +23,7 @@ class Remove extends AerospikeTestCommon
             $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
         }
+        $db->close();
     }
 
     /**

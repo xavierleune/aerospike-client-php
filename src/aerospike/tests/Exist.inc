@@ -16,7 +16,8 @@ class Exist extends AerospikeTestCommon
    }
 
    protected function tearDown(&$db, &$key) {
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+       $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+       $db->close();
    }
     /**
      * @test

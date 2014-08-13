@@ -93,6 +93,7 @@ class Connection extends AerospikeTestCommon
     function testMissingHostsKeyFromConfigArray($dummydb, $dummykey) {
 	    $config = array(array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
+        $db->close();
         return ($db->errorno()); 
     }
     /**
