@@ -109,7 +109,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
     int8_t*     bytes_val_p = bytes->value;
 
     ALLOC_INIT_ZVAL(bytes_string);
-    ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 1);
+    ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 0);
 
     if (serialize_flag) {
         params[0] = value;
