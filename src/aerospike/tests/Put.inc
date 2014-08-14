@@ -79,7 +79,8 @@ class Put extends AerospikeTestCommon
 		$db = new Aerospike($config);
 		$key = array("ns"=>"test", "set"=>"demo", "key"=>"key_multi");
         if ($db->isConnected()) {
-            $status = $db->put($key,array("bin1"=>"Hello World","bin2"=>123456));
+            $status = $db->put($key,array("bin1"=>"Hello
+                World","bin2"=>123456));
         } else{
             $db->close();
             return($db->errorno());
@@ -456,7 +457,8 @@ class Put extends AerospikeTestCommon
       $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"-------------");
       if ($db->isConnected()) {
-          $status = $db->put($key,array("bin1"=>"Hello World"));
+          $status = $db->put($key,array("bin1"=>"Hello World"), 500,
+              array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
       } else {
           $db->close();
           return($db->errorno());
@@ -578,7 +580,9 @@ class Put extends AerospikeTestCommon
       $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
       if ($db->isConnected()) {
-          $status = $db->put($key,array("bin1"=>array("speaking", "reading", "writing")));
+          $status = $db->put($key,array("bin1"=>array("speaking",
+              "reading", "writing", 100,
+              array(Aerospike::OPT_POLICY_EXISTS =>Aerospike::POLICY_EXISTS_CREATE))));
       } else {
           $db->close();
           return($db->errorno());
@@ -617,9 +621,12 @@ class Put extends AerospikeTestCommon
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
       $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"key_map");
+      $opts =array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
+          Aerospike::OPT_WRITE_TIMEOUT => 1500, 
+          Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE);
       $map1= array("k1"=>10,"k2"=>5,"k3"=>6,"k4"=>7,"k5"=>8);
       if ($db->isConnected()) {
-          $status = $db->put($key,array("bin1"=>$map1));
+          $status = $db->put($key,array("bin1"=>$map1, 10, $opts));
       } else {
           $db->close();
           return($db->errorno());
@@ -669,7 +676,8 @@ class Put extends AerospikeTestCommon
       $mylist = array(10, 20, "whatsup", $innerlist, $mymap);
       $rec = array("bin1"=>$mylist);	
       if ($db->isConnected()) {
-          $status = $db->put($key,$rec);
+          $status = $db->put($key,$rec, NULL, 
+               array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
       } else {
           $db->close();
           return($db->errorno());

@@ -44,6 +44,7 @@ function parse_args() {
     $config = array("hosts"=>array(array("addr"=>$HOST_ADDR, "port"=>$HOST_PORT)));
     $db = new Aerospike($config, 'prod-db');
     if (!$db->isConnected()) {
+        $db->close();
         echo "Aerospike failed to connect to host $HOST_ADDR:$HOST_PORT [{$db->errorno()}]: {$db->error()}\n";
         exit(1);
     } else {
@@ -73,6 +74,7 @@ function parse_args() {
      */
 
     if (!$db->isConnected()) {
+        $db->close();
         echo "Aerospike failed to connect to host INVALID_ADDR:INVALID_PORT [{$db->errorno()}]: {$db->error()}\n";
         exit(1);
     } else {
@@ -98,5 +100,6 @@ function parse_args() {
             echo "[{$db->errorno()}] ".$db->error();
         }
     }
+    $db->close();
  
 ?>

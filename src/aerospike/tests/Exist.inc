@@ -36,7 +36,8 @@ class Exist extends AerospikeTestCommon
      */
    function testKeyExist($db, $key) {
         if ($db->isConnected()) {
-            return($db->exists($key, $metadata));
+            return($db->exists($key, $metadata,
+                array(Aerospike::OPT_READ_TIMEOUT=>3000)));
         } else {
             return($db->errorno());
         }

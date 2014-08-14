@@ -408,7 +408,7 @@ PHP_METHOD(Aerospike, get)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|aa",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz",
         &key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for get function");
@@ -416,13 +416,21 @@ PHP_METHOD(Aerospike, get)
         goto exit;
     }
 
-    if (PHP_TYPE_ISNOTARR(key_record_p) || 
-        ((bins_p) && (PHP_TYPE_ISNOTARR(bins_p))) ||
-        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+        ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) || (PHP_TYPE_ISNOTNULL(bins_p)))) ||
+        ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) || (PHP_TYPE_ISNOTNULL(options_p))))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for get function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for get function not proper.");
         goto exit;
+    }
+
+    if (bins_p && PHP_TYPE_ISNULL(bins_p)) {
+       bins_p = NULL;
+    }
+
+    if (options_p && PHP_TYPE_ISNULL(options_p)) {
+        options_p = NULL;
     }
 
     if (PHP_TYPE_ISNOTARR(record_p)) {
@@ -1102,7 +1110,6 @@ PHP_METHOD(Aerospike, initKey)
     int                    set_p_length = 0;
     zval                   *pk_p ;
 
-    array_init(return_value);
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
@@ -1115,6 +1122,7 @@ PHP_METHOD(Aerospike, initKey)
         RETURN_NULL();
     }
 
+    array_init(return_value);
     add_assoc_stringl(return_value, "ns", ns_p, ns_p_length, 1);
     add_assoc_stringl(return_value, "set", set_p, set_p_length, 1);
 
@@ -1757,8 +1765,6 @@ PHP_MINIT_FUNCTION(aerospike)
     ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
 
     zend_class_entry ce;
-
-    INIT_CLASS_ENTRY(ce, "AerospikeException", NULL);
 
     INIT_CLASS_ENTRY(ce, "Aerospike", Aerospike_class_functions);
     if (!(Aerospike_ce = zend_register_internal_class(&ce TSRMLS_CC))) {
