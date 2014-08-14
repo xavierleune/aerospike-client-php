@@ -417,8 +417,8 @@ PHP_METHOD(Aerospike, get)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-        ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) || (PHP_TYPE_ISNOTNULL(bins_p)))) ||
-        ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) || (PHP_TYPE_ISNOTNULL(options_p))))) {
+        ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) && (PHP_TYPE_ISNOTNULL(bins_p)))) ||
+        ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) && (PHP_TYPE_ISNOTNULL(options_p))))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for get function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for get function not proper.");
