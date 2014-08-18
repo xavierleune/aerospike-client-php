@@ -61,6 +61,5 @@ fi
 parse_args $@
 phpize
 ./configure "CFLAGS=-g -O3" --enable-aerospike
-make clean all CFLAGS=-g EXTRA_INCLUDES+=-D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL} -I$CLIENTREPO_3X/include EXTRA_LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua -lrt -lcrypto" 
+make clean all "CFLAGS=-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=-L$CLIENTREPO_3X/lib -laerospike -llua -lrt -lcrypto"
 test-cleanup
-
