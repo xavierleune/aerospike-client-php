@@ -30,6 +30,7 @@ class Get extends AerospikeTestCommon
     protected function tearDown(&$db, &$key) {
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
+        $db->close();
     }
 	/**
 	 * @test
@@ -109,7 +110,8 @@ class Get extends AerospikeTestCommon
 	{
 		$bin_arr = array("Greet");
         if ($db->isConnected()) {  
-            $status = $db->get($key,$rec_arr,$bin_arr);
+            $status = $db->get($key,$rec_arr,$bin_arr,
+                array(Aerospike::OPT_READ_TIMEOUT=>2000));
         } else {
             return($db->errorno());
         }
@@ -200,12 +202,12 @@ class Get extends AerospikeTestCommon
 	function testCheckThirdParameterTypeArray($db, $key) 
     {
         if ($db->isConnected()) {  
-        try {
-            $db->get($key, $rec, "");
-        } catch (ErrorException $e) {
-            return self::$status_ok;
-        }
-        return self::$status_err;
+            try {
+                $db->get($key, $rec, "");
+            } catch (ErrorException $e) {
+                return self::$status_ok;
+            }
+            return($db->errorno());
         } else {
             return($db->errorno());
         }
@@ -464,7 +466,8 @@ class Get extends AerospikeTestCommon
           return($status);
       }
       if ($db->isConnected()) {  
-          $status = $db->get($key1,$get_rec);
+          $status = $db->get($key1,$get_rec, NULL, 
+              array(Aerospike::OPT_READ_TIMEOUT=>2000));
       } else {
           return($db->errorno());
       }

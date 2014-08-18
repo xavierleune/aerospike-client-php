@@ -1,14 +1,14 @@
 --TEST--
-Get - GET With Third Parameter not an array.
+Connection - Check Connect with options.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Get", "testCheckThirdParameterTypeArray");
+aerospike_phpt_skipif("Connection", "testConnectWithOption");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Get", "testCheckThirdParameterTypeArray");
+aerospike_phpt_runtest("Connection", "testConnectWithOption");
 --EXPECT--
-ERR_PARAM
+OK

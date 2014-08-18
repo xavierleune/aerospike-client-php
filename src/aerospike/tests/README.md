@@ -65,30 +65,30 @@ $status_codes.This array is defined in the file
 
    The PHP extension will be built as `modules/aerospike.so`
 
-   ## Confirming The Build
+## Confirming The Build
 
    To test the Aerospike PHP Client interactively after building, do:
 
-	$ php -dextension=modules/aerospike.so -a
+       $ php -dextension=modules/aerospike.so -a
 
-   ## Installing The PHP Extension
+## Installing The PHP Extension
 
-       To install the PHP extension do:
+   To install the PHP extension do:
 
 	   $ sudo make install
 
-       Then edit the aerospike.ini file which is usually in `/etc/php.d/`:
+   Then edit the aerospike.ini file which is usually in `/etc/php.d/`:
 
 	   extension=aerospike.so
 
-       The *aerospike* module should now be available to the PHP CLI:
+   The *aerospike* module should now be available to the PHP CLI:
 
-	       $ php -m | head -5
-	       [PHP Modules]
-	       aerospike
-	       bz2
-	       calendar
-	       Core
+	   $ php -m | head -5
+	   [PHP Modules]
+	   aerospike
+	   bz2
+	   calendar
+	   Core
 
 Step 2:
 
@@ -100,7 +100,8 @@ Step 3:
    Before running the phpt test cases you must disable all the debugs and logs.
 
 a) To run the phpt test case for any specific operation go to `src/aerospike/` and run
-   the below command:-
+   the below command:
+
        make test TESTS=tests/phpt/Operation_Name
 
    For example if you want to run the phpt test cases for Put operation, you must
@@ -108,7 +109,7 @@ a) To run the phpt test case for any specific operation go to `src/aerospike/` a
 
        make test TESTS=tests/phpt/Put
 
-b) To run the phpt for all the operationi, run the below command:-
+b) To run the phpt for all the operation, run the below command:-
 
        make test TESTS=tests/phpt
 

@@ -18,6 +18,7 @@ class Touch extends AerospikeTestCommon
 
     protected function tearDown(&$db, &$key) {
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+        $db->close();
     }
     /**
      * @test
@@ -38,7 +39,7 @@ class Touch extends AerospikeTestCommon
     function testBasicTouchOperation($db, $key) {
         $rv = $db->put($key, array("bin1"=>"Hello World"));
         if ($db->isConnected()) {
-        return ($db->touch($key, 10));
+            return ($db->touch($key, 10, array(Aerospike::OPT_WRITE_TIMEOUT=>200)));
         } else {
             return($db->errorno());
         }
@@ -61,7 +62,8 @@ class Touch extends AerospikeTestCommon
     function testTouchOperationKeyNotExist($db, $key) {
         $key1 = array("ns" => "test", "set" => "demo", "key" => "-----sshh---");
         if ($db->isConnected()) {
-            return ($db->touch($key1, 120));
+            return ($db->touch($key1, 120,
+                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
         } else {
             return($db->errorno());
         }

@@ -50,7 +50,7 @@ function parse_args() {
     } else {
         echo "Aerospike connection to host $HOST_ADDR:$HOST_PORT successful\n";
     }
-
+    $db1->close();
     /*
      * EXAMPLE 2: PASSING INVALID HOST/PORT IN CONFIG AND NO OPTIONAL PARAMETERS
      */
@@ -62,6 +62,7 @@ function parse_args() {
     } else {
         echo "Aerospike connection to host INVALID_ADDR:INVALID_PORT successful\n";
     }
+    $db2->close();
  
     /*
      * EXAMPLE 3: PASSING VALID CONFIG AND ONLY OPTIONAL TIMEOUT PARAMETERS
@@ -75,6 +76,7 @@ function parse_args() {
     } else {
         echo "Aerospike connection to host $HOST_ADDR:$HOST_PORT successful\n";
     }
+    $db3->close();
 
     /*
      * EXAMPLE 4: PASSING VALID CONFIG AND ONLY OPTIONAL PERSISTENCE_ALIAS
@@ -87,5 +89,6 @@ function parse_args() {
     } else {
         echo "Aerospike connection to host $HOST_ADDR:$HOST_PORT successful\n";
     }
+    $db4->close();
 
 ?>
