@@ -52,14 +52,6 @@ function signal_handler($signal) {
     }
 }
 
-if (extension_loaded('pcntl')) {
-    pcntl_signal(SIGTERM, "signal_handler");
-    pcntl_signal(SIGINT, "signal_handler");
-} else {
-    echo "PHP: pcntl extension not found. Please install pcntl extension or re-run with the -o or --once option.";
-    exit(1);
-}
-
 /*
  * CLASS TO EXECUTE PERFORMANCE TESTS.
  */
@@ -69,7 +61,7 @@ class PerformanceTest {
     private $HOST_PORT                 = 3000;
     private $WORKLOAD                  = "RW";
     private $KEYS                      = 1000000;
-    private $ONCE                      = FALSE;
+    public $ONCE                       = FALSE;
     private $REPORT                    = "php://stdout";
     private $NAMESPACE                 = "test";
     private $SET                       = "demo";
@@ -109,13 +101,34 @@ class PerformanceTest {
         $this->HOST_PORT = (isset($args["p"])) ? (integer) $args["p"] : ((isset($args["port"])) ? (integer) $args["port"] : 3000);
         $this->NAMESPACE = (isset($args["n"])) ? (string) $args["n"] : ((isset($args["namespace"])) ? (string) $args["namespace"] : "test");
         $this->SET       = (isset($args["s"])) ? (string) $args["s"] : ((isset($args["set"])) ? (string) $args["set"] : "demo");
-        $this->WORKLOAD  = (isset($args["w"])) ? (string) $args["w"] : ((isset($args["workload"])) ? (string) $args["workload"] : "RW");
+        if (isset($args["w"])) {
+            $val = explode(",", (string) $args["w"]);
+            $this->WORKLOAD = (string) $val[0];
+            if (count($val) > 1) {
+                $this->r = (integer) $val[1];
+            } else {
+                $this->r = 80;
+            }
+        } else if (isset($args["workload"])) {
+            $val = explode(",", (string) $args["workload"]);
+            $this->WORKLOAD = (string) $val[0];
+            if (count($val) > 1) {
+                $this->r = (integer) $val[1];
+            } else {
+                $this->r = 80;
+            }
+        } else {
+            $this->WORKLAD = "RW";
+            $this->r = 80;
+        }
+        $this->w = 100 - $this->r;
+
         $this->KEYS      = (isset($args["k"])) ? (integer) $args["k"] : ((isset($args["keys"])) ? (integer) $args["keys"] : 1000000);
         $this->ONCE      = (isset($args["o"])) ? TRUE : ((isset($args["once"])) ? TRUE : FALSE);
         $this->REPORT    = (isset($args["r"])) ? (string) $args["r"] : ((isset($args["report"])) ? (string) $args["report"] : "php://stdout");
         $this->handle    = fopen ($this->REPORT, 'a+');
-        $this->expected_read_count = (integer) $this->KEYS * (80/100);
-        $this->expected_write_count = (integer) $this->KEYS * (20/100); 
+        $this->expected_read_count = (integer) $this->KEYS * ($this->r/100);
+        $this->expected_write_count = (integer) $this->KEYS * ($this->w/100); 
     }
 
     /*
@@ -259,6 +272,14 @@ class PerformanceTest {
  */
 
 $myPerformanceTest = new PerformanceTest();
+if (extension_loaded('pcntl')) {
+    pcntl_signal(SIGTERM, "signal_handler");
+    pcntl_signal(SIGINT, "signal_handler");
+} else if (!$myPerformanceTest->ONCE){
+    echo "PHP: pcntl extension not found. Please install pcntl extension or re-run with the -o or --once option.\n";
+    exit(1);
+}
+
 $myPerformanceTest->connect();
 $myPerformanceTest->execute();
 $myPerformanceTest->total_summary();
