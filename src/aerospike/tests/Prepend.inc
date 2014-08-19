@@ -17,6 +17,7 @@ class Prepend extends AerospikeTestCommon
     protected function tearDown(&$db, &$key) {
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
+        $db->close();
     }
     /**
      * @test
@@ -35,7 +36,8 @@ class Prepend extends AerospikeTestCommon
      */
     function testPrependOnBinValue($db, $key) {
         if ($db->isConnected()) {
-            return($db->prepend($key, 'Greet', 'Hello '));
+            return($db->prepend($key, 'Greet', 'Hello ',
+                array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
         } else {
             return($db->errorno());
         }
@@ -58,7 +60,8 @@ class Prepend extends AerospikeTestCommon
     function testPrependKeyNotExist($db, $key) {
         $key1 = $db->initKey("test", "demo", "---sss----");
         if ($db->isConnected()) {
-            return($db->prepend($key1, 'Greet', ' World'));
+            return($db->prepend($key1, 'Greet', ' World',
+                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
         } else {
             return($db->errorno());
         }
@@ -80,7 +83,8 @@ class Prepend extends AerospikeTestCommon
      */
         function testPrependBinNotExist($db, $key) {
         if ($db->isConnected()) {
-            return($db->prepend($key, 'sssssssssss', ' World'));
+            return($db->prepend($key, 'sssssssssss', ' World',
+                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE)));
         } else {
             return($db->errorno());
         }
@@ -100,9 +104,11 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-        function testPrependValueNotString($db, $key) {
+    function testPrependValueNotString($db, $key) {
+        $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE, 
+                     Aerospike::OPT_WRITE_TIMEOUT=>1000);
         if ($db->isConnected()) {
-            return($db->prepend($key, 'Greet', 888888));
+            return($db->prepend($key, 'Greet', 888888, $opts));
         } else {
             return($db->errorno());
         }

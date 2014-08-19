@@ -16,7 +16,8 @@ class Exist extends AerospikeTestCommon
    }
 
    protected function tearDown(&$db, &$key) {
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+       $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+       $db->close();
    }
     /**
      * @test
@@ -35,7 +36,8 @@ class Exist extends AerospikeTestCommon
      */
    function testKeyExist($db, $key) {
         if ($db->isConnected()) {
-            return($db->exists($key, $metadata));
+            return($db->exists($key, $metadata,
+                array(Aerospike::OPT_READ_TIMEOUT=>3000)));
         } else {
             return($db->errorno());
         }

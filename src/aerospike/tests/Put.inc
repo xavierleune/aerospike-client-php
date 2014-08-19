@@ -41,15 +41,19 @@ class Put extends AerospikeTestCommon
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"Hello World"));
         } else{
+            $db->close();
             return($db->errorno());
         }
         if ($status != Aerospike::OK) {
+            $db->close();
             return($status);
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                            =>Aerospike::POLICY_RETRY_NONE));
+                =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         } else{
+            $db->close();
             return($db->errorno());
         }
         return($status);
@@ -75,17 +79,22 @@ class Put extends AerospikeTestCommon
 		$db = new Aerospike($config);
 		$key = array("ns"=>"test", "set"=>"demo", "key"=>"key_multi");
         if ($db->isConnected()) {
-            $status = $db->put($key,array("bin1"=>"Hello World","bin2"=>123456));
+            $status = $db->put($key,array("bin1"=>"Hello
+                World","bin2"=>123456));
         } else{
+            $db->close();
             return($db->errorno());
         }
         if ($status != Aerospike::OK) {
+            $db->close();
             return($status);
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                            =>Aerospike::POLICY_RETRY_NONE));
+                =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         } else{
+            $db->close();
             return($db->errorno());
         }
         return($status);
@@ -114,11 +123,14 @@ class Put extends AerospikeTestCommon
             if ($db->isConnected()) {
                 $status = $db->put();
             } else{
+                $db->close();
                 return($db->errorno());
             }
         } catch (ErrorException $e) {
+            $db->close();
             return self::$status_ok;
         }
+        $db->close();
         return self::$status_err;
     }
 	/**
@@ -145,11 +157,14 @@ class Put extends AerospikeTestCommon
             if ($db->isConnected()) {
                 $status = $db->put($key);
             } else{
+                $db->close();
                 return($db->errorno());
             }
         } catch (ErrorException $e) {
+            $db->close();
             return self::$status_ok;
         }
+        $db->close();
         return self::$status_err;
     }
 	/**
@@ -176,11 +191,14 @@ class Put extends AerospikeTestCommon
             if ($db->isConnected()) {
                 $status = $db->put(array("bin1"=>"Hello World"));
             } else{
+                $db->close();
                 return($db->errorno());
             }
         } catch (ErrorException $e) {
+            $db->close();
             return self::$status_ok;
         }
+            $db->close();
             return self::$status_err;
     }
 	/**
@@ -206,15 +224,19 @@ class Put extends AerospikeTestCommon
         if ($db->isConnected()) {
             $status = $db->put($key, array("Hello World"));
         } else{
+            $db->close();
             return($db->errorno());
         }
         if ($status != Aerospike::OK) {
+            $db->close();
             return($status);
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 => Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         } else{
+            $db->close();
             return($db->errorno());
         }
         return($status);
@@ -242,15 +264,19 @@ class Put extends AerospikeTestCommon
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"Hello World"));
         } else{
+            $db->close();
             return($db->errorno());
         }
         if ($status != Aerospike::OK) {
+            $db->close();
             return($status);
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         } else{
+            $db->close();
             return($db->errorno());
         }
         return($status);
@@ -278,15 +304,19 @@ class Put extends AerospikeTestCommon
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"Hello World"));
         } else{
+            $db->close();
             return($db->errorno());
         }
         if ($status != Aerospike::OK) {
+            $db->close();
             return($status);
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-              =>Aerospike::POLICY_RETRY_NONE));
+                =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         } else{
+            $db->close();
             return($db->errorno());
         }
         return($status);
@@ -314,15 +344,19 @@ class Put extends AerospikeTestCommon
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"Hello World"));
         } else{
+            $db->close();
             return($db->errorno());
         }
         if ($status != Aerospike::OK) {
+            $db->close();
             return($status);
         }
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         } else{
+            $db->close();
             return($db->errorno());
         }
         return($status);
@@ -352,11 +386,14 @@ class Put extends AerospikeTestCommon
             if ($db->isConnected()) {
                 $status = $db->put($key,$bin_arr);
             } else {
+                $db->close();
                 return($db->errorno());
             }
         } catch (ErrorException $e) {
+            $db->close();
             return self::$status_ok;
         }
+        $db->close();
         return self::$status_err;
     }
         /**
@@ -382,15 +419,19 @@ class Put extends AerospikeTestCommon
              if ($db->isConnected()) {
                  $status = $db->put($key,array("bin1"=>"Hello World"));
              } else{
+                 $db->close();
                  return($db->errorno());
              }
              if($status != Aerospike::OK) {
+                 $db->close();
                  return($status);
              }
              if ($db->isConnected()) {
                   $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                     =>Aerospike::POLICY_RETRY_NONE));
+                      =>Aerospike::POLICY_RETRY_NONE));
+                  $db->close();
              } else {
+                $db->close();
                 return($db->errorno());
              }
                 return($status);
@@ -416,17 +457,22 @@ class Put extends AerospikeTestCommon
       $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"-------------");
       if ($db->isConnected()) {
-          $status = $db->put($key,array("bin1"=>"Hello World"));
+          $status = $db->put($key,array("bin1"=>"Hello World"), 500,
+              array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -455,15 +501,19 @@ class Put extends AerospikeTestCommon
       if ($db->isConnected()) {
           $status = $db->put($key,array("bin1"=>"Hello World"));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -492,17 +542,21 @@ class Put extends AerospikeTestCommon
       if ($db->isConnected()) {
           $status = $db->put($key,array("bin1"=>"Hello World"));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
           return($db->errorno());
       }
+      $db->close();
       return($status);
   }
 /**
@@ -526,17 +580,23 @@ class Put extends AerospikeTestCommon
       $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
       if ($db->isConnected()) {
-          $status = $db->put($key,array("bin1"=>array("speaking", "reading", "writing")));
+          $status = $db->put($key,array("bin1"=>array("speaking",
+              "reading", "writing", 100,
+              array(Aerospike::OPT_POLICY_EXISTS =>Aerospike::POLICY_EXISTS_CREATE))));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -561,19 +621,26 @@ class Put extends AerospikeTestCommon
       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
       $db = new Aerospike($config);
       $key = array("ns"=>"test","set"=>"demo","key"=>"key_map");
+      $opts =array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
+          Aerospike::OPT_WRITE_TIMEOUT => 1500, 
+          Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE);
       $map1= array("k1"=>10,"k2"=>5,"k3"=>6,"k4"=>7,"k5"=>8);
       if ($db->isConnected()) {
-          $status = $db->put($key,array("bin1"=>$map1));
+          $status = $db->put($key,array("bin1"=>$map1, 10, $opts));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+                =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -609,17 +676,22 @@ class Put extends AerospikeTestCommon
       $mylist = array(10, 20, "whatsup", $innerlist, $mymap);
       $rec = array("bin1"=>$mylist);	
       if ($db->isConnected()) {
-          $status = $db->put($key,$rec);
+          $status = $db->put($key,$rec, NULL, 
+               array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -651,15 +723,19 @@ class Put extends AerospikeTestCommon
       if ($db->isConnected()) {
           $status = $db->put($key,array("bin1"=>$list4));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -690,15 +766,19 @@ class Put extends AerospikeTestCommon
       if ($db->isConnected()) {
           $status = $db->put($key,array("bin1"=>$list2));
       } else {
+          $db->close();
           return($db->errorno());
       }
       if($status != Aerospike::OK) {
+          $db->close();
           return($status);
       }
       if ($db->isConnected()) {
           $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+              =>Aerospike::POLICY_RETRY_NONE));
+          $db->close();
       } else {
+          $db->close();
           return($db->errorno());
       }
       return($status);
@@ -729,15 +809,19 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>$list2));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if($status != Aerospike::OK) {
+         $db->close();
          return($status);
      }
      if ($db->isConnected()) {
          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db->close();
      } else {
+         $db->close();
          return($db->errorno());
      }
      return($status);
@@ -767,15 +851,19 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>$map2));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if($status != Aerospike::OK) {
+         $db->close();
          return($status);
      }
      if ($db->isConnected()) {
          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db->close();
      } else {
+         $db->close();
          return($db->errorno());
      }
      return($status);
@@ -805,15 +893,19 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>$list2));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if($status != Aerospike::OK) {
+         $db->close();
          return($status);
      }
      if ($db->isConnected()) {
          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db->close();
      } else {
+         $db->close();
          return($db->errorno());
      }
      return($status);
@@ -842,15 +934,19 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>$map2));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if($status != Aerospike::OK) {
+         $db->close();
          return($status);
      }
      if ($db->isConnected()) {
          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db->close();
      } else {
+         $db->close();
          return($db->errorno());
      }
      return($status);
@@ -883,23 +979,28 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>"Hello"));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if ($db1->isConnected()) {
          $status = $db1->put($key,array("bin1"=>"Hello"));
      } else {
+         $db->close();
          return($db1->errorno());
      }
      if ($db->isConnected()) {
          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
          =>Aerospike::POLICY_RETRY_NONE));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if ($db1->isConnected()) {
          $status = $db1->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db->close();
      } else {
+         $db->close();
          return($db1->errorno());
      }
      return($status);
@@ -932,23 +1033,29 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>"Hello"));
      } else {
+         $db->close();
          return($db->errorno());
      }
      if ($db1->isConnected()) {
          $status = $db1->put($key,array("bin1"=>"Hello"));
      } else {
+         $db1->close();
          return($db1->errorno());
      }
      if ($db->isConnected()) {
          $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db->close();
      } else {
+         $db->close();
          return($db->errorno());
      }
      if ($db1->isConnected()) {
          $status = $db1->remove($key, array(Aerospike::OPT_POLICY_RETRY
-         =>Aerospike::POLICY_RETRY_NONE));
+             =>Aerospike::POLICY_RETRY_NONE));
+         $db1->close();
      } else {
+         $db1->close();
          return($db1->errorno());
      }
      return($status);
@@ -992,6 +1099,7 @@ class Put extends AerospikeTestCommon
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1034,6 +1142,7 @@ class Put extends AerospikeTestCommon
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1086,10 +1195,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1127,10 +1238,12 @@ class Put extends AerospikeTestCommon
      $map3 = array("k1"=>12, $obj4, "k4"=>$map2);
      $status = $db->put($key, array("bin1"=>$map3), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_NONE));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1170,10 +1283,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1196,7 +1311,8 @@ class Put extends AerospikeTestCommon
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
-     {
+     {   
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_objects_with_UDF_serializer");
@@ -1227,10 +1343,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1254,6 +1372,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
@@ -1268,10 +1387,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -1295,6 +1416,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_objects_with_UDF_serializer");
@@ -1324,10 +1446,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -1351,6 +1475,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
@@ -1366,10 +1491,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
  
@@ -1392,7 +1519,8 @@ class Put extends AerospikeTestCommon
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
-     {
+     {  
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
@@ -1422,10 +1550,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -1449,6 +1579,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_objects_key_is_object");
@@ -1461,10 +1592,13 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return($status);
  }*/
 
 /**
@@ -1488,6 +1622,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_of_bools_with_none_serializer");
@@ -1497,10 +1632,12 @@ class Put extends AerospikeTestCommon
      $list3 = array("k1", TRUE, $list2);
      $status = $db->put($key, array("bin1"=>$list3), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_NONE));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1524,6 +1661,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_of_bools_with_PHP_serializer");
@@ -1534,10 +1672,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1561,6 +1701,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_of_bools_with_UDF_serializer");
@@ -1585,10 +1726,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1612,6 +1755,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_bools_with_none_serializer");
@@ -1621,10 +1765,12 @@ class Put extends AerospikeTestCommon
      $map3 = array("k1"=>12, 89, "k4"=>$map2);
      $status = $db->put($key, array("bin1"=>$map3), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_NONE));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1648,6 +1794,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_bools_with_PHP_serializer");
@@ -1658,10 +1805,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1685,6 +1834,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_bools_with_UDF_serializer");
@@ -1709,10 +1859,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -1735,7 +1887,8 @@ class Put extends AerospikeTestCommon
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
-     {
+     {  
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_bools_with_PHP_serializer");
@@ -1751,10 +1904,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -1778,6 +1933,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_bools_with_UDF_serializer");
@@ -1807,10 +1963,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -1834,6 +1992,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_list_bools_with_PHP_serializer");
@@ -1849,10 +2008,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
  
@@ -1876,6 +2037,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
@@ -1905,10 +2067,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -1932,6 +2096,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_bools_key_is_bool");
@@ -1944,10 +2109,13 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
  }*/
 
 /**
@@ -1971,6 +2139,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_of_floats_with_none_serializer");
@@ -1980,10 +2149,12 @@ class Put extends AerospikeTestCommon
      $list3 = array("k1", $list2);
      $status = $db->put($key, array("bin1"=>$list3), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_NONE));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -2007,6 +2178,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_of_floats_with_PHP_serializer");
@@ -2017,10 +2189,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -2044,6 +2218,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_of_floats_with_UDF_serializer");
@@ -2068,10 +2243,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close(); 
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -2095,6 +2272,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_floats_with_none_serializer");
@@ -2104,10 +2282,12 @@ class Put extends AerospikeTestCommon
      $map3 = array("k1"=>12, 89, "k4"=>$map2);
      $status = $db->put($key, array("bin1"=>$map3), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_NONE));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -2131,6 +2311,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_floats_with_PHP_serializer");
@@ -2141,10 +2322,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -2168,6 +2351,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_floats_with_UDF_serializer");
@@ -2192,10 +2376,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map3), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return($status);
  }
 
@@ -2219,6 +2405,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_floats_with_PHP_serializer");
@@ -2234,10 +2421,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
  }
 
 /**
@@ -2260,6 +2449,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "list_map_floats_with_UDF_serializer");
@@ -2289,10 +2479,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -2316,6 +2508,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_list_floats_with_PHP_serializer");
@@ -2331,10 +2524,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$list), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
  
@@ -2358,6 +2553,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
@@ -2387,10 +2583,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }
 
@@ -2414,6 +2612,7 @@ class Put extends AerospikeTestCommon
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
+         $db->close();
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "map_of_bools_key_is_bool");
@@ -2426,10 +2625,12 @@ class Put extends AerospikeTestCommon
      $status = $db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
      if ($status != AEROSPIKE::OK) {
+         $db->close();
          return($status);
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
+     $db->close();
      return ($status);
  }*/
 }

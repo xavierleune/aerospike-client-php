@@ -17,7 +17,8 @@ class Append  extends AerospikeTestCommon
 
     function tearDown(&$db, &$key) {
         if ($db->isConnected()) {
-               $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+            $db->close();
         }
    }
     
@@ -38,7 +39,8 @@ class Append  extends AerospikeTestCommon
      */
         function testAppendOnBinValue($db, $key) {
         if ($db->isConnected()) {
-            return($db->append($key, 'Greet', ' World'));
+            return($db->append($key, 'Greet', ' World',
+                array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
         } else {
             return($db->errorno());
         }
@@ -62,7 +64,8 @@ class Append  extends AerospikeTestCommon
         $key1 = array("ns" => "test", "set" => "demo", "key" =>
               "---------AppendKey-------");
         if ($db->isConnected()) {
-            return($db->append($key1, 'Greet', ' World'));
+            return($db->append($key1, 'Greet', ' World',
+                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
         } else {
             return($db->errorno());
         }
@@ -83,8 +86,10 @@ class Append  extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testAppendBinNotExist($db, $key) {
+        $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE, 
+                     Aerospike::OPT_WRITE_TIMEOUT=>1000);
         if ($db->isConnected()) {
-            return($db->append($key, 'Greet1234', ' World'));
+            return($db->append($key, 'Greet1234', ' World', $opts));
         } else {
             return($db->errorno());
         }

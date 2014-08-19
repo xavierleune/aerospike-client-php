@@ -28,6 +28,7 @@ class Connection extends AerospikeTestCommon
     function testConnect($dummydb, $dummykey) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
+        $db->close();
         return ($db->errorno()); 
     }
     /**
@@ -73,7 +74,7 @@ class Connection extends AerospikeTestCommon
     function testEmptyArray($dummydb, $dummykey) {
 	    $config = array("hosts"=>array(array("addr"=>"", "port"=>"")));
         $db = new Aerospike($config);
-        return ($db->errorno()); 
+        return($db->errorno());
     }
     /**
      * @test
@@ -133,6 +134,7 @@ class Connection extends AerospikeTestCommon
     function testMissingPortKeyFromConfigArray($dummydb, $dummykey) {
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "qw"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
+        $db->close();
         return ($db->errorno()); 
     }
     /**
@@ -154,6 +156,7 @@ class Connection extends AerospikeTestCommon
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT),
                   array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT2)));
         $db = new Aerospike($config);
+        $db->close();
         return ($db->errorno()); 
     }
     /**
@@ -194,7 +197,9 @@ class Connection extends AerospikeTestCommon
      */
     function testNamePortSequenceInConfig($dummydb, $dummykey) {
         $config = array("hosts"=>array(array("port"=>AEROSPIKE_CONFIG_PORT,"addr"=>AEROSPIKE_CONFIG_NAME)));
-        $db = new Aerospike($config);
+        $db = new Aerospike($config, NULL, 
+            array(Aerospike::OPT_WRITE_TIMEOUT =>1500));
+        $db->close();
         return ($db->errorno());
     }
     /**
@@ -219,7 +224,7 @@ class Connection extends AerospikeTestCommon
             $var = "\n172.20.25.".$i;
             $config = array("hosts"=>array(array("addr"=>$var,"port"=>$port)));
             $db = new Aerospike($config);
-            
+            $db->close();
         }
         if ($i == 10) {
             return (self::$status_ok);
@@ -250,12 +255,16 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config2);
         if (!$db1->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -278,12 +287,16 @@ class Connection extends AerospikeTestCommon
         $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config1);
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -309,12 +322,16 @@ class Connection extends AerospikeTestCommon
                    array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config2);
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -340,12 +357,16 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1);
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config2);
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -373,16 +394,22 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, "\n");
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config1, "");
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
         $db2 = new Aerospike($config2, "\n");
         if (!$db2->isConnected()) {
+            $db2->close();
             return (self::$status_err);
         }
+        $db2->close();
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -408,6 +435,7 @@ class Connection extends AerospikeTestCommon
             $config = array("hosts"=>array(array("addr"=>$var,
             "port"=>4000)));
             $db = new Aerospike($config, $var);
+            $db->close();
         }
 
         if ($i==10) {
@@ -439,12 +467,16 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, "alias1");
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config1, "alias1");
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_ok);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -470,12 +502,16 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "alias1");
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config2, "alias1");
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -501,12 +537,16 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "aliaseee1");
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config2, "alias2");
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
     /**
@@ -532,12 +572,17 @@ class Connection extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT), array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config1, "alias1");
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config2, "alias2");
         if (!$db1->isConnected()) {
+            $db1->close();
+            $db->close();
             return (self::$status_err);
         }
+        $db->close();
+        $db1->close();
         return (self::$status_ok);
     }
     /**
@@ -559,15 +604,45 @@ class Connection extends AerospikeTestCommon
     function testAliasPasssedasBlank($dummydb, $dummykey) {
         $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT),array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config1, "alias");
+        $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250);
+        $db = new Aerospike($config1, "alias", $opts);
         if (!$db->isConnected()) {
+            $db->close();
             return (self::$status_err);
         }
         $db1 = new Aerospike($config1, "");
         if (!$db1->isConnected()) {
+            $db1->close();
             return (self::$status_err);
         }
+        $db1->close();
+        $db->close();
         return (self::$status_ok);
     }
-}
+
+
+    /**
+     * @test
+     * Basic Connection
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testConnect)
+     *
+     * @test_plans{1.1}
+     */
+    function testConnectWithOption($dummydb, $dummykey) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250,
+            Aerospike::OPT_WRITE_TIMEOUT => 1500);
+        $db = new Aerospike($config, NULL, $opts);
+        $db->close();
+        return ($db->errorno());
+    }
+} 
 ?>
