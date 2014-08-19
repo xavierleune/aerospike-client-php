@@ -2532,5 +2532,145 @@ class Get extends AerospikeTestCommon
          Aerospike::POLICY_RETRY_NONE));
      return ($status);
  }
+
+/**
+  * @test  
+  * PUT Map of bools, Bool as a key.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapOfBoolsKeyIsBool)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapOfBoolsKeyIsBool($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_bools_key_is_bool");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+
+     $map = array("k1", TRUE=>$obj2, $obj1);
+     $status = $db->put($key, array("bin1"=>$map), NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res)) {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test  
+  * PUT Map of floats, Float as a key.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapOfFloatsKeyIsFloat)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetMapOfFloatsKeyIsFloat($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_bools_key_is_bool");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+
+     $map = array("k1", 78.5=>56.35, $obj1=>1, $obj2);
+     $status = $db->put($key, array("bin1"=>$map), NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res)) {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+
+/**
+  * @test  
+  * PUT Map of objects, Object as a key.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetMapOfObjectsKeyIsObject)
+  *
+  * @test_plans{1.1}
+  */
+ /*function testGetMapOfObjectsKeyIsObject($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "map_of_objects_key_is_object");
+
+     #Creating objects
+     $obj1 = new Employee();
+     $obj2 = new Employee();
+
+     $map = array("k1", $obj1=>$obj2, "k2");
+     $status = $db->put($key, array("bin1"=>$map), NULL,
+         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     $comp_res = array_diff_assoc($put_record, $get_record);
+     if(!empty($comp_res)) {
+         return self::$status_get_record_fail;
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+ }*/
 }  
 ?>
