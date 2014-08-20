@@ -1260,8 +1260,6 @@ PHP_METHOD(Aerospike, predicateEquals)
     int                    bin_name_len = 0;
     zval                   *val_p;
 
-    array_init(return_value);
-
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &bin_name_p, &bin_name_len, &val_p)) {
         RETURN_NULL();
     }
@@ -1274,6 +1272,7 @@ PHP_METHOD(Aerospike, predicateEquals)
         RETURN_NULL();
     }
 
+    array_init(return_value);
     add_assoc_stringl(return_value, "bin", bin_name_p, bin_name_len, 1);
     add_assoc_stringl(return_value, "op", "=", sizeof("="), 1);
 
@@ -1305,8 +1304,6 @@ PHP_METHOD(Aerospike, predicateBetween)
     long                   max_p;
     zval                   *minmax_arr;
 
-    array_init(return_value);
-
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &bin_name_p, &bin_name_len, &min_p, &max_p)) {
         RETURN_NULL();
     }
@@ -1315,6 +1312,7 @@ PHP_METHOD(Aerospike, predicateBetween)
         RETURN_NULL();
     }
 
+    array_init(return_value);
     add_assoc_stringl(return_value, "bin", bin_name_p, bin_name_len, 1);
     add_assoc_stringl(return_value, "op", "BETWEEN", sizeof("BETWEEN"), 1);
     ALLOC_ZVAL(minmax_arr);

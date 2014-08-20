@@ -65,14 +65,15 @@ See: [as_bytes.h](https://github.com/aerospike/aerospike-common/blob/master/src/
 // Client interface to the Aerospike cluster.
 class Aerospike
 {
-    // helper method for combining predicates, such as predicate1 AND predicate2
-    public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
-
     // Large Data Type (LDT) APIs:
     public function getLargeList($key_z);
     public function getLargeMap($key_z);
     public function getLargeSet($key_z);
     public function getLargeStack($key_z);
+
+    // helper method for combining predicates, such as predicate1 AND predicate2
+    // when server implementation exists
+    public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
 }
 ?>
 ```

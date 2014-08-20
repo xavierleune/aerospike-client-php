@@ -21,12 +21,6 @@ public array Aerospike::predicateEquals ( string $bin, int|string $val )
 public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
 ```
 
-### Aerospike::conjoin \[to be implemented\]
-
-```
-public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] ) 
-```
-
 ## Example
 
 ```php
