@@ -506,7 +506,7 @@ exit:
  *******************************************************************************************************
  * Gets a record from the Aerospike database.
  * Method prototype for PHP userland:
- * public int Aerospike::get ( array $key, array &$record [, array $filter [,array $options]] )
+ * public int Aerospike::get ( array $key, array $record [, array $filter [,array $options]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, get)
@@ -560,10 +560,8 @@ PHP_METHOD(Aerospike, get)
         options_p = NULL;
     }
 
-    if (PHP_TYPE_ISNOTARR(record_p)) {
-        zval_dtor(record_p);
-        array_init(record_p);
-    }
+    zval_dtor(record_p);
+    array_init(record_p);
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
                                                                                  &as_key_for_get_record,
@@ -671,7 +669,7 @@ exit:
  *******************************************************************************************************
  * Return an array of objects for the nodes in the Aerospike cluster.
  * Method prototype for PHP userland:
- * public int Aerospike::getNodes ( array &$metadata [, array $options ] )
+ * public int Aerospike::getNodes ( array $metadata [, array $options ] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, getNodes)
@@ -877,7 +875,7 @@ exit:
  *******************************************************************************************************
  * Check if a record exists in the Aerospike database.
  * Method prototype for PHP userland:
- * public int Aerospike::exists ( array $key, array &$metadata [, array $options] )
+ * public int Aerospike::exists ( array $key, array $metadata [, array $options] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, exists)
@@ -926,7 +924,7 @@ exit:
  *******************************************************************************************************
  * Check if a record exists in the Aerospike database.
  * Method prototype for PHP userland:
- * public int Aerospike::getMetadata ( array $key, array &$metadata [, array $options ] )
+ * public int Aerospike::getMetadata ( array $key, array $metadata [, array $options ] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, getMetadata)
