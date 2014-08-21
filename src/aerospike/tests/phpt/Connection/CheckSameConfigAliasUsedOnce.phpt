@@ -1,5 +1,5 @@
 --TEST--
-Connection - Check Connect with options.
+Connection - Check same config two instances, one without an alias
 
 --SKIPIF--
 <?php
@@ -10,6 +10,6 @@ if (!check_for_socket(AEROSPIKE_CONFIG_NAME, AEROSPIKE_CONFIG_PORT)) {
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Connection", "testConnectWithOption");
+aerospike_phpt_runtest("Connection", "testSameConfigAliasUsedOnce");
 --EXPECT--
 OK

@@ -1,10 +1,16 @@
 <?php
+// You can overwrite these values without modifying the current file by
+// creating a local config file (aerospike.local.inc) which defines
+// AEROSPIKE_CONFIG_* constants as seen in the else clause
 if(file_exists(dirname(__FILE__)."/aerospike.local.inc")) {
     include(dirname(__FILE__)."/aerospike.local.inc");
 } else {
-    define("AEROSPIKE_CONFIG_NAME", "10.43.3.69");
+    // modify the address and port information according to your config
+    define("AEROSPIKE_CONFIG_NAME", "127.0.0.1");
     define("AEROSPIKE_CONFIG_PORT", 3000);
-    define("AEROSPIKE_CONFIG_NAME2", "10.43.4.53");
-    define("AEROSPIKE_CONFIG_PORT2", 3010);
-    define("AEROSPIKE_CONFIG_NAME3", "172.20.25.180");
+
+    // If you are creating a local config file (aerospike.local.inc) you may
+    // skip multi-host configuration tests by commenting out the following:
+    define("AEROSPIKE_CONFIG_NAME2", "localhost");
+    define("AEROSPIKE_CONFIG_PORT2", 3000);
 }
