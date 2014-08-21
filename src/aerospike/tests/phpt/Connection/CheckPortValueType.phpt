@@ -1,11 +1,5 @@
 --TEST--
-Connection - Check Config port parameter type must be integer
-
---SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Connection", "testPortValueIsString");
-
+Connection - Check instantiation with a malformed config array (non-integer "port")
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

@@ -12,3 +12,7 @@ $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AERO
 
     return $oo;
 }
+
+function check_for_socket($addr, $port, $timeout_s = 10) {
+    return @fsockopen($addr, 3000, $errno, $errstr, $timeout_s);
+}
