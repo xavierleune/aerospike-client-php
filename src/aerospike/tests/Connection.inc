@@ -47,14 +47,14 @@ class Connection extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testConfigNotArray($dummydb, $dummykey) {
-        $config = "";
-        $db = new Aerospike($config);
-        if (get_class($db) != 'Aerospike') {
-            return (self::$status_err);
+        try {
+            $config = "";
+            $db = new Aerospike($config);
+            return($db->errorno());
+        } catch (ErrorException $e) {
+            return self::$status_err;
         }
-        return($db->errorno());
     }
-
     /**
      * @test
      * Config Argument Is An Empty Array
