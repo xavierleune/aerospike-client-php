@@ -7,6 +7,20 @@
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
 
+/*
+ *******************************************************************************************************
+ * Wrapper function to perform an aerospike_key_exists within the C client.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param as_key_p              The C client's as_key that identifies the record.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param metadata_p            The return metadata for the exists/getMetadata API to be 
+ *                              populated by this function.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ *
+ *******************************************************************************************************
+ */
 extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
                                                     as_key* as_key_p,
                                                     as_error *error_p,
@@ -45,6 +59,18 @@ exit:
 }
 
 
+/*
+ *******************************************************************************************************
+ * Wrapper function to perform an aerospike_key_remove within the C client.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param as_key_p              The C client's as_key that identifies the record.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ *
+ *******************************************************************************************************
+ */
 extern as_status 
 aerospike_record_operations_remove(aerospike* as_object_p,
                                    as_key* as_key_p,
@@ -73,6 +99,25 @@ exit:
     return(status);
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function to perform an aerospike_key_oeprate within the C client.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param as_key_p              The C client's as_key that identifies the record.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param bin_name_p            The bin name to perform operation upon.
+ * @param str                   The string to be appended in case of operation: append.
+ * @param offset                The offset to be incremented by in case of operation: increment.
+ * @param initial_value         The initial value to be set if record is absent
+ *                              in case of operation: increment.
+ * @param time_to_live          The ttl for the record in case of operation: touch.
+ * @param operation             The operation type.
+ *
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_record_operations_ops(aerospike* as_object_p,
                                 as_key* as_key_p,
@@ -162,6 +207,19 @@ exit:
      return status;
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function to remove bin(s) from a record.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param as_key_p              The C client's as_key that identifies the record.
+ * @param bins_p                The PHP array of bins to be removed from the record.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ *
+ *******************************************************************************************************
+ */
 extern as_status 
 aerospike_record_operations_remove_bin(aerospike* as_object_p,
                                        as_key* as_key_p,
@@ -211,6 +269,20 @@ exit:
     return(status);
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function to perform an aerospike_key_exists within the C client.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param as_key_p              The C client's as_key that identifies the record.
+ * @param metadata_p            The return metadata for the exists/getMetadata API to be 
+ *                              populated by this function.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 extern as_status 
 aerospike_php_exists_metadata(aerospike* as_object_p, 
                               zval* key_record_p, 

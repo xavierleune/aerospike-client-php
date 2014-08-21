@@ -8,17 +8,43 @@
 
 #include "aerospike_common.h"
 
+/* 
+ *******************************************************************************************************
+ * PHP Userland logger callback.
+ *******************************************************************************************************
+ */
 zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
 
+/* 
+ *******************************************************************************************************
+ * aerospike-client-php global log level
+ *******************************************************************************************************
+ */
 #ifndef __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__
 as_log_level php_log_level_set = AS_LOG_LEVEL_OFF;
 #else
 as_log_level php_log_level_set = __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__;
 #endif
 
+/* 
+ *******************************************************************************************************
+ * Callback for C client's logger.
+ * This function shall be invoked by:
+ * 1. C client's logger statements.
+ * 2. PHP client's logger statements.
+ * 
+ * @param level             The as_log_level to be used by the callback.
+ * @param func              The function name generating the log.
+ * @param file              The file name containing the func generating the log.
+ * @param line              The line number in file where the log was generated.
+ * @param fmt               The format specifier for logger.
+ *
+ * @return true if log callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
 extern bool 
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
 {
@@ -79,6 +105,14 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     return true;
 }
 
+/* 
+ *******************************************************************************************************
+ * Sets C client's logger callback.
+ * 
+ * @param as_log_p          The as_log to be set.
+ * @return 1 if log set succeeds. Otherwise 0.
+ *******************************************************************************************************
+ */
 extern int parseLogParameters(as_log* as_log_p)
 {
     if (as_log_set_callback(as_log_p, &aerospike_helper_log_callback)) {
@@ -90,6 +124,17 @@ extern int parseLogParameters(as_log* as_log_p)
     }	
 }
 
+/* 
+ *******************************************************************************************************
+ * Sets the private members error and errorno of the Aerospike class.
+ * 
+ * @param ce_p              The zend_class_entry pointer for the Aerospike class.
+ * @param object_p          The Aerospike object.
+ * @param error_p           The as_error containing the recent error details.
+ * @param reset_flag        The flag indicating whether to set/reset the class error.
+ *
+ *******************************************************************************************************
+ */
 extern void 
 aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *error_p, bool reset_flag TSRMLS_DC)
 {
@@ -114,7 +159,10 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *err
     zval_ptr_dtor(&err_msg_p);
 }
 
-/* This macro is defined to register a new resource and to add hash to it 
+/* 
+ *******************************************************************************************************
+ * This macro is defined to register a new resource and to add hash to it.
+ *******************************************************************************************************
  */
 #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                \
 do {                                                                          \
@@ -140,8 +188,11 @@ do {                                                                          \
 } while(0)
 
 
-/* This macro is defined to match the config details with the stored object
+/* 
+ *******************************************************************************************************
+ * This macro is defined to match the config details with the stored object
  * details in the resource and if match use the existing one. 
+ *******************************************************************************************************
  */
 #define ZEND_CONFIG_MATCH_USER_STORED(alias, alias_len)                       \
 do {                                                                          \
@@ -165,6 +216,24 @@ do {                                                                          \
     ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, 0);                          \
 } while(0)
 
+/* 
+ *******************************************************************************************************
+ * Function to retrieve a C Client's aerospike object either from the zend
+ * persistent store if an already hashed object (with same alias) exists, or by
+ * creating a new aerospike object if it doesn't and pushing it on the zend persistent store 
+ * for further reuse.
+ * 
+ * @param as_object_p               The instance of Aerospike_object structure containing 
+ *                                  the C Client's aerospike object.
+ * @param persistence_alias         The persistence_alias for hashing the aerospike object.
+ * @param persistence_alias_len     The length of persistence_alias.
+ * @param conf                      The as_config to be used for creating/retrieving aerospike object.
+ * @param persistent_list           The hashtable pointing to the zend global persistent list.
+ * @param val_persist               The resource handler for persistent list.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         int8_t * persistence_alias_p,

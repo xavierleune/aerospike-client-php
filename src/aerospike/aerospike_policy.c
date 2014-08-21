@@ -17,12 +17,22 @@
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
 #define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
 
+/* 
+ *******************************************************************************************************
+ * Structure to map constant number to constant name string for Aerospike constants.
+ *******************************************************************************************************
+ */
 typedef struct Aerospike_Constants {
-    int constantno;
-    char constant_str[MAX_CONSTANT_STR_SIZE];
+    int     constantno;
+    char    constant_str[MAX_CONSTANT_STR_SIZE];
 } AerospikeConstants;
 
 
+/* 
+ *******************************************************************************************************
+ * Instance of Mapper of constant number to constant name string for Aerospike constants.
+ *******************************************************************************************************
+ */
 static 
 AerospikeConstants aerospike_constants[] = {
     { OPT_CONNECT_TIMEOUT               ,   "OPT_CONNECT_TIMEOUT"               },
@@ -46,6 +56,15 @@ AerospikeConstants aerospike_constants[] = {
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
 
+/*
+ *******************************************************************************************************
+ * Function to declare policy constants in Aerospike class.
+ *
+ * @param Aerospike_ce          The zend class entry for Aerospike class.
+ *
+ * @return AEROSPIKE_OK if the success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern
 as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce)
 {
@@ -69,8 +88,22 @@ exit:
 }
 
 /*
- * as_config_p, read_policy, write_policy pointers and not checked.
- * Calling functions should check them.
+ *******************************************************************************************************
+ * Function for checking and setting the default aerospike policies by reading
+ * from php.ini entries if configured by user, else the global defaults.
+ * N.B.:
+ *      as_config_p, read_policy, write_policy pointers and not checked.
+ *      Calling functions should check them.
+ *
+ * @param as_config_p           The as_config object to be passed in case of connect.
+ * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
+ *                              append, prepend, increment and touch.
+ * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param serializer_policy_p   The serialization policy to be passed in case of put.
+ *
+ *******************************************************************************************************
  */
 static void
 check_and_set_default_policies(as_config *as_config_p, 
@@ -107,6 +140,24 @@ check_and_set_default_policies(as_config *as_config_p,
     }
 }
 
+/*
+ *******************************************************************************************************
+ * Function for setting the relevant aerospike policies by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param as_config_p           The as_config object to be passed in case of connect.
+ * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
+ *                              append, prepend, increment and touch.
+ * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param serializer_policy_p   The serialization policy to be passed in case of put.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void
 set_policy_ex(as_config *as_config_p, 
               as_policy_read *read_policy_p, 
@@ -277,6 +328,24 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the relevant aerospike policies by using the user's
+ * optional policy options (if set) else the defaults.
+ * (Called by all methods except connect.)
+ *
+ * @param read_policy_p         The as_policy_read to be passed in case of get.
+ * @param write_policy_p        The as_policy_write to be passed in case of put. 
+ * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
+ *                              append, prepend, increment and touch.
+ * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param serializer_policy_p   The serialization policy to be passed in case of put.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 extern void
 set_policy(as_policy_read *read_policy_p, 
            as_policy_write *write_policy_p, 
@@ -290,6 +359,19 @@ set_policy(as_policy_read *read_policy_p,
             serializer_policy_p, options_p, error_p);
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the relevant aerospike policies by using the user's
+ * optional policy options (if set) else the defaults.
+ * (Called in case of connect.)
+ *
+ * @param as_config_p           The as_config object to be passed in case of connect.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 extern void
 set_general_policies(as_config *as_config_p, 
                      zval *options_p,

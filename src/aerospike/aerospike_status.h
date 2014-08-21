@@ -1,6 +1,6 @@
 /*
  *
- * This file should be mimic with as_status.h
+ * This file should mimic constants from as_status.h
  * Any addition/deletion to the status codes should be
  * mapped and changed in the static array "aerospike_status".
  *
@@ -11,11 +11,21 @@
 
 #define MAX_STATUS_MSG_SIZE 512
 
+/* 
+ *******************************************************************************************************
+ * Structure to map constant number to constant name string for Aerospike status constants.
+ *******************************************************************************************************
+ */
 typedef struct Aerospike_Status {
     int statusno;
     char status_msg[MAX_STATUS_MSG_SIZE];
 } AerospikeStatus;
 
+/* 
+ *******************************************************************************************************
+ * Instance of Mapper of constant number to constant name string for Aerospike status constants.
+ *******************************************************************************************************
+ */
 AerospikeStatus aerospike_status[] = {
   { AEROSPIKE_OK                      ,   "OK"                     },
   { AEROSPIKE_ERR                     ,   "ERR"                    },
@@ -56,6 +66,13 @@ AerospikeStatus aerospike_status[] = {
 
 #define AEROSPIKE_STATUS_ARR_SIZE (sizeof(aerospike_status)/sizeof(AerospikeStatus))
 
+/*
+ *******************************************************************************************************
+ * MACRO to expose status constants in Aerospike class.
+ *
+ * @param Aerospike_ce          The zend class entry for Aerospike class.
+ *******************************************************************************************************
+ */
 #define EXPOSE_STATUS_CODE_ZEND(Aerospike_ce)                       \
 do {                                                                \
     int32_t i;                                                      \
