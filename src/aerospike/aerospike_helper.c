@@ -8,17 +8,43 @@
 
 #include "aerospike_common.h"
 
+/* 
+ *******************************************************************************************************
+ * PHP Userland logger callback.
+ *******************************************************************************************************
+ */
 zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
 
+/* 
+ *******************************************************************************************************
+ * aerospike-client-php global log level
+ *******************************************************************************************************
+ */
 #ifndef __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__
 as_log_level php_log_level_set = AS_LOG_LEVEL_OFF;
 #else
 as_log_level php_log_level_set = __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__;
 #endif
 
+/* 
+ *******************************************************************************************************
+ * Callback for C client's logger.
+ * This function shall be invoked by:
+ * 1. C client's logger statements.
+ * 2. PHP client's logger statements.
+ * 
+ * @param level             The as_log_level to be used by the callback.
+ * @param func              The function name generating the log.
+ * @param file              The file name containing the func generating the log.
+ * @param line              The line number in file where the log was generated.
+ * @param fmt               The format specifier for logger.
+ *
+ * @return true if log callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
 extern bool 
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
 {
@@ -79,6 +105,14 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     return true;
 }
 
+/* 
+ *******************************************************************************************************
+ * Sets C client's logger callback.
+ * 
+ * @param as_log_p          The as_log to be set.
+ * @return 1 if log set succeeds. Otherwise 0.
+ *******************************************************************************************************
+ */
 extern int parseLogParameters(as_log* as_log_p)
 {
     if (as_log_set_callback(as_log_p, &aerospike_helper_log_callback)) {
@@ -90,6 +124,17 @@ extern int parseLogParameters(as_log* as_log_p)
     }	
 }
 
+/* 
+ *******************************************************************************************************
+ * Sets the private members error and errorno of the Aerospike class.
+ * 
+ * @param ce_p              The zend_class_entry pointer for the Aerospike class.
+ * @param object_p          The Aerospike object.
+ * @param error_p           The as_error containing the recent error details.
+ * @param reset_flag        The flag indicating whether to set/reset the class error.
+ *
+ *******************************************************************************************************
+ */
 extern void 
 aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *error_p, bool reset_flag TSRMLS_DC)
 {
@@ -114,9 +159,12 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *err
     zval_ptr_dtor(&err_msg_p);
 }
 
-/* This macro is defined to register a new resource and to add hash to it 
+/* 
+ *******************************************************************************************************
+ * This macro is defined to create a new C client's aerospike object.
+ *******************************************************************************************************
  */
-#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                \
+#define ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT()                              \
 do {                                                                          \
     if (NULL != (as_object_p->as_ref_p = ecalloc(1,                           \
                     sizeof(aerospike_ref)))) {                                \
@@ -124,14 +172,25 @@ do {                                                                          \
         as_object_p->as_ref_p->ref_as_p = 0;                                  \
     }                                                                         \
     as_object_p->as_ref_p->as_p = aerospike_new(conf);                        \
+    as_object_p->as_ref_p->ref_as_p = 1;                                      \
+} while(0)
+
+/* 
+ *******************************************************************************************************
+ * This macro is defined to register a new resource and to add hash to it.
+ *******************************************************************************************************
+ */
+#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                \
+do {                                                                          \
+    ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                                 \
     ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,          \
             val_persist);                                                     \
-    as_object_p->as_ref_p->ref_as_p = 1;                                      \
     new_le.ptr = as_object_p->as_ref_p;                                       \
     new_le.type = val_persist;                                                \
     if (new_flag) {                                                           \
         zend_hash_add(&EG(persistent_list), alias, alias_len,                 \
                 (void *) &new_le, sizeof(list_entry), NULL);                  \
+        goto exit;                                                            \
     } else {                                                                  \
         zend_hash_update(&EG(persistent_list), alias, alias_len,              \
                 (void *) &new_le, sizeof(list_entry), (void **) &le);         \
@@ -140,8 +199,11 @@ do {                                                                          \
 } while(0)
 
 
-/* This macro is defined to match the config details with the stored object
+/* 
+ *******************************************************************************************************
+ * This macro is defined to match the config details with the stored object
  * details in the resource and if match use the existing one. 
+ *******************************************************************************************************
  */
 #define ZEND_CONFIG_MATCH_USER_STORED(alias, alias_len)                       \
 do {                                                                          \
@@ -165,10 +227,29 @@ do {                                                                          \
     ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, 0);                          \
 } while(0)
 
+#define MAX_PORT_SIZE 6
+
+/* 
+ *******************************************************************************************************
+ * Function to retrieve a C Client's aerospike object either from the zend
+ * persistent store if an already hashed object (with the addr+port as the hash) exists, or by
+ * creating a new aerospike object if it doesn't and pushing it on the zend persistent store 
+ * for further reuse.
+ * 
+ * @param as_object_p               The instance of Aerospike_object structure containing 
+ *                                  the C Client's aerospike object.
+ * @param persist_flag              The flag which indicates whether to persist the C Client's 
+ *                                  aerospike object.
+ * @param conf                      The as_config to be used for creating/retrieving aerospike object.
+ * @param persistent_list           The hashtable pointing to the zend global persistent list.
+ * @param val_persist               The resource handler for persistent list.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
-                                        int8_t * persistence_alias_p,
-                                        int16_t persistence_alias_len,
+                                        bool persist_flag,
                                         as_config* conf,
                                         HashTable persistent_list,
                                         int val_persist)
@@ -178,7 +259,9 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
     as_status status = AEROSPIKE_OK;
     int itr_user = 0, itr_stored = 0;
     aerospike_ref *tmp_ref = NULL;
-    char* alias_null_p = "aerospike";
+    char *alias_to_search = NULL;
+    char *alias_to_hash = NULL;
+    char port[MAX_PORT_SIZE];
 
     if (!(as_object_p) && !(conf))
     {
@@ -186,55 +269,47 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         goto exit;
     }
 
-    if (persistence_alias_len == 0) {
-        /*TODO
-         * Alias name is not given by User.
-         * Most effective way is to use host as an alias
-         * for empty alias case.
-         * An algorithm needs to be written to iterate over
-         * list of hosts and check if the one of them is already
-         * hashed and can be reused.
-         */
-#ifdef __AEROSPIKE_ALIAS_COMP_IPADDR__
-        for(itr_user=0; itr_user < conf->hosts_size; itr_user++ ) {
-            if (zend_hash_find(&EG(persistent_list), conf->hosts[itr_user].addr,
-                        strlen(conf->hosts[itr_user].addr), (void **) &le) == SUCCESS) {
-                ZEND_CONFIG_MATCH_USER_STORED(conf->hosts[itr_user].addr, (strlen(conf->hosts[itr_user].addr)));
-            }
-        }
-        ZEND_HASH_CREATE_ALIAS_NEW((conf->hosts[0].addr), (strlen(conf->hosts[0].addr)), 1);
-        for(itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
-            zend_hash_add(&EG(persistent_list),  conf->hosts[itr_user].addr,
-                    strlen(conf->hosts[itr_user].addr), (void *) &new_le, sizeof(list_entry), NULL);
-        }
-#else
-        /* Alias is not given by the User.
-         * For such scenerio we will create a generic alias for the user and 
-         * then use that alias for adding and fetching the value from the store
-         */
-        persistence_alias_p = (int8_t*) alias_null_p;
-        persistence_alias_len = strlen(alias_null_p);
-        if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
-                    persistence_alias_len, (void **) &le) == SUCCESS) {
-            ZEND_CONFIG_MATCH_USER_STORED(persistence_alias_p, (persistence_alias_len));
-        }
-        goto create_new;
-
-
-#endif
+    if(persist_flag == false) {
+        ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();
         goto exit;
     }
 
-    /* if we are here then we are having alias passed in.
-     * Lets check if the alias is already present in the storage and if yes then
-     * check for the config details if match use the existing object else create
-     * a new one 
+    /*
+     * Iterate over list of hosts and check if the one of them is already
+     * hashed and can be reused.
      */
-    if (zend_hash_find(&EG(persistent_list), persistence_alias_p,
-                persistence_alias_len, (void **) &le) == SUCCESS) {
-        ZEND_CONFIG_MATCH_USER_STORED(persistence_alias_p, (persistence_alias_len));
+
+    alias_to_search = (char*) emalloc(strlen(conf->hosts[0].addr) + MAX_PORT_SIZE + 1);
+    sprintf(port, "%d", conf->hosts[0].port);
+    strcpy(alias_to_search, conf->hosts[0].addr);
+    strcat(alias_to_search, ":");
+    strcat(alias_to_search, port);
+    for(itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+        if (zend_hash_find(&EG(persistent_list), alias_to_search,
+                strlen(alias_to_search), (void **) &le) == SUCCESS) {
+            if (alias_to_search) {
+                efree(alias_to_search);
+                alias_to_search = NULL;
+            }
+            tmp_ref = le->ptr;
+            goto use_existing;
+        }
     }
-    goto create_new;
+
+    ZEND_HASH_CREATE_ALIAS_NEW(alias_to_search, strlen(alias_to_search), 1);
+    for(itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
+        alias_to_hash = (char*) emalloc(strlen(conf->hosts[0].addr) + MAX_PORT_SIZE + 1);
+        sprintf(port, "%d", conf->hosts[itr_user].port);
+        strcpy(alias_to_hash, conf->hosts[itr_user].addr);
+        strcat(alias_to_hash, ":");
+        strcat(alias_to_hash, port);
+        zend_hash_add(&EG(persistent_list), alias_to_hash,
+                strlen(alias_to_hash), (void *) &new_le, sizeof(list_entry), NULL);
+        efree(alias_to_hash);
+        alias_to_hash = NULL;
+   }
+
+
 use_existing:
     /* config details are matched, use the existing one obtained from the
      * storage
@@ -243,10 +318,10 @@ use_existing:
     as_object_p->as_ref_p = tmp_ref;
     as_object_p->as_ref_p->ref_as_p++;
     goto exit;
-create_new:
-    /* Create a new object in the resorce.
-     */
-    ZEND_HASH_CREATE_ALIAS_NEW(persistence_alias_p, persistence_alias_len, 1);
 exit:
+    if (alias_to_search) {
+        efree(alias_to_search);
+        alias_to_search = NULL;
+    }
     return (status);
 }

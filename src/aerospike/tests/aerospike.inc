@@ -14,3 +14,4 @@ if(file_exists(dirname(__FILE__)."/aerospike.local.inc")) {
     define("AEROSPIKE_CONFIG_NAME2", "localhost");
     define("AEROSPIKE_CONFIG_PORT2", 3000);
 }
+?>

@@ -1,6 +1,11 @@
 #ifndef __AEROSPIKE_POLICY_H__
 #define __AEROSPIKE_POLICY_H__
 
+/*
+ *******************************************************************************************************
+ * Enum for PHP client's optional policy constant keys. (OPT_*)
+ *******************************************************************************************************
+ */
 enum Aerospike_constants {
     OPT_CONNECT_TIMEOUT = 1,  /* value in milliseconds, default: 1000 */
     OPT_READ_TIMEOUT,         /* value in milliseconds, default: 1000 */
@@ -11,15 +16,22 @@ enum Aerospike_constants {
 };
 
 /*
+ *******************************************************************************************************
  * These values are redundant with the read/write policy
  * implementation of CSDK. It can be removed once CSDK
  * starts enforcing the policies. This implementation enforces
  * it in PHP SDK.
+ *******************************************************************************************************
  */
 #define AS_POLICY_RETRY 0x00000010
 #define AS_POLICY_EXISTS 0x00000100
 #define AS_SERIALIZER_TYPE 0x00001000
 
+/*
+ *******************************************************************************************************
+ * Enum for PHP client's optional policy constant values. (POLICY_* or SERIALIZER_*)
+ *******************************************************************************************************
+ */
 enum Aerospike_values {
     POLICY_RETRY_NONE      = AS_POLICY_RETRY,       /* do not retry an operation (default behavior for policy_retry) */
     POLICY_RETRY_ONCE,                              /* allow for a single retry on an operation */
@@ -34,6 +46,11 @@ enum Aerospike_values {
     SERIALIZER_USER
 };
 
+/*
+ *******************************************************************************************************
+ * Extern declarations of policy functions.
+ *******************************************************************************************************
+ */
 extern void
 set_policy(as_policy_read *read_policy_p,
            as_policy_write *write_policy_p,

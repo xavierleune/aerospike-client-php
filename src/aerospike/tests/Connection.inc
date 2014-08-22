@@ -232,214 +232,10 @@ class Connection extends AerospikeTestCommon
         if ($test1 && $test2) {
             return (self::$status_ok);
         } elseif (!$test1) {
-            return $db1->errno();
+            return $db1->errorno();
         } else {
-            return $db2->errno();
+            return $db2->errorno();
         }
-    }
-    /**
-     * @test
-     * Alias Empty string test
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testNamePortSequenceInConfig)
-     *
-     * @test_plans{1.1}
-     */
-    function testWithAliasEmptyString($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db1 = new Aerospike($config1, "");
-        if (!$db1->isConnected()) {
-            return ($db1->errorno());
-        }
-        $db2 = new Aerospike($config2, "");
-        if (!$db2->isConnected()) {
-            return ($db2->errorno());
-        }
-        // TODO: check that these instances both use the same C-client
-        $db1->close();
-        $db2->close();
-        return (self::$status_ok);
-    }
-    /**
-     * @test
-     * Smae config and same alias are passed
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testNamePortSequenceInConfig)
-     *
-     * @test_plans{1.1}
-     */
-
-    function testSameConfigSameAlias($dummydb, $dummykey) {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config, "alias1");
-        if (!$db->isConnected()) {
-            $db->close();
-            return (self::$status_err);
-        }
-        $db1 = new Aerospike($config1, "alias1");
-        if (!$db1->isConnected()) {
-            $db1->close();
-            return (self::$status_ok);
-        }
-        // TODO: check that these instances both use the same C-client
-        $db1->close();
-        $db->close();
-        return (self::$status_ok);
-    }
-    /**
-     * @test
-     * Different config same alias
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testNamePortSequenceInConfig)
-     *
-     * @test_plans{1.1}
-     */
-    function testDifferentConfigSameAlias($dummydb, $dummykey){
-        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)));
-        $db = new Aerospike($config1, "alias1");
-        if (!$db->isConnected()) {
-            $db->close();
-            return (self::$status_err);
-        }
-        $db1 = new Aerospike($config2, "alias1");
-        if (!$db1->isConnected()) {
-            $db1->close();
-            return (self::$status_err);
-        }
-        // TODO: check that these instances DO NOT use the same C-client
-        $db1->close();
-        $db->close();
-        return (self::$status_ok);
-    }
-    /**
-     * @test
-     * Both config and alais are different
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testNamePortSequenceInConfig)
-     *
-     * @test_plans{1.1}
-     */
-
-    function testDiffrentConfigDifferentAlias($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)));
-        $db = new Aerospike($config1, "aliaseee1");
-        if (!$db->isConnected()) {
-            $db->close();
-            return (self::$status_err);
-        }
-        $db1 = new Aerospike($config2, "alias2");
-        if (!$db1->isConnected()) {
-            $db1->close();
-            return (self::$status_err);
-        }
-        // TODO: check that these instances DO NOT use the same C-client
-        $db1->close();
-        $db->close();
-        return (self::$status_ok);
-    }
-    /**
-     * @test
-     * Partial different in config with different alias
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testNamePortSequenceInConfig)
-     *
-     * @test_plans{1.1}
-     */
-
-    function testDiffAliasPartiallyDiffConfig($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(
-            array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT),
-            array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)));
-        $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)));
-        $db = new Aerospike($config1, "alias1");
-        if (!$db->isConnected()) {
-            $db->close();
-            return (self::$status_err);
-        }
-        $db1 = new Aerospike($config2, "alias2");
-        if (!$db1->isConnected()) {
-            $db1->close();
-            $db->close();
-            return (self::$status_err);
-        }
-        // TODO: check that these instances DO NOT use the same C-client
-        $db->close();
-        $db1->close();
-        return (self::$status_ok);
-    }
-    /**
-     * @test
-     * Same config but alias is only used once
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testSameConfigAliasUsedOnce)
-     *
-     * @test_plans{1.1}
-     */
-    function testSameConfigAliasUsedOnce($dummydb, $dummykey) {
-        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250);
-        $db = new Aerospike($config1, "alias", $opts);
-        if (!$db->isConnected()) {
-            $db->close();
-            return (self::$status_err);
-        }
-        $db1 = new Aerospike($config1);
-        if (!$db1->isConnected()) {
-            $db1->close();
-            return (self::$status_err);
-        }
-        // TODO: check that these instances DO NOT use the same C-client
-        $db1->close();
-        $db->close();
-        return (self::$status_ok);
     }
 
 
@@ -463,8 +259,66 @@ class Connection extends AerospikeTestCommon
         $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250,
             Aerospike::OPT_WRITE_TIMEOUT => 1500);
         $db = new Aerospike($config, NULL, $opts);
+        $status = $db->errorno();
         $db->close();
-        return ($db->errorno());
+        return ($status);
+    }
+
+    function testConnectWithPersistFlagFalse($dummydb, $dummykey) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config, false);
+        $status = $db->errorno();
+        $db->close();
+        return ($status);
+    }
+
+    function testConnectWithPersistFlagPassedAsStr($dummydb, $dummykey) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config, "persist");
+        $status = $db->errorno();
+        $db->close();
+        return ($status);
+    }
+
+    function testConnectWithPersistFlagPassedAsInt($dummydb, $dummykey) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config, 11111222);
+        $status = $db->errorno();
+        $db->close();
+        return ($status);
+    }
+
+    function testConnectWithPersistFlagTrue($dummydb, $dummykey) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config, true);
+        $status = $db->errorno();
+        $db->close();
+        return ($status);
+    }
+
+    function testConnectWithSameConfigPersistAsTrue($dummydb, $dummykey) {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+            "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config, true);
+        if (!$db->isConnected()) {
+            $db->close();
+            return (self::$status_err);
+        }
+        $db1 = new Aerospike($config1, true);
+        if (!$db1->isConnected()) {
+            $db1->close();
+            return (self::$status_ok);
+        }
+        $db1->close();
+        $db->close();
+        return (self::$status_ok);
+        
     }
 } 
 ?>
