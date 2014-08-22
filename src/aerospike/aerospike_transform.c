@@ -2118,8 +2118,8 @@ exit:
  * @param key_data_type_u32         The key datatype of current key in the config array.
  * @param key_p                     The current key in the config array.
  * @param key_len_u32               The length of the current key.
- * @param data_p                    The user data to be used within the callback.
- * @param retdata_pp                The return zval to be populated by the callback.
+ * @param data_p                    The as_config to be set within the callback.
+ * @param value_pp                  The zval value for current key.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
@@ -2128,19 +2128,19 @@ static as_status
 aerospike_transform_config_callback(HashTable* ht_p,
                                     u_int32_t key_data_type_u32,
                                     int8_t* key_p, u_int32_t key_len_u32,
-                                    void* data_p, zval** retdata_pp)
+                                    void* data_p, zval** value_pp)
 {
     as_status      status = AEROSPIKE_OK;
 
     if (PHP_IS_ARRAY(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
-            status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(value_pp), (as_config *) data_p);
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_USER, PHP_AS_KEY_DEFINE_FOR_USER_LEN, key_p, key_len_u32 -1)) {
-            status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(value_pp), (as_config *) data_p);
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD, PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
-            status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(value_pp), (as_config *) data_p);
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
@@ -2217,6 +2217,9 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
     } else if(PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
         AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, Z_LVAL_PP(retdata_pp));
+    } else if(PHP_IS_STRING(key_data_type_u32) &&
+             PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
+        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, atoi(Z_STRVAL_PP(retdata_pp)));
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
@@ -2248,7 +2251,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
                                              void* data_p, zval** retdata_pp)
 {
     as_status      status = AEROSPIKE_OK;
-    zval**         nameport_data_pp = NULL;
+    zval**         addrport_data_pp = NULL;
 
     if (PHP_IS_NOT_ARRAY(key_data_type_u32) || (!data_p) || (!retdata_pp)) {
         status = AEROSPIKE_ERR;
@@ -2256,7 +2259,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(Z_ARRVAL_PP(retdata_pp),
-                                                                 nameport_data_pp, 
+                                                                 addrport_data_pp,
                                                                  &aerospike_transform_addrport_callback,
                                                                  (void *)data_p))) {
         goto exit;
@@ -2277,10 +2280,10 @@ exit:
 
 /* 
  *******************************************************************************************************
- * Iterates over the current host array and sets the keys (addr and port) in C client's as_config.
+ * Iterates over the hosts array and sets the host keys (addr and port) in C client's as_config.
  *
- * @param ht_p                      The hashtable pointing to the current host.
- * @param as_config_p               The C SDK's as_config to be set using the current host.
+ * @param ht_p                      The hashtable pointing to the hosts array.
+ * @param as_config_p               The C SDK's as_config to be set using the hosts array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
