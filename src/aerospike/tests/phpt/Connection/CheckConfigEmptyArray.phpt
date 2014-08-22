@@ -1,11 +1,5 @@
 --TEST--
-Connection - Check Config parameter for empty array
-
---SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Connection", "testEmptyArray");
-
+Connection - Check instantiation with empty config array
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
