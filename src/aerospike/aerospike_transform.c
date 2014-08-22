@@ -2192,7 +2192,7 @@ exit:
  * @param key_p                     The current key.
  * @param key_len_u32               The length of current key.
  * @param data_p                    The user data to be passed to the callback.
- * @param retdata_pp                The return zval to be populated by the function.
+ * @param value_pp                  The zval containing the current value.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
@@ -2201,25 +2201,31 @@ static
 as_status aerospike_transform_addrport_callback(HashTable* ht_p,
                                                 u_int32_t key_data_type_u32,
                                                 int8_t* key_p, u_int32_t key_len_u32,
-                                                void* data_p, zval** retdata_pp)
+                                                void* data_p, zval** value_pp)
 {
     as_status                status = AEROSPIKE_OK;
+    uint32_t                 port = -1;
     as_config_iter_map*      as_config_iter_map_p = (as_config_iter_map *)(data_p);
 
-    if ((!as_config_iter_map_p) || (!retdata_pp) || (!as_config_iter_map_p->as_config_p)) {
+    if ((!as_config_iter_map_p) || (!value_pp) || (!as_config_iter_map_p->as_config_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     if (PHP_IS_STRING(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_ADDR, PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32 - 1)) {
-        AS_CONFIG_ITER_MAP_SET_ADDR(as_config_iter_map_p, Z_STRVAL_PP(retdata_pp));
-    } else if(PHP_IS_LONG(key_data_type_u32) &&
+        AS_CONFIG_ITER_MAP_SET_ADDR(as_config_iter_map_p, Z_STRVAL_PP(value_pp));
+    } else if (PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
-        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, Z_LVAL_PP(retdata_pp));
-    } else if(PHP_IS_STRING(key_data_type_u32) &&
+        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, Z_LVAL_PP(value_pp));
+    } else if (PHP_IS_STRING(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
-        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, atoi(Z_STRVAL_PP(retdata_pp)));
+        port = atoi(Z_STRVAL_PP(value_pp));
+        if (port < 0 || port > 65535) {
+            status = AEROSPIKE_ERR_PARAM;
+            goto exit;
+        }
+        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, port);
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
