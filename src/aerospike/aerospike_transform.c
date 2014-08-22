@@ -13,6 +13,11 @@
 #include "aerospike_transform.h"
 #include "aerospike_policy.h"
 
+/*
+ *******************************************************************************************************
+ * EXPECTED KEYS IN INPUT FROM PHP USERLAND.
+ *******************************************************************************************************
+ */
 #define PHP_AS_KEY_DEFINE_FOR_HOSTS                   "hosts"
 #define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN               5
 #define PHP_AS_KEY_DEFINE_FOR_USER                    "user"
@@ -30,9 +35,19 @@
 #define PHP_AS_KEY_DEFINE_FOR_KEY                     "key"
 #define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                 3
 
+/*
+ *******************************************************************************************************
+ * MACRO TO COMPARE TWO KEYS OF A PHP ARRAY
+ *******************************************************************************************************
+ */
 #define PHP_COMPARE_KEY(key_const, key_const_len, key_obtained, key_obtained_len)    \
      ((key_const_len == key_obtained_len) && (0 == memcmp(key_obtained, key_const, key_const_len)))
 
+/*
+ *******************************************************************************************************
+ * Forward declarations of certain helper methods for PUT/GET.
+ *******************************************************************************************************
+ */
 void AS_DEFAULT_PUT(void *key, void *value, as_record *record,
                     void *static_pool, uint32_t serializer_policy, as_error *error_p);
 void AS_LIST_PUT(void *key, void *value, void *store,
@@ -45,7 +60,9 @@ static as_status
 aerospike_transform_iteratefor_addr_port(HashTable* ht_p, as_config* as_config_p);
 
 /* 
- * PHP Userland Serializer callback
+ *******************************************************************************************************
+ * PHP Userland Serializer callback.
+ *******************************************************************************************************
  */
 zend_fcall_info       user_serializer_call_info;
 zend_fcall_info_cache user_serializer_call_info_cache;
@@ -53,7 +70,9 @@ zval                  *user_serializer_callback_retval_p;
 uint32_t              is_user_serializer_registered = 0;
 
 /* 
- * PHP Userland Deserializer callback
+ *******************************************************************************************************
+ * PHP Userland Deserializer callback.
+ *******************************************************************************************************
  */
 zend_fcall_info       user_deserializer_call_info;
 zend_fcall_info_cache user_deserializer_call_info_cache;
@@ -61,8 +80,17 @@ zval                  *user_deserializer_callback_retval_p;
 uint32_t              is_user_deserializer_registered = 0;
 
 /*
+ *******************************************************************************************************
  * Sets value of as_bytes with bytes from bytes_string.
  * Sets type of as_bytes to bytes_type.
+ *
+ * @param bytes                 The C client's as_bytes to be set.
+ * @param bytes_string          The bytes string to be set into as_bytes.
+ * @param bytes_string_len      The length of bytes string.
+ * @param bytes_type            The type of as_bytes to be set.
+ * @param error_p               The as_error to be populated by the function
+ *                              with encountered error if any.
+ *******************************************************************************************************
  */
 static void set_as_bytes(as_bytes *bytes,
                          uint8_t *bytes_string,
@@ -90,11 +118,26 @@ exit:
 }
 
 /*
+ *******************************************************************************************************
  * If serialize_flag == true, executes the passed userland serializer callback,
  * by creating as_bytes (bytes) from the passed zval (value).
  * Else executes the passed userland deserializer callback,
  * by passing the as_bytes (bytes) to the deserializer and getting back
- * the corresponding zval (value)
+ * the corresponding zval (value).
+ *
+ * @param user_callback_info            The zend_fcall_info for the user
+ *                                      callback to be executed.
+ * @param user_callback_info_cache      The zend_fcall_info_cache for the user
+ *                                      callback to be executed.
+ * @param user_callback_retval_p        The return value for the user callback
+ *                                      to be executed.
+ * @param bytes                         The as_bytes to be stored/retrieved.
+ * @param value                         The value to be retrieved/stored.
+ * @param serialize_flag                The flag which indicates
+ *                                      serialize/deserialize.
+ * @param error_p                       The as_error to be populated by the
+ *                                      function with encountered error if any.
+ *******************************************************************************************************
  */
 static void execute_user_callback(zend_fcall_info *user_callback_info,
                                   zend_fcall_info_cache *user_callback_info_cache,
@@ -147,9 +190,18 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 }
 
 /*
+ *******************************************************************************************************
  * Checks serializer_policy.
  * Serializes zval (value) into as_bytes using serialization logic
  * based on serializer_policy.
+ *
+ * @param serializer_policy         The serializer_policy to be used to handle
+ *                                  the serialization.
+ * @param bytes                     The as_bytes to be set.
+ * @param value                     The value to be serialized.
+ * @param error_p                   The as_error to be populated by the function
+ *                                  with encountered error if any.
+ *******************************************************************************************************
  */
 static void serialize_based_on_serializer_policy(int32_t serializer_policy,
                                                  as_bytes *bytes,
@@ -175,13 +227,16 @@ static void serialize_based_on_serializer_policy(int32_t serializer_policy,
                 } else if (buf.c) {
                     set_as_bytes(bytes, buf.c, buf.len, AS_BYTES_PHP, error_p);
                     if (AEROSPIKE_OK != (error_p->code)) {
+                        smart_str_free(&buf);
                         goto exit;
                     }
                 } else {
+                    smart_str_free(&buf);
                     DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to serialize using standard php serializer");
                     goto exit;
                 }
+                smart_str_free(&buf);
             }
             break;
         case SERIALIZER_JSON:
@@ -219,9 +274,17 @@ exit:
 }
 
 /*
+ *******************************************************************************************************
  * Checks as_bytes->type.
  * Unserializes as_bytes into zval (retval) using unserialization logic
- * based on as_bytes->type. 
+ * based on as_bytes->type.
+ *
+ * @param bytes                 The as_bytes to be deserialized.
+ * @param retval                The return zval to be populated with the
+ *                              deserialized value of the input as_bytes.
+ * @param error_p               The as_error to be populated by the function
+ *                              with encountered error if any.
+ *******************************************************************************************************
  */
 static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
                                                zval      **retval,
@@ -279,16 +342,48 @@ exit:
     return;
 }
 
-/* GET helper functions */
+/* 
+ *******************************************************************************************************
+ * GET helper functions.
+ *******************************************************************************************************
+ */
 
-/* Wrappers for appeding datatype to List */
+/* 
+ *******************************************************************************************************
+ * Wrappers for appeding datatype to List.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Appends a NULL to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The NULL value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_NULL(void *key, void *value, void *array, void *err)
 {
     add_next_index_null(*((zval**)array));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a boolean to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The boolean value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_BOOL(void *key, void *value, void *array, void *err)
 {
     add_next_index_bool(*((zval**)array),
@@ -296,6 +391,18 @@ static void ADD_LIST_APPEND_BOOL(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a long to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The boolean value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_LONG(void *key, void *value, void *array, void *err)
 {
     add_next_index_long(*((zval**)array),
@@ -303,6 +410,18 @@ static void ADD_LIST_APPEND_LONG(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a string to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The string value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_STRING(void *key, void *value, void *array, void *err)
 {
     add_next_index_stringl(*((zval**)array),
@@ -311,16 +430,52 @@ static void ADD_LIST_APPEND_STRING(void *key, void *value, void *array, void *er
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a rec to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The record value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_REC(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a pair to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The pair value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_PAIR(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends bytes to PHP indexed array: list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The bytes value to be appended to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_BYTES(void *key, void *value, void *array, void *err)
 {
     zval        *unserialized_zval = NULL;
@@ -339,14 +494,42 @@ exit:
     return;
 }
 
-/* Wrappers for associating datatype with Map with string key*/
+/* 
+ *******************************************************************************************************
+ * Wrappers for associating datatype with Map with string key.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Adds a NULL to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The NULL value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_NULL(void *key, void *value, void *array, void *err)
 {
     add_assoc_null(*((zval**)array), as_string_get((as_string *) key));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a boolean to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The boolean value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_BOOL(void *key, void *value, void *array, void *err)
 {
     add_assoc_bool(*((zval**)array), as_string_get((as_string *) key),
@@ -354,6 +537,18 @@ static void ADD_MAP_ASSOC_BOOL(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a long to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The long value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_LONG(void *key, void *value, void *array, void *err)
 {
     add_assoc_long(*((zval**)array),  as_string_get((as_string *) key),
@@ -361,6 +556,18 @@ static void ADD_MAP_ASSOC_LONG(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a string to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The string value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_STRING(void *key, void *value, void *array, void *err)
 {
     add_assoc_stringl(*((zval**)array), as_string_get((as_string *) key),
@@ -369,16 +576,52 @@ static void ADD_MAP_ASSOC_STRING(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a rec to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The rec value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_REC(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a pair to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The pair value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_PAIR(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds bytes to PHP assoc array: map with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The bytes value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_BYTES(void *key, void *value, void *array, void *err)
 {
     zval        *unserialized_zval = NULL;
@@ -396,14 +639,42 @@ exit:
     return;
 }
 
-/* Wrappers for associating datatype with Map with integer key */
-
+/*
+ *******************************************************************************************************
+ * Wrappers for associating datatype with Map with integer key.
+ *******************************************************************************************************
+ */
+ 
+/*
+ *******************************************************************************************************
+ * Adds a null to PHP assoc array at specified index: map with integer key.
+ * 
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The null value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_NULL(void *key, void *value, void *array, void *err)
 {
     add_index_null(*((zval**)array), (uint) as_integer_get((as_integer *) key));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a boolean to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The boolean value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_BOOL(void *key, void *value, void *array, void *err)
 {
     add_index_bool(*((zval**)array), (uint) as_integer_get((as_integer *) key),
@@ -411,6 +682,18 @@ static void ADD_MAP_INDEX_BOOL(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a long to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The long value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_LONG(void *key, void *value, void *array, void *err)
 {
     add_index_long(*((zval**)array), (uint) as_integer_get((as_integer *) key),
@@ -418,6 +701,18 @@ static void ADD_MAP_INDEX_LONG(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a string to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The string value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_STRING(void *key, void *value, void *array, void *err)
 {
     add_index_stringl(*((zval**)array), (uint) as_integer_get((as_integer *) key),
@@ -426,16 +721,52 @@ static void ADD_MAP_INDEX_STRING(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a rec to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The rec value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_REC(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a pair to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The pair value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_PAIR(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds bytes to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the assoc array.
+ * @param value                 The bytes value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_BYTES(void *key, void *value, void *array, void *err)
 {
     zval        *unserialized_zval = NULL;
@@ -454,14 +785,42 @@ exit:
     return;
 }
 
-/* Wrappers for associating datatype with Record */
+/*
+ *******************************************************************************************************
+ * Wrappers for associating datatype with Record.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Adds a NULL to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The null value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_NULL(void *key, void *value, void *array, void *err)
 {
     add_assoc_null(((zval*)array), (char *) key);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a boolean to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The boolean value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_BOOL(void *key, void *value, void *array, void *err)
 {
     add_assoc_bool(((zval*)array), (char*) key,
@@ -469,6 +828,18 @@ static void ADD_DEFAULT_ASSOC_BOOL(void *key, void *value, void *array, void *er
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a long to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The long value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array, void *err)
 {
     add_assoc_long(((zval*)array),  (char*) key,
@@ -476,6 +847,18 @@ static void ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array, void *er
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a string to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The string value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_STRING(void *key, void *value, void *array, void *err)
 {
     add_assoc_stringl(((zval*)array), (char*) key,
@@ -484,16 +867,52 @@ static void ADD_DEFAULT_ASSOC_STRING(void *key, void *value, void *array, void *
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a rec to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The rec value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_REC(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a pair to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The pair value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_PAIR(void *key, void *value, void *array, void *err)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Adds a NULL to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The null value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_BYTES(void *key, void *value, void *array, void *err)
 {
     zval        *unserialized_zval = NULL;
@@ -511,58 +930,174 @@ exit:
     return;
 }
 
-/* GET helper functions with expanding macros */
+/* 
+ *******************************************************************************************************
+ * GET helper functions with expanding macros.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Appends a map to PHP indexed array: list.
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP assoc array: map value to be added to the PHP indexed array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_MAP(void *key, void *value, void *array, void *err)
 {
     AS_APPEND_MAP_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a list to PHP indexed array: list.
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP indexed array: list value to be added to the PHP indexed array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_LIST_APPEND_LIST(void *key, void *value, void *array, void *err)
 {
     AS_APPEND_LIST_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a map to PHP assoc array: map.
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP assoc array: map value to be added to the PHP assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_MAP(void *key, void *value, void *array, void *err)
 {
     AS_ASSOC_MAP_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a list to PHP assoc array: map.
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP indexed array: list value to be added to the PHP assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_ASSOC_LIST(void *key, void *value, void *array, void *err)
 {
     AS_ASSOC_LIST_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a map to PHP assoc array at specific index: map with integer key.
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP assoc array: map value to be added to the PHP assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_MAP(void *key, void *value, void *array, void *err)
 {
     AS_INDEX_MAP_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a list to PHP assoc array at specific index: map with integer key.
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP indexed array: list value to be added to the PHP assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_MAP_INDEX_LIST(void *key, void *value, void *array, void *err)
 {
     AS_INDEX_LIST_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a map to PHP assoc array: record
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP assoc array: map value to be added to the PHP assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_MAP(void *key, void *value, void *array, void *err)
 {
     AS_ASSOC_MAP_TO_DEFAULT(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a list to PHP assoc array: record
+ *
+ * @param key                   The bin name.
+ * @param value                 The PHP indexed array: list value to be added to the PHP assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_LIST(void *key, void *value, void *array, void *err)
 {
     AS_ASSOC_LIST_TO_DEFAULT(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
-/* GET callback methods where switch case will expand */
+/*
+ *******************************************************************************************************
+ * GET callback methods where switch case will expand.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Callback function for as_record_foreach.
+ *
+ * @param key                   The bin name.
+ * @param value                 The current bin value.
+ * @param array                 The foreach_callback_udata struct containing the PHP record array 
+ *                              as well as the as_error to be populated by the callback.
+ *
+ * @return true if the callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
@@ -573,6 +1108,18 @@ exit:
     return (((((foreach_callback_udata *) array)->error_p)->code == AEROSPIKE_OK) ? true : false);
 }
 
+/*
+ *******************************************************************************************************
+ * Callback function for as_list_foreach.
+ *
+ * @param key                   The bin name.
+ * @param value                 The current bin value.
+ * @param array                 The foreach_callback_udata struct containing the PHP list array 
+ *                              as well as the as_error to be populated by the callback.
+ *
+ * @return true if the callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
 bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
@@ -583,6 +1130,18 @@ exit:
     return (((((foreach_callback_udata *) array)->error_p)->code == AEROSPIKE_OK) ? true : false);
 }
 
+/*
+ *******************************************************************************************************
+ * Callback function for as_map_foreach.
+ *
+ * @param key                   The bin name.
+ * @param value                 The current bin value.
+ * @param array                 The foreach_callback_udata struct containing the PHP map array 
+ *                              as well as the as_error to be populated by the callback.
+ *
+ * @return true if the callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
@@ -600,12 +1159,37 @@ exit:
     return (((((foreach_callback_udata *) array)->error_p)->code == AEROSPIKE_OK) ? true : false);
 }
 
-/* End of helper functions for GET */
+/* 
+ *******************************************************************************************************
+ * End of helper functions for GET.
+ *******************************************************************************************************
+ */
 
-/* PUT helper functions */
+/* 
+ *******************************************************************************************************
+ * PUT helper functions.
+ *******************************************************************************************************
+ */
 
-/* Misc SET calls for GET and PUT */
+/*
+ *******************************************************************************************************
+ * Misc SET calls for GET and PUT.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Appends a list to a list.
+ *
+ * @param outer_store       The outer as_arraylist to which inner as_list is to be
+ *                          appended.
+ * @param inner_store       The inner as_list to be appended to the outer as_arraylist.
+ * @param bin_name          The bin name.
+ * @param error_p           The as_error to be populated by the function with
+ *                          encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_SET_APPEND_LIST(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p)
 {
@@ -621,6 +1205,19 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a map to a list.
+ *
+ * @param outer_store       The outer as_arraylist to which as_map is to be
+ *                          appended.
+ * @param inner_store       The as_map to be appended to the outer as_arraylist.
+ * @param bin_name          The bin name.
+ * @param error_p           The as_error to be populated by the function with
+ *                          encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_SET_APPEND_MAP(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p)
 {
@@ -636,6 +1233,18 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a list in a record.
+ *
+ * @param outer_store       The as_record in which as_list is to be set.
+ * @param inner_store       The as_list to be set in the record.
+ * @param bin_name          The bin name.
+ * @param error_p           The as_error to be populated by the function with
+ *                          encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_SET_ASSOC_LIST(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p)
 {
@@ -650,6 +1259,18 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a map in a record.
+ *
+ * @param outer_store       The as_record in which as_map is to be set.
+ * @param inner_store       The as_map to be set in the record.
+ * @param bin_name          The bin name.
+ * @param error_p           The as_error to be populated by the function with
+ *                          encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_SET_ASSOC_MAP(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p)
 {
@@ -664,6 +1285,18 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a list in a map.
+ *
+ * @param outer_store       The as_hashmap in which list is to be set.
+ * @param inner_store       The as_list to be set in the as_hashmap.
+ * @param bin_name          The bin name.
+ * @param error_p           The as_error to be populated by the function with
+ *                          encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_SET_ASSOC_LIST(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p)
 {
@@ -679,6 +1312,18 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a map in a map.
+ *
+ * @param outer_store       The as_hashmap in which as_map is to be set.
+ * @param inner_store       The as_map to be set in the as_hashmap.
+ * @param bin_name          The bin name.
+ * @param error_p           The as_error to be populated by the function with
+ *                          encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p)
 {
@@ -694,7 +1339,11 @@ exit:
     return;
 }
 
-/* Wrappers for appeding datatype to List */
+/* 
+ *******************************************************************************************************
+ * Wrappers for appeding datatype to List.
+ *******************************************************************************************************
+ */
 
 static void AS_SET_ERROR_CASE(void* key, void* value, void* array,
                               void* static_pool, uint32_t serializer_policy, as_error *error_p)
@@ -702,6 +1351,20 @@ static void AS_SET_ERROR_CASE(void* key, void* value, void* array,
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Error");
 }
 
+/*
+ *******************************************************************************************************
+ * Appends an integer to a list.
+ *
+ * @param key                   The key for the array.
+ * @param value                 The integer value to be appended to the as_arraylist.
+ * @param array                 The as_arraylist to be appended to.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -717,6 +1380,20 @@ exit:
     return;
 }
  
+/*
+ *******************************************************************************************************
+ * Appends a string to a list.
+ *
+ * @param key                   The key for the array.
+ * @param value                 The string value to be appended to the as_arraylist.
+ * @param array                 The as_arraylist to be appended to.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -732,25 +1409,70 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Appends a list to a list.
+ *
+ * @param key                   The key for the array.
+ * @param value                 The list value to be appended to the as_arraylist.
+ * @param array                 The as_arraylist to be appended to.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
     AS_LIST_PUT(key, value, array, static_pool, serializer_policy, error_p);
 }
  
+/*
+ *******************************************************************************************************
+ * Appends a map to a list.
+ *
+ * @param key                   The key for the array.
+ * @param value                 The map value to be appended to the as_arraylist.
+ * @param array                 The as_arraylist to be appended to.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
     AS_MAP_PUT(key, value, array, static_pool, serializer_policy, error_p);
 }
 
-/* Wrappers for associating datatype with Record */
+/*
+ *******************************************************************************************************
+ * Wrappers for associating datatype with Record.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Sets a NIL value in a record.
+ *
+ * @param key                   The bin name to which nil value is to be set.
+ * @param value                 The nil value to be set in the record.
+ * @param array                 The as_record to which nil value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array,
         void* static_pool, uint32_t serializer_policy, as_error *error_p)
 {
-    /* value holds the name of the bin*/
-    if (!(as_record_set_nil((as_record *)(key), (int8_t *) Z_LVAL_PP((zval**) value)))) {
+    if (!(as_record_set_nil((as_record *)(array), (int8_t *) Z_LVAL_PP((zval**) key)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to nil");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set record to nil");
         goto exit;
@@ -761,6 +1483,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a bytes value in a record.
+ *
+ * @param key                   The bin name to which bytes value is to be set.
+ * @param value                 The zval to be serialized to a bytes value to be set in the record.
+ * @param array                 The as_record to which bytes value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value,
         void* array, void* static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -783,6 +1519,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets an integer value in a record.
+ *
+ * @param key                   The bin name to which integer value is to be set.
+ * @param value                 The integer value to be set in the record.
+ * @param array                 The as_record to which integer value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array,
         void* static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -797,6 +1547,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a string value in a record.
+ *
+ * @param key                   The bin name to which string value is to be set.
+ * @param value                 The string value to be set in the record.
+ * @param array                 The as_record to which string value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -811,20 +1575,66 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a list value in a record.
+ *
+ * @param key                   The bin name to which list value is to be set.
+ * @param value                 The list value to be set in the record.
+ * @param array                 The as_record to which list value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
     AS_LIST_PUT(key, value, array, static_pool, serializer_policy, error_p);
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a map value in a record.
+ *
+ * @param key                   The bin name to which map value is to be set.
+ * @param value                 The map value to be set in the record.
+ * @param array                 The as_record to which map value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
     AS_MAP_PUT(key, value, array, static_pool, serializer_policy, error_p);
 }
 
-/* Wrappers for associating datatype with MAP */
+/*
+ *******************************************************************************************************
+ * Wrappers for associating datatype with MAP.
+ *******************************************************************************************************
+ */
 
+/*
+ *******************************************************************************************************
+ * Sets an integer value in a map.
+ *
+ * @param key                   The key to be set in the as_hashmap.
+ * @param value                 The integer value to be set in the as_hashmap.
+ * @param store                 The as_hashmap to which integer value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_PUT_ASSOC_INT64(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -842,6 +1652,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a string value in a map.
+ *
+ * @param key                   The key to be set in the as_hashmap.
+ * @param value                 The string value to be set in the as_hashmap.
+ * @param store                 The as_hashmap to which string value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -859,18 +1683,60 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a map value in a map.
+ *
+ * @param key                   The key to be set in the as_hashmap.
+ * @param value                 The as_map value to be set in the as_hashmap.
+ * @param store                 The as_hashmap to which map value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
     AS_MAP_PUT(key, value, store, static_pool, serializer_policy, error_p);
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a list value in a map.
+ *
+ * @param key                   The key to be set in the as_hashmap.
+ * @param value                 The as_list value to be set in the as_hashmap.
+ * @param store                 The as_hashmap to which list value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
     AS_LIST_PUT(key, value, store, static_pool, serializer_policy, error_p);
 }
 
+/*
+ *******************************************************************************************************
+ * Sets a bytes value in a map.
+ *
+ * @param key                   The key to be set in the as_hashmap.
+ * @param value                 The zval to be serialized into as_bytes value to be set in the as_hashmap.
+ * @param store                 The as_hashmap to which bytes value is to be set.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -907,16 +1773,49 @@ static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
 static void AS_LIST_PUT_APPEND_BYTES(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p);
 
-/* PUT functions whose macros will expand */
-void AS_DEFAULT_PUT(void *key, void *value, as_record *record, void *static_pool,
+/* 
+ *******************************************************************************************************
+ * PUT functions whose macros will expand.
+ *******************************************************************************************************
+ */
+
+/*
+ *******************************************************************************************************
+ * Puts a value in an as_record.
+ *
+ * @param key                   The bin name for the record.
+ * @param value                 The value to be put in the as_record.
+ * @param record_p              The as_record in which value is to be put.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+void AS_DEFAULT_PUT(void *key, void *value, as_record *record_p, void *static_pool,
         uint32_t serializer_policy, as_error *error_p)
 {
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(error_p, static_pool,
-            key, ((zval**)value), record, exit, serializer_policy);
+            key, ((zval**)value), record_p, exit, serializer_policy);
 exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Puts a value in an as_list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The value to be put in the as_list.
+ * @param store                 The as_list in which value is to be put.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
         uint32_t serializer_policy, as_error *error_p)
 {
@@ -926,6 +1825,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Puts a value in an as_map.
+ *
+ * @param key                   The key for the map.
+ * @param value                 The value to be put in the as_map.
+ * @param store                 The as_map in which value is to be put.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 void AS_MAP_PUT(void *key, void *value, void *store, void *static_pool,
         uint32_t serializer_policy, as_error *error_p)
 {
@@ -936,6 +1849,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Puts an array value in an as_record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The array value to be put in the as_record.
+ * @param store                 The as_record in which value is to be put.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -945,6 +1872,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Puts an array value in an as_map.
+ *
+ * @param key                   The bin name.
+ * @param value                 The array value to be put in the as_map.
+ * @param store                 The as_map in which value is to be put.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -954,6 +1895,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Puts an array value in an as_list.
+ *
+ * @param key                   The bin name.
+ * @param value                 The array value to be put in the as_list.
+ * @param store                 The as_list in which value is to be put.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -963,6 +1918,20 @@ exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Appends bytes value to an as_list.
+ *
+ * @param key                   The key for the array (NULL).
+ * @param value                 The zval to be serialized into as_bytes value to be appended to the as_list.
+ * @param array                 The as_list to which value is to be appended to.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void AS_LIST_PUT_APPEND_BYTES(void* key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p)
 {
@@ -986,19 +1955,33 @@ exit:
     return;
 }
 
-/* End of PUT helper functions */
+/* 
+ *******************************************************************************************************
+ * End of PUT helper functions. 
+ *******************************************************************************************************
+ */
 
 typedef as_status (*aerospike_transform_key_callback)(HashTable* ht_p,
                                                       u_int32_t key_data_type_u32, 
                                                       int8_t* key_p, u_int32_t key_len_u32,
                                                       void* data_p, zval** retdata_pp);
 
+/* 
+ *******************************************************************************************************
+ * Structure for expected input key in put from PHP userland.
+ *******************************************************************************************************
+ */
 typedef struct asputkeydatamap {
     int8_t* namespace_p;
     int8_t* set_p;
     zval**  key_pp;
 } as_put_key_data_map;
 
+/* 
+ *******************************************************************************************************
+ * Structure for asconfig iterator.
+ *******************************************************************************************************
+ */
 typedef struct asconfig_iter {
     u_int32_t     iter_count_u32;
     as_config*    as_config_p;
@@ -1016,6 +1999,16 @@ do {                                                                           \
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->as_config_p->hosts[map_p->iter_count_u32].port)
 
+/* 
+ *******************************************************************************************************
+ * Set input user in as_config.
+ *
+ * @param user_p        The string containing username to be set into as_config.
+ * @param config_p      The c-client's as_config object to be set.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status
 aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
 {
@@ -1034,6 +2027,16 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Set input password in as_config.
+ *
+ * @param password_p        The string containing password to be set into as_config.
+ * @param config_p          The c-client's as_config object to be set.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status
 aerospike_transform_set_password_in_config(char *password_p, as_config *config_p)
 {
@@ -1052,6 +2055,21 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * This function iterates over the keys of a PHP array and performs the
+ * required checks with the help of the given keycallback function.
+ *
+ * @param ht_p              The hashtable pointing to the PHP array.
+ * @param retdata_pp        The return zval to be poplated with the data within
+ *                          the PHP array.
+ * @keycallback_p           The callback function that shall perform the
+ *                          required checks on each key of the given PHP array.
+ * @data_p                  User data to be passed into the keycallback.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status 
 aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp, 
                                aerospike_transform_key_callback keycallback_p,
@@ -1091,23 +2109,38 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Callback for checking expected keys (hosts, user and password) in the input
+ * config array for Aerospike::construct().
+ *
+ * @param ht_p                      The hashtable pointing to the input PHP config array.
+ * @param key_data_type_u32         The key datatype of current key in the config array.
+ * @param key_p                     The current key in the config array.
+ * @param key_len_u32               The length of the current key.
+ * @param data_p                    The as_config to be set within the callback.
+ * @param value_pp                  The zval value for current key.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status
 aerospike_transform_config_callback(HashTable* ht_p,
                                     u_int32_t key_data_type_u32,
                                     int8_t* key_p, u_int32_t key_len_u32,
-                                    void* data_p, zval** retdata_pp)
+                                    void* data_p, zval** value_pp)
 {
     as_status      status = AEROSPIKE_OK;
 
     if (PHP_IS_ARRAY(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS, PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
-            status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(value_pp), (as_config *) data_p);
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_USER, PHP_AS_KEY_DEFINE_FOR_USER_LEN, key_p, key_len_u32 -1)) {
-            status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(value_pp), (as_config *) data_p);
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD, PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
-            status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(retdata_pp), (as_config *) data_p);
+            status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(value_pp), (as_config *) data_p);
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
@@ -1117,6 +2150,18 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Check input PHP config array and translate it to corresponding as_config of
+ * the c-client.
+ *
+ * @param ht_p                      The hashtable pointing to the input PHP config array.
+ * @param retdata_pp                The return zval to be populated by the function.
+ * @param config_p                  The c client's as_config to be set.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, as_config *config_p)
 {
@@ -1137,26 +2182,50 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Callback for checking expected keys (addr and port) in the current host 
+ * within the array of hosts from input config array for Aerospike::construct().
+ *
+ * @param ht_p                      The hashtable pointing to the input host array.
+ * @param key_data_type_u32         The key datatype of the current key in host array.
+ * @param key_p                     The current key.
+ * @param key_len_u32               The length of current key.
+ * @param data_p                    The user data to be passed to the callback.
+ * @param value_pp                  The zval containing the current value.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static
 as_status aerospike_transform_addrport_callback(HashTable* ht_p,
                                                 u_int32_t key_data_type_u32,
                                                 int8_t* key_p, u_int32_t key_len_u32,
-                                                void* data_p, zval** retdata_pp)
+                                                void* data_p, zval** value_pp)
 {
     as_status                status = AEROSPIKE_OK;
+    uint32_t                 port = -1;
     as_config_iter_map*      as_config_iter_map_p = (as_config_iter_map *)(data_p);
 
-    if ((!as_config_iter_map_p) || (!retdata_pp) || (!as_config_iter_map_p->as_config_p)) {
+    if ((!as_config_iter_map_p) || (!value_pp) || (!as_config_iter_map_p->as_config_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     if (PHP_IS_STRING(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_ADDR, PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32 - 1)) {
-        AS_CONFIG_ITER_MAP_SET_ADDR(as_config_iter_map_p, Z_STRVAL_PP(retdata_pp));
-    } else if(PHP_IS_LONG(key_data_type_u32) &&
+        AS_CONFIG_ITER_MAP_SET_ADDR(as_config_iter_map_p, Z_STRVAL_PP(value_pp));
+    } else if (PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
-        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, Z_LVAL_PP(retdata_pp));
+        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, Z_LVAL_PP(value_pp));
+    } else if (PHP_IS_STRING(key_data_type_u32) &&
+             PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT, PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
+        port = atoi(Z_STRVAL_PP(value_pp));
+        if (port < 0 || port > 65535) {
+            status = AEROSPIKE_ERR_PARAM;
+            goto exit;
+        }
+        AS_CONFIG_ITER_MAP_SET_PORT(as_config_iter_map_p, port);
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
@@ -1166,6 +2235,21 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Callback for checking expected keys (addr and port) in each host within the array of hosts
+ * in the input config array for Aerospike::construct().
+ *
+ * @param ht_p                      The hashtable pointing to the input array of hosts.
+ * @param key_data_type_u32         The key datatype of the current key in host array.
+ * @param key_p                     The current key.
+ * @param key_len_u32               The length of current key.
+ * @param data_p                    The user data to be passed to the callback.
+ * @param retdata_pp                The return zval to be populated by the function.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static
 as_status aerospike_transform_array_callback(HashTable* ht_p,
                                              u_int32_t key_data_type_u32,
@@ -1173,7 +2257,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
                                              void* data_p, zval** retdata_pp)
 {
     as_status      status = AEROSPIKE_OK;
-    zval**         nameport_data_pp = NULL;
+    zval**         addrport_data_pp = NULL;
 
     if (PHP_IS_NOT_ARRAY(key_data_type_u32) || (!data_p) || (!retdata_pp)) {
         status = AEROSPIKE_ERR;
@@ -1181,7 +2265,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(Z_ARRVAL_PP(retdata_pp),
-                                                                 nameport_data_pp, 
+                                                                 addrport_data_pp,
                                                                  &aerospike_transform_addrport_callback,
                                                                  (void *)data_p))) {
         goto exit;
@@ -1200,6 +2284,16 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Iterates over the hosts array and sets the host keys (addr and port) in C client's as_config.
+ *
+ * @param ht_p                      The hashtable pointing to the hosts array.
+ * @param as_config_p               The C SDK's as_config to be set using the hosts array.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status
 aerospike_transform_iteratefor_addr_port(HashTable* ht_p, as_config* as_config_p)
 {
@@ -1228,22 +2322,35 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Checks and sets the as_key using the input ns, set and key value.
+ *
+ * @param as_key_p                  The C client's as_key to be set.
+ * @param key_type                  The datatype of current key.
+ * @param namespace_p               The namespace name for the record.
+ * @param set_p                     The set name for the record.
+ * @param key_pp                    The value of the key to be set.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status
-aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace_p, int8_t* set_p, zval** record_pp)
+aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace_p, int8_t* set_p, zval** key_pp)
 {
     as_status      status = AEROSPIKE_OK;
 
-    if ((!as_key_p) || (!namespace_p) || (!set_p) || (!record_pp)) {
+    if ((!as_key_p) || (!namespace_p) || (!set_p) || (!key_pp)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     switch(key_type) {
         case IS_LONG:
-            as_key_init_int64(as_key_p, namespace_p, set_p, (int64_t) Z_LVAL_PP(record_pp));
+            as_key_init_int64(as_key_p, namespace_p, set_p, (int64_t) Z_LVAL_PP(key_pp));
             break;
         case IS_STRING:
-            as_key_init_str(as_key_p, namespace_p, set_p, (int8_t *) Z_STRVAL_PP(record_pp));
+            as_key_init_str(as_key_p, namespace_p, set_p, (int8_t *) Z_STRVAL_PP(key_pp));
             break;
         default:
             status = AEROSPIKE_ERR;
@@ -1254,6 +2361,21 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Callback for checking and setting the as_key for the record to be read/written from/to Aerospike.
+ *
+ * @param ht_p                      The hashtable pointing to the current element of 
+ *                                  input key from PHP user.
+ * @param key_data_type_u32         The datatype of current key.
+ * @param key_p                     The current key.
+ * @param key_len_u32               The length of current key.
+ * @param data_p                    The userdata for the callback.
+ * @param retdata_pp                The return zval to be populated by the callback.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static as_status
 aerospike_transform_putkey_callback(HashTable* ht_p,
                                     u_int32_t key_data_type_u32,
@@ -1285,6 +2407,18 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Check and set the as_key for the record to be read/written from/to Aerospike.
+ *
+ * @param ht_p                      The hashtable pointing to the input key from PHP user.
+ * @param as_key_p                  The C client's as_key to be set.
+ * @param set_val_p                 The flag to be set if as_key is allocated memory 
+ *                                  so that it can be destroyed by calling function if set.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p, int16_t *set_val_p)
 {
@@ -1326,33 +2460,65 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Iterate over the input PHP record array and translate it to corresponding C
+ * client's as_record by transforming the datatypes from PHP to C client's
+ * datatypes recursively at all possible nested levels within the record.
+ *
+ * @param record_pp                 The PHP user's record array.
+ * @param as_record_p               The C client's as_record to be set.
+ * @param static_pool               The static pool of C client datatypes (like
+ *                                  as_hashmap, as_arraylist, as_string, as_integer, as_bytes)
+ * @param serializer_policy         The serializer policy for writing unsupported datatypes to Aerospike. 
+ * @param error_p                   The as_error object to be set with the
+ *                                  encountered error or success.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 static void
 aerospike_transform_iterate_records(zval **record_pp,
-                                    as_record* record,
+                                    as_record* as_record_p,
                                     as_static_pool* static_pool,
                                     uint32_t serializer_policy,
                                     as_error *error_p)
 {
     char*              key = NULL;
 
-    if ((!record_pp) || !(record) || !(static_pool)) {
+    if ((!record_pp) || !(as_record_p) || !(static_pool)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to put record");
         goto exit;
     }
 
     /* switch case statements for put for zend related data types */
-    AS_DEFAULT_PUT(key, record_pp, record, static_pool, serializer_policy, error_p);
+    AS_DEFAULT_PUT(key, record_pp, as_record_p, static_pool, serializer_policy, error_p);
 
 exit:
     return;
 }
 
+/* 
+ *******************************************************************************************************
+ * Creates and puts the as_record into Aerospike db by using appropriate write policy.
+ *
+ * @param as_object_p               The C client's aerospike object for the db to be written to.
+ * @param record_pp                 The record to be written.
+ * @param as_key_p                  The C client's as_key identifying the record to be written to. 
+ * @param error_p                   The C client's as_error to be set to the encountered error.
+ * @param ttl_u64                   The ttl to be set for C client's as_record.
+ * @param options_p                 The optional parameters to Aerospike::put()
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_transform_key_data_put(aerospike* as_object_p,
                                  zval **record_pp,
                                  as_key* as_key_p,
                                  as_error *error_p,
+                                 u_int32_t ttl_u32,
                                  zval* options_p)
 {
     as_policy_write             write_policy;
@@ -1383,6 +2549,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
+    record.ttl = ttl_u32;
     aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, &record);
 
 exit:
@@ -1415,6 +2582,23 @@ exit:
     return error_p->code;
 }
 
+/* 
+ *******************************************************************************************************
+ * Read specified filter bins for the record specified by get_rec_key_p.
+ *
+ * @param as_object_p               The C client's aerospike object.
+ * @param bins_array_p              The hashtable pointing to the PHP filter bins array.
+ * @param get_record_p              The C client's as_record to be read into.
+ * @param error_p                   The C client's as_error object to be
+ *                                  populated by this functon.
+ * @param get_rec_key_p             The C client's as_key that identifies the
+ *                                  record to be read.
+ * @param read_policy_p             The C client's as_policy_read to be used
+ *                                  while reading the record.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_transform_filter_bins_exists(aerospike *as_object_p,
                                        HashTable *bins_array_p,
@@ -1450,6 +2634,22 @@ exit:
     return status;
 }
 
+/* 
+ *******************************************************************************************************
+ * Read all bins for the record specified by get_rec_key_p.
+ *
+ * @param as_object_p               The C client's aerospike object.
+ * @param get_rec_key_p             The C client's as_key that identifies the
+ *                                  record to be read.
+ * @param options_p                 The optional PHP parameters for Aerospike::get().
+ * @param error_p                   The C client's as_error object to be
+ *                                  populated by this functon.
+ * @param get_record_p              The C client's as_record to be read into.
+ * @param bins_p                    The optional PHP array for filter bins.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_transform_get_record(aerospike* as_object_p,
                                as_key* get_rec_key_p,
