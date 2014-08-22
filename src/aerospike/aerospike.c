@@ -1465,7 +1465,7 @@ exit:
 
 bool record_stream_callback(const as_val* p_val, void* udata)
 {
-    as_error                *error_p;
+    as_error                error;
     userland_callback       *user_func_p;
     zend_fcall_info         *fci_p = NULL;
     zend_fcall_info_cache   *fcc_p = NULL;
@@ -1487,7 +1487,7 @@ bool record_stream_callback(const as_val* p_val, void* udata)
     MAKE_STD_ZVAL(record_p);
     array_init(record_p);
     foreach_record_callback_udata.udata_p = record_p;
-    foreach_record_callback_udata.error_p = error_p;
+    foreach_record_callback_udata.error_p = &error;
     if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
         &foreach_record_callback_udata)) {
         DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
