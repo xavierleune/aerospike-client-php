@@ -1,8 +1,6 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
 
-#include "dbg.h"
-
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
