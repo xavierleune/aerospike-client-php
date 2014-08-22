@@ -1,7 +1,7 @@
 
 # Overview
 
-The Aerospike PHP client API may be described as follows:
+The Aerospike PHP client API is described in the following sections:
 
 ### [Aerospike Class](aerospike.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
@@ -24,23 +24,17 @@ We expect the specification of the PHP client to closely describe our next
 release, including the unimplemented methods.  However, it is possible that
 some changes to the client spec will occur.
 
-# Client instance caching
+# Persistent Connections
 
-Cluster instance caching
+Initializing the C-client to connect to a specified cluster is a costly operation, so ideally the C-client should be reused for the multiple requests made against the same PHP process (as is the case for mod_php and fastCGI).
 
-The initialization of the C-client to talk to a specified cluster is a heavy operation, so ideally the C-client should be reused for multiple requests made against the same PHP process (as is the case for mod_php and fastCGI).
+The PHP developer can determine whether the Aerospike class constructor will use persistent connections or not by way of an optional boolean argument.  After the first time Aerospike::__construct() is called within the process, the extension will attempt to reuse the persistent connection.
 
-The (user land) PHP developer will pass an alias for the cluster that should be used to persistently identify the C-client instance associated with it.  After the first time Aerospike::__construct() is called in the process for a cluster specified by the alias, it should be placed in memory that was allocated using the [persistent memory API](www.php.net/manual/en/internals2.memory.persistence.php).
-
-When the process is terminated the module shutdown callbacks are called. A cleanup of the resources used by the Aerospike object should be registered with [PHP_MSHUTDOWN](http://www.php.net/manual/en/internals2.structure.modstruct.php) and include explicitly disconnecting from the cluster (aerospike_close, aerospike_destroy).
+When persistent connections are used the methods _reconnect()_ and _close()_ do not actually close the connection.  Those methods only apply to instances of class Aerospike which use non-persistent connections.
 
 # Halting a Stream
 
-Halting a query or scan stream can be done by returning (an explicit) boolean
-**false** from the callback.  The extension should capture the return value from
-the userland callback and if it is **=== false** it should return a false to the
-C-client.  The C-client will then close the sockets to the nodes involved in
-streaming results, effectively halting it.
+Halting a _query()_ or _scan()_ result stream can be done by returning (an explicit) boolean **false** from the callback.  The extension will capture the return value from the registered PHP callback, and pass it to the C-client.  The C-client will then close the sockets to the nodes involved in streaming results, effectively halting it.
 
 # Handling Unsupported Types
 
@@ -72,7 +66,7 @@ class Aerospike
     public function getLargeStack($key_z);
 
     // helper method for combining predicates, such as predicate1 AND predicate2
-    // when server implementation exists
+    // when server implementation arrives
     public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
 }
 ?>

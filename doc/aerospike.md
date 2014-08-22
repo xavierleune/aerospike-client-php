@@ -136,7 +136,7 @@ class Aerospike
 
 
     // lifecycle and connection methods
-    public int Aerospike::__construct ( array $config [, string $persistence_alias [, array $options]] )
+    public int Aerospike::__construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
     public void Aerospike::__destruct ( void )
     public boolean Aerospike::isConnected ( void )
     public void Aerospike::close ( void )

@@ -32,7 +32,7 @@ Returns a **true** or **false**.
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
 $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 750);
-$db = new Aerospike($config, 'prod-db', $opts);
+$db = new Aerospike($config, true, $opts);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);

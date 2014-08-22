@@ -30,7 +30,7 @@ public static void Aerospike::setLogHandler ( callback $log_handler )
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config, 'prod-db');
+$db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
