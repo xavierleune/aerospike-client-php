@@ -5,4 +5,4 @@ Connection - Check instantiation with empty config array
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Connection", "testEmptyArray");
 --EXPECT--
-ERR_PARAM
+ERR_CLUSTER
