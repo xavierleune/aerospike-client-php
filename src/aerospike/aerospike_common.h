@@ -18,7 +18,7 @@ typedef struct csdk_aerospike_obj {
 
 typedef struct Aerospike_object {
     zend_object std;
-    int value;
+    bool is_persistent;
     aerospike_ref *as_ref_p;
     u_int16_t is_conn_16;
 } Aerospike_object;
@@ -185,8 +185,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p,
 
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
-                                        int8_t* persistence_alias_p,
-                                        int16_t persistence_alias_len,
+                                        bool persist_flag,
                                         as_config* conf,
                                         HashTable persistent_list,
                                         int persist);

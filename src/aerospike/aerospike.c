@@ -272,12 +272,10 @@ PHP_METHOD(Aerospike, __construct)
 {
     zval*                  config_p = NULL;
     zval*                  options_p = NULL;
-    zval*                  alias = NULL;
-    int8_t*                persistence_alias_p = NULL;
-    int16_t                persistence_alias_len = 0;
     as_error               error;
     as_status              status = AEROSPIKE_OK;
     as_config              config;
+    zend_bool              persistent_connection = true;
     HashTable              persistent_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
  
@@ -291,30 +289,22 @@ PHP_METHOD(Aerospike, __construct)
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|za",
-                &config_p, &alias, &options_p) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|ba",
+                &config_p, &persistent_connection, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for construct in zend");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for construct in zend");
         goto exit;
     }
 
-    if (alias && PHP_TYPE_ISNULL(alias)) {
-        alias = NULL;
-    }
+    aerospike_obj_p->is_persistent = persistent_connection;
 
     if (PHP_TYPE_ISNOTARR(config_p) || 
-        ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
-        ((alias) && (PHP_TYPE_ISNOTSTR(alias)))) {
+        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) { 
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for construct not proper"); 
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for construct not proper");
         goto exit;
-    }
-
-    if (alias) {
-        persistence_alias_p = Z_STRVAL_P(alias);
-        persistence_alias_len = Z_STRLEN_P(alias);
     }
 
     /* configuration */
@@ -336,8 +326,8 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_helper_object_from_alias_hash(aerospike_obj_p, persistence_alias_p,
-        persistence_alias_len, &config, persistent_list, persist))){
+    if (AEROSPIKE_OK != (status = aerospike_helper_object_from_alias_hash(aerospike_obj_p,
+                    persistent_connection, &config, persistent_list, persist))){
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find object from alias");
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
@@ -559,19 +549,23 @@ PHP_METHOD(Aerospike, close)
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_ref_p->as_p, &error))) {
-        DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
+    if (aerospike_obj_p->is_persistent == false) {
+        if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_ref_p->as_p, &error))) {
+            DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
+            PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        }
+        /* Now as connection is getting closed we need to set the connection flag to false */
+        aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
+    } else {
+        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
     }
-   
-    /* Now as connection is getting closed we need to set the connection flag to false */
-    aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     RETURN_LONG(status);
 }
 

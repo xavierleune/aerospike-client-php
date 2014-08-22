@@ -1,5 +1,5 @@
 --TEST--
-Connection - Check partially different configs with different aliases
+Connection - Check persist flag passed as int.
 
 --SKIPIF--
 <?php
@@ -16,6 +16,6 @@ if (!check_for_socket(AEROSPIKE_CONFIG_NAME2, AEROSPIKE_CONFIG_PORT2)) {
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Connection", "testDiffAliasPartiallyDiffConfig");
+aerospike_phpt_runtest("Connection", "testConnectWithPersistflagPassedasInt");
 --EXPECT--
 OK
