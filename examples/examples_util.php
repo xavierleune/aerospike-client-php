@@ -1,8 +1,12 @@
 <?php
 
 global $has_pygmentize;
-if (exec("which pygmentize 2>1 &", $o, $r) == '') $has_pygmentize = false;
-else $has_pygmentize = true;
+if (exec("which pygmentize 2>&1", $o, $r) == '') {
+    $has_pygmentize = false;
+}
+else {
+    $has_pygmentize = true;
+}
 
 function colorize($str, $color, $bold = false) {
     $start = "\033[";
@@ -53,13 +57,19 @@ function display_code($path, $after, $till) {
     global $has_pygmentize;
 
     if ($has_pygmentize) {
-        $cmd = "pygmentize -lphp ";
-    } else {
-        $cmd = "cat -b ";
+        // check if the file has already been pygmentized
+        $cache_path = '/tmp/.'.basename($path);
+        if (file_exists($path) && file_exists($cache_path) &&
+            (filemtime($path) > filemtime($cache_path))) {
+            $path = $cache_path;
+        } else {
+            exec("pygmentize -fterminal256 -lphp -o$cache_path $path 2>&1", $o, $r);
+            $path = $cache_path;
+        }
     }
     $end = $till - 1;
     $len = $end - $after;
-    passthru("$cmd $path|head -n $end |tail -n $len");
+    passthru("cat -n $path 2>&1|head -n $end |tail -n $len");
     echo "\n";
 }
 

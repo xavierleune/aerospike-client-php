@@ -82,7 +82,8 @@ To install the PHP extension do:
 
     $ sudo make install
 
-Then edit the aerospike.ini file, which is usually in `/etc/php.d/`:
+Then edit the aerospike.ini file, which is usually in `/etc/php.d/` (or
+otherwise add this directive to php.ini):
 
     extension=aerospike.so
 
