@@ -11,6 +11,41 @@ Example PHP code can be found in [examples/basic_examples/](examples/basic_examp
 
 Full documentation of the Aerospike database is available at http://www.aerospike.com/docs/
 
+## Dependencies
+
+**The Aerospike PHP Client works on PHP 5.3**
+
+ - Lua 5.1.5
+ - PHP 5 development libraries
+ - [PEAR](http://us3.php.net/manual/en/install.pecl.intro.php)
+
+### RedHat 6+ and CentOS 6+
+
+The following are dependencies for:
+
+RedHat Enterprise (RHEL) 6 or newer CentOS 6 or newer
+and related distributions using yum package manager.
+
+    sudo yum groupinstall "Development Tools"
+    sudo yum install lua-devel
+    sudo yum install php-devel.x86_64 php-pear.noarch
+
+### Ubuntu 12.04
+
+The following are dependencies for:
+
+Ubuntu 12.04
+and related distributions using apt-get package manager.
+
+    sudo apt-get install build-essential
+    sudo apt-get install php5 php5-common php5-cli php5-dev php-pear
+    sudo apt-get install liblua5.1-dev
+
+### Mac OS X
+
+We recommend building Lua from source. Follow the instructions provided in the
+Lua section of the [Aerospike C Client Installation Guide](http://aerospike.com/docs/client/c/install/macosx.html#lua)
+
 ## Build Instructions
 
 To build the PHP extension, you must first invoke the setup script, which will
