@@ -1,11 +1,21 @@
 # Aerospike PHP Client
 
+**The Aerospike PHP Client works on PHP 5.3**. We are working on getting the
+extension to compile against PHP versions 5.4 and 5.5.
+
+The PHP extension was tested to build on
+
+ - Ubuntu 12.04 LTS, 14.04 LTS and related distros using the **apt-get** package manager
+ - CentOS 6.x, 7.x, RedHat 6.x, 7.x and related distros using the **yum** package manager
+ - Mac OS X 10.9 (Mavericks)
+
+Windows is currently not supported.
+
 ## Documentation
 
-Documentation of the Aerospike PHP Client may be found in the
-[doc directory](doc/README.md).  The API described there is the
-[specification](doc/aerospike.md) for the PHP Client.  Notes on the
-internals of the implementation are in [doc/internals.md](doc/internals.md).
+Documentation of the Aerospike PHP Client may be found in the [doc directory](doc/README.md).
+The API described there is the [specification](doc/aerospike.md) for the PHP Client.
+Notes on the internals of the implementation are in [doc/internals.md](doc/internals.md).
 
 Example PHP code can be found in [examples/basic_examples/](examples/basic_examples).
 
@@ -13,38 +23,42 @@ Full documentation of the Aerospike database is available at http://www.aerospik
 
 ## Dependencies
 
-**The Aerospike PHP Client works on PHP 5.3**
+In distributions such as Ubuntu 14.04 LTS, where the package manager defaults
+to versions higher than 5.3, you will need to [install PHP 5.3 manually](http://www.php.net/downloads.php).
 
- - Lua 5.1.5
- - PHP 5 development libraries
- - [PEAR](http://us3.php.net/manual/en/install.pecl.intro.php)
-
-### RedHat 6+ and CentOS 6+
-
-The following are dependencies for:
-
-RedHat Enterprise (RHEL) 6 or newer CentOS 6 or newer
-and related distributions using yum package manager.
+### CentOS and RedHat (yum)
 
     sudo yum groupinstall "Development Tools"
-    sudo yum install lua-devel
-    sudo yum install php-devel.x86_64 php-pear.noarch
+    sudo yum install openssl-devel
+    sudo yum install php-devel.x86_64 php-pear.noarch # unless installing manually
 
-### Ubuntu 12.04
+### Ubuntu and Debian (apt-get)
 
-The following are dependencies for:
-
-Ubuntu 12.04
-and related distributions using apt-get package manager.
-
-    sudo apt-get install build-essential
-    sudo apt-get install php5 php5-common php5-cli php5-dev php-pear
-    sudo apt-get install liblua5.1-dev
+    sudo apt-get install build-essential autoconf sudo apt-get install libssl-dev
+    sudo apt-get install php5-dev php-pear # unless installing manually
 
 ### Mac OS X
 
-We recommend building Lua from source. Follow the instructions provided in the
-Lua section of the [Aerospike C Client Installation Guide](http://aerospike.com/docs/client/c/install/macosx.html#lua)
+By default Mac OS X will be missing command line tools. On Mavericks (OS X 10.9)
+and higher those [can be installed without Xcode](http://osxdaily.com/2014/02/12/install-command-line-tools-mac-os-x/).
+
+    xcode-select --install # install the command line tools, if missing
+
+The required utility automake can be installed through the OS X package manager
+[Homebrew](http://brew.sh/).
+
+    ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+    brew update && brew doctor
+    brew install automake
+
+If the preinstalled PHP has a version higher than 5.3 you will need to install it
+from the [Homewbrew-PHP](https://github.com/Homebrew/homebrew-php) repository:
+
+    brew tap homebrew/dupes
+    brew tap homebrew/versions
+    brew tap homebrew/homebrew-php
+    brew install php/php53
+    php -v # verify that it is PHP 5.3.x
 
 ## Build Instructions
 
@@ -82,19 +96,16 @@ To install the PHP extension do:
 
     $ sudo make install
 
-Then edit the aerospike.ini file, which is usually in `/etc/php.d/` (or
-otherwise add this directive to php.ini):
+Now edit the php.ini file.  If PHP is configured --with-config-file-scan-dir
+(usually set to `/etc/php.d/`) you can create an `aerospike.ini` file in the
+directory, otherwise edit php.ini directly. Add the following directive:
 
     extension=aerospike.so
 
 The *aerospike* module should now be available to the PHP CLI:
 
-    $ php -m | head -5
-    [PHP Modules]
+    $ php -m | grep aerospike
     aerospike
-    bz2
-    calendar
-    Core
 
 ## Cleanup
 
@@ -112,3 +123,5 @@ the Apache License, Version 2, as stated in the file `LICENSE`.
 Individual files may be made available under their own specific license,
 all compatible with Apache License, Version 2. Please see individual files for
 details.
+
+
