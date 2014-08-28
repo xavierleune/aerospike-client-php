@@ -5,8 +5,8 @@ extension to compile against PHP versions 5.4 and 5.5.
 
 The PHP extension was tested to build on
 
- - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7 and related distros using the **apt-get** package manager
- - CentOS 6.x, 7.x, RedHat 6.x and related distros using the **yum** package manager
+ - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7 and related distros using the **apt** package manager
+ - CentOS 6.x, 7.x, RedHat 6.x, 7.x and related distros using the **yum** package manager
  - Mac OS X 10.9 (Mavericks)
 
 Windows is currently not supported.
@@ -17,7 +17,7 @@ Documentation of the Aerospike PHP Client may be found in the [doc directory](do
 The API described there is the [specification](doc/aerospike.md) for the PHP Client.
 Notes on the internals of the implementation are in [doc/internals.md](doc/internals.md).
 
-Example PHP code can be found in [examples/basic_examples/](examples/basic_examples).
+[Example PHP code](examples/) can be found in the `examples/` directory.
 
 Full documentation of the Aerospike database is available at http://www.aerospike.com/docs/
 
@@ -32,7 +32,7 @@ to versions higher than 5.3, you will need to [install PHP 5.3 manually](http://
     sudo yum install openssl-devel
     sudo yum install php-devel php-pear # unless PHP was manually installed
 
-### Ubuntu and Debian (apt-get)
+### Ubuntu and Debian (apt)
 
     sudo apt-get install build-essential autoconf libssl-dev
     sudo apt-get install php5-dev php-pear # unless PHP was manually installed

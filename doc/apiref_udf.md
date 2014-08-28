@@ -11,6 +11,16 @@ public int Aerospike::register ( string $path, string $module [, int $language =
 public int Aerospike::deregister ( string $module )
 ```
 
+### [Aerospike::listRegistered](aerospike_listregistered.md)
+```
+public int Aerospike::listRegistered ( array &$modules [, int $language ] )
+```
+
+### [Aerospike::getRegistered](aerospike_getregistered.md)
+```
+public int Aerospike::getRegistered ( string $module, string &$code )
+```
+
 ### [Aerospike::apply](aerospike_apply.md)
 ```
 public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
