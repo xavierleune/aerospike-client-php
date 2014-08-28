@@ -6,7 +6,7 @@ extension to compile against PHP versions 5.4 and 5.5.
 The PHP extension was tested to build on
 
  - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7 and related distros using the **apt-get** package manager
- - CentOS 6.x, RedHat 6.x and related distros using the **yum** package manager
+ - CentOS 6.x, 7.x, RedHat 6.x and related distros using the **yum** package manager
  - Mac OS X 10.9 (Mavericks)
 
 Windows is currently not supported.
@@ -30,12 +30,12 @@ to versions higher than 5.3, you will need to [install PHP 5.3 manually](http://
 
     sudo yum groupinstall "Development Tools"
     sudo yum install openssl-devel
-    sudo yum install php-devel.x86_64 php-pear.noarch # unless installing manually
+    sudo yum install php-devel php-pear # unless PHP was manually installed
 
 ### Ubuntu and Debian (apt-get)
 
     sudo apt-get install build-essential autoconf libssl-dev
-    sudo apt-get install php5-dev php-pear # unless installing manually
+    sudo apt-get install php5-dev php-pear # unless PHP was manually installed
 
 ### Mac OS X
 

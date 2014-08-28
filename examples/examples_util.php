@@ -1,7 +1,8 @@
 <?php
 
 global $has_pygmentize;
-if (exec("which pygmentize 2>&1", $o, $r) == '') {
+exec("which pygmentize 2>&1", $output, $exit_code);
+if ($exit_code > 0) {
     $has_pygmentize = false;
 }
 else {

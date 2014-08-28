@@ -76,20 +76,25 @@ LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
 if [ $OS = "Darwin" ] ; then
     LDFLAGS="$LDFLAGS -lcrypto"
 else
-    # Find and add the static OpenSSL "crypto" library.
-    if [ -e /usr/local/lib/libcrypto.a ] ; then
+    # Find and link to libcrypto (provided by OpenSSL)
+    ec=`ls /usr/local/lib/libcrypto.a || ls /usr/local/lib/libcrypto.so`
+    if [ $? -eq 0 ] ; then
         LIBCRYPTO="-L/usr/local/lib -lcrypto"
     else
-        if [ -e /usr/local/ssl/lib/libcrypto.a ] ; then
+        ec=`ls /usr/local/ssl/lib/libcrypto.a || ls /usr/local/ssl/lib/libcrypto.so`
+        if [ $? -eq 0 ] ; then
             LIBCRYPTO="-L/usr/local/ssl/lib -lcrypto"
         else
-            if [ -e /usr/lib64/libcrypto.a ] ; then
+            ec=`ls /usr/lib64/libcrypto.a || ls /usr/lib64/libcrypto.so`
+            if [ $? -eq 0 ] ; then
                 LIBCRYPTO="-L/usr/lib64 -lcrypto"
             else
-                if [ -e /usr/lib/x86_64-linux-gnu/libcrypto.a ] ; then
+                ec=`ls /usr/lib/x86_64-linux-gnu/libcrypto.a || ls /usr/lib/x86_64-linux-gnu/libcrypto.so`
+                if [ $? -eq 0 ] ; then
                     LIBCRYPTO="-L/usr/lib/x86_64-linux-gnu -lcrypto"
                 else
-                    if [ -e /usr/lib/libcrypto.a ] ; then
+                    ec=`ls /usr/lib/libcrypto.a || ls /usr/lib/libcrypto.so`
+                    if [ $? -eq 0 ] ; then
                         LIBCRYPTO="-L/usr/lib -lcrypto"
                     fi
                 fi
