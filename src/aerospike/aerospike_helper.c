@@ -180,22 +180,23 @@ do {                                                                          \
  * This macro is defined to register a new resource and to add hash to it.
  *******************************************************************************************************
  */
-#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                \
-do {                                                                          \
-    ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                                 \
-    ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,          \
-            val_persist);                                                     \
-    new_le.ptr = as_object_p->as_ref_p;                                       \
-    new_le.type = val_persist;                                                \
-    if (new_flag) {                                                           \
-        zend_hash_add(&EG(persistent_list), alias, alias_len,                 \
-                (void *) &new_le, sizeof(list_entry), NULL);                  \
-        goto exit;                                                            \
-    } else {                                                                  \
-        zend_hash_update(&EG(persistent_list), alias, alias_len,              \
-                (void *) &new_le, sizeof(list_entry), (void **) &le);         \
-        goto exit;                                                            \
-    }                                                                         \
+#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                 \
+do {                                                                           \
+    ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                                  \
+    ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,           \
+            val_persist);                                                      \
+    new_le.ptr = as_object_p->as_ref_p;                                        \
+    new_le.type = val_persist;                                                 \
+    if (new_flag) {                                                            \
+        zend_hash_add(&EG(persistent_list), alias, alias_len,                  \
+                (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);         \
+        goto exit;                                                             \
+    } else {                                                                   \
+        zend_hash_update(&EG(persistent_list),                                 \
+                alias, alias_len, (void *) &new_le,                            \
+                sizeof(zend_rsrc_list_entry), (void **) &le);                  \
+        goto exit;                                                             \
+    }                                                                          \
 } while(0)
 
 
@@ -254,7 +255,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         HashTable persistent_list,
                                         int val_persist)
 {
-    list_entry *le, new_le;
+    zend_rsrc_list_entry *le, new_le;
     zval* rsrc_result = NULL;
     as_status status = AEROSPIKE_OK;
     int itr_user = 0, itr_stored = 0;
@@ -304,7 +305,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         strcat(alias_to_hash, ":");
         strcat(alias_to_hash, port);
         zend_hash_add(&EG(persistent_list), alias_to_hash,
-                strlen(alias_to_hash), (void *) &new_le, sizeof(list_entry), NULL);
+                strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
         efree(alias_to_hash);
         alias_to_hash = NULL;
    }

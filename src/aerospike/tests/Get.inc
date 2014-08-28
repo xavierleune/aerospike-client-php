@@ -85,7 +85,7 @@ class Get extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($status);
         }
-        $comp_res = array_diff_assoc(self::$put_rec, $bin_arr);
+        $comp_res = array_diff_assoc_recursive(self::$put_rec, $bin_arr);
         if (!empty($comp_res)) {
             return Aerospike::ERR;
         }
@@ -118,7 +118,7 @@ class Get extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($status);
         }
-        $comp_res = array_diff_assoc(self::$put_rec, $rec_arr);
+        $comp_res = array_diff_assoc_recursive(self::$put_rec, $rec_arr);
         if (!empty($comp_res)) {
             return Aerospike::ERR;
         }
@@ -178,7 +178,7 @@ class Get extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($status);
         }
-        $comp_res = array_diff_assoc(self::$put_rec, $rec_array);
+        $comp_res = array_diff_assoc_recursive(self::$put_rec, $rec_array);
         if (!empty($comp_res)) {
             return Aerospike::ERR;
         }
@@ -425,7 +425,7 @@ class Get extends AerospikeTestCommon
       if($status != Aerospike::OK) {
           return($status);
       }
-      $comp_res = array_diff_assoc(array("bin1"=>array("speaking", "reading",
+      $comp_res = array_diff_assoc_recursive(array("bin1"=>array("speaking", "reading",
           "writing")), $get_rec);
       if (!empty($comp_res)) {
           return Aerospike::ERR;
@@ -474,7 +474,7 @@ class Get extends AerospikeTestCommon
       if($status != Aerospike::OK) {
           return($status);
       }
-      $comp_res = array_diff_assoc(array("bin1"=>$map1), $get_rec);
+      $comp_res = array_diff_assoc_recursive(array("bin1"=>$map1), $get_rec);
       if (!empty($comp_res)) {
           return Aerospike::ERR;
       }
@@ -530,7 +530,7 @@ class Get extends AerospikeTestCommon
       if($status != Aerospike::OK) {
           return($status);
       }
-      $comp_res = array_diff_assoc($rec, $get_rec);
+      $comp_res = array_diff_assoc_recursive($rec, $get_rec);
       if (!empty($comp_res)) {
           return Aerospike::ERR;
       }
@@ -612,7 +612,7 @@ class Get extends AerospikeTestCommon
      if ($status != AEROSPIKE::OK) {
          return($status);
      }
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -691,7 +691,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -747,7 +747,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -825,7 +825,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -878,7 +878,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -955,7 +955,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1009,7 +1009,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1086,7 +1086,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1137,7 +1137,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1209,7 +1209,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1259,7 +1259,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1331,7 +1331,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1394,7 +1394,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1471,7 +1471,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1526,7 +1526,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1603,7 +1603,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1654,7 +1654,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1726,7 +1726,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1776,7 +1776,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1848,7 +1848,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1903,7 +1903,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -1980,7 +1980,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2035,7 +2035,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2112,7 +2112,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2180,7 +2180,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2250,7 +2250,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2318,7 +2318,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2388,7 +2388,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2456,7 +2456,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2526,7 +2526,7 @@ class Get extends AerospikeTestCommon
          return($status);
      }
 
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res))
      {
          return self::$status_get_record_fail;
@@ -2574,7 +2574,7 @@ class Get extends AerospikeTestCommon
      if ($status != AEROSPIKE::OK) {
          return($status);
      }
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res)) {
          return self::$status_get_record_fail;
      }
@@ -2621,7 +2621,7 @@ class Get extends AerospikeTestCommon
      if ($status != AEROSPIKE::OK) {
          return($status);
      }
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res)) {
          return self::$status_get_record_fail;
      }
@@ -2668,7 +2668,7 @@ class Get extends AerospikeTestCommon
      if ($status != AEROSPIKE::OK) {
          return($status);
      }
-     $comp_res = array_diff_assoc($put_record, $get_record);
+     $comp_res = array_diff_assoc_recursive($put_record, $get_record);
      if(!empty($comp_res)) {
          return self::$status_get_record_fail;
      }

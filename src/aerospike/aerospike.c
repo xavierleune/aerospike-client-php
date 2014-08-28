@@ -287,7 +287,11 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 
     if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
         zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
+#if PHP_VERSION_ID < 50399
         zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+#else
+        object_properties_init((zend_object*) &(intern_obj_p->std), ce);
+#endif
 
         retval.handle = zend_objects_store_put(intern_obj_p, Aerospike_object_dtor, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
         retval.handlers = &Aerospike_handlers;
