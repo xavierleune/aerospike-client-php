@@ -140,7 +140,6 @@ extern as_status aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* 
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to remove UDF module\n");
         goto exit;
     }
-    printf("\n\n%d", Z_ARRVAL_PP(return_value));
 exit:
     return status;
 }
