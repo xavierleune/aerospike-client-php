@@ -202,34 +202,6 @@
 #define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
 
-#define AS_MAX_STORE_SIZE 1024
-#define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
-#define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
-
-/*
- *******************************************************************************************************
- * Static pool maintained to avoid runtime mallocs.
- * It comprises of following pools:
- * 1. Pool for Arraylist
- * 2. Pool for Hashmap
- * 3. Pool for Strings
- * 4. Pool for Integers
- * 5. Pool for Bytes
- *******************************************************************************************************
- */
-typedef struct list_map_static_pool {
-    u_int32_t        current_list_id;
-    as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
-    u_int32_t        current_map_id;
-    as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
-    as_string        string_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_str_id;
-    as_integer       integer_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_int_id;
-    as_bytes         bytes_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_bytes_id;
-} as_static_pool;
-
 /*
  *******************************************************************************************************
  * For the case of method PUT, we need to deduce the key for Record as well as

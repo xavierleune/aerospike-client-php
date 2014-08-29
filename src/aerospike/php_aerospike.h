@@ -105,6 +105,10 @@ PHP_METHOD(Aerospike, predicateEquals);
 PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, scan);
 
+PHP_METHOD(Aerospike, register);
+PHP_METHOD(Aerospike, deregister);
+PHP_METHOD(Aerospike, apply);
+
 // TBD
 // Secondary Index APIs:
 // User Defined Function (UDF) APIs:

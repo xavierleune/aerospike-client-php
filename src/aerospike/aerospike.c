@@ -210,10 +210,18 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
+    
+    /*
+     ********************************************************************
+     * UDF APIs:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, register, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, deregister, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, apply, NULL, ZEND_ACC_PUBLIC)
 #if 0 // TBD
 
     // Secondary Index APIs:
-    // User Defined Function (UDF) APIs:
     // Large Data Type (LDT) APIs:
     // Shared Memory APIs:
 
@@ -1831,6 +1839,238 @@ exit:
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     as_scan_destroy(&scan);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method : Aerospike::register()
+ *******************************************************************************************************
+ * Registers a UDF module with the Aerospike DB.
+ * Method prototype for PHP userland:
+ * public int Aerospike::register ( string $path, string $module [, int
+ *                                  $language = Aerospike::UDF_TYPE_LUA] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, register)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    char*                  path;
+    char*                  module;
+    long                   path_len;
+    long                   module_len;
+    long                   language;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "register: connection not established");
+        DEBUG_PHP_EXT_ERROR("register: connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|la",
+                &path, &path_len, &module, &module_len, &language, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for register function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for register function");
+        goto exit;
+    }
+
+    if (path_len == 0 || module_len == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 1 & 2 to be non-empty strings");
+        goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for register function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for reegister function not proper");
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_udf_register(aerospike_obj_p, &error, path))) {
+        DEBUG_PHP_EXT_ERROR("register function returned an error");
+        goto exit;
+    }
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method : Aerospike::deregister()
+ *******************************************************************************************************
+ * Removes a UDF module from the Aerospike DB.
+ * Method prototype for PHP userland:
+ * public int Aerospike::deregister ( string $module )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, deregister)
+{
+    as_status              status = AEROSPIKE_OK;
+    char*                  module;
+    long                   module_len;
+    as_error               error;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT; 
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "deregister: connection not established");
+        DEBUG_PHP_EXT_ERROR("deregister: connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a", &module, &module_len, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for deregister function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for deregister function");
+        goto exit;
+    }
+
+    if (module_len == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for deregister function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for deregister function not proper");
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_udf_deregister(aerospike_obj_p, &error, module, module_len))) {
+        DEBUG_PHP_EXT_ERROR("deregister function returned an error");
+        goto exit;
+    }
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method : Aerospike::apply()
+ *******************************************************************************************************
+ * Applies UDF on record in the Aerospike DB.
+ * Method prototype for PHP userland:
+ * public int Aerospike::apply ( array $key, string $module, string $function[,
+ *                               array $args [, mixed &$returned ]] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, apply)
+{
+    as_status              status = AEROSPIKE_OK;
+    char*                  module;
+    char*                  function_name;
+    zval*                  args = NULL;
+    zval*                  key_record_p = NULL;
+    as_error               error;
+    as_key                 as_key_for_apply_udf;
+    zval*                  return_value_of_udf = NULL;
+    long                   module_len;
+    long                   function_len;
+    int16_t                initializeKey = 0;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "apply: Connection not established");
+        DEBUG_PHP_EXT_ERROR("apply: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|aza",
+                &key_record_p, &module, &module_len, &function_name,
+                &function_len, &args, &return_value_of_udf, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for apply()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for apply()");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || ((args) && (PHP_TYPE_ISNOTARR(args)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for apply function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for apply function are not proper");
+        goto exit;
+    }
+
+    if (module_len ==0 || function_len == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 2 and 3 to be non-empty strings");
+        goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for apply function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for apply function not proper");
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                                                                     &as_key_for_apply_udf,
+                                                                     &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to iterate through apply key params");
+        DEBUG_PHP_EXT_ERROR("Unable to iterate through apply key params");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_udf_apply(aerospike_obj_p, &as_key_for_apply_udf, &error,
+                                          module, function_name, &args, &return_value_of_udf))) {
+        DEBUG_PHP_EXT_ERROR("apply function returned an error");
+        goto exit;
+    }
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_apply_udf);
+    }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     RETURN_LONG(status);
 }
 
