@@ -61,5 +61,49 @@ fi
 parse_args $@
 phpize
 ./configure "CFLAGS=-g -O3" --enable-aerospike
-make clean all "CFLAGS=-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=-L$CLIENTREPO_3X/lib -laerospike -llua -lrt -lcrypto"
+
+OS=`uname`
+#INCLUDE_LUA_5_1=/usr/include/lua5.1
+#if [ -d $INCLUDE_LUA_5_1 ] ; then
+#  LUA_SUFFIX=5.1
+#fi
+
+CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
+
+#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
+LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
+
+if [ $OS = "Darwin" ] ; then
+    LDFLAGS="$LDFLAGS -lcrypto"
+else
+    # Find and link to libcrypto (provided by OpenSSL)
+    ec=`ls /usr/local/lib/libcrypto.a || ls /usr/local/lib/libcrypto.so`
+    if [ $? -eq 0 ] ; then
+        LIBCRYPTO="-L/usr/local/lib -lcrypto"
+    else
+        ec=`ls /usr/local/ssl/lib/libcrypto.a || ls /usr/local/ssl/lib/libcrypto.so`
+        if [ $? -eq 0 ] ; then
+            LIBCRYPTO="-L/usr/local/ssl/lib -lcrypto"
+        else
+            ec=`ls /usr/lib64/libcrypto.a || ls /usr/lib64/libcrypto.so`
+            if [ $? -eq 0 ] ; then
+                LIBCRYPTO="-L/usr/lib64 -lcrypto"
+            else
+                ec=`ls /usr/lib/x86_64-linux-gnu/libcrypto.a || ls /usr/lib/x86_64-linux-gnu/libcrypto.so`
+                if [ $? -eq 0 ] ; then
+                    LIBCRYPTO="-L/usr/lib/x86_64-linux-gnu -lcrypto"
+                else
+                    ec=`ls /usr/lib/libcrypto.a || ls /usr/lib/libcrypto.so`
+                    if [ $? -eq 0 ] ; then
+                        LIBCRYPTO="-L/usr/lib -lcrypto"
+                    fi
+                fi
+            fi
+        fi
+    fi
+    LDFLAGS="$LDFLAGS $LIBCRYPTO -lrt"
+fi
+
+make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=$LDFLAGS"
+
 test-cleanup

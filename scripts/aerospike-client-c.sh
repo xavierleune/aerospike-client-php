@@ -122,12 +122,24 @@ detect_linux()
         return 0
         ;;
 
-      * )
-        echo "error: ${DIST_NAME} is not supported."
-        return 1
-        ;;
-
     esac
+  fi
+
+  # Check for /etc/centos-release
+  if [ -f /etc/redhat-release ]; then
+      vers=$(cat /etc/redhat-release | sed 's/.* release //' | cut -d'.' -f1)
+      dist=$(cat /etc/redhat-release | sed 's/release.*//')
+      case ${vers} in
+          "6" | "7" )
+            echo "el6"  "rpm"
+            return 0
+            ;;
+
+          * )
+            echo "error: ${dist} ${vers} is not supported."
+            return 1
+            ;;
+      esac
   fi
 
   echo "error: Linux Distro not supported"
