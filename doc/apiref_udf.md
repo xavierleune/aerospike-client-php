@@ -3,22 +3,22 @@
 
 ### [Aerospike::register](aerospike_register.md)
 ```
-public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA  [, array $options ]] )
 ```
 
 ### [Aerospike::deregister](aerospike_deregister.md)
 ```
-public int Aerospike::deregister ( string $module )
+public int Aerospike::deregister ( string $module [, array $options ])
 ```
 
 ### [Aerospike::listRegistered](aerospike_listregistered.md)
 ```
-public int Aerospike::listRegistered ( array &$modules [, int $language ] )
+public int Aerospike::listRegistered ( array &$modules [, int $language  [, array $options ]] )
 ```
 
 ### [Aerospike::getRegistered](aerospike_getregistered.md)
 ```
-public int Aerospike::getRegistered ( string $module, string &$code )
+public int Aerospike::getRegistered ( string $module, string &$code [, array $options ] )
 ```
 
 ### [Aerospike::apply](aerospike_apply.md)

@@ -6,7 +6,7 @@ Aerospike::register - registers a UDF module with the Aerospike DB
 ## Description
 
 ```
-public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA [, array $options ]] )
 ```
 
 **Aerospike::register()** will register a UDF module named *module* with the
@@ -22,6 +22,8 @@ Currently the only UDF *language* supported is Lua.  See the
 **module** the name of the UDF module registered against the Aerospike DB.
 
 **language** one of *Aerospike::UDF_TYPE_\**
+
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**.
 
 ## Return Values
 

@@ -6,7 +6,7 @@ Aerospike::deregister - removes a UDF module from the Aerospike DB
 ## Description
 
 ```
-public int Aerospike::deregister ( string $module )
+public int Aerospike::deregister ( string $module [, array $options ] )
 ```
 
 **Aerospike::deregister()** will remove a UDF module named *module* from the
@@ -15,6 +15,8 @@ Aerospike DB.
 ## Parameters
 
 **module** the name of the UDF module to remove from the Aerospike DB.
+
+**options** including **Aerospike::OPT_WRITE_TIMEOUT**.
 
 ## Return Values
 

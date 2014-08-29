@@ -6,7 +6,7 @@ Aerospike::getRegistered - gets the code for a UDF module registered with the se
 ## Description
 
 ```
-public int Aerospike::getRegistered ( string $module, string &$code )
+public int Aerospike::getRegistered ( string $module, string &$code [, array $options ] )
 ```
 
 **Aerospike::getRegistered()** populates *code* with the content of the matching
@@ -15,6 +15,8 @@ UDF *module* that was previously registered with the server.
 ## Parameters
 
 **module** the name of the UDF module to get from the server.
+
+**options** including **Aerospike::OPT_READ_TIMEOUT**.
 
 ## Return Values
 
