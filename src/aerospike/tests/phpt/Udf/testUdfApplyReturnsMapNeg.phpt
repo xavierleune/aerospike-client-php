@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Udf", "testUdfApplyReturnsMapNeg");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Udf", "testUdfApplyReturnsMapNeg");
 --EXPECT--
-ERR_PARAM
+OK

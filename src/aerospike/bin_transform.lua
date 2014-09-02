@@ -28,7 +28,6 @@ function bin_udf_operation_string(record, bin_name, str)
 end
 
 function bin_udf_operation_bool(record , bin_name)
-    aerospike:remove(record)
     return record[bin_name]
 end
 

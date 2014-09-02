@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Udf", "testUdfListRegisteredModulesNeg");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Udf", "testUdfListRegisteredModulesNeg");
 --EXPECT--
-ERR_PARAM
+OK

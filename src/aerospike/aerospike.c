@@ -1929,7 +1929,7 @@ PHP_METHOD(Aerospike, register)
 
     if (path_len == 0 || module_len == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Expects parameter 1 & 2 to be non-empty strings");
         goto exit;
     }
@@ -1997,7 +1997,7 @@ PHP_METHOD(Aerospike, deregister)
 
     if (module_len == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Expects parameter 1 to be non-empty string");
         goto exit;
     }
@@ -2041,6 +2041,8 @@ PHP_METHOD(Aerospike, apply)
     as_error               error;
     as_key                 as_key_for_apply_udf;
     zval*                  return_value_of_udf_p = NULL;
+    zval*                  module_zval_p = NULL;
+    zval*                  function_zval_p = NULL;
     long                   module_len = 0;
     long                   function_len = 0;
     int16_t                initializeKey = 0;
@@ -2061,9 +2063,9 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|aza",
-                &key_record_p, &module_p, &module_len, &function_name_p,
-                &function_len, &args_p, &return_value_of_udf_p, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zza",
+                &key_record_p, &module_zval_p, &function_zval_p, &args_p,
+                &return_value_of_udf_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for apply()");
@@ -2072,7 +2074,10 @@ PHP_METHOD(Aerospike, apply)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) || ((args_p) &&
-                (PHP_TYPE_ISNOTARR(args_p)))) {
+                (PHP_TYPE_ISNOTARR(args_p)) &&
+                (PHP_TYPE_ISNOTNULL(args_p))) ||
+            (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(function_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Input parameters (type) for apply function are not proper");
@@ -2080,9 +2085,21 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (module_len ==0 || function_len == 0) {
+    if (args_p && PHP_TYPE_ISNULL(args_p)) {
+        args_p = NULL;
+    }
+    if (return_value_of_udf_p) {
+        zval_dtor(return_value_of_udf_p);
+    }
+    module_p = Z_STRVAL_P(module_zval_p);
+    function_name_p = Z_STRVAL_P(function_zval_p);
+
+    module_len = Z_STRLEN_P(module_zval_p);
+    function_len = Z_STRLEN_P(function_zval_p);
+
+    if (module_len == 0 || function_len == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Expects parameter 2 and 3 to be non-empty strings");
         goto exit;
     }
@@ -2117,7 +2134,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_apply_udf);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+//    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     RETURN_LONG(status);
 }
 
@@ -2233,7 +2250,7 @@ PHP_METHOD(Aerospike, getRegistered)
 
     if(module_len == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_PARAM,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Expects parameter 1 to be non-empty string");
         goto exit;
     }

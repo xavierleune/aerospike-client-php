@@ -36,6 +36,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p,
     uint8_t*                buff_p = NULL;
     uint32_t                read;
     as_bytes                udf_content;
+    as_bytes*               udf_content_p = NULL;
     as_policy_info          info_policy;
 
     if ((language == -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
@@ -66,7 +67,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p,
 
     bytes_p = (uint8_t *) emalloc(content_size + 1);
     if (bytes_p == NULL) {
-        PHP_EXT_SET_AS_ERROR(error_p, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Memory allocation failed for contents of UDF");
         DEBUG_PHP_EXT_DEBUG("Memory allocation failed for contents of UDF");
         goto exit;
@@ -81,12 +82,13 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p,
     }
 
     as_bytes_init_wrap(&udf_content, bytes_p, size, true);
+    udf_content_p = &udf_content;
     /*
      * Register the UDF file in the database cluster.
      */
     if (AEROSPIKE_OK != aerospike_udf_put(aerospike_obj_p->as_ref_p->as_p,
                 error_p, &info_policy, path_p, language - AS_UDF_TYPE,
-                      &udf_content)) {
+                      udf_content_p)) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
@@ -94,7 +96,9 @@ exit:
     if (file_p) {
         fclose(file_p);
     }
-    as_bytes_destroy(&udf_content);
+    if (udf_content_p) {
+        as_bytes_destroy(udf_content_p);
+    }
     return error_p->code;
 }
 
@@ -155,7 +159,7 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
     strncpy(file_name_p, module_p, module_len);
     strcat(file_name_p, file_extension_p);
     if (AEROSPIKE_OK != aerospike_udf_remove(aerospike_obj_p->as_ref_p->as_p,
-                error_p, &info_policy, file_name_p)) {
+                error_p, NULL, /*&info_policy,*/ file_name_p)) {
         DEBUG_PHP_EXT_ERROR(error_p->message);
         goto exit;
     }
@@ -192,6 +196,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         zval** args_pp, zval* return_value_p, zval* options_p)
 {
     as_arraylist                args_list;
+    as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
     as_val*                     udf_result_p = NULL;
     foreach_callback_udata      udf_result_callback_udata;
@@ -204,29 +209,33 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    udf_result_callback_udata.udata_p = return_value_p;
-    udf_result_callback_udata.error_p = error_p;
-
-    as_arraylist_inita(&args_list,
-            zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
-    AS_LIST_PUT(NULL, args_pp, &args_list, &udf_pool, NULL, error_p);
+    if ((*args_pp)) {
+        as_arraylist_inita(&args_list,
+                zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+        args_list_p = &args_list;
+        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, NULL, error_p);
+    }
 
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
                     error_p, &write_policy, as_key_p, module_p, function_p,
-                    &args_list, &udf_result_p))) {
+                    args_list_p, &udf_result_p))) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
 
-    AS_DEFAULT_GET(NULL, udf_result_p, &udf_result_callback_udata);
+    if (return_value_p) {
+        udf_result_callback_udata.udata_p = return_value_p;
+        udf_result_callback_udata.error_p = error_p;
+        AS_DEFAULT_GET(NULL, udf_result_p, &udf_result_callback_udata);
+    }
      
 exit:
     if (udf_result_p) {
         as_val_destroy(udf_result_p);
     }
     
-    if (&args_list) {
-        as_arraylist_destroy(&args_list);
+    if (args_list_p) {
+        as_arraylist_destroy(args_list_p);
     }
 
     /* clean up the as_* objects that were initialised */

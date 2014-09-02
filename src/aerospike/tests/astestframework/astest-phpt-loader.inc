@@ -36,7 +36,7 @@ $status_codes = array(0=>"OK",
                       1204=>"ERR_INDEX_NOT_READABLE",
                       1205=>"ERR_INDEX_NAME_MAXLEN",
                       1206=>"ERR_INDEX_MAXCOUNT", 
-                      1300=>"AEROSPIKE_ERR_UDF",
+                      1300=>"ERR_UDF",
                       1301=>"ERR_UDF_NOT_FOUND",
                       2000=> "Parameter_Exception", 
                       2001=>"Undefined_Error",
@@ -56,6 +56,7 @@ function aerospike_phpt_runtest($clsname, $name) {
     # If any assertions fail here, PHPUnitCompat will fail the test
     # and complain.
     $rv= $obj->runSingleTest($name);
+    #printf("\n\nBhushan: %d", $rv);
     global $status_codes;
     printf("%s", ($status_codes[$rv]));
 }

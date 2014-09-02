@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Udf", "testUdfDeregisterUnknownModule");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Udf", "testUdfDeregisterUnknownModule");
 --EXPECT--
-ERR_PARAM
+OK

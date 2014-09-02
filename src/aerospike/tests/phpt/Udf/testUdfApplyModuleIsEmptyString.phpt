@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Udf", "testUdfApplyModuleIsEmptyString");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Udf", "testUdfApplyModuleIsEmptyString");
 --EXPECT--
-ERR_PARAM
+OK
