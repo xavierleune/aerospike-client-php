@@ -1,14 +1,14 @@
 --TEST--
-Apply UDF on record containing Map.
+Deregister UDF module which is not registered.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Udf", "testUdfOnMap");
+aerospike_phpt_skipif("Udf", "testUdfDeregisterUnknownModule");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Udf", "testUdfOnMap");
+aerospike_phpt_runtest("Udf", "testUdfDeregisterUnknownModule");
 --EXPECT--
-OK
+ERR_PARAM

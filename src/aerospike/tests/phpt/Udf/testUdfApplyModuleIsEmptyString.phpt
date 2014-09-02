@@ -1,14 +1,14 @@
 --TEST--
-Apply UDF on record containing Map.
+Apply UDF on record, Where Module name is empty string.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Udf", "testUdfOnMap");
+aerospike_phpt_skipif("Udf", "testUdfApplyModuleIsEmptyString");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Udf", "testUdfOnMap");
+aerospike_phpt_runtest("Udf", "testUdfApplyModuleIsEmptyString");
 --EXPECT--
-OK
+ERR_PARAM

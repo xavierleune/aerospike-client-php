@@ -1,14 +1,14 @@
 --TEST--
-Apply UDF on record containing Map.
+List registered LUA(UDF_TYPE_LUA) modules.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Udf", "testUdfOnMap");
+aerospike_phpt_skipif("Udf", "testUdfListRegisteredLUAModules");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Udf", "testUdfOnMap");
+aerospike_phpt_runtest("Udf", "testUdfListRegisteredLUAModules");
 --EXPECT--
 OK
