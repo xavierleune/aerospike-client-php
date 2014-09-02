@@ -523,7 +523,7 @@ do {                                                                           \
             AS_##datatype##_##method##_CALLBACK,                               \
             &foreach_##datatype##_callback_udata);                             \
     ADD_##level##_##action##_ZVAL(array, key,                                  \
-            foreach_##datatype##_callback_udata.udata_p);                      \
+            foreach_##datatype##_callback_udata.udata_p)                       \
 } while(0);
 
 /* 
@@ -962,16 +962,24 @@ do {                                                                           \
  *******************************************************************************************************
  */
 #define ADD_MAP_ASSOC_ZVAL(array, key, store)                                  \
-    add_assoc_zval(array, as_string_get((as_string *) key), store)
+    add_assoc_zval(array, as_string_get((as_string *) key), store);
 
 #define ADD_MAP_INDEX_ZVAL(array, key, store)                                  \
-    add_index_zval(array, as_integer_get((as_integer *) key), store)
+    add_index_zval(array, as_integer_get((as_integer *) key), store);
 
+/*
+ * key will be NULL in case of UDF methods.
+ * NULL will differentiate UDF from normal GET calls.
+ */
 #define ADD_DEFAULT_ASSOC_ZVAL(array, key, store)                              \
-    add_assoc_zval(array, key, store)
+    if (key == NULL) {                                                         \
+        ZVAL_ZVAL((zval *) array, store, 1, 0);                                \
+    } else {                                                                   \
+        add_assoc_zval((zval *) array, key, store);                            \
+    }
 
 #define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
-    add_next_index_zval(array, store)
+    add_next_index_zval(array, store);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
 

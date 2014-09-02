@@ -335,6 +335,10 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         as_config* conf,
                                         HashTable persistent_list,
                                         int persist);
+
+extern void
+aerospike_helper_free_static_pool(as_static_pool *static_pool);
+
 /*
  ******************************************************************************************************
  * Extern declarations of UDF functions.
@@ -343,21 +347,42 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 
 extern as_status
 aerospike_udf_register(Aerospike_object* aerospike_obj_p,
-        as_error* error_p,
-        char *path);
+                       as_error* error_p,
+                       char *path_p,
+                       long language,
+                       zval *options_p);
 
 extern as_status
 aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
-        as_error* error_p,
-        char *module,
-        long module_len);
+                         as_error* error_p,
+                         char *module_p,
+                         long module_len,
+                         long language,
+                         zval *options_p);
 
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
-        as_key* as_key_p,
-        as_error* error_p,
-        char* module,
-        char* function,
-        zval** args,
-        zval** return_value);
+                    as_key* as_key_p,
+                    as_error* error_p,
+                    char* module_p,
+                    char* function_p,
+                    zval** args_pp,
+                    zval* return_value_p,
+                    zval* options_p);
+
+extern as_status
+aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
+                                      as_error *error_p,
+                                      zval* array_of_modules_p,
+                                      long language,
+                                      zval* options_p);
+
+extern as_status
+aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
+                                         as_error *error_p,
+                                         char* module_p,
+                                         long module_len,
+                                         zval* udf_code_p,
+                                         long language,
+                                         zval* options_p);
 #endif

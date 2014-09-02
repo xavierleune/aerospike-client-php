@@ -7,66 +7,95 @@
 #include "aerospike/aerospike.h"
 #include "aerospike_common.h"
 #include "aerospike/as_udf.h"
+#include "aerospike_policy.h"
+
+#define UDF_MODULE_NAME "name"
+#define UDF_MODULE_TYPE "type"
+
 /*
  ******************************************************************************************************
  Registers a UDF module.
  *
  * @param aerospike_obj_p           The C client's aerospike object.
  * @param error_p                   The C client's as_error to be set to the encountered error.
- * @param path                      Path to the module on the client side
+ * @param path_p                    The path to the module on the client side
+ * @param language                  The Aerospike::UDF_TYPE_* constant.
+ * @param options_p                 The optional policy.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
  */
-extern as_status aerospike_udf_register(Aerospike_object* aerospike_obj_p,
-        as_error* error_p, char* path)
+extern as_status
+aerospike_udf_register(Aerospike_object* aerospike_obj_p,
+        as_error* error_p, char* path_p, long language, zval* options_p)
 {
-    as_status               status = AEROSPIKE_OK;
-    FILE*                   file;
-    long                    size = 0;
-    long                    content_size;
-    uint8_t*                bytes;
-    uint8_t*                buff;
-    int                     read;
+    FILE*                   file_p = NULL;
+    uint32_t                size = 0;
+    uint32_t                content_size;
+    uint8_t*                bytes_p = NULL;
+    uint8_t*                buff_p = NULL;
+    uint32_t                read;
     as_bytes                udf_content;
+    as_policy_info          info_policy;
 
-    file = fopen(path, "r");
+    if ((language == -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Invalid Value for language");
+            DEBUG_PHP_EXT_ERROR("Invalid value for language");
+            goto exit;
+    }
 
-    if (!file) {
-        PHP_EXT_SET_AS_ERROR(error_p, AEROSPIKE_ERR_PARAM, "Cannot open script file %s", path);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
 
-    fseek(file, 0L, SEEK_END);
-    content_size = ftell(file);
-    fseek(file, 0L, SEEK_SET);
+    file_p = fopen(path_p, "r");
 
-    bytes = (uint8_t *) malloc(content_size+1);
-    if (bytes == NULL) {
-        PHP_EXT_SET_AS_ERROR(error_p, AEROSPIKE_ERR, "Memory allocation failed for contents of UDF");
+    if (!file_p) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                "Cannot open script file");
+        DEBUG_PHP_EXT_DEBUG("Cannot open script file");
         goto exit;
     }
 
-    buff = bytes;
-    read = (int) fread(buff, 1, 512, file);
+    fseek(file_p, 0L, SEEK_END);
+    content_size = ftell(file_p);
+    fseek(file_p, 0L, SEEK_SET);
+
+    bytes_p = (uint8_t *) emalloc(content_size + 1);
+    if (bytes_p == NULL) {
+        PHP_EXT_SET_AS_ERROR(error_p, AEROSPIKE_ERR,
+                "Memory allocation failed for contents of UDF");
+        DEBUG_PHP_EXT_DEBUG("Memory allocation failed for contents of UDF");
+        goto exit;
+    }
+
+    buff_p = bytes_p;
+    read = (int) fread(buff_p, 1, 512, file_p);
     while (read) {
         size += read;
-        buff += read;
-        read = (int)fread(buff, 1, 512, file);
+        buff_p += read;
+        read = (int)fread(buff_p, 1, 512, file_p);
     }
 
-    as_bytes_init_wrap(&udf_content, bytes, size, true);
+    as_bytes_init_wrap(&udf_content, bytes_p, size, true);
     /*
      * Register the UDF file in the database cluster.
      */
-    if (aerospike_udf_put(aerospike_obj_p->as_ref_p->as_p, error_p, NULL, path, AS_UDF_TYPE_LUA,
-                &udf_content) != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to register UDF module");
+    if (AEROSPIKE_OK != aerospike_udf_put(aerospike_obj_p->as_ref_p->as_p,
+                error_p, &info_policy, path_p, language - AS_UDF_TYPE,
+                      &udf_content)) {
+        DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
 exit:
+    if (file_p) {
+        fclose(file_p);
+    }
     as_bytes_destroy(&udf_content);
-    return status;
+    return error_p->code;
 }
 
 /*
@@ -75,34 +104,66 @@ exit:
  *
  * @param aerospike_obj_p           The C client's aerospike object.
  * @param error_p                   The C client's as_error to be set to the encountered error.
- * @param module                    The name of the UDF module to remove from the Aerospike DB.
- * @module_len                      The module name length.
+ * @param module_p                  The name of the UDF module to remove from the Aerospike DB.
+ * @param module_len                The module name length.
+ * @param options_p                 The optional policy.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
  */
-extern as_status aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
-        as_error* error_p, char* module, long module_len)
+extern as_status
+aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
+        as_error* error_p, char* module_p, long module_len,
+        long language, zval* options_p)
 {
-    as_status               status = AEROSPIKE_OK;
-    const char*             lua_suffix = ".lua";
-    char*                   file_name;
-    long                    file_name_len;
+    uint8_t*                file_extension_p = NULL;
+    uint8_t*                file_name_p = NULL;
+    uint32_t                file_name_len = 0;
+    as_policy_info          info_policy;
+    
+    if ((language == -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Invalid Value for language");
+            DEBUG_PHP_EXT_ERROR("Invalid value for language");
+            goto exit;
+    }
 
-    file_name_len = module_len + strlen(lua_suffix)+1;
-    file_name = ecalloc(1, file_name_len);
-    strncpy(file_name, module, module_len);
-    strcat(file_name, lua_suffix);
-    if (aerospike_udf_remove(aerospike_obj_p->as_ref_p->as_p, error_p, NULL, file_name) != AEROSPIKE_OK) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to remove UDF module");
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    /*
+     * Add support for other UDF languages here if and when required.
+     * Currently, only LUA is supported.
+     */
+
+    switch(language) {
+        case UDF_TYPE_LUA:
+            file_extension_p = ".lua";
+            break;
+        default:
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Invalid Value for language");
+            DEBUG_PHP_EXT_ERROR("Invalid value for language");
+            goto exit;
+    }
+
+    file_name_len = module_len + strlen(file_extension_p) + 1;
+    file_name_p = ecalloc(1, file_name_len);
+    strncpy(file_name_p, module_p, module_len);
+    strcat(file_name_p, file_extension_p);
+    if (AEROSPIKE_OK != aerospike_udf_remove(aerospike_obj_p->as_ref_p->as_p,
+                error_p, &info_policy, file_name_p)) {
+        DEBUG_PHP_EXT_ERROR(error_p->message);
         goto exit;
     }
 exit:
-    if (file_name) {
-        efree(file_name);
+    if (file_name_p) {
+        efree(file_name_p);
     }
-    return status;
+    return error_p->code;
 }
 
 /*
@@ -113,33 +174,218 @@ exit:
  * @param as_key_p                  The C client's as_key that identifies the
  *                                  record on which UDF will be applied.
  * @param error_p                   The C client's as_error to be set to the encountered error.
- * @param module                    The name of the UDF module registered
+ * @param module_p                  The name of the UDF module registered
  *                                  against the Aerospike DB.
- * @param function                  the name of the function to be applied to
+ * @param function_p                The name of the function to be applied to
  *                                  the record.
- * @param args                      An array of arguments for the UDF.
- * @param return_value              It will contain result value of calling the
+ * @param args_pp                   An array of arguments for the UDF.
+ * @param return_value_p            It will contain result value of calling the
  *                                  UDF.
+ * @param options_p                 The optional policy.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
  */
-extern as_status aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* as_key_p,
-        as_error* error_p, char* module, char* function, zval** args, zval** return_value)
+extern as_status
+aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
+        as_key* as_key_p, as_error* error_p, char* module_p, char* function_p,
+        zval** args_pp, zval* return_value_p, zval* options_p)
 {
-    as_status              status = AEROSPIKE_OK;
-    as_arraylist           args_list;
-    as_static_pool         udf_pool = {0};
+    as_arraylist                args_list;
+    as_static_pool              udf_pool = {0};
+    as_val*                     udf_result_p = NULL;
+    foreach_callback_udata      udf_result_callback_udata;
+    uint32_t                    iter = 0;
+    as_policy_write             write_policy;
 
-    as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_PP(args)));
-    AS_LIST_PUT(NULL, args, &args_list, &udf_pool, NULL, error_p);
-
-    if (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p, error_p, NULL,
-                as_key_p, module, function, &args_list, return_value) != AEROSPIKE_OK) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to remove UDF module\n");
+    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL, options_p, error_p);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
+
+    udf_result_callback_udata.udata_p = return_value_p;
+    udf_result_callback_udata.error_p = error_p;
+
+    as_arraylist_inita(&args_list,
+            zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+    AS_LIST_PUT(NULL, args_pp, &args_list, &udf_pool, NULL, error_p);
+
+    if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
+                    error_p, &write_policy, as_key_p, module_p, function_p,
+                    &args_list, &udf_result_p))) {
+        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        goto exit;
+    }
+
+    AS_DEFAULT_GET(NULL, udf_result_p, &udf_result_callback_udata);
+     
 exit:
-    return status;
+    if (udf_result_p) {
+        as_val_destroy(udf_result_p);
+    }
+    
+    if (&args_list) {
+        as_arraylist_destroy(&args_list);
+    }
+
+    /* clean up the as_* objects that were initialised */
+    aerospike_helper_free_static_pool(&udf_pool);
+
+    return error_p->code;
 }
+
+/*
+ ******************************************************************************************************
+ Lists the UDF modules registered with the server.
+ *
+ * @param aerospike_obj_p           The C client's aerospike object.
+ * @param error_p                   The C client's as_error to be set to the encountered error.
+ * @param array_of_modules_p        An array of registered UDF modules
+ *                                  against the Aerospike DB to be populated by
+ *                                  this function.
+ * @param language                  Optionally filters a subset of modules
+ *                                  matching the given type.
+ * @options_p                       The optional parameters to the
+ *                                  Aerospike::listRegistered().
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
+        as_error* error_p, zval* array_of_modules_p, long language,
+        zval* options_p)
+{
+    as_udf_files            udf_files;
+    uint32_t                init_udf_files = 0; 
+    uint32_t                i=0;
+    as_policy_info          info_policy;
+
+    if ((language != -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Invalid Value for language");
+            DEBUG_PHP_EXT_ERROR("Invalid value for language");
+            goto exit;
+    }
+
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    as_udf_files_init(&udf_files, 0);
+    init_udf_files = 1;
+    if (AEROSPIKE_OK != aerospike_udf_list(aerospike_obj_p->as_ref_p->as_p,
+                error_p, &info_policy, &udf_files)) {
+        DEBUG_PHP_EXT_ERROR(error_p->message);
+        goto exit;
+    }
+
+    for (i = 0; i < udf_files.size; i++) {
+        if ((language != -1) && ((udf_files.entries[i].type) != 
+                    (language - AS_UDF_TYPE))) {
+                continue;
+        }
+        zval* module_p = NULL;
+        MAKE_STD_ZVAL(module_p);
+        array_init(module_p);
+        add_assoc_stringl(module_p, UDF_MODULE_NAME, udf_files.entries[i].name,
+                strlen(udf_files.entries[i].name), 1);
+        add_assoc_long(module_p, UDF_MODULE_TYPE,
+                (udf_files.entries[i].type + AS_UDF_TYPE));
+        add_next_index_zval(array_of_modules_p, module_p);
+    }
+
+exit:
+    if (init_udf_files) {
+        as_udf_files_destroy(&udf_files);
+    }
+    return error_p->code;
+}
+
+/*
+ ******************************************************************************************************
+ Get the code of registered UDF module.
+ *
+ * @param aerospike_obj_p           The C client's aerospike object.
+ * @param error_p                   The C client's as_error to be set to the encountered error.
+ * @param module_p                  The name of the UDF module to get from the
+ *                                  server.
+ * @param module_len                Length of UDF module name.
+ * @param udf_code_p                Code of the UDF to be populated by this
+ *                                  function.
+ * @param language                  The Aerospike::UDF_TYPE_* constant.
+ * @param options_p                 The optional policy.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
+        as_error* error_p, char* module_p, long module_len, zval* udf_code_p,
+        long language, zval* options_p)
+{
+    uint8_t*                file_extension_p = NULL;
+    uint8_t*                file_name_p = NULL;
+    uint32_t                file_name_len = 0;
+    uint32_t                init_udf_file = 0;
+    as_udf_file             udf_file;
+    as_policy_info          info_policy;
+
+    if ((language != -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Invalid Value for language");
+            DEBUG_PHP_EXT_ERROR("Invalid value for language");
+            goto exit;
+    }
+
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    /*
+     * Add support for other UDF languages here if and when required.
+     * Currently, only LUA is supported.
+     */
+
+    switch(language) {
+        case UDF_TYPE_LUA:
+            file_extension_p = ".lua";
+            break;
+        default:
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Invalid Value for language");
+            DEBUG_PHP_EXT_ERROR("Invalid value for language");
+            goto exit;
+    }
+
+    file_name_len = module_len + strlen(file_extension_p) + 1;
+    file_name_p = ecalloc(1, file_name_len);
+    strncpy(file_name_p, module_p, module_len);
+    strcat(file_name_p, file_extension_p);
+
+    as_udf_file_init(&udf_file);
+    init_udf_file = 1;
+    
+    if (AEROSPIKE_OK != aerospike_udf_get(aerospike_obj_p->as_ref_p->as_p,
+                error_p, &info_policy, file_name_p, (language - AS_UDF_TYPE),
+                &udf_file)) {
+        DEBUG_PHP_EXT_ERROR(error_p->message);
+        goto exit;
+    }
+
+    ZVAL_STRINGL(udf_code_p, udf_file.content.bytes, udf_file.content.size, 1);
+exit:
+    if (init_udf_file) {
+        as_udf_file_destroy(&udf_file);
+    }
+    if (file_name_p) {
+        efree(file_name_p);
+    }
+    return error_p->code;
+}
+
