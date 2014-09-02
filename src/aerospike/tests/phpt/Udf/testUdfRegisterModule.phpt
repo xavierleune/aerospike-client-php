@@ -1,14 +1,14 @@
 --TEST--
-Apply UDF on record containing Map.
+Registers UDF Module.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Udf", "testUdfOnMap");
+aerospike_phpt_skipif("Udf", "testUdfRegisterModule");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Udf", "testUdfOnMap");
+aerospike_phpt_runtest("Udf", "testUdfRegisterModule");
 --EXPECT--
 OK
