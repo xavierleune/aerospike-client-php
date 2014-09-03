@@ -166,10 +166,11 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     as_static_pool              udf_pool = {0};
     as_val*                     udf_result_p = NULL;
     foreach_callback_udata      udf_result_callback_udata;
-    uint32_t                    iter = 0;
+    uint32_t                    serializer_policy = -1;
     as_policy_write             write_policy;
 
-    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL, options_p, error_p);
+    set_policy(NULL, &write_policy, NULL, NULL, NULL, &serializer_policy,
+            options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -179,7 +180,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         as_arraylist_inita(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, NULL, error_p);
+        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p);
     }
 
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
