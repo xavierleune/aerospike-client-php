@@ -2134,7 +2134,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_apply_udf);
     }
-//    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     RETURN_LONG(status);
 }
 

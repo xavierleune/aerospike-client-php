@@ -159,7 +159,7 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
     strncpy(file_name_p, module_p, module_len);
     strcat(file_name_p, file_extension_p);
     if (AEROSPIKE_OK != aerospike_udf_remove(aerospike_obj_p->as_ref_p->as_p,
-                error_p, NULL, /*&info_policy,*/ file_name_p)) {
+                error_p, NULL, file_name_p)) {
         DEBUG_PHP_EXT_ERROR(error_p->message);
         goto exit;
     }

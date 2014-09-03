@@ -56,7 +56,6 @@ function aerospike_phpt_runtest($clsname, $name) {
     # If any assertions fail here, PHPUnitCompat will fail the test
     # and complain.
     $rv= $obj->runSingleTest($name);
-    #printf("\n\nBhushan: %d", $rv);
     global $status_codes;
     printf("%s", ($status_codes[$rv]));
 }
