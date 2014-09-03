@@ -18,12 +18,12 @@ public int Aerospike::listRegistered ( array &$modules [, int $language  [, arra
 
 ### [Aerospike::getRegistered](aerospike_getregistered.md)
 ```
-public int Aerospike::getRegistered ( string $module, string &$code [, array $options ] )
+public int Aerospike::getRegistered ( string $module, string &$code [, int $language = Aerospike::UDF_TYPE_LUA [, array $options ]] )
 ```
 
 ### [Aerospike::apply](aerospike_apply.md)
 ```
-public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
+public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options]]] )
 ```
 
 ### [Aerospike::aggregate](aerospike_aggregate.md)
