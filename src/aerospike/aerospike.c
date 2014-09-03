@@ -2005,7 +2005,7 @@ PHP_METHOD(Aerospike, deregister)
     }
 
     if (((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
-            (PHP_TYPE_ISNOTSTR(module_zval_p)))
+            (PHP_TYPE_ISNOTSTR(module_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Input parameters (type) for deregister function not proper");
@@ -2262,7 +2262,7 @@ PHP_METHOD(Aerospike, getRegistered)
     }
 
     if (((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
-            (PHP_TYPE_ISNOTSTR(module_zval_p)))
+            (PHP_TYPE_ISNOTSTR(module_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Input parameters (type) for getRegistered function not proper");

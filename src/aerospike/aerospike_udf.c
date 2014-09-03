@@ -334,9 +334,6 @@ exit:
     if (init_udf_file) {
         as_udf_file_destroy(&udf_file);
     }
-    if (file_name_p) {
-        efree(file_name_p);
-    }
     return error_p->code;
 }
 
