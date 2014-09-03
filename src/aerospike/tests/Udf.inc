@@ -11,10 +11,8 @@ class Udf extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    static $status_ok = 2000;
-    static $status_err = 2001;
 
-    function setUp(&$db, &$key) {
+    protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
@@ -25,7 +23,7 @@ class Udf extends AerospikeTestCommon
         }
     }
 
-    function tearDown(&$db, &$key) {
+    protected function tearDown(&$db, &$key) {
         if ($db->isConnected()) {
             $db->deregister("bin_transform", Aerospike::UDF_TYPE_LUA, array(Aerospike::OPT_WRITE_TIMEOUT
             => 3000));
@@ -53,11 +51,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfRegisterModule)
+     * Variants: OO (testUdfPositiveRegisterModule)
      *
      * @test_plans{1.1}
      */
-    function testUdfRegisterModule($db, $key) {
+    function testUdfPositiveRegisterModule($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -70,6 +68,90 @@ class Udf extends AerospikeTestCommon
     }
     /**
      * @test
+     * Register UDF module which is not present.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfRegisterUnknownModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfNegativeRegisterUnknownModule($db, $key) {
+        if ($db->isConnected()) {
+            $udf_register_status = $db->register("unknown.lua","unknown_udf");
+        } else{
+            $db->close();
+            return($db->errorno());
+        }
+        if ($udf_register_status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        return ($udf_register_status);
+    }
+
+    /**
+     * @test
+     * Register empty string as a UDF module.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfRegisterEmptyStringAsModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfNegativeRegisterEmptyStringAsModule($db, $key) {
+        if ($db->isConnected()) {
+            $udf_register_status = $db->register("","");
+        } else{
+            $db->close();
+            return($db->errorno());
+        }
+        if ($udf_register_status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        return ($udf_register_status);
+    }
+
+    /**
+     * @test
+     * Deregisters a UDF module which is not registered.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfNegativeDeregisterUnknownModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfNegativeDeregisterUnknownModule($db, $key) {
+        if ($db->isConnected()) {
+            $udf_deregister_status = $db->deregister("unknown_udf",
+                Aerospike::UDF_TYPE_LUA);
+        } else{
+            $db->close();
+            return($db->errorno());
+        }
+        if ($udf_deregister_status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        return ($udf_deregister_status);
+    }
+    /**
+     * @test
      * Basic Udf operation on int.
      *
      * @pre
@@ -79,16 +161,16 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfOnInt)
+     * Variants: OO (testUdfPositiveApplyOnInteger)
      *
      * @test_plans{1.1}
      */
-    function testUdfOnInt($db, $key) 
+    function testUdfPositiveApplyOnInteger($db, $key) 
     {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $key = array("ns" => "test", "set" => "demo", "key" => "udf_integer");
+        $key = $db->initKey("test","demo", "udf_integer");
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>10));
         } else {
@@ -118,15 +200,15 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfOnString)
+     * Variants: OO (testUdfPositiveApplyOnString)
      *
      * @test_plans{1.1}
      */
-    function testUdfOnString($db, $key) {
+    function testUdfPositiveApplyOnString($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $key = array("ns" => "test", "set" => "demo", "key" => "test_string");
+        $key = $db->initKey("test","demo", "udf_for_string");
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"hello"));
         } else{
@@ -157,7 +239,7 @@ class Udf extends AerospikeTestCommon
      * Variants: OO (testUdfOnBool)
      *
      * @test_plans{1.1}
-     */
+     
     function testUdfOnBool($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
@@ -177,7 +259,7 @@ class Udf extends AerospikeTestCommon
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         return ($status);
-    }
+    }*/
 
     /**
      * @test
@@ -190,16 +272,16 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfOnList)
+     * Variants: OO (testUdfPositiveApplyOnList)
      *
      * @test_plans{1.1}
      */
-    function testUdfOnList($db, $key) {
+    function testUdfPositiveApplyOnList($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
         $returned = array();
-        $key = array("ns" => "test", "set" => "demo", "key" => "test_list");
+        $key = $db->initKey("test", "demo", "list_iterate");
         $list = array(94, 5, 25);
         if ($db->isConnected()) {
             $status = $db->put($key, array("bin1"=>$list), NULL);
@@ -228,16 +310,16 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfOnList)
+     * Variants: OO (testUdfPositiveApplyOnListReturnsList)
      *
      * @test_plans{1.1}
      */
-    function testUdfOnListReturnsList($db, $key) {
+    function testUdfPositiveApplyOnListReturnsList($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
         $returned = array();
-        $key = array("ns" => "test", "set" => "demo", "key" => "list_iterate");
+        $key = $db->initKey("test", "demo", "list_iterate");
         $list = array(94, 5, 25);
         if ($db->isConnected()) {
             $status = $db->put($key, array("bin1"=>$list), NULL);
@@ -265,16 +347,16 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfOnMap)
+     * Variants: OO (testUdfPositiveApplyOnMap)
      *
      * @test_plans{1.1}
      */
-    function testUdfOnMap($db, $key) {
+    function testUdfPositiveApplyOnMap($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
         $returned = array();
-        $key = array("ns" => "test", "set" => "demo", "key" => "test_map");
+        $key = $db->initKey("test", "demo", "test_map");
         $map = array("k30"=>6, "k20"=>5, "k10"=>1);
         if ($db->isConnected()) {
             $status = $db->put($key, array("bin1"=>$map), NULL);
@@ -295,91 +377,6 @@ class Udf extends AerospikeTestCommon
 
     /**
      * @test
-     * Register UDF module which is not present.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfRegisterUnknownModule)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfRegisterUnknownModule($db, $key) {
-        if ($db->isConnected()) {
-            $udf_register_status = $db->register("unknown.lua","unknown_udf");
-        } else{
-            $db->close();
-            return($db->errorno());
-        }
-        if ($udf_register_status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($udf_register_status);
-    }
-
-    /**
-     * @test
-     * Register empty string as a UDF module.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfRegisterEmptyStringAsModule)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfRegisterEmptyStringAsModule($db, $key) {
-        if ($db->isConnected()) {
-            $udf_register_status = $db->register("","");
-        } else{
-            $db->close();
-            return($db->errorno());
-        }
-        if ($udf_register_status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($udf_register_status);
-    }
-
-    /**
-     * @test
-     * Deregisters a UDF module which is not registered.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfDeregisterUnknownModule)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfDeregisterUnknownModule($db, $key) {
-        if ($db->isConnected()) {
-            $udf_deregister_status = $db->deregister("unknown_udf",
-                Aerospike::UDF_TYPE_LUA);
-        } else{
-            $db->close();
-            return($db->errorno());
-        }
-        if ($udf_deregister_status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($udf_deregister_status);
-    }
-
-    /**
-     * @test
      * Apply UDF on a record and UDF returns a Map.
      *
      * @pre
@@ -389,11 +386,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfApplyReturnsMap)
+     * Variants: OO (testUdfPositiveApplyReturnsMap)
      *
      * @test_plans{1.1}
      */
-    function testUdfApplyReturnsMap($db, $key) {
+    function testUdfPositiveApplyReturnsMap($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -427,15 +424,15 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfApplyReturnsMapNeg)
+     * Variants: OO (testUdfPositiveApplyReturnsMapPassingVariable)
      *
      * @test_plans{1.1}
      */
-    function testUdfApplyReturnsMapNeg($db, $key) {
+    function testUdfPositiveApplyReturnsMapPassingVariable($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $key = array("ns" => "test", "set" => "demo", "key" => "test_map");
+        $key = $db->initKey("test", "demo", "test_map");
         $map = array("k30"=>6, "k20"=>5, "k10"=>1);
         if ($db->isConnected()) {
             $status = $db->put($key, array("bin1"=>$map), NULL);
@@ -457,6 +454,130 @@ class Udf extends AerospikeTestCommon
 
     /**
      * @test
+     * Apply UDF on a record which returns record.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveApplyReturnsRecord)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveApplyReturnsRecord($db, $key) {
+        if (!$db->isConnected()) {
+            return ($db->errorno());
+        }
+        $key = $db->initKey("test", "demo", "udf_returns_record");
+        $map = array("k30"=>6, "k20"=>5, "k10"=>1);
+        $list = array(1, 2, 89);
+        if ($db->isConnected()) {
+            $status = $db->put($key, array("bin1"=>$map, "bin2"=>$list));
+        } else{
+            $db->close();
+            return($db->errorno());
+        }
+        $returned = array();
+        $status = $db->apply($key, "bin_transform", "udf_returns_record", NULL, $returned);
+        if ($status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        $status = $db->remove($key,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        return ($status);
+    }
+
+    /**
+     * @test
+     * Apply UDF on a record which accepts nothing and returns nothing.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveApplyAcceptsNothingAndReturnsNothing)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveApplyAcceptsNothingAndReturnsNothing($db, $key) {
+        if (!$db->isConnected()) {
+            return ($db->errorno());
+        }
+        $key = $db->initKey("test", "demo", "udf_returns_nothing");
+        $status = $db->apply($key, "bin_transform", "udf_without_arg_and_return");
+        if ($status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        $status = $db->remove($key,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        return ($status);
+    }
+
+    /**
+     * @test
+     * Apply UDF on record, Where UDF puts bytes array in DB.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveApplyPutByteArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveApplyPutByteArray($db, $key) {
+        if (!$db->isConnected()) {
+            return ($db->errorno());
+        }
+        $key = $db->initKey("test", "demo", "udf_put_bytes");
+        $status = $db->apply($key, "bin_transform", "udf_put_bytes", array("bin1"));
+        if ($status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        $status = $db->remove($key,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        return ($status);
+    }
+
+    /**
+     * @test
+     * Apply UDF on record, Where Module name is empty string.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfApplyNegativeModuleIsEmptyString)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfApplyNegativeModuleIsEmptyString($db, $key) {
+        if (!$db->isConnected()) {
+            return ($db->errorno());
+        }
+        $key = $db->initKey("test", "demo", "udf_apply_modules_empty_string");
+        $status = $db->apply($key, "", "udf_put_bytes", array("bin1"));
+        if ($status != Aerospike::OK) {
+            return ($db->errorno());
+        }
+        $status = $db->remove($key,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        return ($status);
+    }
+    /**
+     * @test
      * List registered LUA(UDF_TYPE_LUA) modules.
      *
      * @pre
@@ -466,11 +587,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfListRegisteredLUAModules)
+     * Variants: OO (testUdfPositiveListRegisteredLUAModules)
      *
      * @test_plans{1.1}
      */
-    function testUdfListRegisteredLUAModules($db, $key) {
+    function testUdfPositiveListRegisteredLUAModules($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -496,11 +617,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfListRegisteredModules)
+     * Variants: OO (testUdfPositiveListRegisteredModules)
      *
      * @test_plans{1.1}
      */
-    function testUdfListRegisteredModules($db, $key) {
+    function testUdfPositiveListRegisteredModules($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -525,11 +646,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfListRegisteredModulesNeg)
+     * Variants: OO (testUdfPositiveListRegisteredModulesPassingVariable)
      *
      * @test_plans{1.1}
      */
-    function testUdfListRegisteredModulesNeg($db, $key) {
+    function testUdfPositiveListRegisteredModulesPassingVariable($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -554,11 +675,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfGetRegisteredModule)
+     * Variants: OO (testUdfPositiveGetRegisteredModule)
      *
      * @test_plans{1.1}
      */
-    function testUdfGetRegisteredModule($db, $key) {
+    function testUdfPositiveGetRegisteredModule($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -585,11 +706,11 @@ class Udf extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testUdfGetNotRegisteredModule)
+     * Variants: OO (testUdfNegativeGetNotRegisteredModule)
      *
      * @test_plans{1.1}
      */
-    function testUdfGetNotRegisteredModule($db, $key) {
+    function testUdfNegativeGetNotRegisteredModule($db, $key) {
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
@@ -602,145 +723,6 @@ class Udf extends AerospikeTestCommon
             }
         } 
         return($status);
-    }
-
-    /**
-     * @test
-     * Apply UDF on a record which returns record.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfReturnsRecord)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfReturnsRecord($db, $key) {
-        if (!$db->isConnected()) {
-            return ($db->errorno());
-        }
-        $key = array("ns" => "test", "set" => "demo", "key" =>
-            "udf_returns_record");
-        $map = array("k30"=>6, "k20"=>5, "k10"=>1);
-        $list = array(1, 2, 89);
-        if ($db->isConnected()) {
-            $status = $db->put($key, array("bin1"=>$map, "bin2"=>$list));
-        } else{
-            $db->close();
-            return($db->errorno());
-        }
-        $returned = array();
-        $status = $db->apply($key, "bin_transform", "udf_returns_record", NULL, $returned);
-        if ($status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($status);
-    }
-
-    /**
-     * @test
-     * Apply UDF on a record which returns record.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfGetRegisteredModule)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfRegisterWrongModuleandPath($db, $key) {
-    }
-
-    /**
-     * @test
-     * Apply UDF on a record which accepts nothing and returns nothing.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfAcceptsNothingAndReturnsNothing)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfAcceptsNothingAndReturnsNothing($db, $key) {
-        if (!$db->isConnected()) {
-            return ($db->errorno());
-        }
-        $key = array("ns" => "test", "set" => "demo", "key" =>
-            "udf_returns_nothing");
-        $status = $db->apply($key, "bin_transform", "udf_without_arg_and_return");
-        if ($status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($status);
-    }
-
-    /**
-     * @test
-     * Apply UDF on record, Where UDF puts bytes array in DB.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfApplyPutByteArray)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfApplyPutByteArray($db, $key) {
-        if (!$db->isConnected()) {
-            return ($db->errorno());
-        }
-        $key = array("ns" => "test", "set" => "demo", "key" =>
-            "udf_put_bytes");
-        $status = $db->apply($key, "bin_transform", "udf_put_bytes", array("bin1"));
-        if ($status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($status);
-    }
-
-    /**
-     * @test
-     * Apply UDF on record, Where Module name is empty string.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfApplyModuleIsEmptyString)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfApplyModuleIsEmptyString($db, $key) {
-        if (!$db->isConnected()) {
-            return ($db->errorno());
-        }
-        $key = array("ns" => "test", "set" => "demo", "key" =>
-            "udf_apply_modules_empty_string");
-        $status = $db->apply($key, "", "udf_put_bytes", array("bin1"));
-        if ($status != Aerospike::OK) {
-            return ($db->errorno());
-        }
-        return ($status);
     }
 }
 ?>
