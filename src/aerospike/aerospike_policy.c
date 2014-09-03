@@ -187,13 +187,19 @@ set_policy_ex(as_config *as_config_p,
         goto exit;
     }
 
-    // case: connect => (read_policy_p != NULL && write_policy_p != NULL)
+    /*
+     * case: connect => (read_policy_p != NULL && write_policy_p != NULL)
+     */
 
     if (read_policy_p && (!write_policy_p)) {
-        // case: get
+        /*
+         * case: get
+         */
         as_policy_read_init(read_policy_p);
     } else if (write_policy_p && (!read_policy_p)) {
-        // case: put
+        /*
+         * case: put
+         */
         as_policy_write_init(write_policy_p);
     } else if (operate_policy_p) {
         /*

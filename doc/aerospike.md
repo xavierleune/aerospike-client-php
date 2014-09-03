@@ -173,6 +173,8 @@ class Aerospike
     // UDF methods
     public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
     public int Aerospike::deregister ( string $module )
+    public int Aerospike::listRegistered ( array &$modules [, int $language ] )
+    public int Aerospike::getRegistered ( string $module, string &$code )
     public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
     public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
 
