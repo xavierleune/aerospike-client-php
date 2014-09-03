@@ -26,8 +26,8 @@
  ******************************************************************************************************
  */
 extern as_status
-aerospike_udf_register(Aerospike_object* aerospike_obj_p,
-        as_error* error_p, char* path_p, long language, zval* options_p)
+aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
+        char* path_p, char* module_p, long language, zval* options_p)
 {
     FILE*                   file_p = NULL;
     uint32_t                size = 0;
@@ -39,7 +39,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p,
     as_bytes*               udf_content_p = NULL;
     as_policy_info          info_policy;
 
-    if ((language == -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
+    if ((language & AS_UDF_TYPE) != AS_UDF_TYPE) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Invalid Value for language");
             DEBUG_PHP_EXT_ERROR("Invalid value for language");
@@ -87,7 +87,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p,
      * Register the UDF file in the database cluster.
      */
     if (AEROSPIKE_OK != aerospike_udf_put(aerospike_obj_p->as_ref_p->as_p,
-                error_p, &info_policy, path_p, language - AS_UDF_TYPE,
+                error_p, &info_policy, module_p, language - AS_UDF_TYPE,
                       udf_content_p)) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
@@ -117,56 +117,22 @@ exit:
  */
 extern as_status
 aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
-        as_error* error_p, char* module_p, long module_len,
-        long language, zval* options_p)
+        as_error* error_p, char* module_p, zval* options_p)
 {
-    uint8_t*                file_extension_p = NULL;
-    uint8_t*                file_name_p = NULL;
-    uint32_t                file_name_len = 0;
     as_policy_info          info_policy;
     
-    if ((language == -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                    "Invalid Value for language");
-            DEBUG_PHP_EXT_ERROR("Invalid value for language");
-            goto exit;
-    }
-
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
 
-    /*
-     * Add support for other UDF languages here if and when required.
-     * Currently, only LUA is supported.
-     */
-
-    switch(language) {
-        case UDF_TYPE_LUA:
-            file_extension_p = ".lua";
-            break;
-        default:
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                    "Invalid Value for language");
-            DEBUG_PHP_EXT_ERROR("Invalid value for language");
-            goto exit;
-    }
-
-    file_name_len = module_len + strlen(file_extension_p) + 1;
-    file_name_p = ecalloc(1, file_name_len);
-    strncpy(file_name_p, module_p, module_len);
-    strcat(file_name_p, file_extension_p);
     if (AEROSPIKE_OK != aerospike_udf_remove(aerospike_obj_p->as_ref_p->as_p,
-                error_p, NULL, file_name_p)) {
+                error_p, NULL, module_p)) {
         DEBUG_PHP_EXT_ERROR(error_p->message);
         goto exit;
     }
 exit:
-    if (file_name_p) {
-        efree(file_name_p);
-    }
     return error_p->code;
 }
 
@@ -333,17 +299,14 @@ exit:
  */
 extern as_status
 aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
-        as_error* error_p, char* module_p, long module_len, zval* udf_code_p,
+        as_error* error_p, char* module_p, zval* udf_code_p,
         long language, zval* options_p)
 {
-    uint8_t*                file_extension_p = NULL;
-    uint8_t*                file_name_p = NULL;
-    uint32_t                file_name_len = 0;
     uint32_t                init_udf_file = 0;
     as_udf_file             udf_file;
     as_policy_info          info_policy;
 
-    if ((language != -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
+    if ((language & AS_UDF_TYPE) != AS_UDF_TYPE) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Invalid Value for language");
             DEBUG_PHP_EXT_ERROR("Invalid value for language");
@@ -356,32 +319,11 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    /*
-     * Add support for other UDF languages here if and when required.
-     * Currently, only LUA is supported.
-     */
-
-    switch(language) {
-        case UDF_TYPE_LUA:
-            file_extension_p = ".lua";
-            break;
-        default:
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                    "Invalid Value for language");
-            DEBUG_PHP_EXT_ERROR("Invalid value for language");
-            goto exit;
-    }
-
-    file_name_len = module_len + strlen(file_extension_p) + 1;
-    file_name_p = ecalloc(1, file_name_len);
-    strncpy(file_name_p, module_p, module_len);
-    strcat(file_name_p, file_extension_p);
-
     as_udf_file_init(&udf_file);
     init_udf_file = 1;
     
     if (AEROSPIKE_OK != aerospike_udf_get(aerospike_obj_p->as_ref_p->as_p,
-                error_p, &info_policy, file_name_p, (language - AS_UDF_TYPE),
+                error_p, &info_policy, module_p, (language - AS_UDF_TYPE),
                 &udf_file)) {
         DEBUG_PHP_EXT_ERROR(error_p->message);
         goto exit;
