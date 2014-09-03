@@ -1920,8 +1920,7 @@ PHP_METHOD(Aerospike, register)
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|la",
-                &path_zval_p, &module_zval_p, &module_len,
-                &language, &options_p)) {
+                &path_zval_p, &module_zval_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for register function");
@@ -2101,7 +2100,7 @@ PHP_METHOD(Aerospike, apply)
     }
 
     if (return_value_of_udf_p) {
-        zval_dtor(return_value_of_udf_p);
+        zval_ptr_dtor(&return_value_of_udf_p);
     }
 
     module_p = Z_STRVAL_P(module_zval_p);

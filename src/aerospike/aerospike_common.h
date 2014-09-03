@@ -29,6 +29,10 @@
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
 
+#define UDF_MODULE_NAME "name"
+#define UDF_MODULE_TYPE "type"
+#define LUA_FILE_BUFFER_FRAME 512
+
 /*
  *******************************************************************************************************
  * Static pool maintained to avoid runtime mallocs.

@@ -9,9 +9,6 @@
 #include "aerospike/as_udf.h"
 #include "aerospike_policy.h"
 
-#define UDF_MODULE_NAME "name"
-#define UDF_MODULE_TYPE "type"
-
 /*
  ******************************************************************************************************
  Registers a UDF module.
@@ -65,8 +62,13 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     content_size = ftell(file_p);
     fseek(file_p, 0L, SEEK_SET);
 
-    bytes_p = (uint8_t *) emalloc(content_size + 1);
-    if (bytes_p == NULL) {
+    /*
+     * Using emalloc here to maintain consistency of PHP extension.
+     * malloc can also be used for C-SDK.
+     * if emalloc is used, pass parameter 4 of function as_bytes_init_wrap as
+     * "false" and handle the freeing up of the same here.
+     */
+    if (NULL == (bytes_p = (uint8_t *) emalloc(content_size + 1))) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Memory allocation failed for contents of UDF");
         DEBUG_PHP_EXT_DEBUG("Memory allocation failed for contents of UDF");
@@ -74,14 +76,14 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     }
 
     buff_p = bytes_p;
-    read = (int) fread(buff_p, 1, 512, file_p);
+    read = (int) fread(buff_p, 1, LUA_FILE_BUFFER_FRAME, file_p);
     while (read) {
         size += read;
         buff_p += read;
-        read = (int)fread(buff_p, 1, 512, file_p);
+        read = (int)fread(buff_p, 1, LUA_FILE_BUFFER_FRAME, file_p);
     }
 
-    as_bytes_init_wrap(&udf_content, bytes_p, size, true);
+    as_bytes_init_wrap(&udf_content, bytes_p, size, false);
     udf_content_p = &udf_content;
     /*
      * Register the UDF file in the database cluster.
@@ -96,9 +98,15 @@ exit:
     if (file_p) {
         fclose(file_p);
     }
+
+    if (bytes_p) {
+        efree(bytes_p);
+    }
+
     if (udf_content_p) {
         as_bytes_destroy(udf_content_p);
     }
+
     return error_p->code;
 }
 
