@@ -1899,6 +1899,8 @@ PHP_METHOD(Aerospike, register)
     long                   path_len = 0;
     long                   module_len = 0;
     long                   language = UDF_TYPE_LUA;
+    zval*                  module_zval_p = NULL;
+    zval*                  path_zval_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -1917,8 +1919,8 @@ PHP_METHOD(Aerospike, register)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|la",
-                &path_p, &path_len, &module_p, &module_len,
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|la",
+                &path_zval_p, &module_zval_p, &module_len,
                 &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -1927,6 +1929,21 @@ PHP_METHOD(Aerospike, register)
         goto exit;
     }
 
+    if (((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
+            (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(path_zval_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for register function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for reegister function not proper");
+    }
+
+    module_p = Z_STRVAL_P(module_zval_p);
+    path_p = Z_STRVAL_P(path_zval_p);
+
+    module_len = Z_STRLEN_P(module_zval_p);
+    path_len = Z_STRLEN_P(path_zval_p);
+
     if (path_len == 0 || module_len == 0) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -1934,16 +1951,9 @@ PHP_METHOD(Aerospike, register)
         goto exit;
     }
 
-    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for register function not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for reegister function not proper");
-    }
-
     if (AEROSPIKE_OK !=
-            (status = aerospike_udf_register(aerospike_obj_p, &error,
-                                             path_p, language, options_p))) {
+            (status = aerospike_udf_register(aerospike_obj_p, &error, path_p,
+                                             module_p, language, options_p))) {
         DEBUG_PHP_EXT_ERROR("register function returned an error");
         goto exit;
     }
@@ -1958,16 +1968,15 @@ exit:
  *******************************************************************************************************
  * Removes a UDF module from the Aerospike DB.
  * Method prototype for PHP userland:
- * public int Aerospike::deregister ( string $module )
+ * public int Aerospike::deregister ( string $module [, array $options ])
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, deregister)
 {
     as_status              status = AEROSPIKE_OK;
-    char*                  module_p = NULL;
-    long                   module_len = 0;
-    long                   language = UDF_TYPE_LUA;
     as_error               error;
+    char*                  module_p = NULL;
+    zval*                  module_zval_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT; 
 
@@ -1986,8 +1995,8 @@ PHP_METHOD(Aerospike, deregister)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|la",
-                &module_p, &module_len, &language, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
+                &module_zval_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for deregister function");
@@ -1995,24 +2004,26 @@ PHP_METHOD(Aerospike, deregister)
         goto exit;
     }
 
-    if (module_len == 0) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Expects parameter 1 to be non-empty string");
-        goto exit;
-    }
-
-    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+    if (((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
+            (PHP_TYPE_ISNOTSTR(module_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Input parameters (type) for deregister function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for deregister function not proper");
     }
 
+    module_p = Z_STRVAL_P(module_zval_p);
+
+    if (Z_STRLEN_P(module_zval_p) == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
     if (AEROSPIKE_OK !=
             (status = aerospike_udf_deregister(aerospike_obj_p, &error,
-                                               module_p, module_len,
-                                               language, options_p))) {
+                                               module_p, options_p))) {
         DEBUG_PHP_EXT_ERROR("deregister function returned an error");
         goto exit;
     }
@@ -2088,9 +2099,11 @@ PHP_METHOD(Aerospike, apply)
     if (args_p && PHP_TYPE_ISNULL(args_p)) {
         args_p = NULL;
     }
+
     if (return_value_of_udf_p) {
         zval_dtor(return_value_of_udf_p);
     }
+
     module_p = Z_STRVAL_P(module_zval_p);
     function_name_p = Z_STRVAL_P(function_zval_p);
 
@@ -2219,8 +2232,8 @@ PHP_METHOD(Aerospike, getRegistered)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     char*                  module_p = NULL;
-    long                   module_len = 0;
-    long                   language = -1;
+    long                   language = UDF_TYPE_LUA;
+    zval*                  module_zval_p = NULL;
     zval*                  udf_code_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -2239,8 +2252,8 @@ PHP_METHOD(Aerospike, getRegistered)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "szl|z",
-                &module_p, &module_len, &udf_code_p, &language, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzl|z",
+                &module_zval_p, &udf_code_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for getRegistered()");
@@ -2248,18 +2261,21 @@ PHP_METHOD(Aerospike, getRegistered)
         goto exit;
     }
 
-    if(module_len == 0) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Expects parameter 1 to be non-empty string");
-        goto exit;
-    }
-
-    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+    if (((options_p) && (PHP_TYPE_ISNOTARR(options_p))) ||
+            (PHP_TYPE_ISNOTSTR(module_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Input parameters (type) for getRegistered function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for getRegistered function not proper");
+    }
+
+    module_p = Z_STRVAL_P(module_zval_p);
+
+    if (Z_STRLEN_P(module_zval_p) == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 1 to be non-empty string");
+        goto exit;
     }
 
     zval_dtor(udf_code_p);
@@ -2268,7 +2284,6 @@ PHP_METHOD(Aerospike, getRegistered)
     if (AEROSPIKE_OK !=
             (status = aerospike_get_registered_udf_module_code(aerospike_obj_p,
                                                                &error, module_p,
-                                                               module_len,
                                                                udf_code_p,
                                                                language, 
                                                                options_p))) {

@@ -349,6 +349,7 @@ extern as_status
 aerospike_udf_register(Aerospike_object* aerospike_obj_p,
                        as_error* error_p,
                        char *path_p,
+                       char *module_p,
                        long language,
                        zval *options_p);
 
@@ -356,8 +357,6 @@ extern as_status
 aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
                          as_error* error_p,
                          char *module_p,
-                         long module_len,
-                         long language,
                          zval *options_p);
 
 extern as_status
@@ -381,7 +380,6 @@ extern as_status
 aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
                                          as_error *error_p,
                                          char* module_p,
-                                         long module_len,
                                          zval* udf_code_p,
                                          long language,
                                          zval* options_p);
