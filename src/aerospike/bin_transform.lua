@@ -95,8 +95,7 @@ function udf_returns_record(record)
 end
 
 --[[UDF which accepts nothing and returns nothing--]]
-function udf_without_arg_and_return()
-    local len = string.len("hello")
+function udf_without_arg_and_return(record)
 end
 
 --[[UDF which will put bytes array in DB.--]]
@@ -104,7 +103,7 @@ function udf_put_bytes(record, bin)
     local put_bytes = bytes(18)
     put_bytes[1] = 10
     put_bytes[2] = 85
-    rec[bin] = put_bytes
+    record[bin] = put_bytes
     if aerospike:exists(record) then
         aerospike:update(record)
     else

@@ -134,12 +134,13 @@ ZEND_END_ARG_INFO()
 
 /*
  ********************************************************************
- * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
+ * Using "arginfo_sixth_by_ref" in zend_arg_info argument of a
  * zend_function_entry accepts first argument of the
  * corresponding functions by reference and rest by value.
  ********************************************************************
  */
-ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
+ZEND_BEGIN_ARG_INFO(arginfo_sixth_by_ref, 0)
+    ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(0)
@@ -244,7 +245,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, register, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, deregister, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, apply, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, apply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, listRegistered, arginfo_first_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getRegistered, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
 #if 0 // TBD
@@ -2073,9 +2074,9 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zza",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zzz",
                 &key_record_p, &module_zval_p, &function_zval_p, &args_p,
-                &return_value_of_udf_p, &options_p)) {
+                &options_p, &return_value_of_udf_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for apply()");
@@ -2083,9 +2084,13 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (PHP_TYPE_ISNOTARR(key_record_p) || ((args_p) &&
+    if (PHP_TYPE_ISNOTARR(key_record_p) || 
+            ((args_p) &&
                 (PHP_TYPE_ISNOTARR(args_p)) &&
                 (PHP_TYPE_ISNOTNULL(args_p))) ||
+            ((options_p) &&
+                (PHP_TYPE_ISNOTARR(options_p)) &&
+                (PHP_TYPE_ISNOTNULL(options_p))) ||
             (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(function_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2099,10 +2104,9 @@ PHP_METHOD(Aerospike, apply)
         args_p = NULL;
     }
 
-    if (return_value_of_udf_p) {
-        zval_ptr_dtor(&return_value_of_udf_p);
+    if (options_p && PHP_TYPE_ISNULL(options_p)) {
+        options_p = NULL;
     }
-
     module_p = Z_STRVAL_P(module_zval_p);
     function_name_p = Z_STRVAL_P(function_zval_p);
 
