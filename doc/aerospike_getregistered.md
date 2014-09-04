@@ -43,7 +43,7 @@ if (!$db->isConnected()) {
 $res = $db->getRegistered('my_udf', $code);
 if ($res == Aerospike::OK) {
     var_dump($code);
-if ($res == Aerospike::ERR_UDF_NOT_FOUND) {
+if ($res == Aerospike::ERR_UDF_FILE_NOT_FOUND) {
     echo "The UDF module my_udf was not found to be registered with the server.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
