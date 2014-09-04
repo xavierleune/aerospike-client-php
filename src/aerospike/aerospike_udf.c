@@ -52,7 +52,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     file_p = fopen(path_p, "r");
 
     if (!file_p) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
                 "Cannot open script file");
         DEBUG_PHP_EXT_DEBUG("Cannot open script file");
         goto exit;

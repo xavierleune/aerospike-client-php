@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Udf", "testUdfNegativeRegisterUnknownModule");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Udf", "testUdfNegativeRegisterUnknownModule");
 --EXPECT--
-ERR_PARAM
+ERR_UDF_NOT_FOUND
