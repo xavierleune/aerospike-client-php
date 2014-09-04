@@ -199,4 +199,5 @@ Aerospike
 ### [Query and Scan Methods](apiref_streams.md)
 ### [User Defined Methods](apiref_udf.md) \[to be implemented\]
 ### [Admin Methods](apiref_admin.md) \[to be implemented\]
+### [Aerospike LDT Classes](aerospike_ldt.md)
 
