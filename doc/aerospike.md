@@ -8,7 +8,7 @@ The main Aerospike class
 
 ```php
 
-class Aerospike
+Aerospike
 {
     //
     // Policy flags:
@@ -138,57 +138,57 @@ class Aerospike
 
 
     // lifecycle and connection methods
-    public int Aerospike::__construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
-    public void Aerospike::__destruct ( void )
-    public boolean Aerospike::isConnected ( void )
-    public void Aerospike::close ( void )
-    public void Aerospike::reconnect ( void )
-    public int Aerospike::getNodes ( array &$metadata [, array $options ] )
+    public __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
+    public void __destruct ( void )
+    public boolean isConnected ( void )
+    public void close ( void )
+    public void reconnect ( void )
+    public int getNodes ( array &$metadata [, array $options ] )
 
     // error handling methods
-    public string Aerospike::error ( void )
-    public int Aerospike::errorno ( void )
-    public void Aerospike::setLogLevel ( int $log_level )
-    public void Aerospike::setLogHandler ( callback $log_handler )
+    public string error ( void )
+    public int errorno ( void )
+    public void setLogLevel ( int $log_level )
+    public void setLogHandler ( callback $log_handler )
 
     // key-value methods
-    public array Aerospike::initKey ( string $ns, string $set, int|string $pk )
-    public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
-    public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options ]] )
-    public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
-    public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
-    public int Aerospike::remove ( array $key [, array $options ] )
-    public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
-    public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
-    public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
-    public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
-    public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+    public array initKey ( string $ns, string $set, int|string $pk )
+    public int put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
+    public int get ( array $key, array &$record [, array $filter [, array $options ]] )
+    public int exists ( array $key, array &$metadata [, array $options ] )
+    public int touch ( array $key, int $ttl = 0 [, array $options ] )
+    public int remove ( array $key [, array $options ] )
+    public int removeBin ( array $key, array $bins [, array $options ] )
+    public int increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+    public int append ( array $key, string $bin, string $value [, array $options ] )
+    public int prepend ( array $key, string $bin, string $value [, array $options ] )
+    public int operate ( array $key, array $operations [, array &$returned ] )
 
     // unsupported type handler methods
-    public static void Aerospike::setSerializer ( callback $serialize_cb )
-    public static void Aerospike::setDeserializer ( callback $unserialize_cb )
+    public static void setSerializer ( callback $serialize_cb )
+    public static void setDeserializer ( callback $unserialize_cb )
 
     // batch operation methods
-    public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
-    public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
+    public int getMany ( array $keys, array &$records [, array $filter [, array $options]] )
+    public int existsMany ( array $keys, array &$metadata [, array $options ] )
 
     // UDF methods
-    public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
-    public int Aerospike::deregister ( string $module )
-    public int Aerospike::listRegistered ( array &$modules [, int $language ] )
-    public int Aerospike::getRegistered ( string $module, string &$code )
-    public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
-    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+    public int register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+    public int deregister ( string $module )
+    public int listRegistered ( array &$modules [, int $language ] )
+    public int getRegistered ( string $module, string &$code )
+    public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
+    public int aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
 
     // query and scan methods
-    public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
-    public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
-    public array Aerospike::predicateEquals ( string $bin, int|string $val )
-    public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
+    public int query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+    public int scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
+    public array predicateEquals ( string $bin, int|string $val )
+    public array predicateBetween ( string $bin, int $min, int $max )
 
     // admin methods
-    public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name )
-    public int Aerospike::dropIndex ( string $ns, string $name )
+    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name )
+    public int dropIndex ( string $ns, string $name )
 }
 ```
 
