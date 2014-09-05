@@ -326,3 +326,31 @@ exit:
     }
     return (status);
 }
+
+extern void
+aerospike_helper_free_static_pool(as_static_pool *static_pool)
+{
+    uint32_t iter = 0;
+
+    /* clean up the as_* objects that were initialised */
+    for (iter = 0; iter < static_pool->current_str_id; iter++) {
+        as_string_destroy(&static_pool->string_pool[iter]);
+    }
+
+    for (iter = 0; iter < static_pool->current_int_id; iter++) {
+        as_integer_destroy(&static_pool->integer_pool[iter]);
+    }
+
+    for (iter = 0; iter < static_pool->current_bytes_id; iter++) {
+        as_bytes_destroy(&static_pool->bytes_pool[iter]);
+    }
+
+    for (iter = 0; iter < static_pool->current_list_id; iter++) {
+        as_arraylist_destroy(&static_pool->alloc_list[iter]);
+    }
+
+    for (iter = 0; iter < static_pool->current_map_id; iter++) {
+        as_hashmap_destroy(&static_pool->alloc_map[iter]);
+    }
+}
+

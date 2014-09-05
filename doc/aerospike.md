@@ -173,12 +173,13 @@ Aerospike
     public int existsMany ( array $keys, array &$metadata [, array $options ] )
 
     // UDF methods
-    public int register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
-    public int deregister ( string $module )
-    public int listRegistered ( array &$modules [, int $language ] )
-    public int getRegistered ( string $module, string &$code )
-    public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
-    public int aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+    public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+    public int Aerospike::deregister ( string $module )
+    public int Aerospike::listRegistered ( array &$modules [, int $language ] )
+    public int Aerospike::getRegistered ( string $module, string &$code )
+    public int Aerospike::apply ( array $key, string $module, string $function[,
+            array $args [, array $options [, mixed &$returned ]]] )
+    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
 
     // query and scan methods
     public int query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
