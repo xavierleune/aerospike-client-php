@@ -1888,7 +1888,8 @@ exit:
  * Registers a UDF module with the Aerospike DB.
  * Method prototype for PHP userland:
  * public int Aerospike::register ( string $path, string $module [, int
- *                                  $language = Aerospike::UDF_TYPE_LUA] )
+ *                                  $language = Aerospike::UDF_TYPE_LUA [, array
+ *                                  $options]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, register)
@@ -2038,8 +2039,8 @@ exit:
  *******************************************************************************************************
  * Applies UDF on record in the Aerospike DB.
  * Method prototype for PHP userland:
- * public int Aerospike::apply ( array $key, string $module, string $function[,
- *                               array $args [, mixed &$returned ]] )
+ * public int Aerospike::apply ( array $key, string $module, string $function [,
+ *                               array $args [, array $options  [, mixed &$returned ]]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, apply)
@@ -2226,8 +2227,9 @@ exit:
  *******************************************************************************************************
  * Get the code for a UDF module registered with the server.
  * Method prototype for PHP userland:
- * public int Aerospike::getRegistered ( string $module, string &$code [, array
- *                                       $options ] )
+ * public int Aerospike::getRegistered ( string $module, string &$code [, int
+ *                                       $language = Aerospike::UDF_TYPE_LUA
+ *                                       [, array $options ]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, getRegistered)
