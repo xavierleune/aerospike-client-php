@@ -6,7 +6,7 @@ Aerospike::apply - Applies a UDF to a record at the Aerospike DB
 ## Description
 
 ```
-public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed $options [, array &$returned ]]] )
+public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, array $options [, mixed &$returned ]]] )
 ```
 
 **Aerospike::apply()** will apply the UDF *module*.*function* to a record with
