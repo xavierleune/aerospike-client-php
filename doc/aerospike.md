@@ -100,6 +100,8 @@ class Aerospike
     // UDF operations:
     const ERR_UDF                 = 1300; // Generic UDF error
     const ERR_UDF_NOT_FOUND       = 1301; // UDF does not exist
+    const ERR_UDF_FILE_NOT_FOUND  = 1301; // Source file for the module not found
+    const ERR_LUA_FILE_NOT_FOUND  = 1301; // Source file for the module not found
 
     //
     // Logger

@@ -26,7 +26,7 @@ Here is a description of the configuration directives:
     The write timeout in milliseconds
 
 **aerospike.serializer string**
-    The unsupported type handler. One of { php, json, none }
+    The unsupported type handler. One of { php, user, none }
 
 ## See Also
 
