@@ -179,7 +179,7 @@ class Aerospike
     public int Aerospike::getRegistered ( string $module, string &$code )
     public int Aerospike::apply ( array $key, string $module, string $function[,
             array $args [, array $options [, mixed &$returned ]]] )
-    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value [, array $options ])
 
     // query and scan methods
     public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
