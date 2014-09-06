@@ -45,6 +45,21 @@ class Aerospike
     const OPT_SERIALIZER = 6; // set the unsupported type handler
 
     //
+    // Scan Priority Constants
+    //
+    const SCAN_PRIORITY_AUTO = 0; //The cluster will auto adjust the scan priority
+    const SCAN_PRIORITY_LOW = 1; //Low priority scan.
+    const SCAN_PRIORITY_MEDIUM = 2; //Medium priority scan.
+    const SCAN_PRIORITY_HIGH = 3; //High priority scan.
+
+    //
+    // Scan Status Constants
+    //
+    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
+    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
+    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
+    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
+
     // Aerospike Status Codes:
     //
     // Each Aerospike API method invocation returns a status code
