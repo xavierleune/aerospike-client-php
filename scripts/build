@@ -63,15 +63,15 @@ phpize
 ./configure "CFLAGS=-g -O3" --enable-aerospike
 
 OS=`uname`
-#INCLUDE_LUA_5_1=/usr/include/lua5.1
-#if [ -d $INCLUDE_LUA_5_1 ] ; then
-#  LUA_SUFFIX=5.1
-#fi
+INCLUDE_LUA_5_1=/usr/include/lua5.1
+if [ -d $INCLUDE_LUA_5_1 ] ; then
+  LUA_SUFFIX=5.1
+fi
 
 CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
-#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
-LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
+LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
+#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
 
 if [ $OS = "Darwin" ] ; then
     LDFLAGS="$LDFLAGS -lcrypto"
