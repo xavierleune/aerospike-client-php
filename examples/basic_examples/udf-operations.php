@@ -15,7 +15,7 @@
 # limitations under the License.
 ################################################################################
 require_once(realpath(__DIR__ . '/../examples_util.php'));
-echo __DIR__;
+
 function parse_args() {
     $shortopts  = "";
     $shortopts .= "h::";  /* Optional host */

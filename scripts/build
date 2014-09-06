@@ -1,4 +1,20 @@
 #!/bin/bash
+################################################################################
+# Copyright 2013-2014 Aerospike, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+
 LOGLEVEL="AS_LOG_LEVEL_OFF"
 
 parse_args () {
@@ -63,15 +79,15 @@ phpize
 ./configure "CFLAGS=-g -O3" --enable-aerospike
 
 OS=`uname`
-#INCLUDE_LUA_5_1=/usr/include/lua5.1
-#if [ -d $INCLUDE_LUA_5_1 ] ; then
-#  LUA_SUFFIX=5.1
-#fi
+INCLUDE_LUA_5_1=/usr/include/lua5.1
+if [ -d $INCLUDE_LUA_5_1 ] ; then
+  LUA_SUFFIX=5.1
+fi
 
 CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
-#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
-LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
+LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
+#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
 
 if [ $OS = "Darwin" ] ; then
     LDFLAGS="$LDFLAGS -lcrypto"

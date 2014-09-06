@@ -183,8 +183,9 @@ class Udf extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
-        $status = $db->remove($key,
-            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        if ($returned !== 32) {
+            return "Value returned from apply() is not int(32)";
+        }
         return ($status);
     }
 

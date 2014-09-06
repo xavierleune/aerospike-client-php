@@ -318,7 +318,7 @@ aerospike_php_exists_metadata(aerospike* as_object_p,
 
         MAKE_STD_ZVAL(metadata_arr_p);
         array_init(metadata_arr_p);
-        ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1)
+        ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1);
     }
 
     if (AEROSPIKE_OK != (status =
