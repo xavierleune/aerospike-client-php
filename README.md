@@ -1,7 +1,6 @@
 # Aerospike PHP Client
 
-**The Aerospike PHP Client works on PHP 5.3**. We are working on getting the
-extension to compile against PHP versions 5.4 and 5.5.
+The Aerospike PHP Client works with PHP 5.3, 5.4, 5.5, and 5.6.
 
 The PHP extension was tested to build on
 
@@ -23,18 +22,16 @@ Full documentation of the Aerospike database is available at http://www.aerospik
 
 ## Dependencies
 
-In distributions such as Ubuntu 14.04 LTS, where the package manager defaults
-to versions higher than 5.3, you will need to [install PHP 5.3 manually](http://www.php.net/downloads.php).
-
 ### CentOS and RedHat (yum)
 
     sudo yum groupinstall "Development Tools"
     sudo yum install openssl-devel
+    sudo yum install lua-devel # on Fedora 20+ use compat-lua-devel-5.1.5
     sudo yum install php-devel php-pear # unless PHP was manually installed
 
 ### Ubuntu and Debian (apt)
 
-    sudo apt-get install build-essential autoconf libssl-dev
+    sudo apt-get install build-essential autoconf libssl-dev liblua5.1-dev
     sudo apt-get install php5-dev php-pear # unless PHP was manually installed
 
 ### Mac OS X
@@ -44,22 +41,14 @@ and higher those [can be installed without Xcode](http://osxdaily.com/2014/02/12
 
     xcode-select --install # install the command line tools, if missing
 
-The required utility automake can be installed through the OS X package manager
-[Homebrew](http://brew.sh/).
+The dependencies can be installed through the OS X package manager [Homebrew](http://brew.sh/).
 
-    ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
     brew update && brew doctor
     brew install automake
+    brew install openssl
+    brew install lua
 
-If the preinstalled PHP has a version higher than 5.3 you will need to install it
-from the [Homewbrew-PHP](https://github.com/Homebrew/homebrew-php) repository:
-
-    brew tap homebrew/dupes
-    brew tap homebrew/versions
-    brew tap homebrew/homebrew-php
-    brew update
-    brew install php53
-    php -v # verify that it is PHP 5.3.x
+To switch PHP versions [see this gist](https://gist.github.com/rbotzer/198a04f2315e88c75322).
 
 ## Build Instructions
 
@@ -96,6 +85,7 @@ To test the Aerospike PHP Client interactively after building, do:
 To install the PHP extension do:
 
     $ sudo make install
+    $ php -i | grep ".ini "
 
 Now edit the php.ini file.  If PHP is configured --with-config-file-scan-dir
 (usually set to `/etc/php.d/`) you can create an `aerospike.ini` file in the

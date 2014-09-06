@@ -9,4 +9,5 @@ find tests/ -name "*\.diff" -exec rm {} \;
 find tests/ -name "*\.exp" -exec rm {} \;
 find tests/ -name "*\.log" -exec rm {} \;
 find tests/ -name "*\.php" -exec rm {} \;
+find tests/ -name "*\.sh" -exec rm {} \;
 

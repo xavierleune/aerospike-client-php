@@ -1,6 +1,7 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
-
+#include<aerospike/as_arraylist.h>
+#include<aerospike/as_hashmap.h>
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
@@ -23,6 +24,38 @@
          zend_hash_get_current_data_ex(ht,                       \
                 (void **) &datavalue, &position) == SUCCESS;     \
          zend_hash_move_forward_ex(ht, &position))
+
+#define AS_MAX_STORE_SIZE 1024
+#define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
+#define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
+
+#define UDF_MODULE_NAME "name"
+#define UDF_MODULE_TYPE "type"
+#define LUA_FILE_BUFFER_FRAME 512
+
+/*
+ *******************************************************************************************************
+ * Static pool maintained to avoid runtime mallocs.
+ * It comprises of following pools:
+ * 1. Pool for Arraylist
+ * 2. Pool for Hashmap
+ * 3. Pool for Strings
+ * 4. Pool for Integers
+ * 5. Pool for Bytes
+ *******************************************************************************************************
+ */
+typedef struct list_map_static_pool {
+    u_int32_t        current_list_id;
+    as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
+    u_int32_t        current_map_id;
+    as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
+    as_string        string_pool[AS_MAX_STORE_SIZE];
+    u_int32_t        current_str_id;
+    as_integer       integer_pool[AS_MAX_STORE_SIZE];
+    u_int32_t        current_int_id;
+    as_bytes         bytes_pool[AS_MAX_STORE_SIZE];
+    u_int32_t        current_bytes_id;
+} as_static_pool;
 
 /* 
  *******************************************************************************************************
@@ -306,4 +339,52 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         as_config* conf,
                                         HashTable persistent_list,
                                         int persist);
+
+extern void
+aerospike_helper_free_static_pool(as_static_pool *static_pool);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of UDF functions.
+ ******************************************************************************************************
+ */
+
+extern as_status
+aerospike_udf_register(Aerospike_object* aerospike_obj_p,
+                       as_error* error_p,
+                       char *path_p,
+                       char *module_p,
+                       long language,
+                       zval *options_p);
+
+extern as_status
+aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
+                         as_error* error_p,
+                         char *module_p,
+                         zval *options_p);
+
+extern as_status
+aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
+                    as_key* as_key_p,
+                    as_error* error_p,
+                    char* module_p,
+                    char* function_p,
+                    zval** args_pp,
+                    zval* return_value_p,
+                    zval* options_p);
+
+extern as_status
+aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
+                                      as_error *error_p,
+                                      zval* array_of_modules_p,
+                                      long language,
+                                      zval* options_p);
+
+extern as_status
+aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
+                                         as_error *error_p,
+                                         char* module_p,
+                                         zval* udf_code_p,
+                                         long language,
+                                         zval* options_p);
 #endif

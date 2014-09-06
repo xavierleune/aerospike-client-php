@@ -104,10 +104,18 @@ PHP_METHOD(Aerospike, predicateBetween);
 PHP_METHOD(Aerospike, predicateEquals);
 PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, scan);
+/*
+ * User Defined Function (UDF) APIs:
+ */
+
+PHP_METHOD(Aerospike, register);
+PHP_METHOD(Aerospike, deregister);
+PHP_METHOD(Aerospike, apply);
+PHP_METHOD(Aerospike, listRegistered);
+PHP_METHOD(Aerospike, getRegistered);
 
 // TBD
 // Secondary Index APIs:
-// User Defined Function (UDF) APIs:
 // Large Data Type (LDT) APIs:
 // Shared Memory APIs:
 

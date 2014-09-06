@@ -16,4 +16,5 @@ namespace.
 
     $ php rec-operations.php --host=192.168.119.3 -a -c
     $ php bin-operations.php --host=192.168.119.3 -a -c
+    $ php udf-operations.php --host=192.168.119.3 -a -c
 
