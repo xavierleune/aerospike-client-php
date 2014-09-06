@@ -6,7 +6,7 @@ Aerospike::scan - scans a set in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]]] )
 ```
 
 **Aerospike::scan()** will scan a *set* and invoke a callback function 
@@ -24,6 +24,14 @@ Non-existent bins will appear in the *record* with a NULL value.
 **record_cb** a callback function invoked for each record streaming back from the server.
 
 **bins** an array of bin names to be returned.
+
+**percent** the percentage of data to scan.
+
+**scan_priority** the priority of the scan.
+
+**concurrent** whether to scan all nodes in parallel.
+
+**no_bins** whether to return only metabins and exclude bins.
 
 **options** including **Aerospike::OPT_POLICY_RETRY**.
 
