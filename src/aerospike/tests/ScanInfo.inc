@@ -42,7 +42,7 @@ class ScanInfo extends AerospikeTestCommon
             $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
             $key=$db->initKey("test", "demo", "Get_key".$i);
-        }  
+        }
         $degister_status = $db->deregister("my_udf");
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
@@ -69,7 +69,7 @@ class ScanInfo extends AerospikeTestCommon
     {
         if (!$db->isConnected()) {
             return($db->errorno());
-        }   
+        }
         $status = $db->scanInfo($scan_id, $info);
 	    if($info['status] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
@@ -130,7 +130,7 @@ class ScanInfo extends AerospikeTestCommon
         $status = $db->scanInfo(array($scan_id), $info);
 	    if($status != Aerospike::OK) {
             return($db->errorno());
-	    }   
+        }
         return($status);
     }
 	/**
