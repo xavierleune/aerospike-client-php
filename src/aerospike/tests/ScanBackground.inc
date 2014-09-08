@@ -12,21 +12,21 @@ class ScanBackground extends AerospikeTestCommon
      * constants.
      */
     protected function setUp(&$db) {
-	$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
- 	$key = $db->initKey("test", "demo", "Get_key");
- 	$db->put($key,array("first_name"=>"raunak","age"=>29));
- 	$key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key,array("first_name"=>"pavan","age"=>27));
- 	$key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key,array("first_name"=>"bhushan","age"=>22));
-	$key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key,array("first_name"=>"ajit","age"=>32));
+   	 $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     $key = $db->initKey("test", "demo", "Get_key");
+     $db->put($key,array("first_name"=>"raunak","age"=>29));
+ 	 $key = $db->initKey("test", "demo", "Get_key1");
+     $db->put($key,array("first_name"=>"pavan","age"=>27));
+     $key = $db->initKey("test", "demo", "Get_key2");
+     $db->put($key,array("first_name"=>"bhushan","age"=>22));
+     $key = $db->initKey("test", "demo", "Get_key3");
+     $db->put($key,array("first_name"=>"ajit","age"=>32));
 
-        $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf");
-        if ($register_status != Aerospike::OK) {
-            return($db->errorno());
-        }
+     $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf");
+     if ($register_status != Aerospike::OK) {
+        return($db->errorno());
+     }
     }
 
     protected function tearDown(&$db) {
@@ -34,9 +34,9 @@ class ScanBackground extends AerospikeTestCommon
             $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
             $db = new Aerospike($config);
         }
-     $key = $db->initKey("test","demo","Get_key");
+        $key = $db->initKey("test","demo","Get_key");
         for($i=1;$i<4;$i++) {
-  $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
         $key=$db->initKey("test","demo","Get_key".$i);
         }
@@ -63,8 +63,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundPositive($db) 
-   	{
+    function testScanBackgroundPositive($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -91,7 +91,7 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundUnknownNamespaceAndSetNegative($db) 
+    function testScanBackgroundUnknownNamespaceAndSetNegative($db)
    	{
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -101,7 +101,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    	}
+    }
 
 	/**
 	 * @test
@@ -119,8 +119,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundUnknownModuleNegative($db) 
-    	{
+	function testScanBackgroundUnknownModuleNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -130,7 +130,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    	}
+    }
 
 	/**
 	 * @test
@@ -148,8 +148,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundUnknownFunctionNegative($db) 
-    	{
+	function testScanBackgroundUnknownFunctionNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -176,8 +176,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundEmptyNamespaceSetNegative($db) 
-    	{
+	function testScanBackgroundEmptyNamespaceSetNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -186,7 +186,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    	}
+    }
 
 	/**
 	 * @test
@@ -204,8 +204,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundEmptyFunctionUDFNameNegative($db) 
-    	{
+	function testScanBackgroundEmptyFunctionUDFNameNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -214,7 +214,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    	}
+    }
 
 	/**
 	 * @test
@@ -232,8 +232,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundArgumentIsVariableNegative($db) 
-	{
+	function testScanBackgroundArgumentIsVariableNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -243,7 +243,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    	}
+    }
 
 	/**
 	 * @test
@@ -261,8 +261,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundArgsEmptyNegative($db) 
-    	{
+	function testScanBackgroundArgsEmptyNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -288,8 +288,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundExtraParameter($db) 
-   	{
+	function testScanBackgroundExtraParameter($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -298,7 +298,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-        }
+    }
 	/**
 	 * @test
      * ScanBackground - Lua function definition contains extra parameter
@@ -314,8 +314,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundLuaExtraParameter($db) 
-   	{
+	function testScanBackgroundLuaExtraParameter($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -323,12 +323,12 @@ class ScanBackground extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-  	$status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20),"test", "demo", $scan_id);         
+        $status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20),"test", "demo", $scan_id);         
         $degister_status = $db->deregister("my_udf_extra_parameter")
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
         }
-	if ($status != Aerospike::OK) {
+	    if ($status != Aerospike::OK) {
             return($db->errorno());
         }
         return($status);
@@ -349,8 +349,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundLuaLessParameter($db) 
-   	{
+	function testScanBackgroundLuaLessParameter($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -358,7 +358,7 @@ class ScanBackground extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-  	$status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20),"test", "demo", $scan_id);        
+        $status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20),"test", "demo", $scan_id);        
         $degister_status = $db->deregister("my_udf_less_parameter");
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
@@ -367,7 +367,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-        }
+    }
 	/**
 	 * @test
      * ScanBackground - positive with all arguments
@@ -383,8 +383,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundPositiveWithAllArguments($db) 
-   	{
+	function testScanBackgroundPositiveWithAllArguments($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -409,8 +409,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundScanIdIsNull($db) 
-   	{
+	function testScanBackgroundScanIdIsNull($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -419,7 +419,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-        }
+    }
 	/**
 	 * @test
      * ScanBackground - percent is a string
@@ -435,8 +435,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundPercentIsString($db) 
-   	{
+	function testScanBackgroundPercentIsString($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -445,7 +445,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-        }
+    }
 	/**
 	 * @test
      * ScanBackground - Scan priority is string
@@ -461,8 +461,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundPriorityIsString($db) 
-   	{
+	function testScanBackgroundPriorityIsString($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -471,7 +471,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-        }
+    }
 	/**
 	 * @test
      * ScanBackground - conncurent option is integer.
@@ -487,8 +487,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanBackgroundConcurrentIsInt($db) 
-   	{
+	function testScanBackgroundConcurrentIsInt($db)
+    {
          if (!$db->isConnected()) {
             return($db->errorno());
          }
@@ -497,6 +497,6 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-        }
+    }
 }
 ?>
