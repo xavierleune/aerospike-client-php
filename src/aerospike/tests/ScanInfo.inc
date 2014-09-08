@@ -43,7 +43,7 @@ class ScanInfo extends AerospikeTestCommon
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
         $key=$db->initKey("test","demo","Get_key".$i);
-        }   
+        }
 
         $degister_status = $db->deregister("my_udf");
         if ($deregister_status != Aerospike::OK) {

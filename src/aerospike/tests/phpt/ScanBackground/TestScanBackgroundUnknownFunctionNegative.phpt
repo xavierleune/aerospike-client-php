@@ -1,5 +1,5 @@
 --TEST--
-ScanBackground - Unknown Function 
+ScanBackground - Unknown Function
 
 --SKIPIF--
 <?php

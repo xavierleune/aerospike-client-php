@@ -12,7 +12,7 @@ class ScanBackground extends AerospikeTestCommon
      * constants.
      */
     protected function setUp(&$db) {
-   	 $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "Get_key");
      $db->put($key,array("first_name"=>"raunak","age"=>29));
@@ -92,7 +92,7 @@ class ScanBackground extends AerospikeTestCommon
 	 */
 
     function testScanBackgroundUnknownNamespaceAndSetNegative($db)
-   	{
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -238,7 +238,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $arg = "args";
-       $status = $db->scanBackground("my_udf", "mytransform", "age","test", "demo", $scan_id); 
+       $status = $db->scanBackground("my_udf", "mytransform", "age","test", "demo", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -323,7 +323,7 @@ class ScanBackground extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20),"test", "demo", $scan_id);         
+        $status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20),"test", "demo", $scan_id);
         $degister_status = $db->deregister("my_udf_extra_parameter")
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
@@ -358,7 +358,7 @@ class ScanBackground extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20),"test", "demo", $scan_id);        
+        $status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20),"test", "demo", $scan_id);
         $degister_status = $db->deregister("my_udf_less_parameter");
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
