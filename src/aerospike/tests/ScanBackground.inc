@@ -74,10 +74,10 @@ class ScanBackground extends AerospikeTestCommon
         return($status);
     }
 
-	/**
-	 * @test
-	 * ScanBackground - namespace and set are incorrect.
-	 *
+    /**
+    * @test
+    * ScanBackground - namespace and set are incorrect.
+    *
 	 * @pre
 	 * Connect using aerospike object to the specified node
 	 *
@@ -102,7 +102,7 @@ class ScanBackground extends AerospikeTestCommon
         return($status);
     }
 
-	/**
+	 /**
 	 * @test
 	 * ScanBackground - Module name is incorrect.
 	 *
@@ -118,8 +118,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundUnknownModuleNegative($db)
-    {
+	 function testScanBackgroundUnknownModuleNegative($db)
+     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -129,9 +129,9 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    }
+     }
 
-	/**
+	 /**
 	 * @test
 	 * ScanBackground - Unknown function passed.
 	 *
@@ -147,8 +147,8 @@ class ScanBackground extends AerospikeTestCommon
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundUnknownFunctionNegative($db)
-    {
+     function testScanBackgroundUnknownFunctionNegative($db)
+     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -159,7 +159,7 @@ class ScanBackground extends AerospikeTestCommon
         return($status);
     }
 
-	/**
+	 /**
 	 * @test
 	 * ScanBackground - Empty namespace and set.
 	 *
@@ -174,9 +174,8 @@ class ScanBackground extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-
-	function testScanBackgroundEmptyNamespaceSetNegative($db)
-    {
+    function testScanBackgroundEmptyNamespaceSetNegative($db)
+     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -185,25 +184,25 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-    }
+     }
 
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - Empty module and function
      *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
 	 * @remark
 	 * Variants: OO (testAggregateEmptyFunctionUDFNameNegative)
 	 *
 	 * @test_plans{1.1}
 	 */
 
-	function testScanBackgroundEmptyFunctionUDFNameNegative($db)
+    function testScanBackgroundEmptyFunctionUDFNameNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
