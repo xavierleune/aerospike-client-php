@@ -215,14 +215,13 @@ class Udf extends AerospikeTestCommon
             $db->close();
             return($db->errorno());
         }
-        $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1",
-            "world"), $returned);
+        $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1", "world"), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        if($returned == "hellobin1") {
+        if($returned == "helloworld") {
             return Aerospike::OK;
         }
         return Aerospike::ERR;
@@ -474,15 +473,12 @@ class Udf extends AerospikeTestCommon
             $db->close();
             return($db->errorno());
         }
-      //  $returned = array();
         $status = $db->apply($key, "module", "udf_returns_record", NULL, $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-   /*     $mystatus = array_diff_assoc_recursive($returned,array("bin1"=>$map, "bin2"=>$list));
-        //  echo "Ret is".var_dump($returned);*/
         if($returned!="") {
             return Aerospike::ERR;
         }
@@ -509,7 +505,7 @@ class Udf extends AerospikeTestCommon
             return ($db->errorno());
         }
         $key = $db->initKey("test", "demo", "udf_put");
-        
+
         if ($db->isConnected()) {
             $status = $db->put($key, array("bin1"=>"aa"));
         } else{
@@ -517,8 +513,8 @@ class Udf extends AerospikeTestCommon
             return($db->errorno());
         }
         try {
-        $status = $db->apply($key, "module", "udf_without_arg_and_return",
-            NULL, NULL, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+            $status = $db->apply($key, "module", "udf_without_arg_and_return",
+                NULL, NULL, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
         } catch(ErrorException $e) {
             return Aerospike::OK;
         }
@@ -618,12 +614,12 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            $test = array(array("name"=>"bin_transform.lua","type"=>65536), array("name"=>"my_udf.lua","type"=>65536),array("name"=>"module.lua","type"=>65536));
-            $mystatus = array_diff_assoc_recursive($modules,$test);
-            if(!empty($mystatus)) {
-                return Aerospike::ERR;
+            foreach($modules as $moduleeach) {
+                if($moduleeach['name']=='module.lua') {
+                    return Aerospike::OK;
+                }
             }
-            return Aerospike::OK;
+            return Aerospike::ERR;
         }
         return($status);
     }
@@ -653,12 +649,12 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            $test = array(array("name"=>"bin_transform.lua","type"=>65536), array("name"=>"my_udf.lua","type"=>65536),array("name"=>"module.lua","type"=>65536));
-            $mystatus = array_diff_assoc_recursive($modules,$test);
-            if(!empty($mystatus)) {
-                return Aerospike::ERR;
+            foreach($modules as $moduleeach) {
+                if($moduleeach['name']=='module.lua') {
+                    return Aerospike::OK;
+                }
             }
-            return Aerospike::OK;
+            return Aerospike::ERR;
         }
         return($status);
     }
@@ -688,12 +684,12 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-             $test = array(array("name"=>"bin_transform.lua","type"=>65536), array("name"=>"my_udf.lua","type"=>65536),array("name"=>"module.lua","type"=>65536));
-            $mystatus = array_diff_assoc_recursive($modules,$test);
-            if(!empty($mystatus)) {
-                return Aerospike::ERR;
-            }
-            return Aerospike::OK;
+            foreach($modules as $moduleeach) {
+                if($moduleeach['name']=='module.lua') {
+                    return Aerospike::OK;
+                }
+            } 
+            return Aerospike::ERR;
         }
         return($status);
     }
