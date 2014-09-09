@@ -4,14 +4,14 @@ require_once 'Common.inc';
 
  *Basic Aggregate tests
 
-*/
+ */
 class ScanBackground extends AerospikeTestCommon
 {
     /*
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    protected function setUp(&$db) {
+    protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("test", "demo", "Get_key");
@@ -23,13 +23,13 @@ class ScanBackground extends AerospikeTestCommon
         $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
 
-        register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf");
+        $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf");
         if ($register_status != Aerospike::OK) {
-        return($db->errorno());
+            return($db->errorno());
         }
     }
 
-    protected function tearDown(&$db) {
+    protected function tearDown(&$db, &$key) {
         if (!$db->isConnected()) {
             $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
             $db = new Aerospike($config);
@@ -37,7 +37,7 @@ class ScanBackground extends AerospikeTestCommon
         $key = $db->initKey("test", "demo", "Get_key");
         for($i=1; $i<4; $i++) {
             $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
+                =>Aerospike::POLICY_RETRY_NONE));
             $key=$db->initKey("test", "demo", "Get_key".$i);
         }
         $degister_status = $db->deregister("my_udf");
@@ -47,27 +47,55 @@ class ScanBackground extends AerospikeTestCommon
         $db->close();
     }
 
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - All correct arguments
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-    function testScanBackgroundPositive($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundPositive($db, $key)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
-         }
+        }
         $status = $db->scanBackground("my_udf", "mytransform", array(20),"test", "demo", $scan_id);
+        if ($status != Aerospike::OK) {
+            return($db->errorno());
+        }
+        return(var_dump($scan_id));
+    }
+
+    /**
+     * @test
+     * ScanBackground - namespace and set are incorrect.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregateUnknownNamespaceAndSetNegative)
+     *
+     * @test_plans{1.1}
+     */
+
+    function testScanBackgroundUnknownNamespaceAndSetNegative($db)
+    {
+        if(!$db->isConnected()) {
+            return($db->errorno());
+        }
+        $status = $db->scanBackground("my_udf", "mytransform", array(20), "t", "d", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -75,51 +103,23 @@ class ScanBackground extends AerospikeTestCommon
     }
 
     /**
-    * @test
-    * ScanBackground - namespace and set are incorrect.
-    *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregateUnknownNamespaceAndSetNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
+     * @test
+     * ScanBackground - Module name is incorrect.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregateUnknownModuleNegative)
+     *
+     * @test_plans{1.1}
+     */
 
-    function testScanBackgroundUnknownNamespaceAndSetNegative($db)
+    function testScanBackgroundUnknownModuleNegative($db)
     {
-        if(!$db->isConnected()) {
-            return($db->errorno());
-        }
-	    status = $db->scanBackground("my_udf", "mytransform", array(20), "t", "d", $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
-        }
-        return($status);
-    }
-
-	 /**
-	 * @test
-	 * ScanBackground - Module name is incorrect.
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregateUnknownModuleNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
-
-	 function testScanBackgroundUnknownModuleNegative($db)
-     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -129,26 +129,26 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-     }
+    }
 
-	 /**
-	 * @test
-	 * ScanBackground - Unknown function passed.
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregateUnknownFunctionNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
+    /**
+     * @test
+     * ScanBackground - Unknown function passed.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregateUnknownFunctionNegative)
+     *
+     * @test_plans{1.1}
+     */
 
-     function testScanBackgroundUnknownFunctionNegative($db)
-     {
+    function testScanBackgroundUnknownFunctionNegative($db)
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -159,23 +159,23 @@ class ScanBackground extends AerospikeTestCommon
         return($status);
     }
 
-	 /**
-	 * @test
-	 * ScanBackground - Empty namespace and set.
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregateEmptyNamespaceSetNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
+    /**
+     * @test
+     * ScanBackground - Empty namespace and set.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregateEmptyNamespaceSetNegative)
+     *
+     * @test_plans{1.1}
+     */
     function testScanBackgroundEmptyNamespaceSetNegative($db)
-     {
+    {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -184,7 +184,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         return($status);
-     }
+    }
 
     /**
      * @test
@@ -196,11 +196,11 @@ class ScanBackground extends AerospikeTestCommon
      * @post
      * newly initialized Aerospike objects
      *
-	 * @remark
-	 * Variants: OO (testAggregateEmptyFunctionUDFNameNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
+     * @remark
+     * Variants: OO (testAggregateEmptyFunctionUDFNameNegative)
+     *
+     * @test_plans{1.1}
+     */
 
     function testScanBackgroundEmptyFunctionUDFNameNegative($db)
     {
@@ -214,23 +214,23 @@ class ScanBackground extends AerospikeTestCommon
         return($status);
     }
 
-	/**
-	 * @test
-	 * ScanBackground - String variable is passed as argument to UDF.
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregateArgumentIsVariableNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
+    /**
+     * @test
+     * ScanBackground - String variable is passed as argument to UDF.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregateArgumentIsVariableNegative)
+     *
+     * @test_plans{1.1}
+     */
 
-	function testScanBackgroundArgumentIsVariableNegative($db)
+    function testScanBackgroundArgumentIsVariableNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -243,23 +243,23 @@ class ScanBackground extends AerospikeTestCommon
         return($status);
     }
 
-	/**
-	 * @test
-	 * ScanBackground - Empty argument passed to UDF.
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregateArgsEmptyNegative)
-	 *
-	 * @test_plans{1.1}
-	 */
+    /**
+     * @test
+     * ScanBackground - Empty argument passed to UDF.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregateArgsEmptyNegative)
+     *
+     * @test_plans{1.1}
+     */
 
-	function testScanBackgroundArgsEmptyNegative($db)
+    function testScanBackgroundArgsEmptyNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -271,87 +271,87 @@ class ScanBackground extends AerospikeTestCommon
         }
         return($status);
     }
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - Extra parameter in call to lua function
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundExtraParameter($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundExtraParameter($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
-         }
+        }
         $status = $db->scanBackground("my_udf", "mytransform", array(20,30), "test", "demo", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
         return($status);
     }
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - Lua function definition contains extra parameter
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundLuaExtraParameter($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundLuaExtraParameter($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
-         }
+        }
         $register_status = $db->register("./tests/phpt/ScanBackground/my_udf_extra_parameter.lua", "my_udf_extra_parameter");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20), "test", "demo", $scan_id);
-        $degister_status = $db->deregister("my_udf_extra_parameter")
+        $degister_status = $db->deregister("my_udf_extra_parameter");
         if ($deregister_status != Aerospike::OK) {
-            return($db->errorno());
+        	return($db->errorno());
         }
-	    if ($status != Aerospike::OK) {
+        if ($status != Aerospike::OK) {
             return($db->errorno());
         }
         return($status);
     }
 
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - Lua function definition contains less parameters
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundLuaLessParameter($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundLuaLessParameter($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
-         }
+        }
         $register_status = $db->register("./tests/phpt/ScanBackground/my_udf_less_parameter.lua", "my_udf_less_parameter");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
@@ -359,81 +359,81 @@ class ScanBackground extends AerospikeTestCommon
         $status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20), "test", "demo", $scan_id);
         $degister_status = $db->deregister("my_udf_less_parameter");
         if ($deregister_status != Aerospike::OK) {
-        return($db->errorno());
-        }
-	    if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        return($status);
-    }
-	/**
-	 * @test
-     * ScanBackground - positive with all arguments
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundPositiveWithAllArguments($db)
-    {
-        if (!$db->isConnected()) {
-            return($db->errorno());
-         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike:SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
         return($status);
     }
-	/**
-	 * @test
-     * ScanBackground - null string for scanid
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundScanIdIsNull($db)
+    /**
+     * @test
+     * ScanBackground - positive with all arguments
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundPositiveWithAllArguments($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
-         }
+        }
+        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+        if ($status != Aerospike::OK) {
+            return($db->errorno());
+        }
+        return($status);
+    }
+    /**
+     * @test
+     * ScanBackground - null string for scanid
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundScanIdIsNull($db)
+    {
+        if (!$db->isConnected()) {
+            return($db->errorno());
+        }
         $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", "");
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
         return($status);
     }
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - percent is a string
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundPercentIsString($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundPercentIsString($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -444,22 +444,22 @@ class ScanBackground extends AerospikeTestCommon
         }
         return($status);
     }
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - Scan priority is string
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundPriorityIsString($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundPriorityIsString($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -470,22 +470,22 @@ class ScanBackground extends AerospikeTestCommon
         }
         return($status);
     }
-	/**
-	 * @test
+    /**
+     * @test
      * ScanBackground - conncurent option is integer.
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testAggregatePositive)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testScanBackgroundConcurrentIsInt($db)
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanBackgroundConcurrentIsInt($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
