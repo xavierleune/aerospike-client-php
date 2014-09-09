@@ -222,7 +222,10 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return ($status);
+        if($returned == "hellobin1") {
+            return Aerospike::OK
+        } 
+        return Aerospike::ERR;
     }
 
     /**
@@ -261,7 +264,13 @@ class Udf extends AerospikeTestCommon
 
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return ($status);
+        $mystatus = $db->get($key, $returned);
+        $testList = array("bin1" => array(94, 5, 222, 58));
+        $result = array_diff_assoc_recursive($testList, $returned);
+        if(!empty($result)) {
+            return Aerospike:ERR;
+        }
+        return Aerospike::OK;
     }
 
     /**
@@ -300,7 +309,12 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return ($status);
+        $testList = array("bin1" => array(94, 5, 222, 58));
+        $result = array_diff_assoc_recursive($testList, $returned);
+        if(!empty($result)) {
+            return Aerospike:ERR;
+        }
+        return Aerospike::OK;
     }
     /**
      * @test
@@ -337,8 +351,13 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-
-        return ($status);
+        $mystatus = $db->get($key, $returned);
+        $testMap = array("k30"=>55555, "k20"=>55555, "k10"=>55555);
+        $result = array_diff_assoc_recursive($returned, $testMap);
+        if(!empty($result)) {
+            return Aerospike::ERR;
+        } 
+        return Aerospike::OK;
     }
 
     /**
@@ -376,7 +395,12 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return ($status);
+        $testMap = array("k30"=>85, "k20"=>85, "k10"=>85);
+        $result = array_diff_assoc_recursive($testMap, $returned);
+        if(!empty($result)) {
+            return Aerospike:ERR;
+        }
+        return Aerospike::OK;
     }
 
     /**
@@ -414,8 +438,13 @@ class Udf extends AerospikeTestCommon
             return ($db->errorno());
         }
         $status = $db->remove($key,
-            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return ($status);
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)); 
+        $testMap = array("k30"=>5, "k20"=>5, "k10"=>5);
+        $result = array_diff_assoc_recursive($testMap, $ret_val);
+        if(!empty($result)) {
+            return Aerospike:ERR;
+        }
+        return Aerospike::OK;
     }
 
     /**
@@ -453,7 +482,11 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return ($status);
+        $mystatus = array_diff_assoc_recursive($returned,array("bin1"=>$map, "bin2"=>$list));
+        if(!empty($mystatus)) {
+            return Aerospike:ERR;
+        }
+        return Aerospike::OK;
     }
 
     /**
@@ -576,6 +609,11 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             } 
+            $mystatus = array_diff_assoc_recursive($modules,array("module"));
+            if(!empty($mystatus)) {
+                return Aerospike::OK;
+            }
+            return Aerospike::ERR;
         }
         return($status);
     }
@@ -605,6 +643,11 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
+            $mystatus = array_diff_assoc_recursive($modules,array("module"));
+            if(!empty($mystatus)) {
+                return Aerospike::OK;
+            }
+            return Aerospike::ERR;
         }
         return($status);
     }
@@ -634,6 +677,11 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
+            $mystatus = array_diff_assoc_recursive($modules,array("module"));
+            if(!empty($mystatus)) {
+                return Aerospike::OK;
+            }
+            return Aerospike::ERR;
         } 
         return($status);
     }
