@@ -1,4 +1,4 @@
-T--
+--TEST--
 ScanBackground - Unknown Namespace and Set
 
 --SKIPIF--

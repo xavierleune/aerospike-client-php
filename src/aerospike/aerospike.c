@@ -2061,7 +2061,7 @@ PHP_METHOD(Aerospike, scanInfo)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_get_info(aerospike_obj_p->as_ref_p->as_p,
-                                              &error, scan_id, &scan_info,
+                                              &error, scan_id, scan_info,
                                               options_p))) {
         DEBUG_PHP_EXT_ERROR("scanInfo returned an error");
         goto exit;
