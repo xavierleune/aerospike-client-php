@@ -947,7 +947,7 @@ exit:
     }
     RETURN_LONG(status);
 }
-    
+
 /*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getMetadata
@@ -1479,7 +1479,7 @@ exit:
  *******************************************************************************************************
  * PHP Method:  Aerospike::predicateEquals()
  *******************************************************************************************************
- * 
+ *
  * Method prototype for PHP userland:
  * Helper method for building an equals WHERE predicate.
  * public array Aerospike::predicateEquals ( string $bin, int|string $val )
@@ -1734,7 +1734,7 @@ exit:
  * @param concurrent        Whether to scan all nodes in parallel.
  * @param no_bins           Whether to return only metabins and exclude bins.
  * @param options           Options including Aerospike::OPT_POLICY_RETRY.
- * 
+ *
  * @return                  Returns an integer status code.  Compare to the Aerospike class status
  *                          constants.  When non-zero the Aerospike::error() and
  *                          Aerospike::errorno() methods can be used.

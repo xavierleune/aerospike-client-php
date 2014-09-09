@@ -319,7 +319,7 @@ aerospike_php_exists_metadata(aerospike*  as_object_p, zval* key_record_p,
  * Extern declarations of helper functions.
  *******************************************************************************************************
  */
-extern void 
+extern void
 aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p,
         as_error *error_p, bool reset_flag TSRMLS_DC);
 

@@ -108,7 +108,7 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
 /*
  *******************************************************************************************************
  * Sets C client's logger callback.
- * 
+ *
  * @param as_log_p          The as_log to be set.
  * @return 1 if log set succeeds. Otherwise 0.
  *******************************************************************************************************
@@ -119,15 +119,15 @@ extern int parseLogParameters(as_log* as_log_p)
 	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         return 1;
-    } else {	
+    } else {
         return 0;;
-    }	
+    }
 }
 
 /*
  *******************************************************************************************************
  * Sets the private members error and errorno of the Aerospike class.
- * 
+ *
  * @param ce_p              The zend_class_entry pointer for the Aerospike class.
  * @param object_p          The Aerospike object.
  * @param error_p           The as_error containing the recent error details.
@@ -203,7 +203,7 @@ do {                                                                           \
 /*
  *******************************************************************************************************
  * This macro is defined to match the config details with the stored object
- * details in the resource and if match use the existing one. 
+ * details in the resource and if match use the existing one.
  *******************************************************************************************************
  */
 #define ZEND_CONFIG_MATCH_USER_STORED(alias, alias_len)                       \
@@ -234,7 +234,7 @@ do {                                                                          \
  *******************************************************************************************************
  * Function to retrieve a C Client's aerospike object either from the zend
  * persistent store if an already hashed object (with the addr+port as the hash) exists, or by
- * creating a new aerospike object if it doesn't and pushing it on the zend persistent store 
+ * creating a new aerospike object if it doesn't and pushing it on the zend persistent store
  * for further reuse.
  * 
  * @param as_object_p               The instance of Aerospike_object structure containing 
@@ -332,8 +332,8 @@ exit:
  * Function to destroy all as_* types initiated within the as_static_pool.
  * To be called if as_static_pool has been initialized after the use of pool is
  * complete.
- * 
- * @param static_pool               The as_static_pool object to be freed. 
+ *
+ * @param static_pool               The as_static_pool object to be freed.
  *******************************************************************************************************
  */
 extern void
