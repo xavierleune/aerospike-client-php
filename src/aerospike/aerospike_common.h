@@ -121,11 +121,25 @@ extern zend_fcall_info_cache user_deserializer_call_info_cache;
 extern zval                  *user_deserializer_callback_retval_p;
 extern uint32_t              is_user_deserializer_registered;
 
+/*
+ ****************************************************************************
+ * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
+ * that allows for userland function callbacks from within a C-callback
+ * context, by having both passed within this struct as a void *udata.
+ ****************************************************************************
+ */
+typedef struct _userland_callback {
+    zend_fcall_info *fci_p;
+    zend_fcall_info_cache *fcc_p;
+} userland_callback;
+
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
+extern bool
+aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
 
-/* 
+/*
  * Need to re-direct the same to log function that we have written
  * if per Aerospike_obj has been decided then we have to pass the object
  * as well into the callback method
@@ -256,30 +270,21 @@ extern as_log_level   php_log_level_set;
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);
 
 extern as_status
-aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, 
-                                               as_key* as_key_p, 
-                                               int16_t* set_val_p);
+aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
+        as_key* as_key_p, int16_t* set_val_p);
 
 extern as_status
-aerospike_transform_check_and_set_config(HashTable* ht_p, 
-                                         zval** retdata_pp,
-                                         as_config* config_p);
+aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
+        as_config* config_p);
 
 extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p,
-                                 zval **record_pp, 
-                                 as_key* as_key_p,
-                                 as_error *error_p,
-                                 u_int32_t ttl_u32,
-                                 zval* options_p);
+aerospike_transform_key_data_put(aerospike* as_object_p, zval **record_pp,
+        as_key* as_key_p, as_error *error_p, u_int32_t ttl_u32,
+        zval* options_p);
 
 extern as_status
-aerospike_transform_get_record(aerospike* as_object_p,
-                               as_key* get_rec_key_p,
-                               zval* options_p,
-                               as_error *error_p,
-                               zval* get_record_p,
-                               zval* bins_p);
+aerospike_transform_get_record(aerospike* as_object_p, as_key* get_rec_key_p,
+        zval* options_p, as_error *error_p, zval* get_record_p, zval* bins_p);
 
 /*
  *******************************************************************************************************
@@ -287,58 +292,41 @@ aerospike_transform_get_record(aerospike* as_object_p,
  *******************************************************************************************************
  */
 extern as_status
-aerospike_record_operations_exists(aerospike* as_object_p, 
-                                   as_key* as_key_p, 
-                                   as_error *error_p, 
-                                   zval* metadata_p, 
-                                   zval* options_p);
-extern as_status
-aerospike_record_operations_remove(aerospike* as_object_p, 
-                                   as_key* as_key_p, 
-                                   as_error *error_p, 
-                                   zval* options_p);
-extern as_status
-aerospike_record_operations_ops(aerospike* as_object_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                int8_t* bin_name_p,
-                                int8_t* str,
-                                u_int64_t offset,
-                                u_int64_t initial_value,
-                                u_int64_t time_to_live,
-                                u_int64_t operation);
-extern as_status
-aerospike_record_operations_remove_bin(aerospike* as_object_p, 
-                                       as_key* as_key_p, 
-                                       zval* bin_name_p, 
-                                       as_error* error_p, 
-                                       zval* options_p);
+aerospike_record_operations_exists(aerospike* as_object_p, as_key* as_key_p,
+        as_error *error_p, zval* metadata_p, zval* options_p);
 
 extern as_status
-aerospike_php_exists_metadata(aerospike*  as_object_p, 
-                              zval* key_record_p, 
-                              zval* metadata_p, 
-                              zval* options_p, 
-                              as_error *error_p);
+aerospike_record_operations_remove(aerospike* as_object_p,
+        as_key* as_key_p, as_error *error_p, zval* options_p);
+
+extern as_status
+aerospike_record_operations_ops(aerospike* as_object_p, as_key* as_key_p,
+        zval* options_p, as_error* error_p, int8_t* bin_name_p, int8_t* str,
+        u_int64_t offset, u_int64_t initial_value, u_int64_t time_to_live,
+        u_int64_t operation);
+
+extern as_status
+aerospike_record_operations_remove_bin(aerospike* as_object_p,
+        as_key* as_key_p, zval* bin_name_p, as_error* error_p,
+        zval* options_p);
+
+extern as_status
+aerospike_php_exists_metadata(aerospike*  as_object_p, zval* key_record_p,
+        zval* metadata_p, zval* options_p, as_error *error_p);
 
 /*
  *******************************************************************************************************
  * Extern declarations of helper functions.
  *******************************************************************************************************
  */
-extern void 
-aerospike_helper_set_error(zend_class_entry *ce_p, 
-                           zval *object_p, 
-                           as_error *error_p, 
-                           bool reset_flag TSRMLS_DC);
+extern void
+aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p,
+        as_error *error_p, bool reset_flag TSRMLS_DC);
 
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
-                                        bool persist_flag,
-                                        as_config* conf,
-                                        HashTable persistent_list,
-                                        int persist);
+        bool persist_flag, as_config* conf, HashTable persistent_list,
+        int persist);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);
@@ -350,41 +338,47 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool);
  */
 
 extern as_status
-aerospike_udf_register(Aerospike_object* aerospike_obj_p,
-                       as_error* error_p,
-                       char *path_p,
-                       char *module_p,
-                       long language,
-                       zval *options_p);
+aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
+        char *path_p, char *module_p, long language, zval *options_p);
 
 extern as_status
-aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
-                         as_error* error_p,
-                         char *module_p,
-                         zval *options_p);
+aerospike_udf_deregister(Aerospike_object* aerospike_obj_p, as_error* error_p,
+        char *module_p, zval *options_p);
 
 extern as_status
-aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
-                    as_key* as_key_p,
-                    as_error* error_p,
-                    char* module_p,
-                    char* function_p,
-                    zval** args_pp,
-                    zval* return_value_p,
-                    zval* options_p);
+aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* as_key_p,
+        as_error* error_p, char* module_p, char* function_p, zval** args_pp,
+        zval* return_value_p, zval* options_p);
 
 extern as_status
 aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
-                                      as_error *error_p,
-                                      zval* array_of_modules_p,
-                                      long language,
-                                      zval* options_p);
+        as_error *error_p, zval* array_of_modules_p, long language,
+        zval* options_p);
 
 extern as_status
 aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
-                                         as_error *error_p,
-                                         char* module_p,
-                                         zval* udf_code_p,
-                                         long language,
-                                         zval* options_p);
+        as_error *error_p, char* module_p, zval* udf_code_p, long language,
+        zval* options_p);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of scan functions.
+ ******************************************************************************************************
+ */
+
+extern as_status
+aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
+        char* namespace_p, char* set_p, userland_callback* user_func_p,
+        HashTable* bins_ht_p, uint8_t percent, uint8_t scan_priority,
+        bool concurrent, bool no_bins, zval* options_p);
+
+extern as_status
+aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
+        char *module_p, char *function_p, zval** args_pp, char* namespace_p,
+        char* set_p, uint64_t* scan_id_p, uint8_t percent,
+        uint8_t scan_priority, bool concurrent, bool no_bins, zval *options_p);
+
+extern as_status
+aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
+        uint64_t scan_id, zval* scan_info_p, zval* options_p);
 #endif
