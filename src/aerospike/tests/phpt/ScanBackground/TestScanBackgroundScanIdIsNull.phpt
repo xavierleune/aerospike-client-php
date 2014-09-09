@@ -1,4 +1,4 @@
-T--
+--TEST--
 ScanBackground - Scan Id is null string
 
 --SKIPIF--

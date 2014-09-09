@@ -1,4 +1,4 @@
-T--
+--TEST--
 ScanBackground - Extra parameter in udf function definition
 
 --SKIPIF--
