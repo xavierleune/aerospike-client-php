@@ -20,14 +20,15 @@ function parse_args() {
     $shortopts  = "";
     $shortopts .= "h::";  /* Optional host */
     $shortopts .= "p::";  /* Optional port */
+    $shortopts .= "p::";  /* Optional port */
     $shortopts .= "a";    /* Optionally annotate output with code */
     $shortopts .= "c";    /* Optionally clean up before leaving */
 
     $longopts  = array(
         "host::",         /* Optional host */
         "port::",         /* Optional port */
-        "annotate",       /* Optionally annotate output with code */
         "clean",          /* Optionally clean up before leaving */
+        "annotate",       /* Optionally annotate output with code */
         "help",           /* Usage */
     );
     $options = getopt($shortopts, $longopts);
@@ -36,13 +37,14 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo "php bin-operations.php [-hHOST] [-pPORT] [-a] [-c]\n";
-    echo " or\n";
-    echo "php bin-operations.php [--host=HOST] [--port=PORT] [--annotate] [--clean]\n";
+    echo("php bin-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
 $HOST_PORT = (isset($args["p"])) ? (integer) $args["p"] : ((isset($args["port"])) ? (string) $args["port"] : 3000);
+$UDF_FILE  = __DIR__ . '/lua/basic_udf.lua';
+$UDF_MODULE = 'basic_udf';
+$UDF_MODULE_TO_REGISTER =  $UDF_MODULE . '.lua';
 
 echo colorize("Connecting to the host ≻", 'black', true);
 $start = __LINE__;
@@ -55,10 +57,22 @@ if (!$db->isConnected()) {
 echo success();
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Ensuring that a UDF is registered ≻", 'black', true);
+$start = __LINE__;
+$res = $db->register($UDF_FILE, $UDF_MODULE_TO_REGISTER);
+if ($res == Aerospike::OK) {
+    echo success();
+} elseif ($res == Aerospike::ERR_UDF_NOT_FOUND) {
+    echo fail("Could not find the udf file {$UDF_FILE}");
+} else {
+    echo standard_fail($db);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 echo colorize("Ensuring that a record is put at test.users with PK=1234 ≻", 'black', true);
 $start = __LINE__;
 $key = $db->initKey("test", "users", 1234);
-$put_vals = array("email" => "freudian.circuits@hal-inst.org", "name" => "Perceptron");
+$put_vals = array("email" => "freudian.circuits@hal-inst.org", "name" => "Perceptron", "age" => 30);
 $res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo success();
@@ -67,22 +81,9 @@ if ($res == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Getting the record ≻", 'black', true);
+echo colorize("Applying a simple UDF on the record with PK=1234 to increment age by 10 ≻", 'black', true);
 $start = __LINE__;
-$res = $db->get($key, $record);
-if ($res == Aerospike::OK) {
-    echo success();
-    var_dump($record);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo fail("Could not find a user with PK={$key['key']} in the set test.users");
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Prepending the string value 'Doctor ' value to the 'name' bin ≻", 'black', true);
-$start = __LINE__;
-$res = $db->prepend($key, 'name', 'Doctor ');
+$res = $db->apply($key, $UDF_MODULE, "bin_age_add_10");
 if ($res == Aerospike::OK) {
     echo success();
 } else {
@@ -90,81 +91,24 @@ if ($res == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Appending the string value ' MD' to the 'name' bin ≻", 'black', true);
+echo colorize("Applying a UDF with arguments and return value on the record with PK=1234 to update age and return the new age ≻", 'black', true);
 $start = __LINE__;
-$res = $db->append($key, 'name', ' MD');
+$res = $db->apply($key, $UDF_MODULE, "bin_transform", array("age", 2, 20), NULL, $ret_val);
 if ($res == Aerospike::OK) {
     echo success();
+    var_dump($ret_val);
 } else {
     echo standard_fail($db);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Getting the modified 'name' bin of the record ≻", 'black', true);
+echo colorize("Ensuring that the UDF is deregistered ≻", 'black', true);
 $start = __LINE__;
-$res = $db->get($key, $record, array('name'));
+$res = $db->deregister($UDF_MODULE_TO_REGISTER);
 if ($res == Aerospike::OK) {
     echo success();
-    var_dump($record);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo fail("Could not find a user with PK={$key['key']} in the set test.users");
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Setting a 'patients_cured' bin on the record to (int) 3 using Aerospike::put() ≻", 'black', true);
-$start = __LINE__;
-$put_vals = array("patients_cured" => 3);
-$res = $db->put($key, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Incrementing the 'patients_cured' bin by (int) -1 ≻", 'black', true);
-$start = __LINE__;
-$res = $db->increment($key, 'patients_cured', -1);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Getting the bins 'email' and 'patients_cured' from the record ≻", 'black', true);
-$start = __LINE__;
-$res = $db->get($key, $record, array('email', 'patients_cured'));
-if ($res == Aerospike::OK) {
-    echo success();
-    var_dump($record);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo fail("Could not find a user with PK={$key['key']} in the set test.users");
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Removing the 'patients_cured' bin ≻", 'black', true);
-$start = __LINE__;
-$res = $db->removeBin($key, array('patients_cured'));
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Getting the full record ≻", 'black', true);
-$start = __LINE__;
-$res = $db->get($key, $record);
-if ($res == Aerospike::OK) {
-    echo success();
-    var_dump($record);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo fail("Could not find a user with PK={$key['key']} in the set test.users");
+} elseif ($res == Aerospike::ERR_UDF_NOT_FOUND) {
+    echo fail("Could not find the udf module {$UDF_MODULE_TO_REGISTER}");
 } else {
     echo standard_fail($db);
 }

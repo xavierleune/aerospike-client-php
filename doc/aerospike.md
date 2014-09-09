@@ -177,7 +177,7 @@ Aerospike
     public int deregister ( string $module )
     public int listRegistered ( array &$modules [, int $language ] )
     public int getRegistered ( string $module, string &$code )
-    public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned ]] )
+    public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options ]]] )
     public int aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
 
     // query and scan methods

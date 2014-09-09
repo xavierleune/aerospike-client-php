@@ -37,13 +37,14 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(&read_policy, NULL, NULL, NULL, NULL, options_p, error_p);
+    set_policy(&read_policy, NULL, NULL, NULL, NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
   
-    if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p, &read_policy, as_key_p, &record_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p,
+                    &read_policy, as_key_p, &record_p))) {
         goto exit;
     }
 
@@ -86,13 +87,14 @@ aerospike_record_operations_remove(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, &remove_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, &remove_policy, NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p, &remove_policy, as_key_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p,
+                    &remove_policy, as_key_p))) {
         goto exit;
     }
 exit: 
@@ -148,7 +150,8 @@ aerospike_record_operations_ops(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, &operate_policy, NULL, &serializer_policy, options_p, error_p);
+    set_policy(NULL, NULL, &operate_policy, NULL, NULL, &serializer_policy,
+            options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -162,14 +165,16 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             as_operations_add_prepend_str(&ops, bin_name_p, str);
             break;
         case AS_OPERATOR_INCR:
-            if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p, error_p, NULL, as_key_p, select, &get_rec))) {
+            if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p,
+                            error_p, NULL, as_key_p, select, &get_rec))) {
                 goto exit;
             } else {
                 if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
                    if (AS_NIL == value_p->type) {
                        as_integer_init(&initial_int_val, initial_value);
                        initialize_int = 1;
-                       if (!as_operations_add_write(&ops, bin_name_p, (as_bin_value*) &initial_int_val)) {
+                       if (!as_operations_add_write(&ops, bin_name_p,
+                                   (as_bin_value*) &initial_int_val)) {
                            status = AEROSPIKE_ERR;
                            goto exit;
                        }
@@ -192,7 +197,8 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             break;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_key_operate(as_object_p, error_p, &operate_policy, as_key_p, &ops, &get_rec))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_operate(as_object_p, error_p,
+                    &operate_policy, as_key_p, &ops, &get_rec))) {
         goto exit;
     }
 
@@ -241,7 +247,7 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, &write_policy, NULL, NULL, NULL, options_p, error_p);
+    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -260,7 +266,8 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
         }
     }         
 
-    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p, NULL, as_key_p, &rec))) {
+    if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p,
+                    NULL, as_key_p, &rec))) {
          goto exit;
     }
 
@@ -311,15 +318,19 @@ aerospike_php_exists_metadata(aerospike* as_object_p,
 
         MAKE_STD_ZVAL(metadata_arr_p);
         array_init(metadata_arr_p);
-        ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1)
+        ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1);
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p), &as_key_for_put_record, &initializeKey))) {
+    if (AEROSPIKE_OK != (status =
+                aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_put_record, &initializeKey))) {
         DEBUG_PHP_EXT_ERROR("unable to iterate through exists/getMetadata key params");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_exists(as_object_p, &as_key_for_put_record, error_p, metadata_p, options_p))) {
+    if (AEROSPIKE_OK != (status =
+                aerospike_record_operations_exists(as_object_p, &as_key_for_put_record,
+                    error_p, metadata_p, options_p))) {
         DEBUG_PHP_EXT_ERROR("exists/getMetadata: unable to fetch the record");
         goto exit;
     }

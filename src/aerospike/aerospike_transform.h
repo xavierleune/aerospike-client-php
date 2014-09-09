@@ -202,34 +202,6 @@
 #define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
 
-#define AS_MAX_STORE_SIZE 1024
-#define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
-#define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
-
-/*
- *******************************************************************************************************
- * Static pool maintained to avoid runtime mallocs.
- * It comprises of following pools:
- * 1. Pool for Arraylist
- * 2. Pool for Hashmap
- * 3. Pool for Strings
- * 4. Pool for Integers
- * 5. Pool for Bytes
- *******************************************************************************************************
- */
-typedef struct list_map_static_pool {
-    u_int32_t        current_list_id;
-    as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
-    u_int32_t        current_map_id;
-    as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
-    as_string        string_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_str_id;
-    as_integer       integer_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_int_id;
-    as_bytes         bytes_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_bytes_id;
-} as_static_pool;
-
 /*
  *******************************************************************************************************
  * For the case of method PUT, we need to deduce the key for Record as well as
@@ -551,7 +523,7 @@ do {                                                                           \
             AS_##datatype##_##method##_CALLBACK,                               \
             &foreach_##datatype##_callback_udata);                             \
     ADD_##level##_##action##_ZVAL(array, key,                                  \
-            foreach_##datatype##_callback_udata.udata_p);                      \
+            foreach_##datatype##_callback_udata.udata_p)                       \
 } while(0);
 
 /* 
@@ -990,16 +962,24 @@ do {                                                                           \
  *******************************************************************************************************
  */
 #define ADD_MAP_ASSOC_ZVAL(array, key, store)                                  \
-    add_assoc_zval(array, as_string_get((as_string *) key), store)
+    add_assoc_zval(array, as_string_get((as_string *) key), store);
 
 #define ADD_MAP_INDEX_ZVAL(array, key, store)                                  \
-    add_index_zval(array, as_integer_get((as_integer *) key), store)
+    add_index_zval(array, as_integer_get((as_integer *) key), store);
 
+/*
+ * key will be NULL in case of UDF methods.
+ * NULL will differentiate UDF from normal GET calls.
+ */
 #define ADD_DEFAULT_ASSOC_ZVAL(array, key, store)                              \
-    add_assoc_zval(array, key, store)
+    if (key == NULL) {                                                         \
+        ZVAL_ZVAL((zval *) array, store, 1, 0);                                \
+    } else {                                                                   \
+        add_assoc_zval((zval *) array, key, store);                            \
+    }
 
 #define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
-    add_next_index_zval(array, store)
+    add_next_index_zval(array, store);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
 
