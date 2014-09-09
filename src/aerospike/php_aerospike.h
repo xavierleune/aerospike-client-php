@@ -55,24 +55,32 @@ PHP_RINIT_FUNCTION(aerospike);
 PHP_RSHUTDOWN_FUNCTION(aerospike);
 PHP_MINFO_FUNCTION(aerospike);
 
-// Client Object APIs:
+/*
+ * Client Object APIs:
+ */
 
 PHP_METHOD(Aerospike, __construct);
 PHP_METHOD(Aerospike, __destruct);
 
-// Cluster Management APIs:
+/*
+ * Cluster Management APIs:
+ */
 
 PHP_METHOD(Aerospike, isConnected);
 PHP_METHOD(Aerospike, close);
 PHP_METHOD(Aerospike, getNodes);
 PHP_METHOD(Aerospike, info);
 
-// Error Handling APIs:
+/*
+ * Error Handling APIs:
+ */
 
 PHP_METHOD(Aerospike, error);
 PHP_METHOD(Aerospike, errorno);
 
-// Key Value Store (KVS) APIs:
+/*
+ * Key Value Store (KVS) APIs:
+ */
 
 PHP_METHOD(Aerospike, add);
 PHP_METHOD(Aerospike, append);
@@ -93,17 +101,24 @@ PHP_METHOD(Aerospike, setDeserializer);
 PHP_METHOD(Aerospike, setSerializer);
 PHP_METHOD(Aerospike, touch);
 
-// Logging APIs:
+/*
+ * Logging APIs:
+ */
 
 PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
 
-// Query and Scan APIs:
+/*
+ * Query and Scan APIs:
+ */
 
 PHP_METHOD(Aerospike, predicateBetween);
 PHP_METHOD(Aerospike, predicateEquals);
 PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, scan);
+PHP_METHOD(Aerospike, scanBackground);
+PHP_METHOD(Aerospike, scanInfo);
+
 /*
  * User Defined Function (UDF) APIs:
  */
@@ -114,10 +129,12 @@ PHP_METHOD(Aerospike, apply);
 PHP_METHOD(Aerospike, listRegistered);
 PHP_METHOD(Aerospike, getRegistered);
 
-// TBD
-// Secondary Index APIs:
-// Large Data Type (LDT) APIs:
-// Shared Memory APIs:
+/*
+ * TBD
+ * Secondary Index APIs:
+ * Large Data Type (LDT) APIs:
+ * Shared Memory APIs:
+ */
 
 extern zend_module_entry aerospike_module_entry;
 #define phpext_aerospike_ptr &aerospike_module_entry

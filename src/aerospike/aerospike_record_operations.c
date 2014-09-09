@@ -37,12 +37,13 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(&read_policy, NULL, NULL, NULL, NULL, NULL, options_p, error_p);
+    set_policy(&read_policy, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
-  
+
     if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p,
                     &read_policy, as_key_p, &record_p))) {
         goto exit;
@@ -87,7 +88,8 @@ aerospike_record_operations_remove(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, &remove_policy, NULL, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, &remove_policy, NULL, NULL, NULL, NULL,
+            options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -150,8 +152,8 @@ aerospike_record_operations_ops(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, &operate_policy, NULL, NULL, &serializer_policy,
-            options_p, error_p);
+    set_policy(NULL, NULL, &operate_policy, NULL, NULL, NULL, NULL,
+            &serializer_policy, options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -247,7 +249,8 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL, options_p, error_p);
+    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL,
+            NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

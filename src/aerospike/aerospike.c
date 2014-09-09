@@ -55,20 +55,6 @@
 #include "aerospike_logger.h"
 
 /*
- ****************************************************************************
- * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
- * that allows for userland function callbacks from within a C-callback
- * context, by having both passed within this struct as a void *udata.
- ****************************************************************************
- */
-typedef struct _userland_callback {
-    zend_fcall_info *fci_p;
-    zend_fcall_info_cache *fcc_p;
-} userland_callback;
-
-bool record_stream_callback(const as_val* p_val, void* udata);
-
-/*
  ********************************************************************
  * GLOBAL AEROSPIKE CLASS ENTRY
  * GLOBAL AEROSPIKE OBJECT HANDLERS
@@ -135,7 +121,7 @@ ZEND_END_ARG_INFO()
 /*
  ********************************************************************
  * Using "arginfo_sixth_by_ref" in zend_arg_info argument of a
- * zend_function_entry accepts first argument of the
+ * zend_function_entry accepts sixth argument of the
  * corresponding functions by reference and rest by value.
  ********************************************************************
  */
@@ -147,6 +133,7 @@ ZEND_BEGIN_ARG_INFO(arginfo_sixth_by_ref, 0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(1)
 ZEND_END_ARG_INFO()
+
 
 zend_module_entry aerospike_module_entry =
 {
@@ -237,7 +224,9 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
-    
+    PHP_ME(Aerospike, scanBackground, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, scanInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      * UDF APIs:
@@ -350,7 +339,7 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
  *  Lifecycle APIs:
  ********************************************************************
  */
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::__construct()
  *******************************************************************************************************
@@ -442,7 +431,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::__destruct()
  *******************************************************************************************************
@@ -468,7 +457,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::isConnected()
  *******************************************************************************************************
@@ -494,7 +483,7 @@ PHP_METHOD(Aerospike, isConnected)
     }
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::__close()
  *******************************************************************************************************
@@ -541,7 +530,7 @@ exit:
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::get()
  *******************************************************************************************************
@@ -631,7 +620,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::put()
  *******************************************************************************************************
@@ -704,7 +693,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getNodes()
  *******************************************************************************************************
@@ -723,7 +712,7 @@ PHP_METHOD(Aerospike, getNodes)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::info()
  *******************************************************************************************************
@@ -740,7 +729,7 @@ PHP_METHOD(Aerospike, info)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::add()
  * Add integer bin values to existing bin values.
@@ -756,7 +745,7 @@ PHP_METHOD(Aerospike, add)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::append()
  *******************************************************************************************************
@@ -843,7 +832,7 @@ exit:
 }
 
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::remove()
  *******************************************************************************************************
@@ -910,7 +899,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::exists()
  *******************************************************************************************************
@@ -937,7 +926,7 @@ PHP_METHOD(Aerospike, exists)
 
     if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "exists: connection not established"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "exists: connection not established");
         DEBUG_PHP_EXT_ERROR("exists: connection not established");
     }
 
@@ -948,7 +937,7 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-   status = aerospike_php_exists_metadata(aerospike_obj_p->as_ref_p->as_p, key_record_p, metadata_p, options_p, &error);
+    status = aerospike_php_exists_metadata(aerospike_obj_p->as_ref_p->as_p, key_record_p, metadata_p, options_p, &error);
 
 exit:
     if (status != AEROSPIKE_OK) {
@@ -958,8 +947,8 @@ exit:
     }
     RETURN_LONG(status);
 }
-    
-/* 
+
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getMetadata
  *******************************************************************************************************
@@ -1010,7 +999,7 @@ exit:
 }
 
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getHeader()
  *******************************************************************************************************
@@ -1028,7 +1017,7 @@ PHP_METHOD(Aerospike, getHeader)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::operate()
  *******************************************************************************************************
@@ -1047,7 +1036,7 @@ PHP_METHOD(Aerospike, operate)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::prepend()
  *******************************************************************************************************
@@ -1134,7 +1123,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  **************************************************************************************************************************
  * PHP Method:  Aerospike::increment()
  **************************************************************************************************************************
@@ -1221,7 +1210,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::touch()
  *******************************************************************************************************
@@ -1303,7 +1292,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::initKey()
  *******************************************************************************************************
@@ -1357,7 +1346,7 @@ PHP_METHOD(Aerospike, initKey)
     }
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::setDeserializer
  *******************************************************************************************************
@@ -1385,7 +1374,7 @@ PHP_METHOD(Aerospike, setDeserializer)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::setSerializer()
  *******************************************************************************************************
@@ -1413,7 +1402,7 @@ PHP_METHOD(Aerospike, setSerializer)
     RETURN_TRUE;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::removeBin()
  *******************************************************************************************************
@@ -1486,11 +1475,11 @@ exit:
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::predicateEquals()
  *******************************************************************************************************
- * 
+ *
  * Method prototype for PHP userland:
  * Helper method for building an equals WHERE predicate.
  * public array Aerospike::predicateEquals ( string $bin, int|string $val )
@@ -1538,7 +1527,7 @@ PHP_METHOD(Aerospike, predicateEquals)
     }
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::predicateBetween()
  *******************************************************************************************************
@@ -1574,7 +1563,7 @@ PHP_METHOD(Aerospike, predicateBetween)
     add_assoc_zval(return_value, "val", minmax_arr);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::query()
  *******************************************************************************************************
@@ -1706,7 +1695,7 @@ PHP_METHOD(Aerospike, query)
     userland_callback user_func;
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
-    if (aerospike_query_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &query, record_stream_callback, &user_func) != AEROSPIKE_OK) {
+    if (aerospike_query_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &query, aerospike_helper_record_stream_callback, &user_func) != AEROSPIKE_OK) {
         e_level = E_WARNING;
         PHP_EXT_SET_AS_ERR(&error, error.code, error.message);
         goto exit;
@@ -1725,77 +1714,30 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
- *******************************************************************************************************
- * Callback for record stream.
- *******************************************************************************************************
- */
-bool record_stream_callback(const as_val* p_val, void* udata)
-{
-    as_error                error;
-    userland_callback       *user_func_p;
-    zend_fcall_info         *fci_p = NULL;
-    zend_fcall_info_cache   *fcc_p = NULL;
-    zval                    *record_p = NULL;
-    zval                    **args[1];
-    zval                    *retval = NULL;
-    bool                    do_continue = true;
-    foreach_callback_udata  foreach_record_callback_udata;
-
-    if (!p_val) {
-        DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
-        return true;
-    }
-    as_record* current_as_rec = as_record_fromval(p_val);
-    if (!current_as_rec) {
-        DEBUG_PHP_EXT_WARNING("stream returned a non-as_record object to the callback.");
-        return true;
-    }
-    MAKE_STD_ZVAL(record_p);
-    array_init(record_p);
-    foreach_record_callback_udata.udata_p = record_p;
-    foreach_record_callback_udata.error_p = &error;
-    if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
-        &foreach_record_callback_udata)) {
-        DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
-        zval_ptr_dtor(&record_p);
-        return true;
-    }
-
-    /* call the userland function with the array representing the record */
-    user_func_p = (userland_callback *) udata;
-    fci_p = user_func_p->fci_p;
-    fcc_p = user_func_p->fcc_p;
-    args[0] = &record_p;
-    fci_p->param_count = 1;
-    fci_p->params = args;
-    fci_p->retval_ptr_ptr = &retval;
-    if (zend_call_function(fci_p, fcc_p TSRMLS_CC) == FAILURE) {
-        DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "stream callback could not invoke userland function.");
-        zval_ptr_dtor(&record_p);
-        return true;
-    }
-    zval_ptr_dtor(&record_p);
-    if (retval) {
-        if ((Z_TYPE_P(retval) == IS_BOOL) && !Z_BVAL_P(retval)) {
-                do_continue = false;
-        } else {
-                do_continue = true;
-        }
-        zval_ptr_dtor(&retval);
-    }
-    return do_continue;
-}
-
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::scan()
  *******************************************************************************************************
  * Scans a set in the Aerospike database.
  * Method prototype for PHP userland:
  * public int Aerospike::scan ( string $ns, string $set, callback $record_cb [,
- * array $bins [, array $options ]] )
+ *      array $bins [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [,
+ *      boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]]] )
+ *
+ * @param ns                The namespace
+ * @param set               The set
+ * @param record_cb         A callback function invoked for each record streaming back from
+ *                          the server.
+ * @param bins              An array of bin names to be returned.
+ * @param percent           The percentage of data to scan.
+ * @param scan_priority     The priority of the scan.
+ * @param concurrent        Whether to scan all nodes in parallel.
+ * @param no_bins           Whether to return only metabins and exclude bins.
+ * @param options           Options including Aerospike::OPT_POLICY_RETRY.
+ *
+ * @return                  Returns an integer status code.  Compare to the Aerospike class status
+ *                          constants.  When non-zero the Aerospike::error() and
+ *                          Aerospike::errorno() methods can be used.
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, scan)
@@ -1813,6 +1755,16 @@ PHP_METHOD(Aerospike, scan)
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     zval                   *retval_ptr = NULL;
     zval                   *bins_p = NULL;
+    long                   percent = 100;
+    /*
+     * TODO:
+     * change default value of priority to SCAN_PRIORITY_AUTO
+     */
+    long                   scan_priority = 0;
+    bool                   concurrent = false;
+    bool                   no_bins = false;
+    zval                   *options_p = NULL;
+    HashTable*             bins_ht_p = NULL;
 
     /* initialized to 'no error' (status AEROSPIKE_OK, empty message) */
     as_error_init(&error);
@@ -1826,9 +1778,10 @@ PHP_METHOD(Aerospike, scan)
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Aerospike::scan() has no connection to the database");
         goto exit;
     }
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|allbbza",
         &ns_p, &ns_p_length, &set_p, &set_p_length,
-        &fci, &fcc, &bins_p) == FAILURE) {
+        &fci, &fcc, &bins_p, &percent, &scan_priority,
+        &concurrent, &no_bins, &options_p) == FAILURE) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
         goto exit;
     }
@@ -1837,6 +1790,23 @@ PHP_METHOD(Aerospike, scan)
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects parameter 1 & 2 to be a non-empty strings.");
         goto exit;
     }
+
+    userland_callback user_func;
+    user_func.fci_p =  &fci;
+    user_func.fcc_p = &fcc;
+
+    //bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
+                                     &error, ns_p, set_p, &user_func,
+                                     bins_ht_p, percent,
+                                     scan_priority, concurrent,
+                                     no_bins, options_p))) {
+        DEBUG_PHP_EXT_ERROR("scan returned an error");
+        goto exit;
+    }
+    /*
     as_scan scan;
     as_scan_init(&scan, ns_p, set_p);
     if (bins_p) {
@@ -1853,28 +1823,253 @@ PHP_METHOD(Aerospike, scan)
         }
     }
 
-    userland_callback user_func;
-    user_func.fci_p =  &fci;
-    user_func.fcc_p = &fcc;
-    if (aerospike_scan_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &scan, record_stream_callback, &user_func) != AEROSPIKE_OK) {
+    if (aerospike_scan_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &scan, aerospike_helper_record_stream_callback, &user_func) != AEROSPIKE_OK) {
         e_level = E_WARNING;
         PHP_EXT_SET_AS_ERR(&error, error.code, error.message);
         goto exit;
-    }
+    }*/
 
 exit:
     if (e_level > 0) {
         php_error_docref(NULL TSRMLS_CC, e_level, error.message);
     }
-    status = error.code;
-    if (status != AEROSPIKE_OK) {
-        DEBUG_PHP_EXT_ERROR(error.message);
-    }
     PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
-    as_scan_destroy(&scan);
     RETURN_LONG(status);
 }
 
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::scanBackground()
+ *******************************************************************************************************
+ * Initiates a background read/write scan by applying a record UDF to each record being scanned.
+ * Method prototype for PHP userland:
+ * public int Aerospike::scanBackground ( string $module, string $function,
+ *          array $args, string $ns, string $set, int &$scan_id, [, int $percent = 100 [,
+ *          int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false
+ *          [, boolean $no_bins = false [, array $options ]]]]] )
+ *
+ * @param module            The name of the UDF module registered against the Aerospike DB.
+ * @param function          The name of the function to be applied to the records.
+ * @param args              An array of arguments for the UDF.
+ * @param ns                The namespace
+ * @param set               The set
+ * @param scan_id           Scan_id filled by an integer handle for the initiated background scan
+ * @param percent           The percentage of data to scan.
+ * @param scan_priority     The priority of the scan.
+ * @param concurrent        Whether to scan all nodes in parallel.
+ * @param no_bins           Whether to return only metabins and exclude bins.
+ * @param options           Options including Aerospike::OPT_WRITE_TIMEOUT and
+ *                          Aerospike::OPT_READ_TIMEOUT.
+ * @return                  Returns an integer status code.  Compare to the Aerospike class status
+ *                          constants.  When non-zero the **Aerospike::error()** and
+ *                          Aerospike::errorno() methods can be used.
+ *
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, scanBackground)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    char*                  module_p = NULL;
+    char*                  function_name_p = NULL;
+    char*                  namespace_p = NULL;
+    char*                  set_p = NULL;
+    zval*                  module_zval_p = NULL;
+    zval*                  function_zval_p = NULL;
+    zval*                  namespace_zval_p = NULL;
+    zval*                  set_zval_p = NULL;
+    /*
+     * TODO:
+     * change default value of scan_id to default return value from c sdk in
+     * case of failure to initiate scan.
+     */
+    long                   scan_id = 0;
+    long                   module_len = 0;
+    long                   function_len = 0;
+    long                   namespace_len = 0;
+    long                   set_len = 0;
+    long                   percent = 100;
+    /*
+     * TODO:
+     * change default value of priority to SCAN_PRIORITY_AUTO
+     */
+    long                   scan_priority = 0;
+    bool                   concurrent = false;
+    bool                   no_bins = false;
+    zval*                  args_p = NULL;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR,
+                "scanBackground: Connection not established");
+        DEBUG_PHP_EXT_ERROR("scanBackground: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+                "zzzzzl|llbbz", &module_zval_p, &function_zval_p, &args_p,
+                &namespace_zval_p, &set_zval_p, &scan_id, &percent,
+                &scan_priority, &concurrent, &no_bins, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for scanBackground()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for scanBackground()");
+        goto exit;
+    }
+
+    if (((args_p) && (PHP_TYPE_ISNOTARR(args_p)) &&
+                (PHP_TYPE_ISNOTNULL(args_p))) || ((options_p) &&
+                (PHP_TYPE_ISNOTARR(options_p)) &&
+                (PHP_TYPE_ISNOTNULL(options_p))) ||
+            (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(function_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(namespace_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(set_zval_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for scanBackground function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function are not proper");
+        goto exit;
+    }
+
+    if (args_p && PHP_TYPE_ISNULL(args_p)) {
+        args_p = NULL;
+    }
+
+    if (options_p && PHP_TYPE_ISNULL(options_p)) {
+        options_p = NULL;
+    }
+    module_p = Z_STRVAL_P(module_zval_p);
+    function_name_p = Z_STRVAL_P(function_zval_p);
+    namespace_p = Z_STRVAL_P(namespace_zval_p);
+    set_p = Z_STRVAL_P(set_zval_p);
+
+    module_len = Z_STRLEN_P(module_zval_p);
+    function_len = Z_STRLEN_P(function_zval_p);
+    namespace_len = Z_STRLEN_P(namespace_zval_p);
+    set_len = Z_STRLEN_P(set_zval_p);
+
+    if (module_len == 0 || function_len == 0 || namespace_len == 0 || set_len == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 1,2,4 and 5 to be non-empty strings");
+        goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for scanBackground function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function not proper");
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
+                                                &error, module_p, function_name_p,
+                                                &args_p, namespace_p, set_p,
+                                                &scan_id, percent, scan_priority,
+                                                concurrent, no_bins,
+                                                options_p))) {
+        DEBUG_PHP_EXT_ERROR("scanBackground returned an error");
+        goto exit;
+    }
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::scanInfo()
+ *******************************************************************************************************
+ * Check the progress of background scan running on the database.
+ * Method prototype for PHP userland:
+ * public int Aerospike::scanInfo ( integer $scan_id, array &$info [, array
+ *                                  $options ] )
+ *
+ * @param scan_id           The scan id
+ * @param info              The status of the background scan returned as an associative array
+ *                          conforming to the following:
+ *                          Associative Array:
+ *                              progress_pct => percentage progress
+ *                              records_scanned => no. of records scanned
+ *                              status => one of Aerospike::SCAN_STATUS_UNDEF,
+ *                                        Aerospike::SCAN_STATUS_INPROGRESS,
+ *                                        Aerospike::SCAN_STATUS_ABORTED,
+ *                                        Aerospike::SCAN_STATUS_COMPLETED
+ *
+ * @param options           Options including Aerospike::OPT_WRITE_TIMEOUT and
+ *                          Aerospike::OPT_READ_TIMEOUT.
+ * @return                  Returns an integer status code.  Compare to the Aerospike class
+ *                          status constants.  When non-zero the Aerospike::error() and
+ *                          Aerospike::errorno() methods can be used.
+ ******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, scanInfo)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    long                   scan_id = -1;
+    zval*                  scan_info = NULL;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "scanInfo: Connection not established");
+        DEBUG_PHP_EXT_ERROR("scanInfo: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz|z",
+                &scan_id, &scan_info, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for scanInfo()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for scanInfo()");
+        goto exit;
+    }
+
+    if (((options_p) && (PHP_TYPE_ISNOTARR(options_p)) &&
+                (PHP_TYPE_ISNOTNULL(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for scanInfo function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanInfo function are not proper");
+        goto exit;
+    }
+
+    if (options_p && PHP_TYPE_ISNULL(options_p)) {
+        options_p = NULL;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_scan_get_info(aerospike_obj_p->as_ref_p->as_p,
+                                              &error, scan_id, scan_info,
+                                              options_p))) {
+        DEBUG_PHP_EXT_ERROR("scanInfo returned an error");
+        goto exit;
+    }
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    RETURN_LONG(status);
+}
 /*
  *******************************************************************************************************
  *  User Defined Function (UDF) APIs:
@@ -2322,7 +2517,7 @@ exit:
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::setLogLevel()
  *******************************************************************************************************
@@ -2375,7 +2570,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::setLogHandler()
  *******************************************************************************************************
@@ -2434,7 +2629,7 @@ PHP_METHOD(Aerospike, setLogHandler)
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::error()
  *******************************************************************************************************
@@ -2449,7 +2644,7 @@ PHP_METHOD(Aerospike, error)
     RETURN_STRINGL(error_msg, strlen(error_msg), 1);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::errorno()
  *******************************************************************************************************
