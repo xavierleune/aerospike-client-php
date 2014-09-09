@@ -73,10 +73,10 @@ class ScanInfo extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
-	    if($info['status] == Aerospike::SCAN_STATUS_COMPLETED ||
+	    if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-	    $info['status] == Aerospike::SCAN_STATUS_COMPLETED) {
+	    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
 	        return($status);
 	    } else {
             return($db->errorno());
@@ -208,10 +208,10 @@ class ScanInfo extends AerospikeTestCommon
         return($db->errorno());
         }
         $status = $db->scanInfo(ScanInfo::$myscan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-	    if($info['status] == Aerospike::SCAN_STATUS_COMPLETED ||
+	    if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-	    $info['status] == Aerospike::SCAN_STATUS_COMPLETED) {
+	    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
 	        return($status);
 	    } else {
             return($db->errorno());
