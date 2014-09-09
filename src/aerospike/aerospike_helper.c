@@ -4,8 +4,8 @@
 #include "aerospike/as_config.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_status.h"
+#include "aerospike/as_record.h"
 #include "aerospike/aerospike.h"
-
 #include "aerospike_common.h"
 
 /* 
@@ -352,5 +352,69 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool)
     for (iter = 0; iter < static_pool->current_map_id; iter++) {
         as_hashmap_destroy(&static_pool->alloc_map[iter]);
     }
+}
+
+/* 
+ *******************************************************************************************************
+ * Callback for record stream.
+ *******************************************************************************************************
+ */
+extern bool
+aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
+{
+    as_error                error;
+    userland_callback       *user_func_p;
+    zend_fcall_info         *fci_p = NULL;
+    zend_fcall_info_cache   *fcc_p = NULL;
+    zval                    *record_p = NULL;
+    zval                    **args[1];
+    zval                    *retval = NULL;
+    bool                    do_continue = true;
+    foreach_callback_udata  foreach_record_callback_udata;
+
+    if (!p_val) {
+        DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
+        return true;
+    }
+    as_record* current_as_rec = as_record_fromval(p_val);
+    if (!current_as_rec) {
+        DEBUG_PHP_EXT_WARNING("stream returned a non-as_record object to the callback.");
+        return true;
+    }
+    MAKE_STD_ZVAL(record_p);
+    array_init(record_p);
+    foreach_record_callback_udata.udata_p = record_p;
+    foreach_record_callback_udata.error_p = &error;
+    if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
+        &foreach_record_callback_udata)) {
+        DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
+        zval_ptr_dtor(&record_p);
+        return true;
+    }
+
+    /* call the userland function with the array representing the record */
+    user_func_p = (userland_callback *) udata;
+    fci_p = user_func_p->fci_p;
+    fcc_p = user_func_p->fcc_p;
+    args[0] = &record_p;
+    fci_p->param_count = 1;
+    fci_p->params = args;
+    fci_p->retval_ptr_ptr = &retval;
+    if (zend_call_function(fci_p, fcc_p TSRMLS_CC) == FAILURE) {
+        DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "stream callback could not invoke userland function.");
+        zval_ptr_dtor(&record_p);
+        return true;
+    }
+    zval_ptr_dtor(&record_p);
+    if (retval) {
+        if ((Z_TYPE_P(retval) == IS_BOOL) && !Z_BVAL_P(retval)) {
+            do_continue = false;
+        } else {
+            do_continue = true;
+        }
+        zval_ptr_dtor(&retval);
+    }
+    return do_continue;
 }
 

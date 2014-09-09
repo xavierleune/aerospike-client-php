@@ -121,9 +121,23 @@ extern zend_fcall_info_cache user_deserializer_call_info_cache;
 extern zval                  *user_deserializer_callback_retval_p;
 extern uint32_t              is_user_deserializer_registered;
 
+/*
+ ****************************************************************************
+ * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
+ * that allows for userland function callbacks from within a C-callback
+ * context, by having both passed within this struct as a void *udata.
+ ****************************************************************************
+ */
+typedef struct _userland_callback {
+    zend_fcall_info *fci_p;
+    zend_fcall_info_cache *fcc_p;
+} userland_callback;
+
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
+extern bool
+aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
 
 /* 
  * Need to re-direct the same to log function that we have written
@@ -387,4 +401,45 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
                                          zval* udf_code_p,
                                          long language,
                                          zval* options_p);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of scan functions.
+ ******************************************************************************************************
+ */
+
+extern as_status
+aerospike_scan_run(aerospike* as_object_p,
+                   as_error* error_p,
+                   char* namespace_p,
+                   char* set_p,
+                   userland_callback* user_func_p,
+                   HashTable* bins_ht_p,
+                   uint8_t percent,
+                   uint8_t scan_priority,
+                   bool concurrent,
+                   bool no_bins,
+                   zval* options_p);
+
+extern as_status
+aerospike_scan_run_background(aerospike* as_object_p,
+                              as_error* error_p,
+                              char *module_p,
+                              char *function_p,
+                              zval** args_pp,
+                              char* namespace_p,
+                              char* set_p,
+                              uint64_t* scan_id_p,
+                              uint8_t percent,
+                              uint8_t scan_priority,
+                              bool concurrent,
+                              bool no_bins,
+                              zval *options_p);
+
+extern as_status
+aerospike_scan_get_info(aerospike* as_object_p,
+                        as_error* error_p,
+                        uint64_t scan_id,
+                        zval* scan_info_p,
+                        zval* options_p);
 #endif
