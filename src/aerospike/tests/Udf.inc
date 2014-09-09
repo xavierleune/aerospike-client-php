@@ -178,8 +178,8 @@ class Udf extends AerospikeTestCommon
         }
         $returned = "aa";
         $udf_apply_status = $db->apply($key, "module",
-            "bin_udf_operation_integer", array("bin1", 2, 20),
-            array(Aerospike::OPT_WRITE_TIMEOUT => 2000), $returned);
+            "bin_udf_operation_integer", array("bin1", 2, 20), $returned,
+            array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -216,7 +216,7 @@ class Udf extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1",
-            "world"), NULL, $returned);
+            "world"), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -254,7 +254,7 @@ class Udf extends AerospikeTestCommon
         }
         $returned = array();
         $status = $db->apply($key, "module", "list_iterate", array("bin1", 2),
-            NULL, $returned);
+            $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -294,7 +294,7 @@ class Udf extends AerospikeTestCommon
         }
         $returned = array();
         $status = $db->apply($key, "module", "list_iterate_returns_list",
-            array("bin1", 2), NULL, $returned);
+            array("bin1", 2), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -331,7 +331,7 @@ class Udf extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->apply($key, "module", "map_iterate",
-            array("bin1", 55555), NULL, $returned);
+            array("bin1", 55555), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -370,7 +370,7 @@ class Udf extends AerospikeTestCommon
         }
         $returned = array();
         $status = $db->apply($key, "module", "map_iterate_returns_map",
-            array("bin1", 85), NULL, $returned);
+            array("bin1", 85), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -409,7 +409,7 @@ class Udf extends AerospikeTestCommon
         $ret_val = "aa";
 
         $status = $db->apply($key, "module", "map_iterate_returns_map",
-            array("bin1", 5), NULL, $ret_val);
+            array("bin1", 5), $ret_val);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -447,7 +447,7 @@ class Udf extends AerospikeTestCommon
             return($db->errorno());
         }
         $returned = array();
-        $status = $db->apply($key, "module", "udf_returns_record", NULL, NULL, $returned);
+        $status = $db->apply($key, "module", "udf_returns_record", NULL, $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -483,7 +483,8 @@ class Udf extends AerospikeTestCommon
             $db->close();
             return($db->errorno());
         }
-        $status = $db->apply($key, "module", "udf_without_arg_and_return");
+        $status = $db->apply($key, "module", "udf_without_arg_and_return",
+            NULL, NULL, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
