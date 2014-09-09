@@ -11,7 +11,8 @@ class ScanInfo extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    protected function setUp(&$db, &$scan_id) {
+    static $myscan_id = 0;
+    protected function setUp(&$db, &$key) {
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("test", "demo", "Get_key");
@@ -27,12 +28,13 @@ class ScanInfo extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id);
+        ScanInfo::$myscan_id = $scan_id;
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
     }
 
-    protected function tearDown(&$db) {
+    protected function tearDown(&$db, &$key) {
         if (!$db->isConnected()) {
             $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
             $db = new Aerospike($config);
@@ -65,12 +67,12 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoPositive($db,$scan_id)
+	function testScanInfoPositive($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanInfo($scan_id, $info);
+        $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
 	    if($info['status] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
@@ -96,7 +98,7 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoScanIdString($db,$scan_id)
+	function testScanInfoScanIdString($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -122,12 +124,38 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoScanIdArray($db,$scan_id)
+	function testScanInfoScanIdArray($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanInfo(array($scan_id), $info);
+        $status = $db->scanInfo(array(ScanInfo::$myscan_id), $info);
+	    if($status != Aerospike::OK) {
+            return($db->errorno());
+        }
+        return($status);
+    }
+	/**
+	 * @test
+     * ScanInfo - Scan id is negative
+	 *
+	 * @pre
+	 * Connect using aerospike object to the specified node
+	 *
+	 * @post
+	 * newly initialized Aerospike objects
+	 *
+	 * @remark
+	 * Variants: OO (testAggregatePositive)
+	 *
+	 * @test_plans{1.1}
+	 */
+	function testScanInfoScanIdNegative($db)
+    {
+        if (!$db->isConnected()) {
+            return($db->errorno());
+        }
+        $status = $db->scanInfo(-1, $info);
 	    if($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -148,12 +176,12 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoInfoIsString($db,$scan_id)
+	function testScanInfoInfoIsString($db)
     {
         if (!$db->isConnected()) {
         return($db->errorno());
         }
-        $status = $db->scanInfo($scan_id, "age");
+        $status = $db->scanInfo(ScanInfo::$myscan_id, "age");
 	    if($status != Aerospike::OK) {
             return($db->errorno());
 	    }
@@ -179,7 +207,7 @@ class ScanInfo extends AerospikeTestCommon
         if (!$db->isConnected()) {
         return($db->errorno());
         }
-        $status = $db->scanInfo($scan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        $status = $db->scanInfo(ScanInfo::$myscan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
 	    if($info['status] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
