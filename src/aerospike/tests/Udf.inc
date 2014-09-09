@@ -688,7 +688,7 @@ class Udf extends AerospikeTestCommon
                 if($moduleeach['name']=='module.lua') {
                     return Aerospike::OK;
                 }
-            } 
+            }
             return Aerospike::ERR;
         }
         return($status);
