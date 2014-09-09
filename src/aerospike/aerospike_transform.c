@@ -2642,8 +2642,8 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_PP(record_pp)));
     init_record = 1;
 
-    set_policy(NULL, &write_policy, NULL, NULL, NULL, &serializer_policy,
-            options_p, error_p);
+    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL, NULL,
+            &serializer_policy, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -2761,7 +2761,8 @@ aerospike_transform_get_record(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(&read_policy, NULL, NULL, NULL, NULL, NULL, options_p, error_p);
+    set_policy(&read_policy, NULL, NULL, NULL, NULL, NULL, NULL,
+            NULL, options_p, error_p);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

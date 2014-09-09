@@ -43,7 +43,8 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
             goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL,
+            NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -129,7 +130,8 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
 {
     as_policy_info          info_policy;
     
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL,
+            NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -177,8 +179,8 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     uint32_t                    serializer_policy = -1;
     as_policy_write             write_policy;
 
-    set_policy(NULL, &write_policy, NULL, NULL, NULL, &serializer_policy,
-            options_p, error_p);
+    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL,
+            NULL, &serializer_policy, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -253,7 +255,8 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
             goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL,
+            NULL, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -322,7 +325,8 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
             goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL,
+            NULL, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
