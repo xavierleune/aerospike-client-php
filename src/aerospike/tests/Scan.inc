@@ -302,7 +302,6 @@ class Scan extends AerospikeTestCommon
                 =>Aerospike::POLICY_RETRY_NONE));
             if ($status != AEROSPIKE::OK) {
                 return($db->errorno());
-                //return($status);
             }
         } else {
             return($db->errorno());
@@ -439,7 +438,6 @@ class Scan extends AerospikeTestCommon
             }, array("email"));
             if ($status != AEROSPIKE::OK) {
                 return($db->errorno());
-                //  return($status);
             } else {
                 return($db->errorno());
             }
