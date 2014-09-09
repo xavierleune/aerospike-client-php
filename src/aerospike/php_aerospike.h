@@ -78,7 +78,7 @@ PHP_METHOD(Aerospike, info);
 PHP_METHOD(Aerospike, error);
 PHP_METHOD(Aerospike, errorno);
 
-/* 
+/*
  * Key Value Store (KVS) APIs:
  */
 
@@ -101,7 +101,7 @@ PHP_METHOD(Aerospike, setDeserializer);
 PHP_METHOD(Aerospike, setSerializer);
 PHP_METHOD(Aerospike, touch);
 
-/* 
+/*
  * Logging APIs:
  */
 
@@ -129,7 +129,7 @@ PHP_METHOD(Aerospike, apply);
 PHP_METHOD(Aerospike, listRegistered);
 PHP_METHOD(Aerospike, getRegistered);
 
-/* 
+/*
  * TBD
  * Secondary Index APIs:
  * Large Data Type (LDT) APIs:

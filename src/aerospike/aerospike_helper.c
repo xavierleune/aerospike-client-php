@@ -8,7 +8,7 @@
 #include "aerospike/aerospike.h"
 #include "aerospike_common.h"
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland logger callback.
  *******************************************************************************************************
@@ -18,7 +18,7 @@ zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
 
-/* 
+/*
  *******************************************************************************************************
  * aerospike-client-php global log level
  *******************************************************************************************************
@@ -29,7 +29,7 @@ as_log_level php_log_level_set = AS_LOG_LEVEL_OFF;
 as_log_level php_log_level_set = __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__;
 #endif
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for C client's logger.
  * This function shall be invoked by:
@@ -105,7 +105,7 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
     return true;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Sets C client's logger callback.
  * 
@@ -124,7 +124,7 @@ extern int parseLogParameters(as_log* as_log_p)
     }	
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Sets the private members error and errorno of the Aerospike class.
  * 
@@ -159,7 +159,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p, as_error *err
     zval_ptr_dtor(&err_msg_p);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * This macro is defined to create a new C client's aerospike object.
  *******************************************************************************************************
@@ -175,7 +175,7 @@ do {                                                                          \
     as_object_p->as_ref_p->ref_as_p = 1;                                      \
 } while(0)
 
-/* 
+/*
  *******************************************************************************************************
  * This macro is defined to register a new resource and to add hash to it.
  *******************************************************************************************************
@@ -200,7 +200,7 @@ do {                                                                           \
 } while(0)
 
 
-/* 
+/*
  *******************************************************************************************************
  * This macro is defined to match the config details with the stored object
  * details in the resource and if match use the existing one. 
@@ -230,7 +230,7 @@ do {                                                                          \
 
 #define MAX_PORT_SIZE 6
 
-/* 
+/*
  *******************************************************************************************************
  * Function to retrieve a C Client's aerospike object either from the zend
  * persistent store if an already hashed object (with the addr+port as the hash) exists, or by
@@ -327,6 +327,15 @@ exit:
     return (status);
 }
 
+/*
+ *******************************************************************************************************
+ * Function to destroy all as_* types initiated within the as_static_pool.
+ * To be called if as_static_pool has been initialized after the use of pool is
+ * complete.
+ * 
+ * @param static_pool               The as_static_pool object to be freed. 
+ *******************************************************************************************************
+ */
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool)
 {
@@ -354,9 +363,18 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool)
     }
 }
 
-/* 
+/*
  *******************************************************************************************************
- * Callback for record stream.
+ * Callback for as_scan_foreach and as_query_foreach functions.
+ * It processes the as_val and translates it into an equivalent zval array.
+ * It then calls the user registered callback passing the zval array as an
+ * argument.
+ *
+ * @param p_val             The current as_val to be passed on to the user
+ *                          callback as an argument.
+ * @param udata             The userland_callback instance filled with fci and
+ *                          fcc.
+ * @return true if callback is successful; else false.
  *******************************************************************************************************
  */
 extern bool
@@ -392,7 +410,9 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return true;
     }
 
-    /* call the userland function with the array representing the record */
+    /*
+     * Call the userland function with the array representing the record.
+     */
     user_func_p = (userland_callback *) udata;
     fci_p = user_func_p->fci_p;
     fcc_p = user_func_p->fcc_p;
