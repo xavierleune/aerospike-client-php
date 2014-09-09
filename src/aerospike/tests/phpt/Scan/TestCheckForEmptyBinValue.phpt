@@ -1,5 +1,5 @@
 --TEST--
-Scan - Check for empty bin value 
+Scan - Check for empty bin value
 
 --SKIPIF--
 <?php
