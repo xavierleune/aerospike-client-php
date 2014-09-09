@@ -20,15 +20,14 @@ function parse_args() {
     $shortopts  = "";
     $shortopts .= "h::";  /* Optional host */
     $shortopts .= "p::";  /* Optional port */
-    $shortopts .= "p::";  /* Optional port */
     $shortopts .= "a";    /* Optionally annotate output with code */
     $shortopts .= "c";    /* Optionally clean up before leaving */
 
     $longopts  = array(
         "host::",         /* Optional host */
         "port::",         /* Optional port */
-        "clean",          /* Optionally clean up before leaving */
         "annotate",       /* Optionally annotate output with code */
+        "clean",          /* Optionally clean up before leaving */
         "help",           /* Usage */
     );
     $options = getopt($shortopts, $longopts);
@@ -37,7 +36,9 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo("php bin-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
+    echo "php bin-operations.php [-hHOST] [-pPORT] [-a] [-c]\n";
+    echo " or\n";
+    echo "php bin-operations.php [--host=HOST] [--port=PORT] [--annotate] [--clean]\n";
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
