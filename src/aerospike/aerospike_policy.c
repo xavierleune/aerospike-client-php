@@ -98,7 +98,7 @@ exit:
  *
  * @param as_config_p           The as_config object to be passed in case of connect.
  * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
- * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
@@ -172,7 +172,7 @@ check_and_set_default_policies(as_config *as_config_p,
  *
  * @param as_config_p           The as_config object to be passed in case of connect.
  * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
- * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
@@ -203,7 +203,7 @@ set_policy_ex(as_config *as_config_p,
               zval *options_p,
               as_error *error_p)
 {
-    if ((!read_policy_p) && (!write_policy_p) && 
+    if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
         (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -394,12 +394,12 @@ set_policy_ex(as_config *as_config_p,
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
                     NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL, NULL);
             connect_flag = 1;
-        } 
+        }
         if (!read_flag && read_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
                     read_policy_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             connect_flag = 1;
-        } 
+        }
         if (!connect_flag && as_config_p) {
             check_and_set_default_policies(as_config_p, NULL, NULL, NULL,
                     NULL, NULL, NULL, NULL, NULL);
@@ -421,7 +421,7 @@ exit:
  * (Called by all methods except connect.)
  *
  * @param read_policy_p         The as_policy_read to be passed in case of get.
- * @param write_policy_p        The as_policy_write to be passed in case of put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
@@ -440,9 +440,9 @@ exit:
  *******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p, 
-           as_policy_write *write_policy_p, 
-           as_policy_operate *operate_policy_p, 
+set_policy(as_policy_read *read_policy_p,
+           as_policy_write *write_policy_p,
+           as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            as_policy_info *info_policy_p,
            as_policy_scan *scan_policy_p,

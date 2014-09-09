@@ -93,12 +93,12 @@ set_policy(as_policy_read *read_policy_p,
            zval *options_p,
            as_error *error_p);
 
-extern void 
-set_general_policies(as_config* as_config_p, 
+extern void
+set_general_policies(as_config* as_config_p,
                      zval *options_p,
                      as_error *error_p);
 
-extern as_status 
+extern as_status
 declare_policy_constants_php(zend_class_entry *Aerospike_ce);
 
 #endif /* end of __AEROSPIKE_POLICY_H__ */

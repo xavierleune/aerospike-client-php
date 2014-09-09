@@ -43,7 +43,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
-  
+
     if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p,
                     &read_policy, as_key_p, &record_p))) {
         goto exit;

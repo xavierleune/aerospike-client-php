@@ -129,7 +129,7 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
         as_error* error_p, char* module_p, zval* options_p)
 {
     as_policy_info          info_policy;
-    
+
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL,
             NULL, NULL, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
