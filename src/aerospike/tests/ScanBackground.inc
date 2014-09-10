@@ -16,13 +16,13 @@ class ScanBackground extends AerospikeTestCommon
         $db = new Aerospike($config);
         $key = $db->initKey("test", "demo", "Get_key");
         $db->put($key, array("first_name"=>"raunak", "age"=>29));
-        $key1 = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key1, array("first_name"=>"pavan", "age"=>27));
-        $key2 = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key2, array("first_name"=>"bhushan", "age"=>22));
-        $key3 = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key3, array("first_name"=>"ajit", "age"=>32));
-
+        $key = $db->initKey("test", "demo", "Get_key1");
+        $db->put($key, array("first_name"=>"pavan", "age"=>27));
+        $key = $db->initKey("test", "demo", "Get_key2");
+        $db->put($key, array("first_name"=>"bhushan", "age"=>22));
+        $key = $db->initKey("test", "demo", "Get_key3");
+        $db->put($key, array("first_name"=>"ajit", "age"=>32));
+         
         $register_status =
             $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf.lua");
         if ($register_status != Aerospike::OK) {
@@ -35,16 +35,15 @@ class ScanBackground extends AerospikeTestCommon
             $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
             $db = new Aerospike($config);
         }
+        $key = $db->initKey("test", "demo", "Get_key");
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
-        $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        $db->remove($key2, array(Aerospike::OPT_POLICY_RETRY
-                            =>Aerospike::POLICY_RETRY_NONE));
-        $db->remove($key3, array(Aerospike::OPT_POLICY_RETRY
-                            =>Aerospike::POLICY_RETRY_NONE));
-
-        $degister_status = $db->deregister("my_udf.lua");
+        for($i=1; $i<4; $i++) {
+            $key=$db->initKey("test", "demo", "Get_key".$i);
+            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+                =>Aerospike::POLICY_RETRY_NONE));
+        }
+        $deregister_status = $db->deregister("my_udf.lua");
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -72,10 +71,12 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf", "mytransform", array(20),"test", "demo", $scan_id);
+	//echo "status is ".$status."\n";
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        return(var_dump($scan_id));
+        //return(var_dump($scan_id));
+	return($status);
     }
 
     /**
@@ -127,7 +128,7 @@ class ScanBackground extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $where = Aerospike::predicateBetween("age", 20, 29);
+        $where = $db->predicateBetween("age", 20, 29);
         $status = $db->scanBackground("my_udf1", "mytransform", array(20), "test", "demo", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
@@ -269,7 +270,8 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $arg = "args";
-        $status = $db->scanBackground("my_udf", "mytransform", "test", "demo", $scan_id);
+	//$scan_id = 10;
+        $status = $db->scanBackground("my_udf", "mytransform", "", "test", "demo", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -329,7 +331,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20), "test", "demo", $scan_id);
-        $degister_status = $db->deregister("my_udf_extra_parameter.lua");
+        $deregister_status = $db->deregister("my_udf_extra_parameter.lua");
         if ($deregister_status != Aerospike::OK) {
         	return($db->errorno());
         }
@@ -366,7 +368,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20), "test", "demo", $scan_id);
-        $degister_status = $db->deregister("my_udf_less_parameter.lua");
+        $deregister_status = $db->deregister("my_udf_less_parameter.lua");
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -397,6 +399,7 @@ class ScanBackground extends AerospikeTestCommon
         }
         $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
         if ($status != Aerospike::OK) {
+	    echo "\n\nError is:".$db->error();
             return($db->errorno());
         }
         return($status);
@@ -474,6 +477,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, "SCAN_PRIORITY_AUTO");
+	echo "\n==================status is ".$status;
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }

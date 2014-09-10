@@ -38,10 +38,13 @@
  */
 static as_status
 aerospike_scan_define(as_scan* scan_p, as_error* error_p, char* namespace_p,
-        char* set_p, uint8_t percent, uint8_t scan_priority,
+        char* set_p, uint8_t percent, long scan_priority,
         bool concurrent, bool no_bins, char* module_p, char* function_p,
         as_list* args_list_p)
 {
+    /*
+     * Please don't change location of as_scan_init().
+     */
     as_scan_init(scan_p, namespace_p, set_p);
 
     if (percent < 0 || percent > 100) {
@@ -120,11 +123,11 @@ exit:
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        uint8_t percent, uint8_t scan_priority, bool concurrent, bool no_bins,
+        uint8_t percent, long scan_priority, bool concurrent, bool no_bins,
         zval* options_p)
 {
     as_scan             scan;
-    as_scan*            scan_p = &scan;
+    as_scan*            scan_p = NULL;
     as_policy_scan      scan_policy;
 
     if ((!as_object_p) || (!error_p) || (!namespace_p) || (!set_p)) {
@@ -133,13 +136,14 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL,
+    set_policy(NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL, NULL,
             options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
 
+    scan_p = &scan;
     if (AEROSPIKE_OK != (aerospike_scan_define(scan_p, error_p, namespace_p,
                     set_p, percent, scan_priority, concurrent, no_bins,
                     NULL, NULL, NULL))) {
@@ -157,12 +161,15 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
             }
             as_scan_select(&scan, Z_STRVAL_PP(bin_names_pp));
         }
-    }
-
-    if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
-                    &scan, aerospike_helper_record_stream_callback,
-                    user_func_p))) {
-        goto exit;
+	if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
+		&scan, aerospike_helper_record_stream_callback, user_func_p))) {
+		goto exit;
+	}
+    } else {
+    		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
+                    &scan, aerospike_helper_record_stream_callback, user_func_p))) {
+                    goto exit;
+    		}
     }
 exit:
     if (scan_p) {
@@ -200,13 +207,13 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, uint64_t* scan_id_p, uint8_t percent, uint8_t scan_priority,
+        char* set_p, uint64_t* scan_id_p, uint8_t percent, long scan_priority,
         bool concurrent, bool no_bins, zval* options_p)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    uint32_t                    serializer_policy = -1;
+    //uint32_t                    serializer_policy = -1;
     as_policy_scan              scan_policy;
     as_scan                     scan;
     as_scan*                    scan_p = NULL;
@@ -219,7 +226,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     }
 
     set_policy(NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL,
-            &serializer_policy, options_p, error_p);
+            NULL/*&serializer_policy*/, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -230,7 +237,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
         AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool,
-                serializer_policy, error_p);
+                NULL/*serializer_policy*/, error_p);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
             goto exit;
@@ -245,12 +252,12 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         DEBUG_PHP_EXT_DEBUG("Unable to define scan");
         goto exit;
     }
-
     if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p,
             error_p, NULL, scan_p, scan_id_p))) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
+
 exit:
     if (args_list_p) {
         as_arraylist_destroy(args_list_p);

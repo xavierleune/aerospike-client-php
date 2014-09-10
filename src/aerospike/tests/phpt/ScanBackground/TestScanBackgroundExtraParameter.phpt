@@ -11,5 +11,4 @@ aerospike_phpt_skipif("ScanBackground", "testScanBackgroundExtraParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanBackground", "testScanBackgroundExtraParameter");
 --EXPECT--
-ERR_UDF
-
+OK

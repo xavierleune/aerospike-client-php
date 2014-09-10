@@ -369,14 +369,14 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
         char* namespace_p, char* set_p, userland_callback* user_func_p,
-        HashTable* bins_ht_p, uint8_t percent, uint8_t scan_priority,
+        HashTable* bins_ht_p, uint8_t percent, long scan_priority,
         bool concurrent, bool no_bins, zval* options_p);
 
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char* namespace_p,
         char* set_p, uint64_t* scan_id_p, uint8_t percent,
-        uint8_t scan_priority, bool concurrent, bool no_bins, zval *options_p);
+        long scan_priority, bool concurrent, bool no_bins, zval *options_p);
 
 extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,

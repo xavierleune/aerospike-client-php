@@ -11,5 +11,4 @@ aerospike_phpt_skipif("ScanBackground", "testScanBackgroundPositive");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanBackground", "testScanBackgroundPositive");
 --EXPECT--
-int(1)
-
+OK

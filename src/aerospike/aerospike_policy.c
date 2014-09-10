@@ -300,9 +300,9 @@ set_policy_ex(as_config *as_config_p,
                     } else if (info_policy_p) {
                         info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if (scan_policy_p) {
-                        info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                        scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if (query_policy_p) {
-                        info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                        query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -327,9 +327,9 @@ set_policy_ex(as_config *as_config_p,
                     } else if(info_policy_p) {
                         info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if(scan_policy_p) {
-                        info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                        scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if(query_policy_p) {
-                        info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                        query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
