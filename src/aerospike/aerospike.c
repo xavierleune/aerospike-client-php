@@ -1756,11 +1756,7 @@ PHP_METHOD(Aerospike, scan)
     zval                   *retval_ptr = NULL;
     zval                   *bins_p = NULL;
     long                   percent = 100;
-    /*
-     * TODO:
-     * change default value of priority to SCAN_PRIORITY_AUTO
-     */
-    long                   scan_priority = 0;
+    long                   scan_priority = SCAN_PRIORITY_AUTO;
     bool                   concurrent = false;
     bool                   no_bins = false;
     zval                   *options_p = NULL;
@@ -1889,11 +1885,7 @@ PHP_METHOD(Aerospike, scanBackground)
     long                   namespace_len = 0;
     long                   set_len = 0;
     long                   percent = 100;
-    /*
-     * TODO:
-     * change default value of priority to SCAN_PRIORITY_AUTO
-     */
-    long                   scan_priority = 0;
+    long                   scan_priority = SCAN_PRIORITY_AUTO;
     bool                   concurrent = false;
     bool                   no_bins = false;
     zval*                  args_p = NULL;
