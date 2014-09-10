@@ -56,18 +56,13 @@ aerospike_scan_define(as_scan* scan_p, as_error* error_p, char* namespace_p,
         goto exit;
     }
 
-    /*
-     * TODO:
-     * Add check for NOT scan priority constant in place of true in following if
-     * condition after it is implemented in as_policy.h
-     */
-
-    if (false) {
+    if ((scan_priority & AS_SCAN_PRIORITY) != AS_SCAN_PRIORITY) {
         DEBUG_PHP_EXT_DEBUG("Invalid value for scan priority");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Invalid value for scan priority");
         goto exit;
-    } else if (!as_scan_set_priority(scan_p, scan_priority)) {
+    } else if (!as_scan_set_priority(scan_p,
+                (scan_priority - AS_SCAN_PRIORITY))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set scan priority");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Unable to set scan priority");
@@ -309,7 +304,7 @@ aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
 
     add_assoc_long(scan_info_p, PROGRESS_PCT, scan_info.progress_pct);
     add_assoc_long(scan_info_p, RECORDS_SCANNED, scan_info.records_scanned);
-    add_assoc_long(scan_info_p, STATUS, scan_info.status);
+    add_assoc_long(scan_info_p, STATUS, (scan_info.status + AS_SCAN_STATUS));
 exit:
     return error_p->code;
 }
