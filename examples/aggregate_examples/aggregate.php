@@ -104,7 +104,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Ensuring that module is registerd  ≻", 'black', true);
 $start = __LINE__;
-$register_status = $db->register("lua/my_udf.lua", "my_udf.lua");
+$register_status = $db->register("lua/aggregate_udf.lua", "aggregate_udf.lua");
 if ($register_status != Aerospike::OK) {
     echo standard_fail($db); 
 } else {
@@ -112,35 +112,24 @@ if ($register_status != Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Performing scan background ≻", 'black', true);
+echo colorize("Performing aggregate on records ≻", 'black', true);
 $start = __LINE__;
-$status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
-if ($status != Aerospike::OK) {
+$where = $db->predicateBetween("age", 20, 29);
+$status = $db->aggregate("aggregate_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+$testArray = array("Alex","Jimmy");
+$result = array_diff_assoc_recursive($testArray, $names);
+if(!empty($result)) {
     echo standard_fail($db);
-} else {        
-    echo var_dump($scan_id);
+} else {
     echo success();
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Performing scan info ≻", 'black', true);
-$start = __LINE__;
-$status = $db->scanInfo($scan_id, $info);
-if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
-    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
-    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
-        echo $info['status'];
-        echo success();
-    }
-else
-    echo standard_fail($db); 
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
 if (isset($args['c']) || isset($args['clean'])) {
+    echo "In here";
     $start = __LINE__;
     echo colorize("Removing the record ≻", 'black', true);
-    $deregister_status = $db->deregister("my_udf.lua");
+    $deregister_status = $db->deregister("aggregate_udf.lua");
     $key = $db->initKey("test", "users", 1234);
     $res = $db->remove($key);
     $key = $db->initKey("test", "users", 2345);

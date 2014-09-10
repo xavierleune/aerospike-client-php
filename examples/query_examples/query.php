@@ -57,7 +57,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Ensuring that a record is put at test.users with PK=1234 ≻", 'black', true);
 $start = __LINE__;
 $key = $db->initKey("test", "users", 1234);
-$put_vals = array("email" => "freudian.circuits@hal-inst.org", "name" => "Perceptron");
+$put_vals = array("email" => "freudian.circuits@hal-inst.org", "age" => 31);
 $res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo success();
@@ -69,7 +69,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Ensuring that a record is put at test.users with PK=2345 ≻", 'black', true);
 $start = __LINE__;
 $key = $db->initKey("test", "users", 2345);
-$put_vals = array("email" => "peter.john@hal-inst.org", "name" => "Peter");
+$put_vals = array("email" => "peter.john@hal-inst.org", "age" => 26);
 $res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo success();
@@ -78,41 +78,28 @@ if ($res == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Scanning records ≻", 'black', true);
+echo colorize("Querying records with ages above 30 ≻", 'black', true);
 $start = __LINE__;
-$processed = 0;
-$status = 0;
-$status = $db->scan( "test", "users", function ($record) {
-    global $processed, $mystatus;
-    if (array_key_exists('email', $record) && !is_null($record['email']))
-    {
-        if($processed==1 && $mystatus==1) {
-            if(!strcmp($record['email'], "peter.john@hal-inst.org")) {
-                echo "\nName is: ".$record['name'];
-                $mystatus = 1;
-            }
-        } else {
-            $mystatus = 0;
+$mystatus = 0;
+$where = $db->predicateBetween("ages", 30, 39);
+$status = $db->query( "test", "users", $where, function ($record) {
+    global $mystatus;
+    if ( array_key_exists('email', $record) && !is_null($record['email'])) {
+        if($record['email']=="freudian.circuits@hal-inst.org") {
+            echo "Email is: ".$record['email']."\nAge is: ".$record['age'];
+            $mystatus = 1;
         }
-        if($processed==0) {
-            if(!strcmp($record['email'],"freudian.circuits@hal-inst.org")) {
-                echo "Name is: ".$record['name'];
-                $mystatus = 1;
-            }
-        }
+        $total += (int) $record['age'];
+        $in_thirties++;
     }
-    if ($processed++ > 19) return false;
-});
-if ($status != AEROSPIKE::OK) {
-    echo standard_fail($db);
-} 
+},array("email", "age"), array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
 if ($mystatus)
     echo success();
 else
     echo standard_fail($db);
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-if (isset($args['c']) || isset($args['clean'])) {
+if (isset($args['a']) || isset($args['clean'])) {
     $start = __LINE__;
     echo colorize("Removing the record ≻", 'black', true);
     $key = $db->initKey("test", "users", 1234);

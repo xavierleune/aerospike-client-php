@@ -81,7 +81,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Scanning records ≻", 'black', true);
 $start = __LINE__;
 $processed = 0;
-$status = 0;
+$mystatus = 0;
 $status = $db->scan( "test", "users", function ($record) {
     global $processed, $mystatus;
     if (array_key_exists('email', $record) && !is_null($record['email']))
@@ -112,7 +112,7 @@ else
     echo standard_fail($db);
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-if (isset($args['c']) || isset($args['clean'])) {
+if (isset($args['a']) || isset($args['clean'])) {
     $start = __LINE__;
     echo colorize("Removing the record ≻", 'black', true);
     $key = $db->initKey("test", "users", 1234);
