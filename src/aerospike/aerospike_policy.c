@@ -52,7 +52,15 @@ AerospikeConstants aerospike_constants[] = {
     { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
     { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
     { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
-    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      }
+    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      },
+    { SCAN_PRIORITY_AUTO                ,   "SCAN_PRIORITY_AUTO"                },
+    { SCAN_PRIORITY_LOW                 ,   "SCAN_PRORITY_LOW"                  },
+    { SCAN_PRIORITY_MEDIUM              ,   "SCAN_PRIORITY_MEDIUM"              },
+    { SCAN_PRIORITY_HIGH                ,   "SCAN_PRIORITY_HIGH"                },
+    { SCAN_STATUS_UNDEF                 ,   "SCAN_STATUS_UNDEF"                 },
+    { SCAN_STATUS_INPROGRESS            ,   "SCAN_STATUS_INPROGRESS"            },
+    { SCAN_STATUS_ABORTED               ,   "SCAN_STATUS_ABORTED"               },
+    { SCAN_STATUS_COMPLETED             ,   "SCAN_STATUS_COMPLETED"             }
 };
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
