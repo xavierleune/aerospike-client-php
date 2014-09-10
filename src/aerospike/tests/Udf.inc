@@ -483,8 +483,9 @@ class Udf extends AerospikeTestCommon
             $db->close();
             return($db->errorno());
         }
+        $return_val = NULL;
         $status = $db->apply($key, "module", "udf_without_arg_and_return",
-            NULL, NULL, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+            NULL, $return_val, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
