@@ -106,7 +106,7 @@ echo colorize("Ensuring that module is registerd  ≻", 'black', true);
 $start = __LINE__;
 $register_status = $db->register("lua/aggregate_udf.lua", "aggregate_udf.lua");
 if ($register_status != Aerospike::OK) {
-    echo standard_fail($db); 
+    echo standard_fail($db);
 } else {
     echo success();
 }

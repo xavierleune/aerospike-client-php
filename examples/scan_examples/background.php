@@ -106,7 +106,7 @@ echo colorize("Ensuring that module is registerd  ≻", 'black', true);
 $start = __LINE__;
 $register_status = $db->register("lua/my_udf.lua", "my_udf.lua");
 if ($register_status != Aerospike::OK) {
-    echo standard_fail($db); 
+    echo standard_fail($db);
 } else {
     echo success();
 }
@@ -117,7 +117,7 @@ $start = __LINE__;
 $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
 if ($status != Aerospike::OK) {
     echo standard_fail($db);
-} else {        
+} else {
     echo var_dump($scan_id);
     echo success();
 }
@@ -134,7 +134,7 @@ if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
         echo success();
     }
 else
-    echo standard_fail($db); 
+    echo standard_fail($db);
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
 if (isset($args['c']) || isset($args['clean'])) {

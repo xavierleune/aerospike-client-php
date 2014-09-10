@@ -105,7 +105,7 @@ $status = $db->scan( "test", "users", function ($record) {
 });
 if ($status != AEROSPIKE::OK) {
     echo standard_fail($db);
-} 
+}
 if ($mystatus)
     echo success();
 else
