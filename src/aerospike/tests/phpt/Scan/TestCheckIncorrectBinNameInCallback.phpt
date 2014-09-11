@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Scan", "testCheckIncorrectBinNameInCallback");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Scan", "testCheckIncorrectBinNameInCallback");
 --EXPECT--
-ERR_SCAN
+OK
 

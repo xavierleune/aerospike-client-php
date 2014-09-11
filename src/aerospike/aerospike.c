@@ -1852,12 +1852,7 @@ PHP_METHOD(Aerospike, scanBackground)
     zval*                  function_zval_p = NULL;
     zval*                  namespace_zval_p = NULL;
     zval*                  set_zval_p = NULL;
-    /*
-     * TODO:
-     * change default value of scan_id to default return value from c sdk in
-     * case of failure to initiate scan.
-     */
-    long                   scan_id = 0;
+    zval*                  scan_id_p = NULL;
     long                   module_len = 0;
     long                   function_len = 0;
     long                   namespace_len = 0;
@@ -1886,8 +1881,8 @@ PHP_METHOD(Aerospike, scanBackground)
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzl|llbbz", &module_zval_p, &function_zval_p, &args_p,
-                &namespace_zval_p, &set_zval_p, &scan_id, &percent,
+                "zzzzzz|llbbz", &module_zval_p, &function_zval_p, &args_p,
+                &namespace_zval_p, &set_zval_p, &scan_id_p, &percent,
                 &scan_priority, &concurrent, &no_bins, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -1942,11 +1937,13 @@ PHP_METHOD(Aerospike, scanBackground)
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function not proper");
     }
 
+    zval_dtor(scan_id_p);
+    ZVAL_LONG(scan_id_p, 0);
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                &scan_id, percent, scan_priority,
+                                                scan_id_p, percent, scan_priority,
                                                 concurrent, no_bins,
                                                 options_p))) {
         DEBUG_PHP_EXT_ERROR("scanBackground returned an error");

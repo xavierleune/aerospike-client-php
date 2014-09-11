@@ -11,5 +11,5 @@ aerospike_phpt_skipif("ScanBackground", "testScanBackgroundUnknownFunctionNegati
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanBackground", "testScanBackgroundUnknownFunctionNegative");
 --EXPECT--
-ERR_UDF
+OK
 

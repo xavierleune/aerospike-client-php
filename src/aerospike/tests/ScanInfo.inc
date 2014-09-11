@@ -181,10 +181,8 @@ class ScanInfo extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $id = "age";
-        $status = $db->scanInfo(ScanInfo::$myscan_id, $id);
-        echo "======\n";
-        var_dump($id);
+        $scan_info = "age";
+        $status = $db->scanInfo(ScanInfo::$myscan_id, $scan_info);
 	    if($status != Aerospike::OK) {
             return($db->errorno());
 	    }

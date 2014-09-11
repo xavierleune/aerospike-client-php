@@ -11,5 +11,4 @@ aerospike_phpt_skipif("ScanInfo", "testScanInfoInfoIsString");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanInfo", "testScanInfoInfoIsString");
 --EXPECT--
-ERR_PARAM
-
+OK

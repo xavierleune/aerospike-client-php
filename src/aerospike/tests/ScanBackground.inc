@@ -11,17 +11,18 @@ class ScanBackground extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
+    private $ages = array(29, 27, 22, 32);
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key, array("first_name"=>"raunak", "age"=>29));
+        $db->put($key, array("first_name"=>"raunak", "age"=>($this->ages[0])));
         $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key, array("first_name"=>"pavan", "age"=>27));
+        $db->put($key, array("first_name"=>"pavan", "age"=>($this->ages[1])));
         $key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key, array("first_name"=>"bhushan", "age"=>22));
+        $db->put($key, array("first_name"=>"bhushan", "age"=>($this->ages[2])));
         $key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key, array("first_name"=>"ajit", "age"=>32));
+        $db->put($key, array("first_name"=>"ajit", "age"=>($this->ages[3])));
          
         $register_status =
             $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf.lua");
@@ -74,6 +75,37 @@ class ScanBackground extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
+        /*do {
+            sleep(5);
+        }while($scan_id != 3); 
+
+        $ages_got = array();
+        $i = 0;
+        $key = $db->initKey("test", "demo", "Get_key");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        $key = $db->initKey("test", "demo", "Get_key1");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        $key = $db->initKey("test", "demo", "Get_key2");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        $key = $db->initKey("test", "demo", "Get_key3");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+
+        for ($i = 0; $i < 4; $i++) {
+            if ($ages_got[$i] == ($ages[$i]+20))
+                continue;
+        }*/
         return($status);
     }
 

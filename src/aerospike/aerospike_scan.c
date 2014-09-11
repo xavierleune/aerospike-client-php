@@ -207,16 +207,17 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, uint64_t* scan_id_p, long percent, long scan_priority,
+        char* set_p, zval* scan_id_p, long percent, long scan_priority,
         bool concurrent, bool no_bins, zval* options_p)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    //uint32_t                    serializer_policy = -1;
+    uint32_t                    serializer_policy = -1;
     as_policy_scan              scan_policy;
     as_scan                     scan;
     as_scan*                    scan_p = NULL;
+    uint64_t                    scan_id = 0;
 
     if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) ||
             (!namespace_p) || (!set_p) || (!scan_id_p)) {
@@ -226,7 +227,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     }
 
     set_policy(NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL,
-            NULL/*&serializer_policy*/, options_p, error_p);
+            &serializer_policy, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
         printf("aerospike_scan_run\n");
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -238,7 +239,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
         AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool,
-                NULL/*serializer_policy*/, error_p);
+                serializer_policy, error_p);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
             goto exit;
@@ -253,11 +254,14 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         DEBUG_PHP_EXT_DEBUG("Unable to define scan");
         goto exit;
     }
+
     if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p,
-            error_p, NULL, scan_p, scan_id_p))) {
+            error_p, NULL, scan_p, &scan_id))) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
+
+    ZVAL_LONG(scan_id_p, scan_id);
 
 exit:
     if (args_list_p) {

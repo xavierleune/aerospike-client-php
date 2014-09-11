@@ -206,7 +206,7 @@ extern as_log_level   php_log_level_set;
 #define PHP_IS_STRING(type)      (IS_STRING == type)
 #define PHP_IS_NOT_STRING(type)  (IS_STRING != type)
 #define PHP_IS_LONG(type)        (IS_LONG == type)
-
+#define PHP_IS_NOT_LONG(type)    (IS_LONG != type)
 
 /* 
  *******************************************************************************************************
@@ -217,9 +217,11 @@ extern as_log_level   php_log_level_set;
  */
 #define PHP_TYPE_ISNULL(zend_val)        PHP_IS_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISSTR(zend_val)         PHP_IS_STRING(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISLONG(zend_val)        PHP_IS_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISARR(zend_val)         PHP_IS_ARRAY(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTNULL(zend_val)     PHP_IS_NOT_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTLONG(zend_val)     PHP_IS_NOT_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
  
 /* 
@@ -375,7 +377,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char* namespace_p,
-        char* set_p, uint64_t* scan_id_p, long percent,
+        char* set_p, zval* scan_id_p, long percent,
         long scan_priority, bool concurrent, bool no_bins, zval *options_p);
 
 extern as_status
