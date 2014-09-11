@@ -161,7 +161,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
             }
             as_scan_select(&scan, Z_STRVAL_PP(bin_names_pp));
         }
-        if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
+        if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, &scan_policy,
                         &scan, aerospike_helper_record_stream_callback, user_func_p))) {
             goto exit;
         }
@@ -256,7 +256,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     }
 
     if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p,
-            error_p, NULL, scan_p, &scan_id))) {
+            error_p, &scan_policy, scan_p, &scan_id))) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }

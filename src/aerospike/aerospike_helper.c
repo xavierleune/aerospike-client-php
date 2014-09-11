@@ -438,3 +438,28 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     return do_continue;
 }
 
+/*
+ *******************************************************************************************************
+ * Callback for as_query_foreach function in case of Aerospike::aggregate().
+ * It processes the as_val and translates it into an equivalent zval.
+ * It then populates the return zval with the same.
+ *
+ * @param val_p             The current as_val to be passed on to the user
+ *                          callback as an argument.
+ * @param udata_p           The zval return value to be filled with the result
+ *                          of aggregation.
+ * @return true if callback is successful; else false.
+ *******************************************************************************************************
+ */
+extern bool
+aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p)
+{
+    if (!val_p) {
+        DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
+        return true;
+    }
+
+    AS_DEFAULT_GET(NULL, val_p, (foreach_callback_udata *) udata_p);
+exit:
+    return true;
+}

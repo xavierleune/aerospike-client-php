@@ -33,6 +33,15 @@
 #define UDF_MODULE_TYPE "type"
 #define LUA_FILE_BUFFER_FRAME 512
 
+/* 
+ *******************************************************************************************************
+ * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR LUA SYSTEM AND USER PATHS IF
+ * SPECIFIED, ELSE RETURN DEFAULTS.
+ *******************************************************************************************************
+ */
+#define LUA_SYSTEM_PATH_PHP_INI INI_STR("aerospike.lua_system_path") ? INI_STR("aerospike.lua_system_path") : NULL
+#define LUA_USER_PATH_PHP_INI INI_STR("aerospike.lua_user_path") ? INI_STR("aerospike.lua_user_path") : NULL
+
 /*
  *******************************************************************************************************
  * Static pool maintained to avoid runtime mallocs.
@@ -138,6 +147,8 @@ aerospike_helper_log_callback(as_log_level level, const char * func, const char 
 extern int parseLogParameters(as_log *as_log_p);
 extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
+extern bool
+aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p);
 
 /*
  * Need to re-direct the same to log function that we have written
@@ -338,7 +349,6 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool);
  * Extern declarations of UDF functions.
  ******************************************************************************************************
  */
-
 extern as_status
 aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
         char *path_p, char *module_p, long language, zval *options_p);
@@ -367,7 +377,6 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
  * Extern declarations of scan functions.
  ******************************************************************************************************
  */
-
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
         char* namespace_p, char* set_p, userland_callback* user_func_p,
@@ -383,4 +392,20 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
 extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
         uint64_t scan_id, zval* scan_info_p, zval* options_p);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of query functions.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
+        char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
+        HashTable* predicate_ht_p, zval* options_p);
+
+extern as_status
+aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
+        const char* module_p, const char* function_p, zval** args_pp,
+        char* namespace_p, char* set_p, HashTable* bins_ht_p,
+        HashTable* predicate_ht_p, zval* return_value_p, zval* options_p);
 #endif
