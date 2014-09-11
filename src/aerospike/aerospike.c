@@ -120,6 +120,22 @@ ZEND_END_ARG_INFO()
 
 /*
  ********************************************************************
+ * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts fifth argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(1)
+    ZEND_ARG_PASS_INFO(0)
+ZEND_END_ARG_INFO()
+
+/*
+ ********************************************************************
  * Using "arginfo_sixth_by_ref" in zend_arg_info argument of a
  * zend_function_entry accepts sixth argument of the
  * corresponding functions by reference and rest by value.
@@ -133,7 +149,6 @@ ZEND_BEGIN_ARG_INFO(arginfo_sixth_by_ref, 0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(1)
 ZEND_END_ARG_INFO()
-
 
 zend_module_entry aerospike_module_entry =
 {
@@ -234,7 +249,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, register, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, deregister, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, apply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, apply, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, listRegistered, arginfo_first_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getRegistered, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
 #if 0 // TBD
@@ -2202,7 +2217,7 @@ exit:
  * Applies UDF on record in the Aerospike DB.
  * Method prototype for PHP userland:
  * public int Aerospike::apply ( array $key, string $module, string $function [,
- *                               array $args [, array $options  [, mixed &$returned ]]] )
+ *                               array $args [, mixed &$returned  [, array $options ]]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, apply)
@@ -2239,7 +2254,7 @@ PHP_METHOD(Aerospike, apply)
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zzz",
                 &key_record_p, &module_zval_p, &function_zval_p, &args_p,
-                &options_p, &return_value_of_udf_p)) {
+                &return_value_of_udf_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for apply()");
@@ -2419,7 +2434,7 @@ PHP_METHOD(Aerospike, getRegistered)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzl|z",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|lz",
                 &module_zval_p, &udf_code_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,

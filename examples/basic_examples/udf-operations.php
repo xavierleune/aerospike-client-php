@@ -37,7 +37,7 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo("php bin-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
+    echo("php udf-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
@@ -93,7 +93,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Applying a UDF with arguments and return value on the record with PK=1234 to update age and return the new age ≻", 'black', true);
 $start = __LINE__;
-$res = $db->apply($key, $UDF_MODULE, "bin_transform", array("age", 2, 20), NULL, $ret_val);
+$res = $db->apply($key, $UDF_MODULE, "bin_transform", array("age", 2, 20), $ret_val);
 if ($res == Aerospike::OK) {
     echo success();
     var_dump($ret_val);

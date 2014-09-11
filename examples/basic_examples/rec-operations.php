@@ -20,7 +20,6 @@ function parse_args() {
     $shortopts  = "";
     $shortopts .= "h::";  /* Optional host */
     $shortopts .= "p::";  /* Optional port */
-    $shortopts .= "p::";  /* Optional port */
     $shortopts .= "a";    /* Optionally annotate output with code */
     $shortopts .= "c";    /* Optionally clean up before leaving */
 
@@ -37,7 +36,9 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo("php rec-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
+    echo "php rec-operations.php [-hHOST] [-pPORT] [-a] [-c]\n";
+    echo " or\n";
+    echo "php rec-operations.php [--host=HOST] [--port=PORT] [--annotate] [--clean]\n";
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");

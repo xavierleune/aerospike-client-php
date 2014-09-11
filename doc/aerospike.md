@@ -192,8 +192,7 @@ class Aerospike
     public int Aerospike::deregister ( string $module )
     public int Aerospike::listRegistered ( array &$modules [, int $language ] )
     public int Aerospike::getRegistered ( string $module, string &$code )
-    public int Aerospike::apply ( array $key, string $module, string $function[,
-            array $args [, array $options [, mixed &$returned ]]] )
+    public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options ]]] )
     public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value [, array $options ])
     public int Aerospike::scanBackground ( string $module, string $function, array $args, string $ns, string $set, int &$scan_id, [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]] )
     public int Aerospike::scanInfo ( integer $scan_id, array &$info [, array $options ] )
