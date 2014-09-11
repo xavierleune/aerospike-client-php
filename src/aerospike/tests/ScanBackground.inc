@@ -71,12 +71,10 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $status = $db->scanBackground("my_udf", "mytransform", array(20),"test", "demo", $scan_id);
-	//echo "status is ".$status."\n";
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        //return(var_dump($scan_id));
-	return($status);
+        return($status);
     }
 
     /**
@@ -270,12 +268,10 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $arg = "args";
-	//$scan_id = 10;
         $status = $db->scanBackground("my_udf", "mytransform", "", "test", "demo", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        echo "status is".$status;
         return($status);
     }
     /**
@@ -424,7 +420,8 @@ class ScanBackground extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", "");
+        $scan_id = "";
+        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $sca_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -450,11 +447,11 @@ class ScanBackground extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id,"100");
-        if ($status != Aerospike::OK) {
+        try {
+            $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, "abc");
+        } catch (Exception $e) {
             return($db->errorno());
         }
-        return($status);
     }
     /**
      * @test
@@ -476,12 +473,12 @@ class ScanBackground extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, "SCAN_PRIORITY_AUTO");
-	echo "\n==================status is ".$status;
-        if ($status != Aerospike::OK) {
+        try {
+            $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, "SCAN_PRIORITY_AUTO");
+        }
+        catch (Exception $e) {
             return($db->errorno());
         }
-        return($status);
     }
     /**
      * @test

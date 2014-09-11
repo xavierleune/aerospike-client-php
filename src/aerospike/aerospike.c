@@ -1791,7 +1791,7 @@ PHP_METHOD(Aerospike, scan)
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
 
-    //bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
+    bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
@@ -1802,28 +1802,6 @@ PHP_METHOD(Aerospike, scan)
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
-    /*
-    as_scan scan;
-    as_scan_init(&scan, ns_p, set_p);
-    if (bins_p) {
-        as_scan_select_inita(&scan, zend_hash_num_elements(Z_ARRVAL_P(bins_p)));
-        HashPosition pos;
-        zval **data;
-        for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(bins_p), &pos);
-            zend_hash_get_current_data_ex(Z_ARRVAL_P(bins_p), (void **) &data, &pos) == SUCCESS;
-            zend_hash_move_forward_ex(Z_ARRVAL_P(bins_p), &pos)) {
-            if (Z_TYPE_PP(data) != IS_STRING) {
-                convert_to_string_ex(data);
-            }
-            as_scan_select(&scan, Z_STRVAL_PP(data));
-        }
-    }
-
-    if (aerospike_scan_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &scan, aerospike_helper_record_stream_callback, &user_func) != AEROSPIKE_OK) {
-        e_level = E_WARNING;
-        PHP_EXT_SET_AS_ERR(&error, error.code, error.message);
-        goto exit;
-    }*/
 
 exit:
     if (e_level > 0) {

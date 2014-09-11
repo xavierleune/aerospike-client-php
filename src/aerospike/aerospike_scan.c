@@ -38,8 +38,8 @@
  */
 static as_status
 aerospike_scan_define(as_scan* scan_p, as_error* error_p, char* namespace_p,
-        char* set_p, uint8_t percent, long scan_priority,
-        bool concurrent, bool no_bins, char* module_p, char* function_p,
+        char* set_p, long percent, long scan_priority, bool concurrent,
+        bool no_bins, char* module_p, char* function_p,
         as_list* args_list_p)
 {
     /*
@@ -123,7 +123,7 @@ exit:
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        uint8_t percent, long scan_priority, bool concurrent, bool no_bins,
+        long percent, long scan_priority, bool concurrent, bool no_bins,
         zval* options_p)
 {
     as_scan             scan;
@@ -161,15 +161,15 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
             }
             as_scan_select(&scan, Z_STRVAL_PP(bin_names_pp));
         }
-	if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
-		&scan, aerospike_helper_record_stream_callback, user_func_p))) {
-		goto exit;
-	}
+        if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
+                        &scan, aerospike_helper_record_stream_callback, user_func_p))) {
+            goto exit;
+        }
     } else {
-    		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
-                    &scan, aerospike_helper_record_stream_callback, user_func_p))) {
-                    goto exit;
-    		}
+        if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, NULL,
+                        &scan, aerospike_helper_record_stream_callback, user_func_p))) {
+            goto exit;
+        }
     }
 exit:
     if (scan_p) {
@@ -207,7 +207,7 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, uint64_t* scan_id_p, uint8_t percent, long scan_priority,
+        char* set_p, uint64_t* scan_id_p, long percent, long scan_priority,
         bool concurrent, bool no_bins, zval* options_p)
 {
     as_arraylist                args_list;
@@ -228,6 +228,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     set_policy(NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL,
             NULL/*&serializer_policy*/, options_p, error_p);
     if (AEROSPIKE_OK != (error_p->code)) {
+        printf("aerospike_scan_run\n");
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }

@@ -11,5 +11,4 @@ aerospike_phpt_skipif("ScanBackground", "testScanBackgroundScanIdIsNull");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanBackground", "testScanBackgroundScanIdIsNull");
 --EXPECT--
-ERR_PARAM
-
+OK

@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Scan", "testCheckIncorrectValueForOptions");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Scan", "testCheckIncorrectValueForOptions");
 --EXPECT--
-ERR_PARAM
+ERR
 

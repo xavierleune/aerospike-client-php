@@ -1,4 +1,4 @@
-T--
+--TEST--
 Scan - Callback Parameter missing
 
 --SKIPIF--

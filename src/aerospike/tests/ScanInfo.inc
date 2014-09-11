@@ -45,7 +45,7 @@ class ScanInfo extends AerospikeTestCommon
             =>Aerospike::POLICY_RETRY_NONE));
             $key=$db->initKey("test", "demo", "Get_key".$i);
         }
-        $degister_status = $db->deregister("my_udf");
+        $deregister_status = $db->deregister("my_udf");
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
         }
@@ -76,7 +76,7 @@ class ScanInfo extends AerospikeTestCommon
 	    if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-	    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
+        $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
 	        return($status);
 	    } else {
             return($db->errorno());
@@ -103,11 +103,11 @@ class ScanInfo extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanInfo("", $info);
-	    if($status != Aerospike::OK) {
+        try {
+            $status = $db->scanInfo("", $info);
+        } catch (Exception $e) {
             return($db->errorno());
-	    }
-        return($status);
+        }
     }
 	/**
 	 * @test
@@ -129,11 +129,11 @@ class ScanInfo extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanInfo(array(ScanInfo::$myscan_id), $info);
-	    if($status != Aerospike::OK) {
-            return($db->errorno());
+        try {
+            $status = $db->scanInfo(array(ScanInfo::$myscan_id), $info);
+        } catch (Exception $e) {
+              return($db->errorno());
         }
-        return($status);
     }
 	/**
 	 * @test
@@ -179,9 +179,12 @@ class ScanInfo extends AerospikeTestCommon
 	function testScanInfoInfoIsString($db)
     {
         if (!$db->isConnected()) {
-        return($db->errorno());
+            return($db->errorno());
         }
-        $status = $db->scanInfo(ScanInfo::$myscan_id, "age");
+        $id = "age";
+        $status = $db->scanInfo(ScanInfo::$myscan_id, $id);
+        echo "======\n";
+        var_dump($id);
 	    if($status != Aerospike::OK) {
             return($db->errorno());
 	    }

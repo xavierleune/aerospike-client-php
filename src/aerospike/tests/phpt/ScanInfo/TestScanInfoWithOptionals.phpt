@@ -1,4 +1,4 @@
-T--
+--TEST--
 Scaninfo - With optionals
 
 --SKIPIF--
