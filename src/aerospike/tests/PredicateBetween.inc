@@ -160,6 +160,7 @@ class PredicateBetween extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $ans = $db->predicateBetween($bin, 30, 40);
+                var_dump($ans);
             } catch (ErrorException $e) {
                 return self::$parameter_exception;
             }

@@ -1557,15 +1557,15 @@ PHP_METHOD(Aerospike, predicateEquals)
             break;
         case IS_STRING:
             if (strlen(Z_STRVAL_P(val_p)) == 0) {
-                DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 zval_dtor(return_value);
+                DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
             add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
             break;
         default:
-            DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
             zval_dtor(return_value);
+            DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
             RETURN_NULL();
     }
 }
@@ -1638,6 +1638,7 @@ PHP_METHOD(Aerospike, query)
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
     if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR,
                 "Aerospike::query() has no valid aerospike object");
@@ -1645,6 +1646,7 @@ PHP_METHOD(Aerospike, query)
     }
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() has no connection to the database");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
                 "Aerospike::query() has no connection to the database");
@@ -1654,17 +1656,20 @@ PHP_METHOD(Aerospike, query)
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssaf|aa",
         &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
         &fci, &fcc, &bins_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unable to parse parameters");
         goto exit;
     }
     if (ns_p_length == 0 || set_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
         goto exit;
     }
     if (PHP_TYPE_ISNOTARR(predicate_p)) {
+        status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() expects parameter 3 to be an array.");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Aerospike::query() expects parameter 3 to be an array.");
@@ -1888,13 +1893,15 @@ PHP_METHOD(Aerospike, scan)
     as_error_init(&error);
 
     if (!aerospike_obj_p) {
-        e_level = E_WARNING;
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Aerospike::scan() has no valid aerospike object");
         goto exit;
     }
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        e_level = E_WARNING;
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Aerospike::scan() has no connection to the database");
         goto exit;
     }
@@ -1903,12 +1910,15 @@ PHP_METHOD(Aerospike, scan)
         &ns_p, &ns_p_length, &set_p, &set_p_length,
         &fci, &fcc, &bins_p, &percent, &scan_priority,
         &concurrent, &no_bins, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
         goto exit;
     }
 
     if (ns_p_length == 0 || set_p_length == 0) {
-        e_level = E_WARNING;
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects parameter 1 & 2 to be a non-empty strings.");
         goto exit;
     }
@@ -1925,15 +1935,13 @@ PHP_METHOD(Aerospike, scan)
                                      bins_ht_p, percent,
                                      scan_priority, concurrent,
                                      no_bins, options_p))) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
 
 exit:
-    if (e_level > 0) {
-        php_error_docref(NULL TSRMLS_CC, e_level, error.message);
-    }
-
     PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     RETURN_LONG(status);
 }

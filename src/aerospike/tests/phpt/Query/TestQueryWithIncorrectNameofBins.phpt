@@ -11,5 +11,4 @@ aerospike_phpt_skipif("Query", "testQueryWithIncorrectNameOfBins");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithIncorrectNameOfBins");
 --EXPECT--
-ERR_QUERY
-
+OK
