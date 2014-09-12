@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Aggregate", "testAggregateUnknownFunctionNegative");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateUnknownFunctionNegative");
 --EXPECT--
-ERR_UDF_FILE_NOT_FOUND
+ERR_SERVER
