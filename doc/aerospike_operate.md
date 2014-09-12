@@ -15,9 +15,9 @@ Non-existent bins being read will have a NULL value.
 
 ## Parameters
 
-**key** the key identifying the record. An associative array with keys 'ns','set','key'.
+**key** the key identifying the record. An array with keys 'ns','set','key'.
 
-**operations** an associative array of one or more per-bin operations conforming
+**operations** an array of one or more per-bin operations conforming
 to the following structure:
 ```
 Write Operation:
@@ -57,7 +57,7 @@ array(
 )
 ```
 
-**returned** an associative array of bins retrieved by read operations
+**returned** an array of bins retrieved by read operations
 
 
 ## Return Values

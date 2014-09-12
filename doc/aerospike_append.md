@@ -13,7 +13,7 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 
 ## Parameters
 
-**key** the key under which the bin can be found. An associative array with keys 'ns','set','key'.
+**key** the key under which the bin can be found. An array with keys 'ns','set','key'.
 
 **bin** the name of the bin in which we have a numeric value.
 

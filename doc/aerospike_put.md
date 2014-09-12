@@ -10,18 +10,18 @@ public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $
 ```
 
 **Aerospike::put()** will write a *record* with a given *key*, where the _record_
-is an associative array of bins and values.  The *ttl* parameter can be used to
+is an array of bins and values.  The *ttl* parameter can be used to
 control the expiration of the record.
 
 By default the **Aerospike::put()** method behaves in a set-and-replace mode similar to
-associative array keys and values. This behavior can be modified using the
+array keys and values. This behavior can be modified using the
 *options* parameter.
 
 ## Parameters
 
-**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
+**key** the key under which to store the record. An array with keys 'ns','set','key'.
 
-**record** the associative array of bins and values to write.
+**record** the array of bins and values to write.
 
 **ttl** the time-to-live in seconds for the record.
 

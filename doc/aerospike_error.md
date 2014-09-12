@@ -22,8 +22,6 @@ Returns an error string, which may be empty on success.
 
 ## Examples
 
-### Example #1 Aerospike::error()
-
 ```php
 <?php
 

@@ -14,7 +14,7 @@ The following configuration options in php.ini
 Here is a description of the configuration directives:
 
 **aerospike.nesting_depth integer**
-    The allowed nesting depth in associative arrays for write operations
+    The allowed nesting depth in arrays for write operations
 
 **aerospike.connect_timeout integer**
     The connection timeout in milliseconds

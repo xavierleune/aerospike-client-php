@@ -11,7 +11,7 @@ public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, arr
 
 **Aerospike::scan()** will scan a *set* and invoke a callback function 
 *record_cb* on each record in the result stream.
-The bins returned can be filtered by passing an associative array of the *bins*
+The bins returned can be filtered by passing an array of the *bins*
 needed, otherwise all bins in the record are returned (similar to a SELECT \*).
 Non-existent bins will appear in the *record* with a NULL value.
 

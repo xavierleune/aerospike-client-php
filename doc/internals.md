@@ -83,7 +83,7 @@ $my_bin_values = array("bin1"=>"value1", "bin3"=>"value3");
 ## Bin Values
 
 ### Supported Types
-PHP strings, integers and associative arrays should map directly to the
+PHP strings, integers and arrays should map directly to the
 equivalent types on the database - string, integer, list, and map.
 
 ### Handling Unsupported Types

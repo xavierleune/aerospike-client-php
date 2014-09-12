@@ -9,8 +9,8 @@ inherits the common LDT functionality.
 AerospikeLStack extends AerospikeLDT
 {
     public __construct ( Aerospike $db, array $key, string $bin )
-    public int push ( mixed $val )
-    public int pushMany ( array $vals )
+    public int push ( mixed $value )
+    public int pushMany ( array $values )
     public int peek ( int $num, array &$elements )
     public int remove ( int|string $key )
     public int scan ( array &$elements )

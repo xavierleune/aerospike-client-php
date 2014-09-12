@@ -11,7 +11,7 @@ public int Aerospike::query ( string $ns, string $set, array $where, callback $r
 
 **Aerospike::query()** will query a *set* with a specified *where* predicate
 then invoke a callback function *record_cb* on each record in the result stream.
-The bins returned can be filtered by passing an associative array of the *bins*
+The bins returned can be filtered by passing an array of the *bins*
 needed, otherwise all bins in the record are returned (similar to a SELECT \*).
 Non-existent bins will appear in the *record* with a NULL value.
 
@@ -23,7 +23,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 **where** the predicate conforming to one of the following:
 ```
-Associative Array:
+Array:
   bin => bin name
   op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
   val => scalar integer/string for OP_EQ or array($min, $max) for OP_BETWEEN

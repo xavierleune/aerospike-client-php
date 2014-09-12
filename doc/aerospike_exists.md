@@ -19,9 +19,9 @@ otherwise it will be NULL.
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key for the record. An array with keys 'ns','set','key'.
 
-**metadata** filled by an associative array of metadata.
+**metadata** filled by an array of metadata.
 
 **options** including **Aerospike::OPT_READ_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 

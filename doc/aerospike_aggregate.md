@@ -12,7 +12,7 @@ public int Aerospike::aggregate ( string $module, string $function, array $args,
 **Aerospike::aggregate()** will apply the stream UDF *module*.*function* with
 *args* to the result of running a secondary index query on *ns*.*set*.
 The aggregated *value* is then filled, with its type depending on the UDF.
-It may be a string, integer or associative array, and potentially an array of
+It may be a string, integer or array, and potentially an array of
 those, such as in the case the UDF does not specify a reducer and there are
 multiple nodes in the cluster (each sending back the result of its own
 aggregation).
@@ -34,7 +34,7 @@ Currently the only UDF language supported is Lua.  See the
 
 **where** the predicate for the query, conforming to one of the following:
 ```
-Associative Array:
+Array:
   bin => bin name
   op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
   val => scalar integer/string for OP_EQ or array($min, $max) for OP_BETWEEN

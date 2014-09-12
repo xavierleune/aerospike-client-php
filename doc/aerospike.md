@@ -19,7 +19,7 @@ Aerospike
     const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
 
     // By default writes will try to create or replace records and bins
-    // behaving similar to an associative array in PHP. Setting
+    // behaving similar to an array in PHP. Setting
     // OPT_POLICY_EXISTS with one of these values will overwrite this.
     // POLICY_EXISTS_IGNORE (aka CREATE_OR_UPDATE) is the default value
     const POLICY_EXISTS_IGNORE = 1; // interleave bins of a record if it exists

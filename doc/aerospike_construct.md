@@ -21,7 +21,7 @@ its nodes.  Subsequent instantiation calls will attempt to reuse the connection.
 
 ## Parameters
 
-**config** an associative array holding the cluster connection information. One
+**config** an array holding the cluster connection information. One
 node or more (for failover) may be defined. Once a connection is established to
 a node of the Aerospike DB the client will retrieve the full list of nodes in the
 cluster and manage its connections to them.

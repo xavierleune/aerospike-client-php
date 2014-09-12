@@ -9,14 +9,14 @@ inherits the common LDT functionality.
 AerospikeLSet extends AerospikeLDT
 {
     public __construct ( Aerospike $db, array $key, string $bin )
-    public int add ( mixed $val )
-    public int exists ( mixed $val, boolean &$found )
-    public int remove ( mixed $val )
+    public int add ( mixed $value )
+    public int exists ( mixed $value, boolean &$found )
+    public int remove ( mixed $value )
     public int scan ( array &$elements )
 
     // To be implemented:
     // public int filter ( string $module, string $function, mixed $args, array &$elements )
-    // public int get ( mixed $val, mixed &$element )
+    // public int get ( mixed $value, mixed &$element )
 
     /* Inherited Methods */
     public boolean isLDT ( void )

@@ -9,10 +9,10 @@ inherits the common LDT functionality.
 AerospikeLList extends AerospikeLDT
 {
     public __construct ( Aerospike $db, array $key, string $bin )
-    public int add ( mixed $val )
-    public int addMany ( array $vals )
-    public int find ( mixed $val, array &$elements )
-    public int remove ( mixed $val )
+    public int add ( mixed $value )
+    public int addMany ( array $values )
+    public int find ( mixed $value, array &$elements )
+    public int remove ( mixed $value )
     public int scan ( array &$elements [, int|string $min = null [, int|string $max = null]] )
 
     // To be implemented:

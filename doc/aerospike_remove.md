@@ -13,7 +13,7 @@ public int Aerospike::remove ( array $key [, array $options ] )
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key for the record. An array with keys 'ns','set','key'.
 
 **options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
 

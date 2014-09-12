@@ -10,15 +10,15 @@ public int Aerospike::get ( array $key, array &$record [, array $filter [, array
 ```
 
 **Aerospike::get()** will read a *record* with a given *key*, where the *record*
-is filled with an associative array of bins and values.  The bins returned in
-*record* can be filtered by passing an associative array of the bins needed.
+is filled with an array of bins and values.  The bins returned in
+*record* can be filtered by passing an array of the bins needed.
 Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
+**key** the key under which to store the record. An array with keys 'ns','set','key'.
 
-**record** filled by an associative array of bins and values.
+**record** filled by an array of bins and values.
 
 **filter** an array of bin names
 

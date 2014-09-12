@@ -14,7 +14,7 @@ and incrementing its generation.
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key for the record. An array with keys 'ns','set','key'.
 
 **ttl** the time-to-live in seconds for the record.
 

@@ -9,7 +9,7 @@ inherits the common LDT functionality.
 AerospikeLMap extends AerospikeLDT
 {
     public __construct ( Aerospike $db, array $key, string $bin )
-    public int put ( int|string $key, mixed $val )
+    public int put ( int|string $key, mixed $value )
     public int putMany ( array $key_vals )
     public int get ( int|string $key, mixed &$element )
     public int remove ( int|string $key )
