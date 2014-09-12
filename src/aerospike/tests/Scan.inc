@@ -18,9 +18,9 @@ class Scan extends AerospikeTestCommon
         $ns = "test";
         $set = "demo";
         $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key,array("email"=>"raunak"));
+        $db->put($key, array("email"=>"raunak"));
         $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key,array("email"=>"pavan"));
+        $db->put($key, array("email"=>"pavan"));
     }
 
     protected function tearDown(&$db, &$key) {
@@ -285,25 +285,22 @@ class Scan extends AerospikeTestCommon
         $mystatus = 0;
         if ($db->isConnected()) {
             $status = $db->scan( "test", "demo", function ($record) {
-                global $processed, $mystatus;
-                if (array_key_exists('email', $record) && !is_null($record['email']))
-                {
-                    if($processed==1 && $mystatus==1) {
-                        if(!strcmp($record['email'], "pavan"))
-                            return Aerospike::OK;
-                    } else {
-                        $mystatus = 0;
+                global $processed;
+                if ($processed < 2) {
+                    if (array_key_exists('email', $record) && !is_null($record['email'])) {
+                        if ((!strcmp($record['email'], "pavan")) ||
+                            (!strcmp($record['email'], "raunak"))) {
+                            $processed++;
+                            }
+                        }
                     }
-                    if($processed==0) {
-                        //echo "rec is".$record['email'];
-                        if(!strcmp($record['email'],"raunak"))
-                            $mystatus = 1;
-                    }
-                    //echo $record['email']."\n";
+                if ($processed == 2) {
+                    return Aerospike::OK;
                 }
-                if ($processed++ > 19) return false;
-            }, array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+            }, array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false,
+                false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
             if ($status != AEROSPIKE::OK) {
+                echo $db->errorno();
                 return($db->errorno());
             }
         } else {
@@ -330,27 +327,27 @@ class Scan extends AerospikeTestCommon
     {
         $processed = 0;
         $mystatus = 0;
-        if (!$db->isConnected()) {
-            return($db->errorno());
-        }
-        $status = $db->scan("test", "demo", function ($record) {
-            global $processed, $mystatus;
-            if (array_key_exists('email', $record) && !is_null($record['email']))
-            {
-                if($processed==1 && $mystatus==1) {
-                    if(!strcmp($record['email'], "pavan"))
-                        return Aerospike::OK;
-                } else {
-                    $mystatus = 0;
+        if ($db->isConnected()) {
+            $status = $db->scan( "test", "demo", function ($record) {
+                global $processed;
+                if ($processed < 2) {
+                    if (array_key_exists('email', $record) && !is_null($record['email'])) {
+                        if ((!strcmp($record['email'], "pavan")) ||
+                            (!strcmp($record['email'], "raunak"))) {
+                            $processed++;
+                            }
+                        }
+                    }
+                if ($processed == 2) {
+                    return Aerospike::OK;
                 }
-                if($processed==0) {
-                    if(!strcmp($record['email'],"raunak"))
-                        $mystatus = 1;
-                }
+            }, array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false,
+                false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+            if ($status != AEROSPIKE::OK) {
+                echo $db->errorno();
+                return($db->errorno());
             }
-            if ($processed++ > 19) return false;
-        }, array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
-        if ($status != Aerospike::OK) {
+        } else {
             return($db->errorno());
         }
         return($status);
@@ -376,27 +373,27 @@ class Scan extends AerospikeTestCommon
         $mystatus = 0;
         if ($db->isConnected()) {
             $status = $db->scan( "test", "demo", function ($record) {
-                global $processed, $mystatus;
-                if (array_key_exists('email', $record) && !is_null($record['email']))
-                {
-                    if($processed==1 && $mystatus==1) {
-                        if(!strcmp($record['email'], "pavan"))
-                            return Aerospike::OK;
-                    } else {
-                        $mystatus = 0;
+                global $processed;
+                if ($processed < 2) {
+                    if (array_key_exists('email', $record) && !is_null($record['email'])) {
+                        if ((!strcmp($record['email'], "pavan")) ||
+                            (!strcmp($record['email'], "raunak"))) {
+                            $processed++;
+                            }
+                        }
                     }
-                    if($processed==0) {
-                        if(!strcmp($record['email'],"raunak"))
-                            $mystatus = 1;
-                    }
+                if ($processed == 2) {
+                    return Aerospike::OK;
                 }
-                if ($processed++ > 19) return false;
             });
             if ($status != AEROSPIKE::OK) {
+                echo $db->errorno();
                 return($db->errorno());
             }
-            return($status);
+        } else {
+            return($db->errorno());
         }
+        return($status);
     }
     /**
      * @test
@@ -416,33 +413,30 @@ class Scan extends AerospikeTestCommon
     function testCheckForOneOptionalArgument($db)
     {
         $processed = 0;
-        $mystatus= 0;
+        $mystatus = 0;
         if ($db->isConnected()) {
             $status = $db->scan( "test", "demo", function ($record) {
-                global $processed, $mystatus;
-                if (array_key_exists('email', $record) && !is_null($record['email']))
-                {
-                    if($processed==1 && $mystatus==1) {
-                        if(!strcmp($record['email'], "pavan"))
-                            return Aerospike::OK;
-                    } else {
-                        $mystatus = 0;
+                global $processed;
+                if ($processed < 2) {
+                    if (array_key_exists('email', $record) && !is_null($record['email'])) {
+                        if ((!strcmp($record['email'], "pavan")) ||
+                            (!strcmp($record['email'], "raunak"))) {
+                            $processed++;
+                            }
+                        }
                     }
-                    if($processed==0) {
-                        if(!strcmp($record['email'],"raunak"))
-                            $mystatus = 1;
-                    }
-                    //echo $record['email']."\n";
+                if ($processed == 2) {
+                    return Aerospike::OK;
                 }
-                if ($processed++ > 19) return false;
             }, array("email"));
             if ($status != AEROSPIKE::OK) {
-                return($db->errorno());
-            } else {
+                echo $db->errorno();
                 return($db->errorno());
             }
-            return($status);
+        } else {
+            return($db->errorno());
         }
+        return($status);
     }
     /**
      * @test

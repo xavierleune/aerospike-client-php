@@ -23,7 +23,7 @@ class ScanInfo extends AerospikeTestCommon
         $db->put($key,array("first_name"=>"bhushan", "age"=>22));
 	    $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
-        $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf");
+        $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -40,12 +40,14 @@ class ScanInfo extends AerospikeTestCommon
             $db = new Aerospike($config);
         }
         $key = $db->initKey("test", "demo", "Get_key");
-        for( $i=1; $i<4; $i++) {
-            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
-            $key=$db->initKey("test", "demo", "Get_key".$i);
+        for( $i=1; $i<4; $i++) {
+             $key=$db->initKey("test", "demo", "Get_key".$i);
+             $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+                 =>Aerospike::POLICY_RETRY_NONE));
         }
-        $deregister_status = $db->deregister("my_udf");
+        $deregister_status = $db->deregister("my_udf.lua");
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
         }
@@ -72,15 +74,25 @@ class ScanInfo extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
-	    if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
+        $info = array();
+        do {
+            sleep(10);
+            $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
+            if ($status != Aerospike::OK) {
+                return($db->errorno());
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+        if ($info['progress_pct'] != 100) {
+            return($db->errorno());
+        }
+	    /*if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
         $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
 	        return($status);
 	    } else {
             return($db->errorno());
-	    }
+        }*/
         return($status);
     }
 	/**
@@ -209,14 +221,25 @@ class ScanInfo extends AerospikeTestCommon
         return($db->errorno());
         }
         $status = $db->scanInfo(ScanInfo::$myscan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-	    if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
+        $info = array();
+        do {
+            sleep(10);
+            $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
+            if ($status != Aerospike::OK) {
+                return($db->errorno());
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+        if ($info['progress_pct'] != 100) {
+            return($db->errorno());
+        }
+	    /*if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
 	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
 	    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
 	        return($status);
 	    } else {
             return($db->errorno());
-	    }
+        }*/
         return($status);
     }
 }
