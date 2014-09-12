@@ -1548,22 +1548,24 @@ PHP_METHOD(Aerospike, predicateEquals)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, "bin", bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, "op", "=", sizeof("="), 1);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "=", sizeof("=") - 1, 1);
 
     switch(Z_TYPE_P(val_p)) {
         case IS_LONG:
-            add_assoc_long(return_value, "val", Z_LVAL_P(val_p));
+            add_assoc_long(return_value, VAL, Z_LVAL_P(val_p));
             break;
         case IS_STRING:
             if (strlen(Z_STRVAL_P(val_p)) == 0) {
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
+                zval_dtor(return_value);
                 RETURN_NULL();
             }
-            add_assoc_string(return_value, "val", Z_STRVAL_P(val_p), 1);
+            add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
             break;
         default:
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
+            zval_dtor(return_value);
             RETURN_NULL();
     }
 }
@@ -1597,13 +1599,13 @@ PHP_METHOD(Aerospike, predicateBetween)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, "bin", bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, "op", "BETWEEN", sizeof("BETWEEN"), 1);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
     ALLOC_ZVAL(minmax_arr);
     array_init_size(minmax_arr, 2);
     add_next_index_long(minmax_arr, min_p);
     add_next_index_long(minmax_arr, max_p);
-    add_assoc_zval(return_value, "val", minmax_arr);
+    add_assoc_zval(return_value, VAL, minmax_arr);
 }
 
 /*

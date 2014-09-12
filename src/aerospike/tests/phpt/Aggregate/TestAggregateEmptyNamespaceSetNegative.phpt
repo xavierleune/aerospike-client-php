@@ -1,4 +1,4 @@
-T--
+--TEST--
 Aggregate - empty namespace and set
 
 --SKIPIF--

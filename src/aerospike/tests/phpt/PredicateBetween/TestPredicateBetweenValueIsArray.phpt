@@ -1,4 +1,4 @@
-T--
+--TEST--
 PredicateBetween - predicate between has array parameter
 
 --SKIPIF--
@@ -11,5 +11,5 @@ aerospike_phpt_skipif("PredicateBetween", "testPredicateBetweenValueIsArray");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("PredicateBetween", "testPredicateBetweenValueIsArray");
 --EXPECT--
-ERR_PARAM
+Parameter_Exception
 

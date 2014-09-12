@@ -1,4 +1,4 @@
-T--
+--TEST--
 Aggregate - unknown namespace and set
 
 --SKIPIF--

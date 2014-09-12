@@ -1,7 +1,7 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
-#include<aerospike/as_arraylist.h>
-#include<aerospike/as_hashmap.h>
+#include <aerospike/as_arraylist.h>
+#include <aerospike/as_hashmap.h>
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
@@ -25,10 +25,20 @@
                 (void **) &datavalue, &position) == SUCCESS;     \
          zend_hash_move_forward_ex(ht, &position))
 
+/* 
+ *******************************************************************************************************
+ * MACROS FOR MAX STORE SIZE.
+ *******************************************************************************************************
+ */
 #define AS_MAX_STORE_SIZE 1024
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
 
+/* 
+ *******************************************************************************************************
+ * MACROS FOR UDF KEYS AND FILE READING BUFFER SIZE.
+ *******************************************************************************************************
+ */
 #define UDF_MODULE_NAME "name"
 #define UDF_MODULE_TYPE "type"
 #define LUA_FILE_BUFFER_FRAME 512
@@ -41,6 +51,15 @@
  */
 #define LUA_SYSTEM_PATH_PHP_INI INI_STR("aerospike.lua_system_path") ? INI_STR("aerospike.lua_system_path") : NULL
 #define LUA_USER_PATH_PHP_INI INI_STR("aerospike.lua_user_path") ? INI_STR("aerospike.lua_user_path") : NULL
+
+/* 
+ *******************************************************************************************************
+ * MACROS FOR PREDICATE ARRAY KEYS.
+ *******************************************************************************************************
+ */
+#define BIN "bin"
+#define OP "op"
+#define VAL "val"
 
 /*
  *******************************************************************************************************

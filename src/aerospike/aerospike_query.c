@@ -10,10 +10,6 @@
 #include "aerospike/as_query.h"
 #include "aerospike_policy.h"
 
-#define BIN "bin"
-#define OP "op"
-#define VAL "val"
-
 /*
  ******************************************************************************************************
  Initializes and defines an as_query object.

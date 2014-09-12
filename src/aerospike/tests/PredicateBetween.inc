@@ -11,7 +11,7 @@ class PredicateBetween extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    static $status_ok = 2000;
+    static $parameter_exception = 2000;
     static $status_err = 2001;
     static $status_get_record_fail = 2002;
 
@@ -39,15 +39,15 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenNoParameter($db,$bin)
+    function testPredicateBetweenNoParameter($db, $bin)
     {
         if ($db->isConnected()) {
             try {
                 $db->predicateBetween();
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
@@ -67,15 +67,19 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenValueIsBool($db,$bin)
+    function testPredicateBetweenValueIsBool($db, $bin)
     {
         if ($db->isConnected()) {
             try {
-                $db->predicateBetween($bin,true,true);
+                $ans = $db->predicateBetween($bin, true, true);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(1, 1)));
+            if(!empty($op)) {
+                return Aerospike::ERR;
+            }
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
@@ -95,15 +99,15 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenValueIsArray($db,$bin)
+    function testPredicateBetweenValueIsArray($db, $bin)
     {
         if ($db->isConnected()) {
             try {
-                $db->predicateBetween($bin,array("age","email"),array(2,3));
+                $db->predicateBetween($bin, array("age", "email"), array(2, 3));
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
@@ -123,15 +127,15 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenValueHasOneArgument($db,$bin)
+    function testPredicateBetweenValueHasOneArgument($db, $bin)
     {
         if ($db->isConnected()) {
             try {
                 $db->predicateBetween($bin);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
@@ -151,20 +155,19 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetween($db,$bin)
+    function testPredicateBetween($db, $bin)
     {
         if ($db->isConnected()) {
             try {
-                $ans=$db->predicateBetween($bin,30,40);
+                $ans = $db->predicateBetween($bin, 30, 40);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            echo "Ans is".var_dump($ans);
-            $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(30,40)));
+            $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(30, 40)));
             if(!empty($op)) {
                 return Aerospike::ERR;
             }
-            return self::$status_ok;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }

@@ -1,4 +1,4 @@
-T--
+--TEST--
 Aggregate - where parameter contains bool value
 
 --SKIPIF--

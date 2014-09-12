@@ -11,5 +11,5 @@ aerospike_phpt_skipif("PredicateEquals", "testPredicateEqualValueIsBool");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("PredicateEquals", "testPredicateEqualsValueIsBool");
 --EXPECT--
-ERR_PARAM
+OK
 

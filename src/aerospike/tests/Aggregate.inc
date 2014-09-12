@@ -33,8 +33,8 @@ class Aggregate extends AerospikeTestCommon
             $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
             $db = new Aerospike($config);
         }
-        removeKeys();
-        $degister_status = $db->deregister("aggregate_udf");
+        $this->removeKeys($db);
+        $deregister_status = $db->deregister("aggregate_udf");
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -92,7 +92,7 @@ class Aggregate extends AerospikeTestCommon
      */
     function testAggregatePositiveString($db, $key)
     {
-        removeKeys();
+        $this->removeKeys($db);
         $key = $db->initKey("test", "demo", "Get_key");
         $db->put($key,array("first_name"=>"raunak","age"=>"29"));
         $key = $db->initKey("test", "demo", "Get_key1");
@@ -111,7 +111,7 @@ class Aggregate extends AerospikeTestCommon
         }
         $testArray = array("pavan","bhushan");
         $result = array_diff_assoc_recursive($testArray, $names);
-        removeKeys();
+        $this->removeKeys($db);
         if(!empty($result)) {
             return Aerospike::ERR;
         }
@@ -134,7 +134,7 @@ class Aggregate extends AerospikeTestCommon
      */
     function testAggregatePositiveBlob($db, $key)
     {
-        removeKeys();
+        $this->removeKeys($db);
         $key = $db->initKey("test", "demo", "Get_key");
         $db->put($key,array("first_name"=>"raunak","age"=>true));
         $key = $db->initKey("test", "demo", "Get_key1");
@@ -153,7 +153,7 @@ class Aggregate extends AerospikeTestCommon
         }
         $testArray = array("raunak","bhushan","ajit");
         $result = array_diff_assoc_recursive($testArray, $names);
-        removeKeys();
+        $this->removeKeys($db);
         if(!empty($result)) {
             return Aerospike::ERR;
         }
@@ -605,19 +605,15 @@ class Aggregate extends AerospikeTestCommon
         return ($status);
     }
 
-    function removeKeys() {
+    function removeKeys(&$db) {
         $key = $db->initKey("test", "demo", "Get_key");
-        $db->remove($key, array(Aerospike::Y
-            =>Aerospike::POLICY_RETRY_NONE));
+        $db->remove($key, array(Aerospike::POLICY_RETRY_NONE));
         $key = $db->initKey("test", "demo", "Get_key1");
-        $db->remove($key, array(Aerospike::Y
-            =>Aerospike::POLICY_RETRY_NONE));
+        $db->remove($key, array(Aerospike::POLICY_RETRY_NONE));
         $key = $db->initKey("test", "demo", "Get_key2");
-        $db->remove($key, array(Aerospike::Y
-            =>Aerospike::POLICY_RETRY_NONE));
+        $db->remove($key, array(Aerospike::POLICY_RETRY_NONE));
         $key = $db->initKey("test", "demo", "Get_key3");
-        $db->remove($key, array(Aerospike::Y
-            =>Aerospike::POLICY_RETRY_NONE));
+        $db->remove($key, array(Aerospike::POLICY_RETRY_NONE));
     }
 }
 

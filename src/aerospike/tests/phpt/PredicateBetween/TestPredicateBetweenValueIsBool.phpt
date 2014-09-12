@@ -11,5 +11,5 @@ aerospike_phpt_skipif("PredicateBetween", "testPredicateBetweenValueIsBool");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("PredicateBetween", "testPredicateBetweenValueIsBool");
 --EXPECT--
-ERR_PARAM
+OK
 

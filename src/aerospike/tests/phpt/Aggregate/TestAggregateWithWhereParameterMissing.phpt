@@ -1,4 +1,4 @@
--TEST--
+--TEST--
 Aggregate - where parameter missing
 
 --SKIPIF--

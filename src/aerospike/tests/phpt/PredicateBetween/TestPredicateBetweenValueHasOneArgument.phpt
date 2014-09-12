@@ -1,4 +1,4 @@
-T--
+--TEST--
 PredicateBetween - predicate between has one argument
 
 --SKIPIF--
@@ -11,5 +11,5 @@ aerospike_phpt_skipif("PredicateBetween", "testPredicateBetweenValueHasOneArgume
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("PredicateBetween", "testPredicateBetweenValueHasOneArgument");
 --EXPECT--
-ERR_PARAM
+Parameter_Exception
 

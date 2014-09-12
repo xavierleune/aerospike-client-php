@@ -11,7 +11,7 @@ class PredicateEquals extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    static $status_ok = 2000;
+    static $parameter_exception = 2000;
     static $status_err = 2001;
     static $status_get_record_fail = 2002;
     static $put_rec = array("Greet"=>"World_end");
@@ -46,7 +46,7 @@ class PredicateEquals extends AerospikeTestCommon
             try {
                 $status = $db->predicateEquals();
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
             return($status);
         } else {
@@ -72,11 +72,14 @@ class PredicateEquals extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
-                $db->predicateEquals("age",true);
+                $ans = $db->predicateEquals("age", true);
+                if ($ans == NULL) {
+                    return Aerospike::OK;
+                }
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::ERR;
         } else {
             return($db->errorno());
         }
@@ -100,11 +103,14 @@ class PredicateEquals extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
-                $db->predicateEquals("age",array("age","email"));
+                $ans = $db->predicateEquals("age", array("age", "email"));
+                if ($ans == NULL) {
+                    return Aerospike::OK;
+                }
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::ERR;
         } else {
             return($db->errorno());
         }
@@ -128,11 +134,11 @@ class PredicateEquals extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
-                $db->predicateEquals(1,1);
+                $res = $db->predicateEquals(1, 1);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
@@ -158,9 +164,9 @@ class PredicateEquals extends AerospikeTestCommon
             try {
                 $db->predicateEquals("age");
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
-            return self::$status_err;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
@@ -184,16 +190,15 @@ class PredicateEquals extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
-                $ans=$db->predicateEquals("age",30);
+                $ans = $db->predicateEquals("age", 30);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return $db->errorno();
             }
-            echo "ans is".var_dump($ans);
-            $op = array_diff_assoc_recursive($ans,array("bin"=>"age", "op"=>"=", "val"=>30));
+            $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"=", "val"=>30));
             if(!empty($op)) {
                 return Aerospike::ERR;
             }
-            return self::$status_ok;
+            return Aerospike::OK;
         } else {
             return($db->errorno());
         }
