@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Aggregate", "testAggregateWithWhereContainingArrayValue")
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateWithWhereContainingArrayValue");
 --EXPECT--
-ERR_PARAM
+Parameter_Exception
 

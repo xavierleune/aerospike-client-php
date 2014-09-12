@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Aggregate", "testAggregateWithWhereParameterMissing");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateWithWhereParameterMissing");
 --EXPECT--
-ERR_PARAM
+Parameter_Exception
 

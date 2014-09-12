@@ -11,6 +11,9 @@ class Aggregate extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
+    static $status_ok = 2000;
+    static $status_err = 2001;
+
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
@@ -22,7 +25,8 @@ class Aggregate extends AerospikeTestCommon
         $db->put($key,array("first_name"=>"bhushan","age"=>22));
         $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit","age"=>32));
-        $register_status = $db->register("./tests/phpt/Aggregate/aggregate_udf.lua", "aggregate_udf");
+        $register_status =
+            $db->register("./tests/phpt/Aggregate/stream_udf.lua", "stream_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -63,12 +67,17 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
         $testArray = array("raunak","pavan","bhushan");
-        $result = array_diff_assoc_recursive($testArray, $names);
+        if (($names["raunak"] == 1) && ($names["pavan"] == 1) &&
+            ($names["bhushan"] == 1)) {
+            return Aerospike::OK;
+        } else {
+            return Aerospike::ERR;
+        }
         if(!empty($result)) {
             return Aerospike::ERR;
         }
@@ -105,7 +114,8 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateEquals("age", 27);
-        $status = $db->aggregate("aggregate_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+        echo $status; 
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -146,8 +156,8 @@ class Aggregate extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $where = $db->predicateEquals("age",true);
-        $status = $db->aggregate("aggregate_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $where = $db->predicateEquals("age", true);
+        $status = $db->aggregate("stream_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -181,7 +191,7 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group", array("first_name"),
+        $status = $db->aggregate("stream_udf", "group", array("first_name"),
             "t", "d", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
@@ -240,7 +250,7 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group", array("first_name"),
+        $status = $db->aggregate("stream_udf", "group", array("first_name"),
             "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
@@ -270,7 +280,7 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group", array("first_name"),
+        $status = $db->aggregate("stream_udf", "group", array("first_name"),
             "", "", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
@@ -330,7 +340,7 @@ class Aggregate extends AerospikeTestCommon
         }
         $arg = "args";
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group", $arg, "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group", $arg, "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -360,7 +370,7 @@ class Aggregate extends AerospikeTestCommon
         }
         $arg = "args";
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group", "", "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group", "", "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -387,7 +397,8 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf", "group_count", array("first_name", "last_name"),"test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group_count",
+            array("first_name", "last_name"), "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -482,7 +493,8 @@ class Aggregate extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
-                $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $names);
+                $status = $db->aggregate("aggregate_udf_less_parameter",
+                    "group_count", array("first_name"), "test", "demo", $names);
             } catch (ErrorException $e) {
                 return self::$status_ok;
             }
@@ -510,15 +522,19 @@ class Aggregate extends AerospikeTestCommon
     function testAggregateWithWhereContainingStringValue($db,$key)
     {
         if ($db->isConnected()) {
-            $where = $db->predicateBetween("age","21","ages");
-            $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+            try {
+                $where = $db->predicateBetween("age","21","ages");
+                $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+            } catch (ErrorException $e) {
+                return self::$status_ok;
+            }
         } else {
             return($db->errorno());
         }
         if($status != Aerospike::OK) {
             return($db->errorno());
         }
-        return ($status);
+        return (self::$status_err);
     }
 
     /**
@@ -594,15 +610,19 @@ class Aggregate extends AerospikeTestCommon
     function testAggregateWithWhereContainingArrayValue($db,$key)
     {
         if ($db->isConnected()) {
-            $where = $db->predicateBetween("age", array(""), array(""));
-            $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+            try {
+                $where = $db->predicateBetween("age", array(""), array(""));
+                $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+            } catch (ErrorException $e) {
+                return self::$status_ok;
+            }
         } else {
             return($db->errorno());
         }
         if($status != Aerospike::OK) {
             return($db->errorno());
         }
-        return ($status);
+        return self::$status_err;
     }
 
     function removeKeys(&$db) {
