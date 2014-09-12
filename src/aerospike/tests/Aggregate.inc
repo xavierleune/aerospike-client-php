@@ -11,20 +11,20 @@ class Aggregate extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    static $status_ok = 2000;
+    static $parameter_exception = 2000;
     static $status_err = 2001;
 
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key,array("first_name"=>"raunak","age"=>29));
+        $db->put($key,array("first_name"=>"raunak", "age"=>29));
         $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key,array("first_name"=>"pavan","age"=>27));
+        $db->put($key,array("first_name"=>"pavan", "age"=>27));
         $key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key,array("first_name"=>"bhushan","age"=>22));
+        $db->put($key,array("first_name"=>"bhushan", "age"=>22));
         $key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key,array("first_name"=>"ajit","age"=>32));
+        $db->put($key,array("first_name"=>"ajit", "age"=>32));
         $register_status =
             $db->register("./tests/phpt/Aggregate/stream_udf.lua", "stream_udf.lua");
         if ($register_status != Aerospike::OK) {
@@ -34,7 +34,8 @@ class Aggregate extends AerospikeTestCommon
 
     protected function tearDown(&$db, &$key) {
         if (!$db->isConnected()) {
-            $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+            $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
+                "port"=>AEROSPIKE_CONFIG_PORT)));
             $db = new Aerospike($config);
         }
         $this->removeKeys($db);
@@ -67,26 +68,23 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("stream_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group_count",
+            array("first_name"), "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        $testArray = array("raunak","pavan","bhushan");
         if (($names["raunak"] == 1) && ($names["pavan"] == 1) &&
             ($names["bhushan"] == 1)) {
             return Aerospike::OK;
         } else {
             return Aerospike::ERR;
         }
-        if(!empty($result)) {
-            return Aerospike::ERR;
-        }
-        return Aerospike::OK;
     }
 
     /**
      * @test
-     * Aggregate - correct arguments with string values for bin
+     * Aggregate - Applying aggregation with where predicate containing a
+     * non-indexed bin.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -99,37 +97,22 @@ class Aggregate extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAggregatePositiveString($db, $key)
+    function testAggregateNegativeSecondaryIndexNotFound($db, $key)
     {
-        $this->removeKeys($db);
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key,array("first_name"=>"raunak","age"=>"29"));
-        $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key,array("first_name"=>"pavan","age"=>"27"));
-        $key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key,array("first_name"=>"bhushan","age"=>"27"));
-        $key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key,array("first_name"=>"ajit","age"=>"32"));
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $where = $db->predicateEquals("age", 27);
-        $status = $db->aggregate("stream_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
-        echo $status; 
+        $where = $db->predicateEquals("first_name", "raunak");
+        $status = $db->aggregate("stream_udf", "group_count",
+            array("first_name"), "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        $testArray = array("pavan","bhushan");
-        $result = array_diff_assoc_recursive($testArray, $names);
-        $this->removeKeys($db);
-        if(!empty($result)) {
-            return Aerospike::ERR;
-        }
-        return Aerospike::OK;
+        return $status;
     }
     /**
      * @test
-     * Aggregate - correct arguments with blob values for bin
+     * Aggregate - Where predicate not satisfied by any record.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -142,32 +125,21 @@ class Aggregate extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAggregatePositiveBlob($db, $key)
+    function testAggregatePositiveEmptyAggregationResult($db, $key)
     {
-        $this->removeKeys($db);
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key,array("first_name"=>"raunak","age"=>true));
-        $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key,array("first_name"=>"pavan","age"=>false));
-        $key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key,array("first_name"=>"bhushan","age"=>true));
-        $key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key,array("first_name"=>"ajit","age"=>true));
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $where = $db->predicateEquals("age", true);
-        $status = $db->aggregate("stream_udf", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $where = $db->predicateEquals("age", 1000);
+        $status = $db->aggregate("stream_udf", "group_count",
+            array("first_name"), "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        $testArray = array("raunak","bhushan","ajit");
-        $result = array_diff_assoc_recursive($testArray, $names);
-        $this->removeKeys($db);
-        if(!empty($result)) {
-            return Aerospike::ERR;
+        if (empty($names)) {
+            return Aerospike::OK;
         }
-        return Aerospike::OK;
+        return Aerospike::ERR;
     }
     /**
      * @test
@@ -221,7 +193,8 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("agg", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("agg", "group_count", array("first_name"),
+            "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -246,6 +219,7 @@ class Aggregate extends AerospikeTestCommon
 
     function testAggregateUnknownFunctionNegative($db, $key)
     {
+        gc_enable();
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -310,7 +284,8 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("", "", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("", "", array("first_name"),
+            "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -340,7 +315,8 @@ class Aggregate extends AerospikeTestCommon
         }
         $arg = "args";
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("stream_udf", "group", $arg, "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group", $arg,
+            "test", "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -370,7 +346,8 @@ class Aggregate extends AerospikeTestCommon
         }
         $arg = "args";
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("stream_udf", "group", "", "test", "demo", $where, $names);
+        $status = $db->aggregate("stream_udf", "group", "", "test",
+            "demo", $where, $names);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -424,12 +401,15 @@ class Aggregate extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $register_status = $db->register("./tests/phpt/Aggregate/aggregate_udf_extra_parameter.lua", "aggregate_udf_extra_parameter");
+        $register_status =
+            $db->register("./tests/phpt/Aggregate/aggregate_udf_extra_parameter.lua",
+                "aggregate_udf_extra_parameter");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf_extra_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("aggregate_udf_extra_parameter",
+            "group_count", array("first_name"), "test", "demo", $where, $names);
         $degister_status = $db->deregister("aggregate_udf_extra_parameter");
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
@@ -459,12 +439,15 @@ class Aggregate extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $register_status = $db->register("./tests/phpt/Aggregate/aggregate_udf_less_parameter.lua", "aggregate_udf_less_parameter");
+        $register_status =
+            $db->register("./tests/phpt/Aggregate/aggregate_udf_less_parameter.lua",
+                "aggregate_udf_less_parameter");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+        $status = $db->aggregate("aggregate_udf_less_parameter",
+            "group_count", array("first_name"), "test", "demo", $where, $names);
         $degister_status = $db->deregister("aggregate_udf_less_parameter");
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
@@ -496,7 +479,7 @@ class Aggregate extends AerospikeTestCommon
                 $status = $db->aggregate("aggregate_udf_less_parameter",
                     "group_count", array("first_name"), "test", "demo", $names);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
             return self::$status_err;
         } else {
@@ -524,9 +507,11 @@ class Aggregate extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $where = $db->predicateBetween("age","21","ages");
-                $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+                $status = $db->aggregate("aggregate_udf_less_parameter",
+                    "group_count", array("first_name"), "test", "demo",
+                    $where, $names);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
         } else {
             return($db->errorno());
@@ -555,7 +540,9 @@ class Aggregate extends AerospikeTestCommon
     function testAggregateWithWhereContainingNullString($db,$key)
     {
         if ($db->isConnected()) {
-            $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", array(""), $names);
+            $status = $db->aggregate("aggregate_udf_less_parameter",
+                "group_count", array("first_name"), "test", "demo",
+                array(""), $names);
         } else {
             return($db->errorno());
         }
@@ -583,7 +570,9 @@ class Aggregate extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             $where = $db->predicateBetween("age", true, true);
-            $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+            $status = $db->aggregate("aggregate_udf_less_parameter",
+                "group_count", array("first_name"), "test", "demo",
+                $where, $names);
         } else {
             return($db->errorno());
         }
@@ -612,9 +601,11 @@ class Aggregate extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $where = $db->predicateBetween("age", array(""), array(""));
-                $status = $db->aggregate("aggregate_udf_less_parameter", "group_count", array("first_name"), "test", "demo", $where, $names);
+                $status = $db->aggregate("aggregate_udf_less_parameter",
+                    "group_count", array("first_name"), "test", "demo",
+                        $where, $names);
             } catch (ErrorException $e) {
-                return self::$status_ok;
+                return self::$parameter_exception;
             }
         } else {
             return($db->errorno());
