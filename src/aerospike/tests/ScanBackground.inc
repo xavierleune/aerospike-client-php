@@ -75,9 +75,13 @@ class ScanBackground extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        /*do {
-            sleep(5);
-        }while($scan_id != 3); 
+        do {
+            sleep(10);
+            $status = $db->scanInfo($scan_id, $info);
+            if ($status != Aerospike::OK) {
+                return($db->errorno());
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
 
         $ages_got = array();
         $i = 0;
@@ -101,11 +105,20 @@ class ScanBackground extends AerospikeTestCommon
             $ages_got[$i] = $get_record["age"];
             $i++;
         }
-
         for ($i = 0; $i < 4; $i++) {
-            if ($ages_got[$i] == ($ages[$i]+20))
+            if ($ages_got[$i] == ($this->ages[$i]+20)) {
                 continue;
-        }*/
+            }
+        }
+
+        $key = $db->initKey("test", "demo", "Get_key");
+        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+            =>Aerospike::POLICY_RETRY_NONE));
+        for($i=1; $i<4; $i++) {
+            $key=$db->initKey("test", "demo", "Get_key".$i);
+            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+                =>Aerospike::POLICY_RETRY_NONE));
+        }
         return($status);
     }
 
@@ -427,8 +440,50 @@ class ScanBackground extends AerospikeTestCommon
         }
         $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
         if ($status != Aerospike::OK) {
-	    echo "\n\nError is:".$db->error();
             return($db->errorno());
+        }
+        do {
+            sleep(10);
+            $status = $db->scanInfo($scan_id, $info);
+            if ($status != Aerospike::OK) {
+                return($db->errorno());
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+        $ages_got = array();
+        $i = 0;
+        $key = $db->initKey("test", "demo", "Get_key");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        $key = $db->initKey("test", "demo", "Get_key1");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        $key = $db->initKey("test", "demo", "Get_key2");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        $key = $db->initKey("test", "demo", "Get_key3");
+        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+            $ages_got[$i] = $get_record["age"];
+            $i++;
+        }
+        for ($i = 0; $i < 4; $i++) {
+            if ($ages_got[$i] == ($this->ages[$i]+20)) {
+                continue;
+            }
+        }
+
+        $key = $db->initKey("test", "demo", "Get_key");
+        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+            =>Aerospike::POLICY_RETRY_NONE));
+        for($i=1; $i<4; $i++) {
+            $key=$db->initKey("test", "demo", "Get_key".$i);
+            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+                =>Aerospike::POLICY_RETRY_NONE));
         }
         return($status);
     }

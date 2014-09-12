@@ -2113,7 +2113,7 @@ PHP_METHOD(Aerospike, scanInfo)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     long                   scan_id = -1;
-    zval*                  scan_info = NULL;
+    zval*                  scan_info_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -2132,7 +2132,7 @@ PHP_METHOD(Aerospike, scanInfo)
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz|z",
-                &scan_id, &scan_info, &options_p)) {
+                &scan_id, &scan_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for scanInfo()");
@@ -2153,9 +2153,12 @@ PHP_METHOD(Aerospike, scanInfo)
         options_p = NULL;
     }
 
+    zval_dtor(scan_info_p);
+    array_init(scan_info_p);
+
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_get_info(aerospike_obj_p->as_ref_p->as_p,
-                                              &error, scan_id, scan_info,
+                                              &error, scan_id, scan_info_p,
                                               options_p))) {
         DEBUG_PHP_EXT_ERROR("scanInfo returned an error");
         goto exit;
