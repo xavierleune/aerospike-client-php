@@ -211,11 +211,12 @@ class Udf extends AerospikeTestCommon
         $key = $db->initKey("test","demo", "udf_for_string");
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"hello"));
-        } else{
+        } else {
             $db->close();
             return($db->errorno());
         }
-        $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1", "world"), $returned);
+        $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1",
+            "world"), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -352,7 +353,7 @@ class Udf extends AerospikeTestCommon
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         $testMap = array("bin1"=>array("k30"=>55555, "k20"=>55555, "k10"=>55555));
         $result = array_diff_assoc_recursive($returned, $testMap);
-        if(!empty($result)) {
+        if (!empty($result)) {
             return Aerospike::ERR;
         }
         return Aerospike::OK;
@@ -479,7 +480,7 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        if($returned!="") {
+        if ($returned != "") {
             return Aerospike::ERR;
         }
         return Aerospike::OK;
@@ -611,8 +612,8 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            foreach($modules as $moduleeach) {
-                if($moduleeach['name']=='module.lua') {
+            foreach ($modules as $moduleeach) {
+                if ($moduleeach['name'] == 'module.lua') {
                     return Aerospike::OK;
                 }
             }
@@ -646,8 +647,8 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            foreach($modules as $moduleeach) {
-                if($moduleeach['name']=='module.lua') {
+            foreach ($modules as $moduleeach) {
+                if ($moduleeach['name']=='module.lua') {
                     return Aerospike::OK;
                 }
             }
@@ -681,8 +682,8 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            foreach($modules as $moduleeach) {
-                if($moduleeach['name']=='module.lua') {
+            foreach ($modules as $moduleeach) {
+                if ($moduleeach['name'] == 'module.lua') {
                     return Aerospike::OK;
                 }
             }

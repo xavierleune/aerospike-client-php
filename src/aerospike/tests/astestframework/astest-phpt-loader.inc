@@ -38,7 +38,7 @@ $status_codes = array(0=>"OK",
                       1206=>"ERR_INDEX_MAXCOUNT", 
                       1300=>"ERR_UDF",
                       1301=>"ERR_UDF_NOT_FOUND",
-                      2000=> "Parameter_Exception", 
+                      2000=>"Parameter_Exception", 
                       2001=>"Undefined_Error",
                       2002=>"ERR_GET_RECORD");
 

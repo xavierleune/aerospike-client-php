@@ -52,7 +52,15 @@ AerospikeConstants aerospike_constants[] = {
     { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
     { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
     { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
-    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      }
+    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      },
+    { SCAN_PRIORITY_AUTO                ,   "SCAN_PRIORITY_AUTO"                },
+    { SCAN_PRIORITY_LOW                 ,   "SCAN_PRORITY_LOW"                  },
+    { SCAN_PRIORITY_MEDIUM              ,   "SCAN_PRIORITY_MEDIUM"              },
+    { SCAN_PRIORITY_HIGH                ,   "SCAN_PRIORITY_HIGH"                },
+    { SCAN_STATUS_UNDEF                 ,   "SCAN_STATUS_UNDEF"                 },
+    { SCAN_STATUS_INPROGRESS            ,   "SCAN_STATUS_INPROGRESS"            },
+    { SCAN_STATUS_ABORTED               ,   "SCAN_STATUS_ABORTED"               },
+    { SCAN_STATUS_COMPLETED             ,   "SCAN_STATUS_COMPLETED"             }
 };
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
@@ -98,10 +106,17 @@ exit:
  *
  * @param as_config_p           The as_config object to be passed in case of connect.
  * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
- * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param info_policy_p         The as_policy_info to be passed in case of
+ *                              scan_info, register, deregister, get_registered,
+ *                              list_registered udfs.
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan
+ *                              and scanBackground.
+ * @param query_policy_p        The as_policy_query to be passed in case of
+ *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  *
  *******************************************************************************************************
@@ -113,6 +128,8 @@ check_and_set_default_policies(as_config *as_config_p,
                                as_policy_operate *operate_policy_p,
                                as_policy_remove *remove_policy_p,
                                as_policy_info *info_policy_p,
+                               as_policy_scan *scan_policy_p,
+                               as_policy_query *query_policy_p,
                                uint32_t *serializer_policy_p)
 {
     uint32_t ini_value = 0;
@@ -139,6 +156,12 @@ check_and_set_default_policies(as_config *as_config_p,
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
         }
+        if (scan_policy_p) {
+            scan_policy_p->timeout = ini_value;
+        }
+        if (query_policy_p) {
+            query_policy_p->timeout = ini_value;
+        }
     }
 
     if ((ini_value = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
@@ -157,10 +180,17 @@ check_and_set_default_policies(as_config *as_config_p,
  *
  * @param as_config_p           The as_config object to be passed in case of connect.
  * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
- * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param info_policy_p         The as_policy_info to be passed in case of
+ *                              scan_info, register, deregister, get_registered,
+ *                              list_registered udfs.
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan
+ *                              and scanBackground.
+ * @param query_policy_p        The as_policy_query to be passed in case of
+ *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
@@ -175,13 +205,15 @@ set_policy_ex(as_config *as_config_p,
               as_policy_operate *operate_policy_p,
               as_policy_remove *remove_policy_p,
               as_policy_info *info_policy_p,
+              as_policy_scan *scan_policy_p,
+              as_policy_query *query_policy_p,
               uint32_t *serializer_policy_p,
               zval *options_p,
               as_error *error_p)
 {
-    if ((!read_policy_p) && (!write_policy_p) && 
-        (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p)
-        && (!serializer_policy_p)) {
+    if ((!read_policy_p) && (!write_policy_p) &&
+        (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
+        (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy");
         goto exit;
@@ -221,7 +253,8 @@ set_policy_ex(as_config *as_config_p,
     if (options_p == NULL) {
         check_and_set_default_policies(as_config_p, read_policy_p,
                        write_policy_p, operate_policy_p, remove_policy_p,
-                       info_policy_p, serializer_policy_p);
+                       info_policy_p, scan_policy_p, query_policy_p,
+                       serializer_policy_p);
     } else {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -266,6 +299,15 @@ set_policy_ex(as_config *as_config_p,
                         read_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if (info_policy_p) {
                         info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (scan_policy_p) {
+                        scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (query_policy_p) {
+                        query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        goto exit;
                     }
                     read_flag = 1;
                     break;
@@ -284,6 +326,10 @@ set_policy_ex(as_config *as_config_p,
                         remove_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if(info_policy_p) {
                         info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if(scan_policy_p) {
+                        scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if(query_policy_p) {
+                        query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -354,21 +400,21 @@ set_policy_ex(as_config *as_config_p,
         }
         if (!write_flag && write_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
-                    NULL, write_policy_p, NULL, NULL, NULL, NULL);
+                    NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL, NULL);
             connect_flag = 1;
-        } 
+        }
         if (!read_flag && read_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
-                    read_policy_p, NULL, NULL, NULL, NULL, NULL);
+                    read_policy_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             connect_flag = 1;
-        } 
+        }
         if (!connect_flag && as_config_p) {
             check_and_set_default_policies(as_config_p, NULL, NULL, NULL,
-                    NULL, NULL, NULL);
+                    NULL, NULL, NULL, NULL, NULL);
         }
         if (!serializer_flag && serializer_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, NULL, NULL,
-                    NULL, serializer_policy_p);
+                    NULL, NULL, NULL, serializer_policy_p);
         }
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -383,10 +429,17 @@ exit:
  * (Called by all methods except connect.)
  *
  * @param read_policy_p         The as_policy_read to be passed in case of get.
- * @param write_policy_p        The as_policy_write to be passed in case of put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param info_policy_p         The as_policy_info to be passed in case of
+ *                              scan_info, register, deregister, get_registered,
+ *                              list_registered udfs.
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan
+ *                              and scanBackground.
+ * @param query_policy_p        The as_policy_query to be passed in case of
+ *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
@@ -395,18 +448,20 @@ exit:
  *******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p, 
-           as_policy_write *write_policy_p, 
-           as_policy_operate *operate_policy_p, 
+set_policy(as_policy_read *read_policy_p,
+           as_policy_write *write_policy_p,
+           as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            as_policy_info *info_policy_p,
+           as_policy_scan *scan_policy_p,
+           as_policy_query *query_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
            as_error *error_p)
 {
     set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p,
-            remove_policy_p, info_policy_p, serializer_policy_p, options_p,
-            error_p);
+            remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
+            serializer_policy_p, options_p, error_p);
 }
 
 /*
@@ -434,7 +489,7 @@ set_general_policies(as_config *as_config_p,
     }
 
     set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write,
-                           NULL, NULL, NULL, NULL, options_p, error_p);
+                           NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p);
 exit:
     return;
 }

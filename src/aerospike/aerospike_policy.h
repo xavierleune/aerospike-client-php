@@ -55,7 +55,8 @@ enum Aerospike_constants {
 #define AS_POLICY_EXISTS 0x00000100
 #define AS_SERIALIZER_TYPE 0x00001000
 #define AS_UDF_TYPE 0x00010000
-
+#define AS_SCAN_PRIORITY 0x00100000
+#define AS_SCAN_STATUS 0x01000000
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant values. (POLICY_* or SERIALIZER_*)
@@ -73,7 +74,15 @@ enum Aerospike_values {
     SERIALIZER_PHP,                                 /* default handler for serializer type */
     SERIALIZER_JSON,
     SERIALIZER_USER,
-    UDF_TYPE_LUA           = AS_UDF_TYPE            /* UDF language type */
+    UDF_TYPE_LUA           = AS_UDF_TYPE,           /* UDF language type */
+    SCAN_PRIORITY_AUTO     = AS_SCAN_PRIORITY,      /* The cluster will auto adjust the scan priority */
+    SCAN_PRIORITY_LOW,                              /* Low priority scan */
+    SCAN_PRIORITY_MEDIUM,                           /* Medium priority scan */
+    SCAN_PRIORITY_HIGH,                             /* High priority scan */
+    SCAN_STATUS_UNDEF      = AS_SCAN_STATUS,        /* Undefined scan status likely due to the status not being properly checked */
+    SCAN_STATUS_INPROGRESS,                         /* The scan is currently running*/
+    SCAN_STATUS_ABORTED,                            /* The scan was aborted due to failure or the user */
+    SCAN_STATUS_COMPLETED                           /* The scan completed successfully  */
 };
 
 /*
@@ -87,14 +96,18 @@ set_policy(as_policy_read *read_policy_p,
            as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            as_policy_info *info_policy_p,
+           as_policy_scan *scan_policy_p,
+           as_policy_query *query_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
            as_error *error_p);
-extern void 
-set_general_policies(as_config* as_config_p, 
+
+extern void
+set_general_policies(as_config* as_config_p,
                      zval *options_p,
                      as_error *error_p);
-extern as_status 
+
+extern as_status
 declare_policy_constants_php(zend_class_entry *Aerospike_ce);
 
 #endif /* end of __AEROSPIKE_POLICY_H__ */

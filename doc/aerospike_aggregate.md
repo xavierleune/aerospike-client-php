@@ -6,7 +6,7 @@ Aerospike::aggregate - Applies a stream UDF to a secondary index query
 ## Description
 
 ```
-public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value [, array $options ] )
 ```
 
 **Aerospike::aggregate()** will apply the stream UDF *module*.*function* with
@@ -46,6 +46,9 @@ array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
 ```
 
 **value** filled by one or more of the supported types.
+
+**options** including Aerospike::OPT_READ_TIMEOUT and Aerospike::OPT_WRITE_TIMEOUT
+
 
 ## Return Values
 
