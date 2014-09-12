@@ -184,9 +184,13 @@ class Query extends AerospikeTestCommon
     function testQueryWithWrongBinNameInCallback($db)
     {
         if ($db->isConnected()) {
+    	    $total = 0;
+	        $in_thirties = 0;
             $where = $db->predicateBetween("age", 30, 39);
             $status = $db->query( "test", "demo", $where, function ($record) {
-                if (array_key_exists('email', $record) && !is_null($record['email'])) {
+                if (array_key_exists('wrong_bin', $record) &&
+                    (!is_null($record['wrong_bin']))) {
+                    global $total, $in_thirties;
                     $total += (int) $record['age'];
                     $in_thirties++;
                 }
@@ -325,7 +329,7 @@ class Query extends AerospikeTestCommon
             $status = $db->query("test", "demo", $where, function ($record) {
         		global $total, $in_thirties;
                 if (array_key_exists('email', $record) && (!is_null($record['email']))) {
-                    if ($record['email'] == "Ajit") {
+                    if ($record['email'] == "ajit") {
                         return Aerospike::OK;
                     }
                     $total += (int) $record['age'];
@@ -358,12 +362,18 @@ class Query extends AerospikeTestCommon
     function testQueryWithPutInCallback($db)
     {
         if ($db->isConnected()) {
-            $key = $db->initKey("test", "demo", "testKey");
+    	    $total = 0;
+	        $in_thirties = 0;
             $where = $db->predicateBetween("age", 30, 39);
             $status = $db->query( "test", "demo", $where, function ($record) {
+                global $total, $in_thirties;
                 if (array_key_exists('email', $record) && !is_null($record['email'])) {
-                    if ($record['email']=="Ajit") {
-                        $db->put($key, array("name"=>"Ajit"));
+                    if ($record['email'] == "ajit") {
+                        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+                        $db = new Aerospike($config);
+                        $key = $db->initKey("test", "demo", "testKey");
+                        $put_status = $db->put($key, array("name"=>"ajit"));
+                        $db->close();
                     }
                     $total += (int) $record['age'];
                     $in_thirties++;
@@ -375,9 +385,10 @@ class Query extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($db->errorno());
         }
+        $key = $db->initKey("test", "demo", "testKey");
         $db->get($key, $record);
         $db->remove($key, array(Aerospike::OPT_READ_TIMEOUT=>3000));
-        $result = array_diff_assoc_recursive($record, array("name"=>"Ajit"));
+        $result = array_diff_assoc_recursive($record, array("name"=>"ajit"));
         if(!empty($result)) {
             return Aerospike::ERR;
         }
@@ -402,9 +413,12 @@ class Query extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             $where = $db->predicateBetween("age", 30, 39);
+    	    $total = 0;
+	        $in_thirties = 0;
             $status = $db->query("test", "demo", $where, function ($record) {
+                global $total, $in_thirties;
                 if (array_key_exists('email', $record) && !is_null($record['email'])) {
-                    if($record['email']=="Ajit") {
+                    if($record['email']=="ajit") {
                         return Aerospike::OK;
                     }
                     $total += (int) $record['age'];
@@ -417,7 +431,7 @@ class Query extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($db->errorno());
         }
-        return (Aerospike::ERR);
+        return ($status);
     }
     /**
      * @test
@@ -438,22 +452,25 @@ class Query extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             $where = $db->predicateBetween("age", 30, 39);
-            $status = $db->query( "test", "demo", $where, function ($record) {
+    	    $total = 0;
+	        $in_thirties = 0;
+            $status = $db->query("test", "demo", $where, function ($record) {
+                global $total, $in_thirties;
                 if (array_key_exists('email', $record) && !is_null($record['email'])) {
-                    if($record['email']=="Ajit") {
+                    if ($record['email'] == "ajit") {
                         return Aerospike::OK;
                     }
                     $total += (int) $record['age'];
                     $in_thirties++;
                 }
-            },array( "email", "age"));
+            }, array( "email", "age"));
         } else {
             return($db->errorno());
         }
         if($status != Aerospike::OK) {
             return($db->errorno());
         }
-        return (Aerospike::ERR);
+        return ($status);
     }
     /**
      * @test
@@ -536,13 +553,17 @@ class Query extends AerospikeTestCommon
     function testQueryWithWhereContainingNullValue($db)
     {
         if ($db->isConnected()) {
-            $where = $db->predicateEquals( "age", "");
-            $status = $db->query( "test", "demo", $where, function ($record) {
-                if (array_key_exists('email', $record) && !is_null($record['email'])) {
-                    $total += (int) $record['age'];
-                    $in_thirties++;
+            $where = $db->predicateEquals("age", "");
+            try {
+                $status = $db->query( "test", "demo", $where, function ($record) {
+                    if (array_key_exists('email', $record) && !is_null($record['email'])) {
+                        $total += (int) $record['age'];
+                        $in_thirties++;
                 }
             }, array( "email", "age"));
+            } catch (ErrorException $e) {
+                return self::$status_ok;
+            }
         } else {
             return($db->errorno());
         }

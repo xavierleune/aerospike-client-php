@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Query", "testQueryWithWhereContainingNullValue");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithWhereContainingNullValue");
 --EXPECT--
-ERR_PARAM
+Parameter_Exception
 
