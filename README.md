@@ -74,13 +74,13 @@ For a debug build specify the log level (default being OFF):
 
 The PHP extension will be built as `modules/aerospike.so`
 
-## Confirming The Build
+## Confirming the Build
 
 To test the Aerospike PHP Client interactively after building, do:
 
     $ php -dextension=modules/aerospike.so -a
 
-## Installing The PHP Extension
+## Installing the PHP Extension
 
 To install the PHP extension do:
 

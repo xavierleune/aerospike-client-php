@@ -6,7 +6,7 @@ Aerospike::apply - Applies a UDF to a record at the Aerospike DB
 ## Description
 
 ```
-public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, array $options [, mixed &$returned ]]] )
+public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options ]]] )
 ```
 
 **Aerospike::apply()** will apply the UDF *module*.*function* to a record with
@@ -26,11 +26,11 @@ Currently the only UDF language supported is Lua.  See the
 
 **args** an array of arguments for the UDF.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**,
-    **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_SERIALIZER**.
-
 **returned** if passed will contain the result value (integer, string, array) of
 calling the UDF.
+
+**options** including **Aerospike::OPT_READ_TIMEOUT**,
+    **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_SERIALIZER**.
 
 ## Return Values
 
