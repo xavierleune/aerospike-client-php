@@ -121,5 +121,50 @@ else
 fi
 
 make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=$LDFLAGS"
-
 test-cleanup
+
+headline()
+{
+    echo "
+⇒  ⇒  ⇒  $1  ⇐  ⇐  ⇐
+"
+}
+
+seperator()
+{
+    echo ""
+}
+
+code()
+{
+    echo "    $1"
+}
+
+config()
+{
+    headline "Configure PHP to Load the Extension"
+    INI_PATH=`echo $2|cut -d '>' -f2`
+    echo "$1 file at $INI_PATH with the directive:"
+    code "extension=aerospike.so"
+    headline "Verify the Extension"
+    code "php -m | grep aerospike"
+    seperator
+
+}
+
+echo "----------------------------------------------------------------------"
+headline "Installing the Aerospike PHP Extension"
+echo "To install the extension run:"
+code "sudo make install"
+
+HAS_PHP_CONF_D=`php -i 2>&1 | grep "Scan this dir for additional .ini files"`
+if [ $? -eq 0 ] ; then
+    config "Create an aerospike.ini" "$HAS_PHP_CONF_D"
+    exit 0
+fi
+
+HAS_PHP_INI=`php -i 2>&1 | grep "Loaded Configuration File"`
+if [ $? -eq 0 ] ; then
+    config "Edit the php.ini" "$HAS_PHP_INI"
+fi
+
