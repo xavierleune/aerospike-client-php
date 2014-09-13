@@ -1601,7 +1601,7 @@ PHP_METHOD(Aerospike, predicateBetween)
     array_init(return_value);
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
     add_assoc_stringl(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
-    ALLOC_ZVAL(minmax_arr);
+    MAKE_STD_ZVAL(minmax_arr);
     array_init_size(minmax_arr, 2);
     add_next_index_long(minmax_arr, min_p);
     add_next_index_long(minmax_arr, max_p);
