@@ -32,7 +32,7 @@
 static as_status
 aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
         char* set_p, HashTable *predicate_ht_p, const char* module_p,
-        const char* function_p, as_list* args_list_p)
+        const char* function_p, as_arraylist* args_list_p)
 {
     zval**              op_pp = NULL;
     zval**              bin_pp = NULL;
@@ -41,9 +41,9 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
     if ((!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
         (!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
         (!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))) {
-        DEBUG_PHP_EXT_DEBUG("Aerospike::query() expects parameter 3 to include the keys 'bin','op', and 'val'.");
+        DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Aerospike::query() expects parameter 3 to include the keys 'bin','op', and 'val'.");
+                "Predicate is expected to include the keys 'bin','op', and 'val'.");
         goto exit;
     }
 
@@ -53,9 +53,9 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                              (void **) &bin_pp)) ||
             (FAILURE == zend_hash_find(predicate_ht_p, VAL, sizeof(VAL),
                              (void **) &val_pp))) {
-        DEBUG_PHP_EXT_DEBUG("Aerospike::query() expects parameter 3 to include the keys 'bin','op', and 'val'.");
+        DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Aerospike::query() expects parameter 3 to include the keys 'bin','op', and 'val'.");
+                "Predicate is expected to include the keys 'bin','op', and 'val'.");
         goto exit;
     }
 
@@ -82,9 +82,9 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                 }
                 break;
             default:
-                DEBUG_PHP_EXT_DEBUG("Aerospike::query() predicate 'val' must be either string or integer.");
+                DEBUG_PHP_EXT_DEBUG("Predicate 'val' must be either string or integer.");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                        "Aerospike::query() predicate 'val' must be either string or integer.");
+                        "Predicate 'val' must be either string or integer.");
                 goto exit;
         }
     } else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0) {
@@ -110,14 +110,22 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
             }
         }
         if (!between_unpacked) {
-            DEBUG_PHP_EXT_DEBUG("Aerospike::query() the BETWEEN 'op' requires an array of (min,max) integers.");
+            DEBUG_PHP_EXT_DEBUG("Predicate BETWEEN 'op' requires an array of (min,max) integers.");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Aerospike::query() the BETWEEN 'op' requires an array of (min,max) integers.");
+                "Predicate BETWEEN 'op' requires an array of (min,max) integers.");
             goto exit;
         }
     } else {
-        DEBUG_PHP_EXT_DEBUG("Aerospike::query() unsupported 'op' in parameter 3.");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Aerospike::query() unsupported 'op' in parameter 3.");
+        DEBUG_PHP_EXT_DEBUG("Unsupported 'op' in predicate");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unsupported 'op' in predicate");
+        goto exit;
+    }
+
+    if (module_p && function_p && (!as_query_apply(query_p, module_p,
+                    function_p, (as_list *) args_list_p))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to initiate UDF on the query");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                "Unable to initiate UDF on the query");
         goto exit;
     }
 
@@ -278,17 +286,9 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     is_init_query = true;
     as_query_where_inita(&query, 1);
     if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
-                    set_p, predicate_ht_p, NULL, NULL,
-                    NULL))) {
+                    set_p, predicate_ht_p, module_p, function_p,
+                    args_list_p))) {
         DEBUG_PHP_EXT_DEBUG("Unable to define query");
-        goto exit;
-    }
-
-    if (module_p && function_p && (!as_query_apply(&query, module_p,
-                    function_p, (as_list *) &args_list))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to initiate UDF on the query");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Unable to initiate UDF on the query");
         goto exit;
     }
 

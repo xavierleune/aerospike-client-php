@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Aggregate", "testAggregateLuaLessParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateLuaLessParameter");
 --EXPECT--
-ERR_UDF
+OK
