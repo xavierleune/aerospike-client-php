@@ -307,6 +307,46 @@ class Query extends AerospikeTestCommon
     }
     /**
      * @test
+     * Query - Executing a query with where predicate containing a
+     * non-indexed bin.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testQueryNegativeSecondaryIndexNotFound($db)
+    {
+        if ($db->isConnected()) {
+            $where = $db->predicateEquals("first_name", "raunak");
+    	    $total = 0;
+	        $in_thirties = 0;
+            $status = $db->query("test", "demo", $where, function ($record) {
+        		global $total, $in_thirties;
+                if (array_key_exists('email', $record) && (!is_null($record['email']))) {
+                    if ($record['email'] == "ajit") {
+                        return Aerospike::OK;
+                    }
+                    $total += (int) $record['age'];
+                    $in_thirties++;
+                }
+            }, array("email", "age"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
+        } else {
+            return($db->errorno());
+        }
+        if($status != Aerospike::OK) {
+            return($db->errorno());
+        }
+        return $status;
+    }
+    /**
+     * @test
      * Query with correct arguments
      *
      * @pre

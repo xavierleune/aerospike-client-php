@@ -79,8 +79,8 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.serializer", "4097", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.lua_system_path", "/opt/aerospike/client/sys/udf/lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.lua_user_path", "/opt/aerospike/client/sys/udf/lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.udf.lua_systempath", "/opt/aerospike/client/sys/udf/lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_systempath, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.udf.lua_userpath", "/opt/aerospike/client/sys/udf/lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_userpath, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
@@ -1900,7 +1900,7 @@ PHP_METHOD(Aerospike, scan)
     }
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLUSTER;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Aerospike::scan() has no connection to the database");
         goto exit;
@@ -1910,14 +1910,14 @@ PHP_METHOD(Aerospike, scan)
         &ns_p, &ns_p_length, &set_p, &set_p_length,
         &fci, &fcc, &bins_p, &percent, &scan_priority,
         &concurrent, &no_bins, &options_p) == FAILURE) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
         goto exit;
     }
 
     if (ns_p_length == 0 || set_p_length == 0) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects parameter 1 & 2 to be a non-empty strings.");
         goto exit;
@@ -1935,8 +1935,6 @@ PHP_METHOD(Aerospike, scan)
                                      bins_ht_p, percent,
                                      scan_priority, concurrent,
                                      no_bins, options_p))) {
-        status = AEROSPIKE_ERR;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -2009,7 +2007,7 @@ PHP_METHOD(Aerospike, scanBackground)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
                 "scanBackground: Connection not established");
         DEBUG_PHP_EXT_ERROR("scanBackground: Connection not established");
         goto exit;
@@ -2134,7 +2132,8 @@ PHP_METHOD(Aerospike, scanInfo)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "scanInfo: Connection not established");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, 
+                "scanInfo: Connection not established");
         DEBUG_PHP_EXT_ERROR("scanInfo: Connection not established");
         goto exit;
     }
@@ -2370,7 +2369,8 @@ PHP_METHOD(Aerospike, apply)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "apply: Connection not established");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "apply: Connection not established");
         DEBUG_PHP_EXT_ERROR("apply: Connection not established");
         goto exit;
     }
@@ -2483,7 +2483,8 @@ PHP_METHOD(Aerospike, listRegistered)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "listRegistered: Connection not established");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "listRegistered: Connection not established");
         DEBUG_PHP_EXT_ERROR("listRegistered: Connection not established");
         goto exit;
     }
@@ -2552,7 +2553,8 @@ PHP_METHOD(Aerospike, getRegistered)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "getRegistered: Connection not established");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "getRegistered: Connection not established");
         DEBUG_PHP_EXT_ERROR("getRegistered: Connection not established");
         goto exit;
     }

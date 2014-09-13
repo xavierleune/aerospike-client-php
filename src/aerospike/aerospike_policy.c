@@ -248,6 +248,16 @@ set_policy_ex(as_config *as_config_p,
          * case: info
          */
         as_policy_info_init(info_policy_p);
+    } else if (scan_policy_p) {
+        /*
+         * case: scan, scanBackground
+         */
+        as_policy_scan_init(scan_policy_p);
+    } else if (query_policy_p) {
+        /*
+         * case: query, aggregate
+         */
+        as_policy_query_init(query_policy_p);
     }
 
     if (options_p == NULL) {

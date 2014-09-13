@@ -49,8 +49,8 @@
  * SPECIFIED, ELSE RETURN DEFAULTS.
  *******************************************************************************************************
  */
-#define LUA_SYSTEM_PATH_PHP_INI INI_STR("aerospike.lua_system_path") ? INI_STR("aerospike.lua_system_path") : NULL
-#define LUA_USER_PATH_PHP_INI INI_STR("aerospike.lua_user_path") ? INI_STR("aerospike.lua_user_path") : NULL
+#define LUA_SYSTEM_PATH_PHP_INI INI_STR("aerospike.lua_systempath") ? INI_STR("aerospike.lua_systempath") : "/opt/aerospike/client/sys/udf/lua"
+#define LUA_USER_PATH_PHP_INI INI_STR("aerospike.lua_userpath") ? INI_STR("aerospike.lua_userpath") : "/opt/aerospike/client/sys/udf/lua"
 
 /* 
  *******************************************************************************************************
