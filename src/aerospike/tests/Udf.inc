@@ -17,7 +17,7 @@ class Udf extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $udf_register_status =
-            $db->register("bin_transform.lua", "module.lua");
+            $db->register("tests/lua/bin_transform.lua", "module.lua");
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -59,7 +59,7 @@ class Udf extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $udf_register_status = $db->register("bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
+        $udf_register_status = $db->register("tests/lua/bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
             array(Aerospike::OPT_WRITE_TIMEOUT => 5000));
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());

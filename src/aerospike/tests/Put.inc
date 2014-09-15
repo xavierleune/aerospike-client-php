@@ -809,7 +809,6 @@ class Put extends AerospikeTestCommon
      if ($db->isConnected()) {
          $status = $db->put($key,array("bin1"=>$list2));
      } else {
-         $db->close();
          return($db->errorno());
      }
      if($status != Aerospike::OK) {

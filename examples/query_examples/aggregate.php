@@ -42,7 +42,7 @@ if (isset($args["help"])) {
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
 $HOST_PORT = (isset($args["p"])) ? (integer) $args["p"] : ((isset($args["port"])) ? (string) $args["port"] : 3000);
-$UDF_FILE  = __DIR__ . './lua/stream_udf.lua';
+$UDF_FILE  = __DIR__ . '/lua/stream_udf.lua';
 $UDF_MODULE = 'stream_udf';
 $UDF_MODULE_TO_REGISTER =  $UDF_MODULE . '.lua';
 

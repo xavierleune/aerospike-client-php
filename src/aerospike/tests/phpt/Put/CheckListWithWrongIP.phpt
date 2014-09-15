@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Put", "testListWithWrongIP");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testListWithWrongIP");
 --EXPECT--
-ERR_CLIENT
+ERR_CLUSTER

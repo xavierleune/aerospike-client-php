@@ -25,7 +25,7 @@ class ScanBackground extends AerospikeTestCommon
         $db->put($key, array("first_name"=>"ajit", "age"=>($this->ages[3])));
          
         $register_status =
-            $db->register("my_udf.lua", "my_udf.lua");
+            $db->register("tests/lua/my_udf.lua", "my_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -366,7 +366,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $register_status =
-            $db->register("my_udf_extra_parameter.lua",
+            $db->register("tests/lua/my_udf_extra_parameter.lua",
                 "my_udf_extra_parameter.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
@@ -403,7 +403,7 @@ class ScanBackground extends AerospikeTestCommon
             return($db->errorno());
         }
         $register_status =
-            $db->register("my_udf_less_parameter.lua",
+            $db->register("tests/lua/my_udf_less_parameter.lua",
                 "my_udf_less_parameter.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
