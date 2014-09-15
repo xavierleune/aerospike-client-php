@@ -37,7 +37,7 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo("php standard.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
+    echo("php simple.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
@@ -54,59 +54,57 @@ if (!$db->isConnected()) {
 echo success();
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Ensuring that a record is put at test.users with PK=1234 ≻", 'black', true);
+echo colorize("Ensuring that records are put at test.users with PKs=2345-2349 ≻", 'black', true);
 $start = __LINE__;
-$key = $db->initKey("test", "users", 1234);
-$put_vals = array("email" => "freudian.circuits@hal-inst.org", "name" => "Perceptron");
-$res = $db->put($key, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
+$emails = array("peter.john@hal-inst.org",
+    "freudian.circuits@hal-inst.org",
+    "steve.circuits@hal-inst.org",
+    "wolverine.john@hal-inst.org",
+    "amelia.johnson@hal-inst.org");
+$ages = array(26, 30, 35, 39, 45);
+for ($i = 2345, $j = 0; $i < 2350; $i++, $j++) {
+    $key = $db->initKey("test", "users", $i);
+    $put_vals = array("email" => $emails[$j], "age" => $ages[$j]);
+    $res = $db->put($key, $put_vals);
+    if ($res == Aerospike::OK) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
 }
+
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Ensuring that a record is put at test.users with PK=2345 ≻", 'black', true);
+echo colorize("Querying records with ages between 30 and 39≻", 'black', true);
 $start = __LINE__;
-$key = $db->initKey("test", "users", 2345);
-$put_vals = array("email" => "peter.john@hal-inst.org", "name" => "Peter");
-$res = $db->put($key, $put_vals);
-if ($res == Aerospike::OK) {
+$total = 0;
+$in_thirties = 0;
+$where = $db->predicateBetween("age", 30, 39);
+$status = $db->query("test", "users", $where, function ($record) {
+    global $total, $in_thirties;
+    if (array_key_exists('email', $record) && !is_null($record['email'])) {
+            echo "\nFound record with email-id: " . $record['email'] . "and age: " . $record['age'];
+        }
+        $total += (int) $record['age'];
+        $in_thirties++;
+}, array("email", "age"));
+if ($status == Aerospike::OK && $total) {
+    echo "\nThe average age of employees in their thirties is ".round($total / $in_thirties)."\n";
     echo success();
 } else {
     echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Scanning records ≻", 'black', true);
-$start = __LINE__;
-$processed = 0;
-$status = $db->scan("test", "users", function ($record) {
-    global $processed;
-    if (array_key_exists('email', $record) && !is_null($record['email']) &&
-        array_key_exists('name', $record) && !is_null($record['name']))
-    {
-        echo "\nName: " . $record['name'] . "\nEmail:" . $record['email'];
-    }
-    if ($processed++ > 20) {
-        return false; // halt the stream by returning a false
-    }
-});
-if ($status != AEROSPIKE::OK) {
-    echo standard_fail($db);
-} else {
-    echo success();
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
 if (isset($args['a']) || isset($args['clean'])) {
     $start = __LINE__;
-    echo colorize("Removing the record ≻", 'black', true);
-    $key = $db->initKey("test", "users", 1234);
-    $res = $db->remove($key);
-    $key = $db->initKey("test", "users", 2345);
-    $res = $db->remove($key);
-    if ($res == Aerospike::OK) {
+    echo colorize("Removing the records ≻", 'black', true);
+    $res = true;
+    for ($i = 2345; $i < 2350; $i++) {
+        $key = $db->initKey("test", "users", $i);
+        $res &= ((Aerospike::OK == $db->remove($key)) ? true : false);
+    }
+    if ($res) {
         echo success();
     } else {
         echo standard_fail($db);

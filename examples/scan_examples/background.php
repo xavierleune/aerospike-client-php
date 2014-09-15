@@ -37,7 +37,7 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo("php bin-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
+    echo("php background.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
@@ -118,23 +118,27 @@ $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo"
 if ($status != Aerospike::OK) {
     echo standard_fail($db);
 } else {
-    echo var_dump($scan_id);
+    echo "\nInitiated a scan with Scan ID:" . $scan_id . "\n";
     echo success();
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
 echo colorize("Performing scan info ≻", 'black', true);
 $start = __LINE__;
-$status = $db->scanInfo($scan_id, $info);
-if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
-    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
-    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
-        echo $info['status'];
-        echo success();
+do {
+    sleep(10);
+    $status = $db->scanInfo($scan_id, $info);
+    if ($status != Aerospike::OK) {
+        return($db->errorno());
     }
-else
+} while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+if ($info['progress_pct'] != 100) {
+    var_dump($info);
     echo standard_fail($db);
+} else {
+    var_dump($info);
+    echo success();
+}
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
 if (isset($args['c']) || isset($args['clean'])) {
@@ -144,6 +148,10 @@ if (isset($args['c']) || isset($args['clean'])) {
     $key = $db->initKey("test", "users", 1234);
     $res = $db->remove($key);
     $key = $db->initKey("test", "users", 2345);
+    $res = $db->remove($key);
+    $key = $db->initKey("test", "users", 3456);
+    $res = $db->remove($key);
+    $key = $db->initKey("test", "users", 4567);
     $res = $db->remove($key);
     if ($res == Aerospike::OK) {
         echo success();

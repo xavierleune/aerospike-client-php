@@ -37,11 +37,14 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo("php bin-operations.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
+    echo("php aggregate.php [-h<HOST IP ADDRESS>|--host=<HOST IP ADDRESS> -p<HOST PORT NUMBER>|--port=<HOST PORT NUMBER> -a|--annotate -c|--clean]\n");
     exit(1);
 }
 $HOST_ADDR = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
 $HOST_PORT = (isset($args["p"])) ? (integer) $args["p"] : ((isset($args["port"])) ? (string) $args["port"] : 3000);
+$UDF_FILE  = __DIR__ . './lua/stream_udf.lua';
+$UDF_MODULE = 'stream_udf';
+$UDF_MODULE_TO_REGISTER =  $UDF_MODULE . '.lua';
 
 echo colorize("Connecting to the host ≻", 'black', true);
 $start = __LINE__;
@@ -57,7 +60,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Ensuring that a record is put at test.users with PK=1234 ≻", 'black', true);
 $start = __LINE__;
 $key = $db->initKey("test", "users", 1234);
-$put_vals = array("email" => "freudian.circuits@hal-inst.org", "age" => 31);
+$put_vals = array("first_name" => "Peter", "age" => 30, "school" => "State University of Newyork");
 $res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo success();
@@ -69,7 +72,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Ensuring that a record is put at test.users with PK=2345 ≻", 'black', true);
 $start = __LINE__;
 $key = $db->initKey("test", "users", 2345);
-$put_vals = array("email" => "peter.john@hal-inst.org", "age" => 26);
+$put_vals = array("first_name" => "John", "age" => 25, "school" => "State University of Newyork");
 $res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo success();
@@ -78,33 +81,65 @@ if ($res == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Querying records with ages above 30 ≻", 'black', true);
+echo colorize("Ensuring that a record is put at test.users with PK=3456 ≻", 'black', true);
 $start = __LINE__;
-$mystatus = 0;
-$where = $db->predicateBetween("ages", 30, 39);
-$status = $db->query( "test", "users", $where, function ($record) {
-    global $mystatus;
-    if ( array_key_exists('email', $record) && !is_null($record['email'])) {
-        if($record['email']=="freudian.circuits@hal-inst.org") {
-            echo "Email is: ".$record['email']."\nAge is: ".$record['age'];
-            $mystatus = 1;
-        }
-        $total += (int) $record['age'];
-        $in_thirties++;
-    }
-},array("email", "age"), array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-if ($mystatus)
+$key = $db->initKey("test", "users", 3456);
+$put_vals = array("first_name" => "Alex", "age" => 26, "school" => "State University of Newyork");
+$res = $db->put($key, $put_vals);
+if ($res == Aerospike::OK) {
     echo success();
-else
+} else {
     echo standard_fail($db);
+}
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-if (isset($args['a']) || isset($args['clean'])) {
+echo colorize("Ensuring that a record is put at test.users with PK=4567 ≻", 'black', true);
+$start = __LINE__;
+$key = $db->initKey("test", "users", 4567);
+$put_vals = array("first_name" => "Jimmy", "age" => 23, "school" => "State University of California");
+$res = $db->put($key, $put_vals);
+if ($res == Aerospike::OK) {
+    echo success();
+} else {
+    echo standard_fail($db);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Ensuring that module is registerd  ≻", 'black', true);
+$start = __LINE__;
+$register_status = $db->register($UDF_FILE, $UDF_MODULE_TO_REGISTER);
+if ($register_status != Aerospike::OK) {
+    echo standard_fail($db);
+} else {
+    echo success();
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Performing aggregate on records ≻", 'black', true);
+$start = __LINE__;
+$where = $db->predicateBetween("age", 20, 29);
+$status = $db->aggregate($UDF_MODULE, "group_count", array("school"), "test", "users", $where, $names);
+if($status != Aerospike::OK || empty($names)) {
+    echo standard_fail($db);
+} else {
+    echo "Counts of persons in their twenties grouped by school are:\n";
+    var_dump($names);
+    echo success();
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+if (isset($args['c']) || isset($args['clean'])) {
+    echo "In here";
     $start = __LINE__;
     echo colorize("Removing the record ≻", 'black', true);
+    $deregister_status = $db->deregister($UDF_MODULE_TO_REGISTER);
     $key = $db->initKey("test", "users", 1234);
     $res = $db->remove($key);
     $key = $db->initKey("test", "users", 2345);
+    $res = $db->remove($key);
+    $key = $db->initKey("test", "users", 3456);
+    $res = $db->remove($key);
+    $key = $db->initKey("test", "users", 4567);
     $res = $db->remove($key);
     if ($res == Aerospike::OK) {
         echo success();
