@@ -125,9 +125,7 @@ test-cleanup
 
 headline()
 {
-    echo "
-⇒  ⇒  ⇒  $1  ⇐  ⇐  ⇐
-"
+    printf "\n⇒  ⇒  ⇒  $1  ⇐  ⇐  ⇐\n"
 }
 
 seperator()

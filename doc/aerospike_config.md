@@ -10,6 +10,8 @@ The following configuration options in php.ini
 | aerospike.read_timeout | 1000 |
 | aerospike.write_timeout | 1000 |
 | aerospike.serializer | php |
+| aerospike.lua_system_path | /usr/local/aerospike/client/sys/udf/lua |
+| aerospike.lua_user_path | /usr/local/aerospike/client/usr/udf/lua |
 
 Here is a description of the configuration directives:
 
@@ -27,6 +29,12 @@ Here is a description of the configuration directives:
 
 **aerospike.serializer string**
     The unsupported type handler. One of { php, user, none }
+
+**aerospike.udf.lua_system_path string**
+    Path to the system support files for Lua UDFs
+
+**aerospike.udf.lua_user_path string**
+    Path to the user-defined Lua function modules
 
 ## See Also
 
