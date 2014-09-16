@@ -23,7 +23,7 @@ class ScanInfo extends AerospikeTestCommon
         $db->put($key,array("first_name"=>"bhushan", "age"=>22));
 	    $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
-        $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf.lua");
+        $register_status = $db->register("tests/lua/my_udf.lua", "my_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -81,18 +81,13 @@ class ScanInfo extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
+            if ($info['status'] != Aerospike::SCAN_STATUS_COMPLETED) {
+                return Aerospike::ERR_TIMEOUT;
+            }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         if ($info['progress_pct'] != 100) {
             return($db->errorno());
         }
-	    /*if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
-	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
-	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-        $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
-	        return($status);
-	    } else {
-            return($db->errorno());
-        }*/
         return($status);
     }
 	/**
@@ -228,18 +223,13 @@ class ScanInfo extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
+            if ($info['status'] != Aerospike::SCAN_STATUS_COMPLETED) {
+                return Aerospike::ERR_TIMEOUT;
+            }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         if ($info['progress_pct'] != 100) {
             return($db->errorno());
         }
-	    /*if($info['status'] == Aerospike::SCAN_STATUS_COMPLETED ||
-	    $info['status'] == Aerospike::SCAN_STATUS_ABORTED ||
-	    $info['status'] == Aerospike::SCAN_STATUS_INPROGRESS ||
-	    $info['status'] == Aerospike::SCAN_STATUS_COMPLETED) {
-	        return($status);
-	    } else {
-            return($db->errorno());
-        }*/
         return($status);
     }
 }
