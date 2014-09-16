@@ -10,11 +10,9 @@ The main Aerospike class
 
 class Aerospike
 {
-    //
     // Policy flags:
     // The policy constants map to the C client
     //  src/include/aerospike/as_policy.h
-    //
     const POLICY_RETRY_NONE = 1; // do not retry an operation (default)
     const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
 
@@ -29,12 +27,26 @@ class Aerospike
     const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // overwrite the bins if record exists
 
     // Determines a handler for writing values of unsupported type into bins
+    // Set OPT_SERIALIZER to one of the following:
     const SERIALIZER_NONE = 0;
     const SERIALIZER_PHP  = 1; // default handler
     const SERIALIZER_JSON = 2;
     const SERIALIZER_USER = 3;
 
-    //
+    // Scan Priority Constants
+    // Set OPT_SCAN_PRIORITY to one of the following:
+    const SCAN_PRIORITY_AUTO = 0; //The cluster will auto adjust the scan priority
+    const SCAN_PRIORITY_LOW = 1; //Low priority scan.
+    const SCAN_PRIORITY_MEDIUM = 2; //Medium priority scan.
+    const SCAN_PRIORITY_HIGH = 3; //High priority scan.
+
+    // Scan Status Constants
+    // Status values returned by scanInfo()
+    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
+    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
+    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
+    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
+
     // Options can be assigned values that modify default behavior
     //
     const OPT_CONNECT_TIMEOUT = 1; // value in milliseconds, default: 1000
@@ -43,22 +55,10 @@ class Aerospike
     const OPT_POLICY_RETRY = 4; // set to a Aerospike::POLICY_RETRY_* value
     const OPT_POLICY_EXISTS = 5; // set to a Aerospike::POLICY_EXISTS_* value
     const OPT_SERIALIZER = 6; // set the unsupported type handler
-
-    //
-    // Scan Priority Constants
-    //
-    const SCAN_PRIORITY_AUTO = 0; //The cluster will auto adjust the scan priority
-    const SCAN_PRIORITY_LOW = 1; //Low priority scan.
-    const SCAN_PRIORITY_MEDIUM = 2; //Medium priority scan.
-    const SCAN_PRIORITY_HIGH = 3; //High priority scan.
-
-    //
-    // Scan Status Constants
-    //
-    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
-    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
-    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
-    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
+    const OPT_SCAN_PRIORITY = 7; // set to a Aerospike::SCAN_PRIORITY_* value
+    const OPT_SCAN_PERCENTAGE = 8; // integer value 1-100, default: 100
+    const OPT_SCAN_CONCURRENTLY = 9; // boolean value, default: false
+    const OPT_SCAN_NOBINS = 10; // boolean value, default: false
 
     // Aerospike Status Codes:
     //

@@ -6,20 +6,21 @@ Aerospike::scan - scans a set in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]]] )
+public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $select [, array $options ]] )
 ```
 
 **Aerospike::scan()** will scan a *set* and invoke a callback function 
 *record_cb* on each record in the result stream.
-The bins returned can be filtered by passing an associative array of the *bins*
-needed, otherwise all bins in the record are returned (similar to a SELECT \*).
+A selection of bins returned can be determined by passing an array in *select*,
+otherwise all bins in the record are returned.
+.
 Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
 **ns** the namespace
 
-**set** the set
+**set** the set to be scanned
 
 **record_cb** a callback function invoked for each record streaming back from the server.
 
@@ -33,7 +34,12 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 **no_bins** whether to return only metabins and exclude bins.
 
-**options** including **Aerospike::OPT_POLICY_RETRY**.
+**options** including
+- **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_SCAN_PRIORITY**
+- **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
+- **Aerospike::OPT_SCAN_CONCURRENTLY** whether to run the scan in parallel
+- **Aerospike::OPT_SCAN_NOBINS** whether to not retrieve bins for the records
 
 ## Return Values
 
