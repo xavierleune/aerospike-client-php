@@ -1,15 +1,15 @@
 --TEST--
-ScanBackground - Arguments to udf are empty
+ScanApply - Priority is string
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("ScanBackground", "testScanBackgroundArgsEmptyNegative");
+aerospike_phpt_skipif("ScanApply", "testScanApplyPriorityIsString");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("ScanBackground", "testScanBackgroundArgsEmptyNegative");
+aerospike_phpt_runtest("ScanApply", "testScanApplyPriorityIsString");
 --EXPECT--
 ERR_PARAM
 

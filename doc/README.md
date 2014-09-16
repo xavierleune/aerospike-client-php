@@ -8,17 +8,18 @@ The Aerospike PHP client API is described in the following sections:
 ### [Error Handling Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
-### [User Defined Methods](apiref_udf.md) \[to be implemented\]
+### [User Defined Methods](apiref_udf.md)
 ### [Admin Methods](apiref_admin.md) \[to be implemented\]
+### Large Data Type Methods
 
 ## Implementation Status
 So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
-*Handling and Logging Methods*, and parts of *Key-Value Methods* and *Query and*
-*Scan Methods* have been implemented.
+*Handling and Logging Methods*, *Query and Scan Methods*, *User Defined Methods*
+and parts of *Key-Value Methods* and have been implemented.
 
-The *User Defined Methods* and *Admin Methods* are yet to be implemented.
+The *Admin Methods* are yet to be implemented.
 
-The *Large Data Type Methods* are to be determined (no spec available, yet).
+The *Large Data Type Methods* are to be determined (spec in progress).
 
 We expect the specification of the PHP client to closely describe our next
 release, including the unimplemented methods.  However, it is possible that
@@ -38,6 +39,7 @@ Halting a _query()_ or _scan()_ result stream can be done by returning (an expli
 
 # Handling Unsupported Types
 
+See: [Data Types](http://www.aerospike.com/docs/guide/data-types.html)
 See: [as_bytes.h](https://github.com/aerospike/aerospike-common/blob/master/src/include/aerospike/as_bytes.h)
 * Allow the user to configure their serializer through an option.
  - OPT\_SERIALIZER : SERIALIZER\_PHP (default), SERIALIZER\_NONE, SERIALIZER\_USER, *(SERIALIZER\_JSON)*
@@ -50,25 +52,4 @@ See: [as_bytes.h](https://github.com/aerospike/aerospike-common/blob/master/src/
  - if it’s a AS\_BYTES\_PHP use the PHP unserialize function
  - *(if it’s a AS\_BYTES\_JSON call json_decode)*
  - if it’s a AS\_BYTES\_BLOB and the user registered a callback with Aerospike::setSerializer() call that function, otherwise place it in a PHP string
-
-## TBD
-
-```php
-<?php
-
-// Client interface to the Aerospike cluster.
-class Aerospike
-{
-    // Large Data Type (LDT) APIs:
-    public function getLargeList($key_z);
-    public function getLargeMap($key_z);
-    public function getLargeSet($key_z);
-    public function getLargeStack($key_z);
-
-    // helper method for combining predicates, such as predicate1 AND predicate2
-    // when server implementation arrives
-    public array Aerospike::conjoin ( array $predicate, string $conjunction, array $next_predicate [, boolean $parenthesize = false] )
-}
-?>
-```
 

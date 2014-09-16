@@ -114,7 +114,7 @@ exit:
  *                              scan_info, register, deregister, get_registered,
  *                              list_registered udfs.
  * @param scan_policy_p         The as_policy_scan to be passed in case of scan
- *                              and scanBackground.
+ *                              and scanApply.
  * @param query_policy_p        The as_policy_query to be passed in case of
  *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
@@ -188,7 +188,7 @@ check_and_set_default_policies(as_config *as_config_p,
  *                              scan_info, register, deregister, get_registered,
  *                              list_registered udfs.
  * @param scan_policy_p         The as_policy_scan to be passed in case of scan
- *                              and scanBackground.
+ *                              and scanApply.
  * @param query_policy_p        The as_policy_query to be passed in case of
  *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
@@ -250,7 +250,7 @@ set_policy_ex(as_config *as_config_p,
         as_policy_info_init(info_policy_p);
     } else if (scan_policy_p) {
         /*
-         * case: scan, scanBackground
+         * case: scan, scanApply
          */
         as_policy_scan_init(scan_policy_p);
     } else if (query_policy_p) {
@@ -447,7 +447,7 @@ exit:
  *                              scan_info, register, deregister, get_registered,
  *                              list_registered udfs.
  * @param scan_policy_p         The as_policy_scan to be passed in case of scan
- *                              and scanBackground.
+ *                              and scanApply.
  * @param query_policy_p        The as_policy_query to be passed in case of
  *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.

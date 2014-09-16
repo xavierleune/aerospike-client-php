@@ -168,7 +168,7 @@ class Aerospike
 
     // key-value methods
     public array initKey ( string $ns, string $set, int|string $pk )
-    public int put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
+    public int put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
     public int get ( array $key, array &$record [, array $filter [, array $options ]] )
     public int exists ( array $key, array &$metadata [, array $options ] )
     public int touch ( array $key, int $ttl = 0 [, array $options ] )
@@ -193,13 +193,13 @@ class Aerospike
     public int listRegistered ( array &$modules [, int $language ] )
     public int getRegistered ( string $module, string &$code )
     public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options ]]] )
-    public int aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value [, array $options ])
-    public int scanBackground ( string $module, string $function, array $args, string $ns, string $set, int &$scan_id, [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]] )
+    public int aggregate ( string $ns, string $set, array $where, string $module, string $function, array $args, mixed &$returned [, array $options ] )
+    public int scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$scan_id [, array $options ] )
     public int scanInfo ( integer $scan_id, array &$info [, array $options ] )
 
     // query and scan methods
-    public int query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
-    public int scan ( string $ns, string $set, callback $record_cb [, array $bins [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]]] )
+    public int query ( string $ns, string $set, array $where, callback $record_cb [, array $select [, array $options ]] )
+    public int scan ( string $ns, string $set, callback $record_cb [, array $select [, array $options ]] )
     public array predicateEquals ( string $bin, int|string $val )
     public array predicateBetween ( string $bin, int $min, int $max )
 

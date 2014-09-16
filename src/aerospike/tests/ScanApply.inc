@@ -5,7 +5,7 @@ require_once 'Common.inc';
  *Basic Aggregate tests
 
  */
-class ScanBackground extends AerospikeTestCommon
+class ScanApply extends AerospikeTestCommon
 {
     /*
      * TODO: Remove these constants and map with actual Aerospike class
@@ -53,7 +53,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - All correct arguments
+     * ScanApply - All correct arguments
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -66,12 +66,12 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundPositive($db, $key)
+    function testScanApplyPositive($db, $key)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20),"test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20),$scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -124,7 +124,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - namespace and set are incorrect.
+     * ScanApply - namespace and set are incorrect.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -138,12 +138,12 @@ class ScanBackground extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanBackgroundUnknownNamespaceAndSetNegative($db)
+    function testScanApplyUnknownNamespaceAndSetNegative($db)
     {
         if(!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "t", "d", $scan_id);
+        $status = $db->scanApply("t", "d", "my_udf", "mytransform", array(20), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -152,7 +152,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - Module name is incorrect.
+     * ScanApply - Module name is incorrect.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -166,13 +166,13 @@ class ScanBackground extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanBackgroundUnknownModuleNegative($db)
+    function testScanApplyUnknownModuleNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
         $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->scanBackground("my_udf1", "mytransform", array(20), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf1", "mytransform", array(20), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -181,7 +181,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - Unknown function passed.
+     * ScanApply - Unknown function passed.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -195,12 +195,12 @@ class ScanBackground extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanBackgroundUnknownFunctionNegative($db)
+    function testScanApplyUnknownFunctionNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform1", array(20), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform1", array(20), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -209,7 +209,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - Empty namespace and set.
+     * ScanApply - Empty namespace and set.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -222,12 +222,12 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundEmptyNamespaceSetNegative($db)
+    function testScanApplyEmptyNamespaceSetNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "",  "", $scan_id);
+        $status = $db->scanApply("",  "", "my_udf", "mytransform", array(20), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -236,7 +236,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - Empty module and function
+     * ScanApply - Empty module and function
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -250,12 +250,12 @@ class ScanBackground extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanBackgroundEmptyFunctionUDFNameNegative($db)
+    function testScanApplyEmptyFunctionUDFNameNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("", "", array(20),"test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "", "", array(20),$scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -264,7 +264,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - String variable is passed as argument to UDF.
+     * ScanApply - String variable is passed as argument to UDF.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -278,13 +278,13 @@ class ScanBackground extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanBackgroundArgumentIsVariableNegative($db)
+    function testScanApplyArgumentIsVariableNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
         $arg = "args";
-        $status = $db->scanBackground("my_udf", "mytransform", "age", "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", "age", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -293,7 +293,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - Empty argument passed to UDF.
+     * ScanApply - Empty argument passed to UDF.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -307,13 +307,13 @@ class ScanBackground extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanBackgroundArgsEmptyNegative($db)
+    function testScanApplyArgsEmptyNegative($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
         $arg = "args";
-        $status = $db->scanBackground("my_udf", "mytransform", "", "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", "", $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -321,7 +321,7 @@ class ScanBackground extends AerospikeTestCommon
     }
     /**
      * @test
-     * ScanBackground - Extra parameter in call to lua function
+     * ScanApply - Extra parameter in call to lua function
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -334,12 +334,12 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundExtraParameter($db)
+    function testScanApplyExtraParameter($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20,30), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20,30), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -347,7 +347,7 @@ class ScanBackground extends AerospikeTestCommon
     }
     /**
      * @test
-     * ScanBackground - Lua function definition contains extra parameter
+     * ScanApply - Lua function definition contains extra parameter
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -360,7 +360,7 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundLuaExtraParameter($db)
+    function testScanApplyLuaExtraParameter($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -371,7 +371,7 @@ class ScanBackground extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf_extra_parameter", "mytransform", array(20), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf_extra_parameter", "mytransform", array(20), $scan_id);
         $deregister_status = $db->deregister("my_udf_extra_parameter.lua");
         if ($deregister_status != Aerospike::OK) {
         	return($db->errorno());
@@ -384,7 +384,7 @@ class ScanBackground extends AerospikeTestCommon
 
     /**
      * @test
-     * ScanBackground - Lua function definition contains less parameters
+     * ScanApply - Lua function definition contains less parameters
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -397,7 +397,7 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundLuaLessParameter($db)
+    function testScanApplyLuaLessParameter($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
@@ -408,7 +408,7 @@ class ScanBackground extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf_less_parameter", "mytransform", array(20), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf_less_parameter", "mytransform", array(20), $scan_id);
         $deregister_status = $db->deregister("my_udf_less_parameter.lua");
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
@@ -420,7 +420,7 @@ class ScanBackground extends AerospikeTestCommon
     }
     /**
      * @test
-     * ScanBackground - positive with all arguments
+     * ScanApply - positive with all arguments
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -433,12 +433,12 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundPositiveWithAllArguments($db)
+    function testScanApplyPositiveWithAllArguments($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -489,7 +489,7 @@ class ScanBackground extends AerospikeTestCommon
     }
     /**
      * @test
-     * ScanBackground - null string for scanid
+     * ScanApply - null string for scanid
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -502,13 +502,13 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundScanIdIsNull($db)
+    function testScanApplyScanIdIsNull($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
         $scan_id = "";
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $sca_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $sca_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -516,7 +516,7 @@ class ScanBackground extends AerospikeTestCommon
     }
     /**
      * @test
-     * ScanBackground - percent is a string
+     * ScanApply - percent is a string
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -529,20 +529,20 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundPercentIsString($db)
+    function testScanApplyPercentIsString($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
         try {
-            $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, "abc");
+            $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, "abc");
         } catch (Exception $e) {
             return($db->errorno());
         }
     }
     /**
      * @test
-     * ScanBackground - Scan priority is string
+     * ScanApply - Scan priority is string
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -555,13 +555,13 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundPriorityIsString($db)
+    function testScanApplyPriorityIsString($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
         try {
-            $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, "SCAN_PRIORITY_AUTO");
+            $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
         }
         catch (Exception $e) {
             return($db->errorno());
@@ -569,7 +569,7 @@ class ScanBackground extends AerospikeTestCommon
     }
     /**
      * @test
-     * ScanBackground - conncurent option is integer.
+     * ScanApply - conncurent option is integer.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -582,12 +582,12 @@ class ScanBackground extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanBackgroundConcurrentIsInt($db)
+    function testScanApplyConcurrentIsInt($db)
     {
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, 1);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }

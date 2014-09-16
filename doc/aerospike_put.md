@@ -6,12 +6,12 @@ Aerospike::put - writes a record to the Aerospike database
 ## Description
 
 ```
-public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
+public int Aerospike::put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
 ```
 
-**Aerospike::put()** will write a *record* with a given *key*, where the _record_
-is an associative array of bins and values.  The *ttl* parameter can be used to
-control the expiration of the record.
+**Aerospike::put()** will write a record with a given *key* with *bins*
+described as an array of bin-name => value pairs.
+The *ttl* parameter can be used to control the expiration of the record.
 
 By default the **Aerospike::put()** method behaves in a set-and-replace mode similar to
 associative array keys and values. This behavior can be modified using the
@@ -19,13 +19,17 @@ associative array keys and values. This behavior can be modified using the
 
 ## Parameters
 
-**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
+**key** the key under which to store the record. An array with keys 'ns','set','key'.
 
-**record** the associative array of bins and values to write.
+**bins** the array of bin names and values to write.
 
-**ttl** the time-to-live in seconds for the record.
+**ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_EXISTS**, **Aerospike::OPT_POLICY_RETRY**, and **Aerospike::OPT_SERIALIZER**.
+**options** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_EXISTS**
+- **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_SERIALIZER**.
 
 ## Return Values
 
@@ -48,9 +52,9 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$put_vals = array("email" => "hey@example.com", "name" => "Hey There");
+$bins = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
-$res = $db->put($key, $put_vals);
+$res = $db->put($key, $bins);
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } else {
@@ -58,9 +62,9 @@ if ($res == Aerospike::OK) {
 }
 
 // Updating the record
-$put_vals = array("name" => "You There", "age" => 33);
+$bins = array("name" => "You There", "age" => 33);
 // will update the name bin, and create a new 'age' bin
-$res = $db->put($key, $put_vals);
+$res = $db->put($key, $bins);
 if ($res == Aerospike::OK) {
     echo "Record updated.\n";
 } else {
@@ -84,7 +88,7 @@ Record updated.
 
 // This time we expect an error due to the record already existing (assuming we
 // already ran Example #1)
-$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
+$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";

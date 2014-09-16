@@ -6,21 +6,33 @@ Aerospike::get - gets a record from the Aerospike database
 ## Description
 
 ```
-public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options]] )
+public int Aerospike::get ( array $key, array &$record [, array $select [, array $options]] )
 ```
 
 **Aerospike::get()** will read a *record* with a given *key*, where the *record*
 is filled with an associative array of bins and values.  The bins returned in
-*record* can be filtered by passing an associative array of the bins needed.
+*record* can be filtered by passing a *select* array of bin names.
 Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
+**key** the key under which to store the record. An array with keys 'ns','set','key'.
 
-**record** filled by an associative array of bins and values.
+**record** an array of key, metadata, and bins:
+```
+Array:
+  key => Array
+    ns => namespace
+    set => set name
+    key => the primary index key
+    digest => a RIPEMD-160 hash of the key, and always present
+  meta => Array
+    ttl => time in seconds until the record expires
+    generation => reflects the number of times the record has been altered
+  bins => Array of bin-name => value pairs
+```
 
-**filter** an array of bin names
+**select** an array of bin names which are the subset to be returned.
 
 **options** including **Aerospike::OPT_READ_TIMEOUT**
 
@@ -61,12 +73,33 @@ We expect to see:
 
 ```
 array(3) {
-  ["email"]=>
-  string(9) "hey@example.com"
-  ["name"]=>
-  string(9) "You There"
-  ["age"]=>
-  int(33)
+  ["key"]=>
+  array(4) {
+    ["digest"]=>
+    string(40) "436a3b9fcafb96d12844ab1377c0ff0d7a0b70cc"
+    ["namespace"]=>
+    NULL
+    ["set"]=>
+    NULL
+    ["key"]=>
+    NULL
+  }
+  ["meta"]=>
+  array(2) {
+    ["generation"]=>
+    int(3)
+    ["ttl"]=>
+    int(12345)
+  }
+  ["bins"]=>
+  array(3) {
+    ["email"]=>
+    string(9) "hey@example.com"
+    ["name"]=>
+    string(9) "You There"
+    ["age"]=>
+    int(33)
+  }
 }
 ```
 
@@ -93,11 +126,36 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-array(2) {
-  ["email"]=>
-  string(9) "hey@example.com"
-  ["manager"]=>
-  NULL
+array(3) {
+  ["key"]=>
+  array(4) {
+    ["digest"]=>
+    string(40) "436a3b9fcafb96d12844ab1377c0ff0d7a0b70cc"
+    ["namespace"]=>
+    NULL
+    ["set"]=>
+    NULL
+    ["key"]=>
+    NULL
+  }
+  ["meta"]=>
+  array(2) {
+    ["generation"]=>
+    int(3)
+    ["ttl"]=>
+    int(12344)
+  }
+  ["bins"]=>
+  array(2) {
+    ["email"]=>
+    string(15) "hey@example.com"
+    ["manager"]=>
+    NULL
+  }
 }
 ```
 
+## See Also
+
+- [Glossary](http://www.aerospike.com/docs/guide/glossary.html)
+- [Aerospike Data Model](http://www.aerospike.com/docs/architecture/data-model.html)

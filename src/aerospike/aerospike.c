@@ -260,7 +260,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, aggregate, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, scanBackground, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, scanApply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     /*
      ********************************************************************
@@ -1946,11 +1946,11 @@ exit:
 
 /*
  *******************************************************************************************************
- * PHP Method:  Aerospike::scanBackground()
+ * PHP Method:  Aerospike::scanApply()
  *******************************************************************************************************
  * Initiates a background read/write scan by applying a record UDF to each record being scanned.
  * Method prototype for PHP userland:
- * public int Aerospike::scanBackground ( string $module, string $function,
+ * public int Aerospike::scanApply ( string $module, string $function,
  *          array $args, string $ns, string $set, int &$scan_id, [, int $percent = 100 [,
  *          int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false
  *          [, boolean $no_bins = false [, array $options ]]]]] )
@@ -1973,7 +1973,7 @@ exit:
  *
  *******************************************************************************************************
  */
-PHP_METHOD(Aerospike, scanBackground)
+PHP_METHOD(Aerospike, scanApply)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
@@ -2008,8 +2008,8 @@ PHP_METHOD(Aerospike, scanBackground)
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "scanBackground: Connection not established");
-        DEBUG_PHP_EXT_ERROR("scanBackground: Connection not established");
+                "scanApply: Connection not established");
+        DEBUG_PHP_EXT_ERROR("scanApply: Connection not established");
         goto exit;
     }
 
@@ -2019,8 +2019,8 @@ PHP_METHOD(Aerospike, scanBackground)
                 &scan_priority, &concurrent, &no_bins, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Unable to parse parameters for scanBackground()");
-        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for scanBackground()");
+                "Unable to parse parameters for scanApply()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for scanApply()");
         goto exit;
     }
 
@@ -2034,8 +2034,8 @@ PHP_METHOD(Aerospike, scanBackground)
             (PHP_TYPE_ISNOTSTR(set_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for scanBackground function are not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function are not proper");
+                "Input parameters (type) for scanApply function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanApply function are not proper");
         goto exit;
     }
 
@@ -2066,8 +2066,8 @@ PHP_METHOD(Aerospike, scanBackground)
     if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for scanBackground function not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function not proper");
+                "Input parameters (type) for scanApply function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanApply function not proper");
     }
 
     zval_dtor(scan_id_p);
@@ -2079,7 +2079,7 @@ PHP_METHOD(Aerospike, scanBackground)
                                                 scan_id_p, percent, scan_priority,
                                                 concurrent, no_bins,
                                                 options_p))) {
-        DEBUG_PHP_EXT_ERROR("scanBackground returned an error");
+        DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
 exit:

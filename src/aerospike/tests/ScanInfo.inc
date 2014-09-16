@@ -23,11 +23,11 @@ class ScanInfo extends AerospikeTestCommon
         $db->put($key,array("first_name"=>"bhushan", "age"=>22));
 	    $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
-        $register_status = $db->register("./tests/phpt/ScanBackground/my_udf.lua", "my_udf.lua");
+        $register_status = $db->register("./tests/phpt/ScanApply/my_udf.lua", "my_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
         ScanInfo::$myscan_id = $scan_id;
         if ($status != Aerospike::OK) {
             return($db->errorno());

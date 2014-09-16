@@ -1,26 +1,29 @@
 
-# Aerospike::scanBackground
+# Aerospike::scanApply
 
-Aerospike::scanBackground - Initiates a background read/write scan by applying a record UDF to each record being scanned.
+Aerospike::scanApply - Apply a record UDF to each record in a background scan.
 
 ## Description
 
 ```
-public int Aerospike::scanBackground ( string $module, string $function, array $args, string $ns, string $set, int &$scan_id, [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]] )
+public int Aerospike::scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$scan_id [, array $options ] )
 ```
 
-**Aerospike::scanBackground()** will initiate a background read/write scan by applying the record UDF *module*
-*function* with *args* to each record being scanned on *ns*.*set*.
-The *scan_id* is then filled with an integer handle for the initiated background scan.
-Currently, scanning and applying a Record UDF on each record can only be performed in the background,
-meaning the client sends the scan request to the database and does not wait for results.
-The scan will be queued and run on the database, and no results will be returned to the client.
-The client will have a job id for the scan it sent, so it can check the status.
+**Aerospike::scanApply()** will initiate a background read/write scan and apply a record UDF
+*module*.*function* with *args* to each record being scanned in *ns*.*set*.
+
+An integer *scan_id* identifies the background scan for subsequent **scanInfo()**
+inquiries. As **scanApply()** is performed in the background,no results will be
+returned to the client.
 
 Currently the only UDF language supported is Lua.  See the
 [UDF Developer Guide](http://www.aerospike.com/docs/udf/udf_guide.html) on the Aerospike website.
 
 ## Parameters
+
+**ns** the namespace
+
+**set** the set to be scanned
 
 **module** the name of the UDF module registered against the Aerospike DB.
 
@@ -28,21 +31,14 @@ Currently the only UDF language supported is Lua.  See the
 
 **args** an array of arguments for the UDF.
 
-**ns** the namespace
-
-**set** the set
-
 **scan_id** filled by an integer handle for the initiated background scan
 
-**percent** the percentage of data to scan.
-
-**scan_priority** the priority of the scan.
-
-**concurrent** whether to scan all nodes in parallel.
-
-**no_bins** whether to return only metabins and exclude bins.
-
-**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_READ_TIMEOUT**.
+**options** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_SCAN_PRIORITY**
+- **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
+- **Aerospike::OPT_SCAN_CONCURRENTLY** whether to run the scan in parallel
+- **Aerospike::OPT_SCAN_NOBINS** whether to not retrieve bins for the records
 
 ## Return Values
 
@@ -84,9 +80,9 @@ if (!$db->isConnected()) {
 // Adds offset to the value in bin 'a', multiplies the value in bin 'b' by offset and
 // Updates value in bin 'c' with the sum of updated values in bins 'a' and 'b'.
 
-$res = $db->scanBackground("my_udf", "mytransform", array(20), "test", "users", $scan_id);
+$res = $db->scanApply("test", "users", "my_udf", "mytransform", array(20), $scan_id);
 if ($res == Aerospike::OK) {
-    var_dump($scan_id);
+    var_dump("scan ID is $scan_id");
 } else if ($res == Aerospike::ERR_SCAN) {
     echo "An error occured while initiating the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();
 } else {
@@ -99,6 +95,6 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-int(1)
+string(12) "scan ID is 1"
 ```
 
