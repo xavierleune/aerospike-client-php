@@ -119,7 +119,7 @@ PHP_METHOD(Aerospike, predicateEquals);
 PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, aggregate);
 PHP_METHOD(Aerospike, scan);
-PHP_METHOD(Aerospike, scanBackground);
+PHP_METHOD(Aerospike, scanApply);
 PHP_METHOD(Aerospike, scanInfo);
 
 /*

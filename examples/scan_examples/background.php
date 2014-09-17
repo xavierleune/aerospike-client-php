@@ -114,7 +114,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Performing scan background ≻", 'black', true);
 $start = __LINE__;
-$status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id, 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+$status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
 if ($status != Aerospike::OK) {
     echo standard_fail($db);
 } else {

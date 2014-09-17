@@ -1,6 +1,7 @@
 #ifndef __AEROSPIKE_POLICY_H__
 #define __AEROSPIKE_POLICY_H__
 
+#include "aerospike/as_scan.h"
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant keys. (OPT_*)
@@ -12,7 +13,11 @@ enum Aerospike_constants {
     OPT_WRITE_TIMEOUT,        /* value in milliseconds, default: 1000 */
     OPT_POLICY_RETRY,         /* set to a Aerospike::POLICY_RETRY_* value */
     OPT_POLICY_EXISTS,        /* set to a Aerospike::POLICY_EXISTS_* value */
-    OPT_SERIALIZER            /* set the unsupported type handler */
+    OPT_SERIALIZER,           /* set the unsupported type handler */
+    OPT_SCAN_PRIORITY,        /* set to a Aerospike::SCAN_PRIORITY_* value*/
+    OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
+    OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
+    OPT_SCAN_NOBINS           /* boolean value, default: false */
 };
 
 /*
@@ -106,6 +111,13 @@ extern void
 set_general_policies(as_config* as_config_p,
                      zval *options_p,
                      as_error *error_p);
+
+extern void
+set_policy_scan(as_policy_scan *scan_policy_p,
+        uint32_t *serializer_policy_p,
+        as_scan *as_scan_p,
+        zval *options_p,
+        as_error *error_p);
 
 extern as_status
 declare_policy_constants_php(zend_class_entry *Aerospike_ce);

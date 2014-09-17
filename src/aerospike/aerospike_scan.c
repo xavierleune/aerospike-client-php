@@ -16,92 +16,6 @@
 
 /*
  ******************************************************************************************************
- Initializes and defines an as_scan object.
- *
- * @param as_scan_p                 The C client's as_scan object to be
- *                                  initialized.
- * @param error_p                   The C client's as_error to be set to the encountered error.
- * @param namespace_p               The namespace to scan.
- * @param set_p                     The set to scan.
- * @param percent                   The percentage of data to scan.
- * @param scan_priority             The priority levels for the scan operation.
- * @param concurrent                Whether to scan all nodes in parallel.
- * @param no_bins                   Whether to return only metadata (and no bins).
- * @param module_p                  The name of UDF module containing the function
- *                                  to execute.
- * @param function_p                The name of the function to be applied to
- *                                  the record.
- * @param args_list_p               An as_arraylist initialized with arguments for the UDF.
- *
- * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
- ******************************************************************************************************
- */
-static as_status
-aerospike_scan_define(as_scan* scan_p, as_error* error_p, char* namespace_p,
-        char* set_p, long percent, long scan_priority, bool concurrent,
-        bool no_bins, char* module_p, char* function_p,
-        as_list* args_list_p)
-{
-    /*
-     * Please don't change location of as_scan_init().
-     */
-    as_scan_init(scan_p, namespace_p, set_p);
-
-    if (percent < 0 || percent > 100) {
-        DEBUG_PHP_EXT_DEBUG("Invalid value for scan percent");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Invalid value for scan percent");
-        goto exit;
-    } else if (!as_scan_set_percent(scan_p, percent)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set scan percent");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Unable to set scan percent");
-        goto exit;
-    }
-
-    if ((scan_priority & AS_SCAN_PRIORITY) != AS_SCAN_PRIORITY) {
-        DEBUG_PHP_EXT_DEBUG("Invalid value for scan priority");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Invalid value for scan priority");
-        goto exit;
-    } else if (!as_scan_set_priority(scan_p,
-                (scan_priority - AS_SCAN_PRIORITY))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set scan priority");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Unable to set scan priority");
-        goto exit;
-    }
-
-    if (!as_scan_set_concurrent(scan_p, concurrent)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set scan concurrency");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Unable to set scan concurrency");
-        goto exit;
-    }
-
-    if (!as_scan_set_nobins(scan_p, no_bins)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set scan no bins");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Unable to set scan no bins");
-        goto exit;
-    }
-
-    if (module_p && function_p && (!as_scan_apply_each(scan_p, module_p,
-                    function_p, args_list_p))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to apply UDF on the scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                "Unable to initiate background scan");
-        goto exit;
-    }
-
-    PHP_EXT_SET_AS_ERR(error_p, DEFAULT_ERRORNO, DEFAULT_ERROR);
-
-exit:
-    return error_p->code;
-}
-
-/*
- ******************************************************************************************************
  Scans a set in the Aerospike DB.
  *
  * @param as_object_p               The C client's aerospike object.
@@ -123,12 +37,12 @@ exit:
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        long percent, long scan_priority, bool concurrent, bool no_bins,
         zval* options_p)
 {
     as_scan             scan;
     as_scan*            scan_p = NULL;
     as_policy_scan      scan_policy;
+    uint32_t            serializer_policy = -1;
 
     if ((!as_object_p) || (!error_p) || (!namespace_p) || (!set_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate scan");
@@ -136,21 +50,19 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL, NULL,
-            options_p, error_p);
+    /*
+     * Please don't change location of as_scan_init().
+     */
+    scan_p = &scan;
+    as_scan_init(scan_p, namespace_p, set_p);
+
+    set_policy_scan(&scan_policy, &serializer_policy, scan_p, options_p, error_p);
+    
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
-
-    scan_p = &scan;
-    if (AEROSPIKE_OK != (aerospike_scan_define(scan_p, error_p, namespace_p,
-                    set_p, percent, scan_priority, concurrent, no_bins,
-                    NULL, NULL, NULL))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to define scan");
-        goto exit;
-    }
-
+    
     if (bins_ht_p) {
         as_scan_select_inita(&scan, zend_hash_num_elements(bins_ht_p));
         HashPosition pos;
@@ -207,8 +119,7 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, long percent, long scan_priority,
-        bool concurrent, bool no_bins, zval* options_p)
+        char* set_p, zval* scan_id_p, zval* options_p)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
@@ -226,14 +137,6 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, NULL, &scan_policy, NULL,
-            &serializer_policy, options_p, error_p);
-    if (AEROSPIKE_OK != (error_p->code)) {
-        printf("aerospike_scan_run\n");
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-
     if ((*args_pp)) {
         as_arraylist_inita(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
@@ -246,12 +149,24 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         }
     }
 
+    /*
+     * Please don't change location of as_scan_init().
+     */
     scan_p = &scan;
+    as_scan_init(scan_p, namespace_p, set_p);
 
-    if (AEROSPIKE_OK != (aerospike_scan_define(scan_p, error_p, namespace_p,
-                    set_p, percent, scan_priority, concurrent, no_bins,
-                    module_p, function_p, (as_list *) args_list_p))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to define scan");
+    set_policy_scan(&scan_policy, &serializer_policy, scan_p, options_p, error_p);
+
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    if (module_p && function_p && (!as_scan_apply_each(scan_p, module_p,
+                    function_p, args_list_p))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to apply UDF on the scan");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                "Unable to initiate background scan");
         goto exit;
     }
 

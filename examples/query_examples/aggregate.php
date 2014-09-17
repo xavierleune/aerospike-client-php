@@ -118,7 +118,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Performing aggregate on records ≻", 'black', true);
 $start = __LINE__;
 $where = $db->predicateBetween("age", 20, 29);
-$status = $db->aggregate($UDF_MODULE, "group_count", array("school"), "test", "users", $where, $names);
+$status = $db->aggregate("test", "users", $where, $UDF_MODULE, "group_count", array("school"), $names);
 if($status != Aerospike::OK || empty($names)) {
     echo standard_fail($db);
 } else {

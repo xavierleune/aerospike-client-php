@@ -27,7 +27,7 @@ class ScanInfo extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanBackground("my_udf", "mytransform", array(20), "test", "demo", $scan_id);
+        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
         ScanInfo::$myscan_id = $scan_id;
         if ($status != Aerospike::OK) {
             return($db->errorno());

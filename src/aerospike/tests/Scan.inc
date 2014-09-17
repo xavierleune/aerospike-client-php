@@ -225,13 +225,13 @@ class Scan extends AerospikeTestCommon
      */
     function testCheckIncorrectValueForOptions($db)
     {
-        $processed = 0;
         if ($db->isConnected()) {
             return($db->scan( "test", "demo", function ($record) {
+                global $processed;
                 if (array_key_exists('account', $record) && !is_null($record['account']))
                     echo $record['email']."\n";
                 if ($processed++ > 19) return false;
-            }, array("email"), NULL, Aerospike::SCAN_PRIORITY_AUTO, NULL, NULL, array(Aerospike::OPT_POLICY_RETRY=>"")));
+            }, array("email"), array(Aerospike::OPT_SCAN_NOBINS=>false, Aerospike::OPT_READ_TIMEOUT=>"pqr")));
         } else {
             return($db->errorno());
         }
@@ -297,8 +297,7 @@ class Scan extends AerospikeTestCommon
                 if ($processed == 2) {
                     return Aerospike::OK;
                 }
-            }, array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false,
-                false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+            }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
             if ($status != AEROSPIKE::OK) {
                 echo $db->errorno();
                 return($db->errorno());
@@ -341,8 +340,7 @@ class Scan extends AerospikeTestCommon
                 if ($processed == 2) {
                     return Aerospike::OK;
                 }
-            }, array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false,
-                false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+            }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000, Aerospike::OPT_SCAN_CONCURRENTLY=>true));
             if ($status != AEROSPIKE::OK) {
                 echo $db->errorno();
                 return($db->errorno());
@@ -458,7 +456,8 @@ class Scan extends AerospikeTestCommon
         $processed = 0;
         if ($db->isConnected()) {
             $status = $db->scan("test", "demo", function ($record) {
-            },array("email"), 100, Aerospike::SCAN_PRIORITY_AUTO, false, false, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+            },array("email"), array(Aerospike::OPT_SCAN_PRIORITY=>Aerospike::SCAN_PRIORITY_AUTO,
+                Aerospike::OPT_READ_TIMEOUT=>2000));
             if ($status != AEROSPIKE::OK) {
                 return($db->errorno());
             }

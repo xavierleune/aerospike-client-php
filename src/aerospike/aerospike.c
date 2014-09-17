@@ -260,7 +260,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, aggregate, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, scanBackground, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, scanApply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     /*
      ********************************************************************
@@ -1615,7 +1615,20 @@ PHP_METHOD(Aerospike, predicateBetween)
  * Queries a secondary index on a set in the Aerospike database.
  * Method prototype for PHP userland:
  * public int Aerospike::query ( string $ns, string $set, array $where, callback
- * $record_cb [, array $bins [, array $options ]] )
+ * $record_cb [, array $select [, array $options ]] )
+ *
+ * @param ns                The namespace
+ * @param set               The set
+ * @param where             The predicate for the query, conforming to one of the following:
+ *                          Associative Array:
+ *                              bin => bin name
+ *                              op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
+ *                              val => scalar integer/string for OP_EQ or array($min, $max) for
+ *                                     OP_BETWEEN
+ * @param record_cb         A callback function invoked for each record streaming back from
+ *                          the server.
+ * @param select            An array of bin names to be returned.
+ * @param options           Options including Aerospike::OPT_READ_TIMEOUT.
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, query)
@@ -1702,13 +1715,9 @@ exit:
  *******************************************************************************************************
  * Applies a stream UDF to a secondary index query.
  * Method prototype for PHP userland:
- * public int Aerospike::aggregate ( string $module, string $function, array
- * $args, string $ns, string $set, array $where, mixed &$value [, array $options
- * ] )
+ * public int Aerospike::aggregate ( string $ns, string $set, array $where, string $module,
+ * string $function, array $args, mixed &$returned [, array $options ] )
  *
- * @param module            The name of the UDF module registered against the Aerospike DB.
- * @param function          The name of the function to be applied to the records.
- * @param args              An array of arguments for the UDF.
  * @param ns                The namespace
  * @param set               The set
  * @param where             The predicate for the query, conforming to one of the following:
@@ -1717,7 +1726,10 @@ exit:
  *                              op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
  *                              val => scalar integer/string for OP_EQ or array($min, $max) for
  *                                     OP_BETWEEN
- * @param value             The aggregated return value to be populated by this
+ * @param module            The name of the UDF module registered against the Aerospike DB.
+ * @param function          The name of the function to be applied to the records.
+ * @param args              An array of arguments for the UDF.
+ * @param returned          The aggregated return value to be populated by this
  *                          method.
  * @param options           Options including Aerospike::OPT_WRITE_TIMEOUT and
  *                          Aerospike::OPT_READ_TIMEOUT.
@@ -1773,8 +1785,8 @@ PHP_METHOD(Aerospike, aggregate)
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzzz|z", &module_zval_p, &function_zval_p, &args_p,
-                &namespace_zval_p, &set_zval_p, &predicate_p, &returned_p,
+                "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
+                &module_zval_p, &function_zval_p, &args_p, &returned_p,
                 &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -1847,11 +1859,10 @@ exit:
  * Scans a set in the Aerospike database.
  * Method prototype for PHP userland:
  * public int Aerospike::scan ( string $ns, string $set, callback $record_cb [,
- *      array $bins [, int $percent = 100 [, int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [,
- *      boolean $concurrent = false [, boolean $no_bins = false [, array $options ]]]]]] )
+ *      array $select [, array $options ]] )
  *
  * @param ns                The namespace
- * @param set               The set
+ * @param set               The set to be scanned
  * @param record_cb         A callback function invoked for each record streaming back from
  *                          the server.
  * @param bins              An array of bin names to be returned.
@@ -1859,8 +1870,13 @@ exit:
  * @param scan_priority     The priority of the scan.
  * @param concurrent        Whether to scan all nodes in parallel.
  * @param no_bins           Whether to return only metabins and exclude bins.
- * @param options           Options including Aerospike::OPT_POLICY_RETRY.
- *
+ * @param options           Options including 
+ *                          Aerospike::OPT_READ_TIMEOUT
+ *                          Aerospike::OPT_SCAN_PRIORITY
+ *                          Aerospike::OPT_SCAN_PERCENTAGE of the records in the set to return
+ *                          Aerospike::OPT_SCAN_CONCURRENTLY whether to run the scan in parallel
+ *                          Aerospike::OPT_SCAN_NOBINS whether to not retrieve bins for
+ *                          the records
  * @return                  Returns an integer status code.  Compare to the Aerospike class status
  *                          constants.  When non-zero the Aerospike::error() and
  *                          Aerospike::errorno() methods can be used.
@@ -1880,10 +1896,6 @@ PHP_METHOD(Aerospike, scan)
     zend_fcall_info        fci = empty_fcall_info;
     zend_fcall_info_cache  fcc = empty_fcall_info_cache;
     zval                   *bins_p = NULL;
-    long                   percent = 100;
-    long                   scan_priority = SCAN_PRIORITY_AUTO;
-    bool                   concurrent = false;
-    bool                   no_bins = false;
     zval                   *options_p = NULL;
     HashTable*             bins_ht_p = NULL;
 
@@ -1906,10 +1918,9 @@ PHP_METHOD(Aerospike, scan)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|allbbza",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|aza",
         &ns_p, &ns_p_length, &set_p, &set_p_length,
-        &fci, &fcc, &bins_p, &percent, &scan_priority,
-        &concurrent, &no_bins, &options_p) == FAILURE) {
+        &fci, &fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
@@ -1932,9 +1943,9 @@ PHP_METHOD(Aerospike, scan)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
                                      &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, percent,
+                                     bins_ht_p, /*percent,
                                      scan_priority, concurrent,
-                                     no_bins, options_p))) {
+                                     no_bins,*/ options_p))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -1946,34 +1957,35 @@ exit:
 
 /*
  *******************************************************************************************************
- * PHP Method:  Aerospike::scanBackground()
+ * PHP Method:  Aerospike::scanApply()
  *******************************************************************************************************
  * Initiates a background read/write scan by applying a record UDF to each record being scanned.
  * Method prototype for PHP userland:
- * public int Aerospike::scanBackground ( string $module, string $function,
- *          array $args, string $ns, string $set, int &$scan_id, [, int $percent = 100 [,
- *          int $scan_priority = Aerospike::SCAN_PRIORITY_AUTO [, boolean $concurrent = false
- *          [, boolean $no_bins = false [, array $options ]]]]] )
+ * public int Aerospike::scanBackground ( string $ns, string $set, string $module,
+ *          string $function, array $args, int &$scan_id [, array $options ] )
  *
+ * @param ns                The namespace
+ * @param set               The set to be scanned
  * @param module            The name of the UDF module registered against the Aerospike DB.
  * @param function          The name of the function to be applied to the records.
  * @param args              An array of arguments for the UDF.
- * @param ns                The namespace
- * @param set               The set
  * @param scan_id           Scan_id filled by an integer handle for the initiated background scan
- * @param percent           The percentage of data to scan.
- * @param scan_priority     The priority of the scan.
- * @param concurrent        Whether to scan all nodes in parallel.
- * @param no_bins           Whether to return only metabins and exclude bins.
- * @param options           Options including Aerospike::OPT_WRITE_TIMEOUT and
- *                          Aerospike::OPT_READ_TIMEOUT.
+ * @param options           Options including
+ *                          Aerospike::OPT_WRITE_TIMEOUT 
+ *                          Aerospike::OPT_SCAN_PRIORITY The priority of the scan.
+ *                          Aerospike::OPT_SCAN_PERCENTAGE of the records in the set to return
+ *                          Aerospike::OPT_SCAN_CONCURRENTLY whether to run the
+ *                          scan in parallel
+ *                          Aerospike::OPT_SCAN_NOBINS whether to not retrieve
+ *                          bins for the records
  * @return                  Returns an integer status code.  Compare to the Aerospike class status
  *                          constants.  When non-zero the **Aerospike::error()** and
  *                          Aerospike::errorno() methods can be used.
  *
  *******************************************************************************************************
  */
-PHP_METHOD(Aerospike, scanBackground)
+
+PHP_METHOD(Aerospike, scanApply)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
@@ -1990,10 +2002,6 @@ PHP_METHOD(Aerospike, scanBackground)
     long                   function_len = 0;
     long                   namespace_len = 0;
     long                   set_len = 0;
-    long                   percent = 100;
-    long                   scan_priority = SCAN_PRIORITY_AUTO;
-    bool                   concurrent = false;
-    bool                   no_bins = false;
     zval*                  args_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -2008,19 +2016,19 @@ PHP_METHOD(Aerospike, scanBackground)
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "scanBackground: Connection not established");
-        DEBUG_PHP_EXT_ERROR("scanBackground: Connection not established");
+                "scanApply: Connection not established");
+        DEBUG_PHP_EXT_ERROR("scanApply : Connection not established");
         goto exit;
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzz|llbbz", &module_zval_p, &function_zval_p, &args_p,
-                &namespace_zval_p, &set_zval_p, &scan_id_p, &percent,
-                &scan_priority, &concurrent, &no_bins, &options_p)) {
+                "zzzzzz|z", &namespace_zval_p, &set_zval_p,
+                &module_zval_p, &function_zval_p, &args_p, &scan_id_p,
+                &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Unable to parse parameters for scanBackground()");
-        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for scanBackground()");
+                "Unable to parse parameters for scanApply()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for scanApply()");
         goto exit;
     }
 
@@ -2034,8 +2042,8 @@ PHP_METHOD(Aerospike, scanBackground)
             (PHP_TYPE_ISNOTSTR(set_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for scanBackground function are not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function are not proper");
+                "Input parameters (type) for scanApply function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanApply function are not proper");
         goto exit;
     }
 
@@ -2066,8 +2074,8 @@ PHP_METHOD(Aerospike, scanBackground)
     if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for scanBackground function not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanBackground function not proper");
+                "Input parameters (type) for scanApply function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanApply function not proper");
     }
 
     zval_dtor(scan_id_p);
@@ -2076,10 +2084,8 @@ PHP_METHOD(Aerospike, scanBackground)
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                scan_id_p, percent, scan_priority,
-                                                concurrent, no_bins,
-                                                options_p))) {
-        DEBUG_PHP_EXT_ERROR("scanBackground returned an error");
+                                                scan_id_p, options_p))) {
+        DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
 exit:
