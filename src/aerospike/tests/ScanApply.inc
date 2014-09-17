@@ -255,11 +255,7 @@ class ScanApply extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-<<<<<<< HEAD:src/aerospike/tests/ScanApply.inc
         $status = $db->scanApply("test", "demo", "", "", array(20), $scan_id);
-=======
-        $status = $db->scanApply("test", "demo", "", "", array(20),$scan_id);
->>>>>>> 7d1883181f6dd6cd5302cff76d32b381d27c73cc:src/aerospike/tests/ScanApply.inc
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -442,11 +438,7 @@ class ScanApply extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-<<<<<<< HEAD:src/aerospike/tests/ScanApply.inc
         $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>100, Aerospike::OPT_SCAN_NOBINS=>false));
-=======
-        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
->>>>>>> 7d1883181f6dd6cd5302cff76d32b381d27c73cc:src/aerospike/tests/ScanApply.inc
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -516,11 +508,7 @@ class ScanApply extends AerospikeTestCommon
             return($db->errorno());
         }
         $scan_id = "";
-<<<<<<< HEAD:src/aerospike/tests/ScanApply.inc
         $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
-=======
-        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $sca_id);
->>>>>>> 7d1883181f6dd6cd5302cff76d32b381d27c73cc:src/aerospike/tests/ScanApply.inc
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -546,14 +534,8 @@ class ScanApply extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-<<<<<<< HEAD:src/aerospike/tests/ScanApply.inc
         $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>"abc"));
         if ($status != Aerospike::OK) {
-=======
-        try {
-            $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, "abc");
-        } catch (Exception $e) {
->>>>>>> 7d1883181f6dd6cd5302cff76d32b381d27c73cc:src/aerospike/tests/ScanApply.inc
             return($db->errorno());
         }
         return($status);
@@ -578,15 +560,8 @@ class ScanApply extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-<<<<<<< HEAD:src/aerospike/tests/ScanApply.inc
         $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PRIORITY=>"SCAN_PRIORITY_AUTO"));
         if ($status != Aerospike::OK) {
-=======
-        try {
-            $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
-        }
-        catch (Exception $e) {
->>>>>>> 7d1883181f6dd6cd5302cff76d32b381d27c73cc:src/aerospike/tests/ScanApply.inc
             return($db->errorno());
         }
         return($status);
@@ -611,11 +586,7 @@ class ScanApply extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-<<<<<<< HEAD:src/aerospike/tests/ScanApply.inc
         $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_CONCURRENTLY=>true));
-=======
-        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
->>>>>>> 7d1883181f6dd6cd5302cff76d32b381d27c73cc:src/aerospike/tests/ScanApply.inc
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
