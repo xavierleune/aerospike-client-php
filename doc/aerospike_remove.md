@@ -15,7 +15,10 @@ public int Aerospike::remove ( array $key [, array $options ] )
 
 **key** the key for the record. An associative array with keys 'ns','set','key'.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_POLICY_RETRY**
 
 ## Return Values
 

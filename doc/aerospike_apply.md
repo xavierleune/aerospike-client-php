@@ -29,8 +29,10 @@ Currently the only UDF language supported is Lua.  See the
 **returned** if passed will contain the result value (integer, string, array) of
 calling the UDF.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**,
-    **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_SERIALIZER**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_SERIALIZER**.
 
 ## Return Values
 

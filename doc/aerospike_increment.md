@@ -22,7 +22,10 @@ set it to the *initial_value* if it does not exist.
 
 **initial_value** the integer to set in the bin if it is empty
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_RETRY**
 
 ## Return Values
 

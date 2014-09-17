@@ -1,7 +1,7 @@
 
 # Aerospike::scanInfo
 
-Aerospike::scanInfo - returns the status of background scan triggered in the Aerospike database
+Aerospike::scanInfo - gets the status of a background scan triggered by scanApply()
 
 ## Description
 
@@ -9,24 +9,23 @@ Aerospike::scanInfo - returns the status of background scan triggered in the Aer
 public int Aerospike::scanInfo ( integer $scan_id, array &$info [, array $options ] )
 ```
 
-**Aerospike::scanInfo()** will return the status of a background scan identified
-by *scan_id* which was triggered using **Aerospike::scanBackground()** in
-*info*.
+**Aerospike::scanInfo()** will return *information* on a background scan identified
+by *scan_id* which was triggered using **Aerospike::scanApply()**.
 
 ## Parameters
 
 **scan_id** the scan id
 
-**info** the status of the background scan returned as an associative array conforming to the following:
+**info** the status of the background scan returned as an array conforming to the following:
 ```
 Associative Array:
-  progress_pct => percentage progress
-  records_scanned => no. of records scanned
-  status => one of Aerospike::SCAN_STATUS_UNDEF, Aerospike::SCAN_STATUS_INPROGRESS,
-  Aerospike::SCAN_STATUS_ABORTED, Aerospike::SCAN_STATUS_COMPLETED
+  progress_pct => progress percentage for the scan
+  records_scanned => number of records scanned
+  status => one of Aerospike::SCAN_STATUS_*
 ```
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_READ_TIMEOUT**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 
@@ -36,7 +35,7 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## See Also
 
-- [Aerospike::scanBackground()](aerospike_scanbackground.md)
+- [Aerospike::scanApply()](aerospike_scanapply.md)
 
 ## Examples
 
@@ -50,14 +49,19 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->scanInfo(1, $info);
-if ($res == Aerospike::OK) {
-    var_dump($info);
-    if ($info["status"] == Aerospike::SCAN_STATUS_COMPLETED) {
-        echo "Background scan is complete!";
+$poll = true;
+while($poll) {
+    $res = $db->scanInfo(1, $info);
+    if ($res == Aerospike::OK) {
+        var_dump($info);
+        if ($info["status"] == Aerospike::SCAN_STATUS_COMPLETED) {
+            echo "Background scan is complete!";
+            $poll = false;
+        }
+    } else {
+        echo "An error occured while retrieving info of scan [{$db->errorno()}] {$db->error()}\n";
+        $poll = false;
     }
-} else {
-    echo "An error occured while retrieving info of scan [{$db->errorno()}] {$db->error()}\n";
 }
 
 ?>

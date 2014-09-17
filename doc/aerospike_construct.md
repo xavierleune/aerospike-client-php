@@ -34,9 +34,12 @@ cluster and manage its connections to them.
 
 **persistent_connection** whether the C-client will persist between requests.
 
-**options**: set one or more of the following *OPT_\** constants
-  **OPT_CONNECT_TIMEOUT**, **OPT_READ_TIMEOUT**, **OPT_WRITE_TIMEOUT** as
-default values.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_CONNECT_TIMEOUT**
+- **Aerospike::OPT_READ_TIMEOUT**
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_SERIALIZER**.
 
 ## See Also
 

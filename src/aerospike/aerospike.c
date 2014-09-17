@@ -1961,7 +1961,7 @@ exit:
  *******************************************************************************************************
  * Initiates a background read/write scan by applying a record UDF to each record being scanned.
  * Method prototype for PHP userland:
- * public int Aerospike::scanBackground ( string $ns, string $set, string $module,
+ * public int Aerospike::scanApply ( string $ns, string $set, string $module,
  *          string $function, array $args, int &$scan_id [, array $options ] )
  *
  * @param ns                The namespace
@@ -1984,7 +1984,6 @@ exit:
  *
  *******************************************************************************************************
  */
-
 PHP_METHOD(Aerospike, scanApply)
 {
     as_status              status = AEROSPIKE_OK;

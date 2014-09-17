@@ -23,7 +23,9 @@ otherwise it will be NULL.
 
 **metadata** filled by an associative array of metadata.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
+- **Aerospike::OPT_POLICY_RETRY**
 
 ## Return Values
 

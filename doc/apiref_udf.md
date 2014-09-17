@@ -26,9 +26,19 @@ public int Aerospike::getRegistered ( string $module, string &$code [, int $lang
 public int Aerospike::apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options]]] )
 ```
 
+### [Aerospike::scanApply](aerospike_scanapply.md)
+```
+public int Aerospike::scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$scan_id [, array $options ] )
+```
+
+### [Aerospike::scanInfo](aerospike_scaninfo.md)
+```
+public int Aerospike::scanInfo ( integer $scan_id, array &$info [, array $options ] )
+```
+
 ### [Aerospike::aggregate](aerospike_aggregate.md)
 ```
-public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+public int Aerospike::aggregate ( string $ns, string $set, array $where, string $module, string $function, array $args, mixed &$returned [, array $options ] )
 ```
 
 ## Example
@@ -44,9 +54,9 @@ if (!$db->isConnected()) {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
-$put_val = array("email" => "hey@example.com", "name" => "Hey There");
+$bins = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
+$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
@@ -70,8 +80,8 @@ if ($res == Aerospike::OK) {
 // filtering for specific keys
 $res = $db->get($key, $record, array("email"), Aerospike::POLICY_RETRY_ONCE);
 if ($res == Aerospike::OK) {
-    echo "The email for this user is ". $record['email']. "\n";
-    echo "The name bin should be filtered out: ".var_export(is_null($record['name']), true). "\n";
+    echo "The email for this user is ". $record['bins']['email']. "\n";
+    echo "The name bin should be filtered out: ".var_export(is_null($record['bins']['name']), true). "\n";
 }
 ?>
 ```

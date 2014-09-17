@@ -16,7 +16,8 @@ Aerospike DB.
 
 **module** the name of the UDF module to remove from the Aerospike DB.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
 
 ## Return Values
 

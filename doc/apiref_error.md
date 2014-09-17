@@ -60,9 +60,9 @@ $db->setLogHandler(function ($level, $file, $function, $line) {
 });
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
-$put_val = array("email" => "hey@example.com", "name" => "Hey There");
+$put_bins = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike:POLICY_EXISTS_CREATE));
+$res = $db->put($key, $put_bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike:POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($res == Aerospike::ERR_RECORD_EXISTS) {

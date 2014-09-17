@@ -16,7 +16,8 @@ The metadata will be returned in the *metadata* variable, otherwise it will be a
 
 **metadata** filled by an associative array of metadata.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

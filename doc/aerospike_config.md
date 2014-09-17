@@ -9,6 +9,7 @@ The following configuration options in php.ini
 | aerospike.connect_timeout | 1000 |
 | aerospike.read_timeout | 1000 |
 | aerospike.write_timeout | 1000 |
+| aerospike.key_policy | digest |
 | aerospike.serializer | php |
 | aerospike.lua_system_path | /opt/aerospike/client-php/sys-lua |
 | aerospike.lua_user_path | /opt/aerospike/client-php/usr-lua |
@@ -26,6 +27,9 @@ Here is a description of the configuration directives:
 
 **aerospike.write_timeout integer**
     The write timeout in milliseconds
+
+**aerospike.key_policy string**
+    Whether to send and store the record's (ns,set,key) data along with its (unique identifier) digest. One of { digest, send }
 
 **aerospike.serializer string**
     The unsupported type handler. One of { php, user, none }

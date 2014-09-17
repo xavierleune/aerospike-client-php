@@ -6,7 +6,7 @@ Aerospike::operate - multiple operations on a single record
 ## Description
 
 ```
-public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+public int Aerospike::operate ( array $key, array $operations [, array &$returned [, array $options]] )
 ```
 
 **Aerospike::operate()** allows for multiple per-bin operations on a *record*
@@ -15,7 +15,7 @@ Non-existent bins being read will have a NULL value.
 
 ## Parameters
 
-**key** the key identifying the record. An associative array with keys 'ns','set','key'.
+**key** the key identifying the record. An array with keys 'ns','set','key'.
 
 **operations** an associative array of one or more per-bin operations conforming
 to the following structure:
@@ -57,8 +57,12 @@ array(
 )
 ```
 
-**returned** an associative array of bins retrieved by read operations
+**returned** an array of bins retrieved by read operations
 
+**[options](aerospike.md)** including
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_RETRY**
 
 ## Return Values
 
