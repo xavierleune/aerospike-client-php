@@ -42,3 +42,16 @@ To clean up artifacts created by the tests you can run:
 
     $ test-cleanup
 
+##Secondary Index Dependency
+
+For the following testcases of aggregate to pass you need to first create Secondary Index.
+
+    $ tests/phpt/Aggregate/TestAggregatePositiveEmptyAggregationResult.phpt
+
+You can create secondary index using aql tool.
+The steps are,
+
+    $ CREATE INDEX ix2 ON user_profile.west (location) string
+
+Above aql script creates a string index 'ix2' on the namespace called
+'user_profile', set-name 'west', bin-name 'location'.
