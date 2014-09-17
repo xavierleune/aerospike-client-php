@@ -10,14 +10,16 @@ The main Aerospike class
 
 class Aerospike
 {
-    // Policy flags:
-    // The policy constants map to the C client
-    //  src/include/aerospike/as_policy.h
+    // The key policy can be determined by setting OPT_POLICY_KEY to one of
+    const POLICY_KEY_DIGEST = 1; hashes (ns,set,key) data into a unique record ID (default)
+    const POLICY_KEY_SEND = 2; also send, store, and get the actual (ns,set,key) with each record
+
+    // The retry policy can be determined by setting OPT_POLICY_RETRY to one of
     const POLICY_RETRY_NONE = 1; // do not retry an operation (default)
     const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
 
     // By default writes will try to create or replace records and bins
-    // behaving similar to an associative array in PHP. Setting
+    // behaving similar to an array in PHP. Setting
     // OPT_POLICY_EXISTS with one of these values will overwrite this.
     // POLICY_EXISTS_IGNORE (aka CREATE_OR_UPDATE) is the default value
     const POLICY_EXISTS_IGNORE = 1; // interleave bins of a record if it exists
@@ -33,22 +35,13 @@ class Aerospike
     const SERIALIZER_JSON = 2;
     const SERIALIZER_USER = 3;
 
-    // Scan Priority Constants
-    // Set OPT_SCAN_PRIORITY to one of the following:
+    // OPT_SCAN_PRIORITY can be set to one of the following:
     const SCAN_PRIORITY_AUTO = 0; //The cluster will auto adjust the scan priority
     const SCAN_PRIORITY_LOW = 1; //Low priority scan.
     const SCAN_PRIORITY_MEDIUM = 2; //Medium priority scan.
     const SCAN_PRIORITY_HIGH = 3; //High priority scan.
 
-    // Scan Status Constants
-    // Status values returned by scanInfo()
-    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
-    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
-    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
-    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
-
     // Options can be assigned values that modify default behavior
-    //
     const OPT_CONNECT_TIMEOUT = 1; // value in milliseconds, default: 1000
     const OPT_READ_TIMEOUT = 2; // value in milliseconds, default: 1000
     const OPT_WRITE_TIMEOUT = 3; // value in milliseconds, default: 1000
@@ -59,6 +52,7 @@ class Aerospike
     const OPT_SCAN_PERCENTAGE = 8; // integer value 1-100, default: 100
     const OPT_SCAN_CONCURRENTLY = 9; // boolean value, default: false
     const OPT_SCAN_NOBINS = 10; // boolean value, default: false
+    const OPT_POLICY_KEY = 11; // records store the digest unique ID, optionally also its (ns,set,key) inputs
 
     // Aerospike Status Codes:
     //
@@ -118,9 +112,13 @@ class Aerospike
     const ERR_UDF_FILE_NOT_FOUND  = 1301; // Source file for the module not found
     const ERR_LUA_FILE_NOT_FOUND  = 1301; // Source file for the module not found
 
-    //
+    // Status values returned by scanInfo()
+    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
+    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
+    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
+    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
+
     // Logger
-    //
     const LOG_LEVEL_OFF   = 6;
     const LOG_LEVEL_ERROR = 5;
     const LOG_LEVEL_WARN  = 4;
@@ -128,13 +126,10 @@ class Aerospike
     const LOG_LEVEL_DEBUG = 2;
     const LOG_LEVEL_TRACE = 1;
 
-    //
     // Query Predicate Operators
-    //
     const OP_EQ = '=';
     const OP_BETWEEN = 'BETWEEN';
 
-    //
     // Multi-operation operators map to the C client
     //  src/include/aerospike/as_operations.h
     const OPERATOR_WRITE   = 0;

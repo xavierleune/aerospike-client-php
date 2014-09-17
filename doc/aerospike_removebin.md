@@ -18,7 +18,10 @@ public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 
 **bins** the name of the bins to be removed from the record.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_POLICY_RETRY**
 
 ## Return Values
 

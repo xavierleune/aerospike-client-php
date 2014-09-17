@@ -23,7 +23,8 @@ Currently the only UDF *language* supported is Lua.  See the
 
 **language** one of *Aerospike::UDF_TYPE_\**
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
 
 ## Return Values
 

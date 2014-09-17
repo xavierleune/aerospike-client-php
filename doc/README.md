@@ -3,6 +3,7 @@
 
 The Aerospike PHP client API is described in the following sections:
 
+### [Runtime Configuration](aerospike_config.md)
 ### [Aerospike Class](aerospike.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling Methods](apiref_error.md)

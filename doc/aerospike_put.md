@@ -26,6 +26,7 @@ associative array keys and values. This behavior can be modified using the
 **ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 
 **options** including
+- **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_EXISTS**
 - **Aerospike::OPT_POLICY_RETRY**

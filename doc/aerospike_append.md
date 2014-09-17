@@ -19,7 +19,10 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 
 **value** the string to append to the string value in the bin.
 
-**options** including **Aerospike::OPT_WRITE_TIMEOUT**, **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **Aerospike::OPT_POLICY_RETRY**
 
 ## Return Values
 

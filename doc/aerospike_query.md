@@ -34,11 +34,12 @@ array("bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo")
 array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
 ```
 
-**record_cb** a callback function invoked for each record streaming back from the server.
+**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
 
 **select** an array of bin names which are the subset to be returned.
 
-**options** including **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 
@@ -87,4 +88,5 @@ The average age of employees in their thirties is 34
 
 - [Aerospike::predicateEquals()](aerospike_predicateequals.md)
 - [Aerospike::predicateBetween()](aerospike_predicatebetween.md)
+- [Aerospike::scan()](aerospike_scan.md)
 

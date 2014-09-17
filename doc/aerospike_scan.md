@@ -22,11 +22,11 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 **set** the set to be scanned
 
-**record_cb** a callback function invoked for each record streaming back from the server.
+**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
 
 **select** an array of bin names which are the subset to be returned.
 
-**options** including
+**[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
 - **Aerospike::OPT_SCAN_PRIORITY**
 - **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
@@ -76,4 +76,5 @@ I think a sample of 20 records is enough
 ```
 
 ## See Also
+
 - [Aerospike::get()](aerospike_get.md)

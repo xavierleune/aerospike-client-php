@@ -34,7 +34,9 @@ Array:
 
 **select** an array of bin names which are the subset to be returned.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
+- **Aerospike::OPT_POLICY_KEY**
 
 ## Return Values
 

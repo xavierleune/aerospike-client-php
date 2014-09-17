@@ -24,7 +24,8 @@ Associative Array:
   status => one of Aerospike::SCAN_STATUS_*
 ```
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

@@ -19,7 +19,8 @@ registered with the server.
 **language** one of *Aerospike::UDF_TYPE_\**.  Optionally filters a subset of
 modules matching the given type.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

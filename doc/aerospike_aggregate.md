@@ -47,8 +47,8 @@ array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
 
 **returned** filled by one or more of the supported types.
 
-**options** including Aerospike::OPT_READ_TIMEOUT and Aerospike::OPT_WRITE_TIMEOUT
-
+**[options](aerospike.md)** including
+- Aerospike::OPT_READ_TIMEOUT
 
 ## Return Values
 
