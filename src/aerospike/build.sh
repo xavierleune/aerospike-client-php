@@ -15,7 +15,17 @@
 # limitations under the License.
 ################################################################################
 
-. scripts/setup
+export CLIENTREPO_3X=${PWD}/../aerospike-client-c
+export AEROSPIKE_C_CLIENT=3.0.80
+if [ ! -d $CLIENTREPO_3X ]; then
+    echo "Downloading Aerospike C Client SDK..."
+else
+    echo "Aerospike C Client SDK is present."
+fi
+scripts/aerospike-client-c.sh
+if [ $? -gt 0 ]; then
+    exit 1
+fi
 
 LOGLEVEL="AS_LOG_LEVEL_OFF"
 
@@ -89,7 +99,6 @@ fi
 CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
 LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
-#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
 
 if [ $OS = "Darwin" ] ; then
     LDFLAGS="$LDFLAGS -lcrypto"

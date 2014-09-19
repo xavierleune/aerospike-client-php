@@ -25,7 +25,7 @@ AEROSPIKE_C_VERSION=${AEROSPIKE_C_CLIENT:-'latest'}
 ################################################################################
 
 CWD=$(pwd)
-AEROSPIKE=${CWD}/aerospike-client-c
+AEROSPIKE=${CWD}/../aerospike-client-c
 
 unset PKG_DIST
 unset PKG_TYPE
@@ -404,7 +404,7 @@ fi
 if [ ! -d $LUA_SYSPATH ]; then
     printf "Failed to create the Lua system files path.  Please run:\n"
     printf "    sudo scripts/lua-paths.sh ${LUA_SYSPATH_PREFIX} ${AEROSPIKE_C_CLIENT}\n"
-    printf "Then re-run this scripts:\n    . scripts/setup\n"
+    printf "Then re-run this scripts:\n    ./build.sh\n"
     exit 1
 fi
 
@@ -413,7 +413,7 @@ if [ ! -f ${LUA_SYSPATH}/aerospike.lua ]; then
     if [ $? -gt 0 ] ; then
         printf "Failed to copy the Lua system files.  Please run:\n"
         printf "    sudo cp ${AEROSPIKE_LUA}/*.lua ${LUA_SYSPATH}\n"
-        printf "Then re-run this scripts:\n    . scripts/setup\n"
+        printf "Then re-run this scripts:\n    ./build.sh\n"
         exit 2
     fi
 fi
