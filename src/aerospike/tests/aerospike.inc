@@ -11,7 +11,7 @@ if(file_exists(dirname(__FILE__)."/aerospike.local.inc")) {
 
     // If you are creating a local config file (aerospike.local.inc) you may
     // skip multi-host configuration tests by commenting out the following:
-    define("AEROSPIKE_CONFIG_NAME2", "localhost");
-    define("AEROSPIKE_CONFIG_PORT2", 3000);
+    define("AEROSPIKE_CONFIG_NAME2", "127.0.0.1");
+    define("AEROSPIKE_CONFIG_PORT2", 3010);
 }
 ?>
