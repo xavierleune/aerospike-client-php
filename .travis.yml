@@ -9,6 +9,7 @@ os:
 before_install:
  - ./.travis/start-aerospike.sh
 install:
+ - sudo apt-get update
  - sudo apt-get install autoconf libssl-dev liblua5.1-dev php5-dev
 before_script:
  - . scripts/setup
