@@ -7,11 +7,11 @@ function install_server() {
     fi
     tar xvzf aerospike-server.tgz
     cp -f .travis/aerospike.conf ./aerospike-server/share/etc
+    cd aerospike-server
     return 0
 }
 
 function start_server() {
-    cd aerospike-server
     mkdir instance$1
     ./bin/aerospike init --home instance$1 --instance $1 --service-port $2
     cd instance$1
