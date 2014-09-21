@@ -403,7 +403,7 @@ fi
 
 if [ ! -d $LUA_SYSPATH ]; then
     sudo scripts/lua-paths.sh ${LUA_SYSPATH_PREFIX} ${AEROSPIKE_C_CLIENT}
-    if [ $? -gt 0]; then
+    if [ $? -gt 0 ]; then
         printf "Failed to create the Lua system files path.  Please run:\n"
         printf "    sudo scripts/lua-paths.sh ${LUA_SYSPATH_PREFIX} ${AEROSPIKE_C_CLIENT}\n"
         printf "Then re-run this scripts:\n    ./build.sh\n"

@@ -98,7 +98,7 @@ fi
 
 CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
-LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
+LDFLAGS="-Bstatic -L$CLIENTREPO_3X/lib -Bdynamic -laerospike -llua$LUA_SUFFIX"
 
 if [ $OS = "Darwin" ] ; then
     LDFLAGS="$LDFLAGS -lcrypto"
