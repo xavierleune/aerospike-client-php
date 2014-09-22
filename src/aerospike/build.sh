@@ -83,12 +83,18 @@ parse_args () {
     done
 }
 
+if [ ! -z "$(which php-config)" ]; then
+    PHP_CONFIG=`which php-config`
+else
+    PHP_CONFIG="php-config"
+fi
+
 if [ -f Makefile ]; then
   make clean
 fi
 parse_args $@
 phpize
-./configure "CFLAGS=-g -O3" --enable-aerospike
+./configure --enable-aerospike --with-php-config=$PHP_CONFIG "CFLAGS=-g -O3"
 
 OS=`uname`
 INCLUDE_LUA_5_1=/usr/include/lua5.1
@@ -134,7 +140,7 @@ fi
 make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
-    exit 1
+    exit 2
 fi
 scripts/test-cleanup.sh
 
