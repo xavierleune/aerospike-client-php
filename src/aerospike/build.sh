@@ -102,7 +102,7 @@ if [ -d $INCLUDE_LUA_5_1 ] ; then
   LUA_SUFFIX=5.1
 fi
 
-CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
+CFLAGS="-g -H -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
 
 if [ $OS = "Darwin" ] ; then
