@@ -15,6 +15,11 @@ script:
  - ./build.sh
  - ../../.travis/load-extension.sh
  - make test TESTS=tests/phpt
+after_failure:
+ - echo "################# libtool #######################"
+ - cat libtool
+ - echo "################# Makefile #######################"
+ - cat Makefile
 after_script:
  - ./scripts/test-cleanup.sh
  - cd ../..

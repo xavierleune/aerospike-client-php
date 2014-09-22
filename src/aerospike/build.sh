@@ -98,11 +98,11 @@ fi
 
 CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
-LDFLAGS="-Bstatic -L$CLIENTREPO_3X/lib -Bdynamic -laerospike -llua$LUA_SUFFIX"
 
 if [ $OS = "Darwin" ] ; then
-    LDFLAGS="$LDFLAGS -lcrypto"
+    LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX -lcrypto"
 else
+    LDFLAGS="-Wl,-Bstatic -L$CLIENTREPO_3X/lib -laerospike -Wl,-Bdynamic -llua$LUA_SUFFIX"
     # Find and link to libcrypto (provided by OpenSSL)
     ec=`ls /usr/local/lib/libcrypto.a || ls /usr/local/lib/libcrypto.so`
     if [ $? -eq 0 ] ; then
