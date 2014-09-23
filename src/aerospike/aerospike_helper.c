@@ -380,6 +380,7 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool)
 extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 {
+    as_status               status = AEROSPIKE_OK;
     as_error                error;
     userland_callback       *user_func_p;
     zend_fcall_info         *fci_p = NULL;
@@ -389,6 +390,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     zval                    *retval = NULL;
     bool                    do_continue = true;
     foreach_callback_udata  foreach_record_callback_udata;
+    zval                    *outer_container_p = NULL;
 
     if (!p_val) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
@@ -411,12 +413,29 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     }
 
     /*
+     * Get whole record
+     */
+
+    MAKE_STD_ZVAL(outer_container_p);
+    array_init(outer_container_p);
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec, &(current_as_rec->key), outer_container_p))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
+        return false;
+    }
+
+    if (0 != add_assoc_zval(outer_container_p, "bins"/*PHP_AS_RECORD_DEFINE_FOR_BINS*/, record_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get a record");
+        return false;
+    }
+
+    /*
      * Call the userland function with the array representing the record.
      */
     user_func_p = (userland_callback *) udata;
     fci_p = user_func_p->fci_p;
     fcc_p = user_func_p->fcc_p;
-    args[0] = &record_p;
+    //args[0] = &record_p;
+    args[0] = &outer_container_p;
     fci_p->param_count = 1;
     fci_p->params = args;
     fci_p->retval_ptr_ptr = &retval;
