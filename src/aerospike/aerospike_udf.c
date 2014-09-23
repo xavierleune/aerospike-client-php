@@ -35,6 +35,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     as_bytes                udf_content;
     as_bytes*               udf_content_p = NULL;
     as_policy_info          info_policy;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     if ((language & AS_UDF_TYPE) != AS_UDF_TYPE) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -43,7 +44,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
             goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -128,8 +129,9 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
         as_error* error_p, char* module_p, zval* options_p)
 {
     as_policy_info          info_policy;
-    
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
+
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -176,9 +178,10 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     foreach_callback_udata      udf_result_callback_udata;
     uint32_t                    serializer_policy = -1;
     as_policy_write             write_policy;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     set_policy(NULL, &write_policy, NULL, NULL, NULL, &serializer_policy,
-            options_p, error_p);
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -188,7 +191,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         as_arraylist_inita(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p);
+        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
     }
 
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
@@ -245,6 +248,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
     uint32_t                init_udf_files = 0; 
     uint32_t                i=0;
     as_policy_info          info_policy;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     if ((language != -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -253,7 +257,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
             goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -314,6 +318,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
     uint32_t                init_udf_file = 0;
     as_udf_file             udf_file;
     as_policy_info          info_policy;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     if ((language & AS_UDF_TYPE) != AS_UDF_TYPE) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -322,7 +327,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
             goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p);
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
