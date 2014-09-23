@@ -95,7 +95,7 @@ typedef struct foreach_callback_udata_t {
     Aerospike_object *obj;
 } foreach_callback_udata;
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland Logger callback
  *******************************************************************************************************
@@ -129,7 +129,7 @@ extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
 
-/* 
+/*
  * Need to re-direct the same to log function that we have written
  * if per Aerospike_obj has been decided then we have to pass the object
  * as well into the callback method
@@ -158,7 +158,7 @@ do {                                                                            
         }                                                                                             \
 } while(0)
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS TO SET LOGGING MESSAGES FOR THE VARIOUS LOG LEVELS.
  *
@@ -171,10 +171,10 @@ do {                                                                            
 #define DEBUG_PHP_EXT_DEBUG(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, E_NOTICE, args)
 #define DEBUG_PHP_EXT_INFO(args...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, E_NOTICE, args)
 #else
-#define DEBUG_PHP_EXT_ERROR(TSRM, args...)  
+#define DEBUG_PHP_EXT_ERROR(TSRM, args...)
 #define DEBUG_PHP_EXT_WARNING(TSRM, args...)
-#define DEBUG_PHP_EXT_DEBUG(TSRM, args...)  
-#define DEBUG_PHP_EXT_INFO(TSRM, args...)   
+#define DEBUG_PHP_EXT_DEBUG(TSRM, args...)
+#define DEBUG_PHP_EXT_INFO(TSRM, args...)
 #endif
 
 /*
@@ -281,7 +281,7 @@ aerospike_transform_check_and_set_config(HashTable* ht_p,
 
 extern as_status
 aerospike_transform_key_data_put(aerospike* as_object_p,
-                                 zval **record_pp, 
+                                 zval **record_pp,
                                  as_key* as_key_p,
                                  as_error *error_p,
                                  u_int32_t ttl_u32,
@@ -301,15 +301,15 @@ aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
  *******************************************************************************************************
  */
 extern as_status
-aerospike_record_operations_exists(aerospike* as_object_p, 
-                                   as_key* as_key_p, 
-                                   as_error *error_p, 
-                                   zval* metadata_p, 
+aerospike_record_operations_exists(aerospike* as_object_p,
+                                   as_key* as_key_p,
+                                   as_error *error_p,
+                                   zval* metadata_p,
                                    zval* options_p TSRMLS_DC);
 extern as_status
-aerospike_record_operations_remove(Aerospike_object* aerospike_object_p, 
-                                   as_key* as_key_p, 
-                                   as_error *error_p, 
+aerospike_record_operations_remove(Aerospike_object* aerospike_object_p,
+                                   as_key* as_key_p,
+                                   as_error *error_p,
                                    zval* options_p);
 extern as_status
 aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
@@ -323,17 +323,17 @@ aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
                                 u_int64_t time_to_live,
                                 u_int64_t operation);
 extern as_status
-aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p, 
-                                       as_key* as_key_p, 
-                                       zval* bin_name_p, 
-                                       as_error* error_p, 
+aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,
+                                       as_key* as_key_p,
+                                       zval* bin_name_p,
+                                       as_error* error_p,
                                        zval* options_p);
 
 extern as_status
-aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p, 
-                              zval* key_record_p, 
-                              zval* metadata_p, 
-                              zval* options_p, 
+aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
+                              zval* key_record_p,
+                              zval* metadata_p,
+                              zval* options_p,
                               as_error *error_p);
 
 /*
@@ -341,8 +341,8 @@ aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
  * Extern declarations of helper functions.
  *******************************************************************************************************
  */
-extern void 
-aerospike_helper_set_error(zend_class_entry *ce_p, 
+extern void
+aerospike_helper_set_error(zend_class_entry *ce_p,
                            zval *object_p TSRMLS_DC);
 
 extern as_status

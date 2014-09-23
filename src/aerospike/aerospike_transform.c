@@ -797,7 +797,7 @@ static void ADD_MAP_INDEX_BYTES(void *key, void *value, void *array, void *err T
         DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
         goto exit;
     }
-    add_index_zval(*((zval**)array), (uint) as_integer_get((as_integer *) key), 
+    add_index_zval(*((zval**)array), (uint) as_integer_get((as_integer *) key),
             unserialized_zval);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
@@ -1231,7 +1231,7 @@ exit:
 *******************************************************************************************************
 */
 
-/* 
+/*
  *******************************************************************************************************
  * PUT helper functions.
  *******************************************************************************************************
@@ -1403,7 +1403,7 @@ exit:
 static void AS_MAP_SET_ASSOC_MAP(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
-    if (AEROSPIKE_OK != ((error_p->code) = 
+    if (AEROSPIKE_OK != ((error_p->code) =
                 as_hashmap_set((as_hashmap*)outer_store, bin_name,
                     (as_val*)((as_map *) inner_store)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set map to as_hashmap");
@@ -1510,7 +1510,7 @@ static void AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array,
 {
     AS_LIST_PUT(key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
- 
+
 /*
  *******************************************************************************************************
  * Appends a map to a list.
@@ -1870,7 +1870,7 @@ static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
 static void AS_LIST_PUT_APPEND_BYTES(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
 
-/* 
+/*
  *******************************************************************************************************
  * PUT functions whose macros will expand.
  *******************************************************************************************************
@@ -1963,7 +1963,7 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    AEROSPIKE_PROCESS_ARRAY(DEFAULT, ASSOC, exit, key, value, store, 
+    AEROSPIKE_PROCESS_ARRAY(DEFAULT, ASSOC, exit, key, value, store,
             error_p, static_pool, serializer_policy);
 exit:
     return;
@@ -1986,7 +1986,7 @@ exit:
 static void AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    AEROSPIKE_PROCESS_ARRAY(MAP, ASSOC, exit, key, value, store, 
+    AEROSPIKE_PROCESS_ARRAY(MAP, ASSOC, exit, key, value, store,
             error_p, static_pool, serializer_policy);
 exit:
     return;
@@ -2009,7 +2009,7 @@ exit:
 static void AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store,
         void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    AEROSPIKE_PROCESS_ARRAY(LIST, APPEND, exit, key, value, store, 
+    AEROSPIKE_PROCESS_ARRAY(LIST, APPEND, exit, key, value, store,
             error_p, static_pool, serializer_policy);
 exit:
     return;

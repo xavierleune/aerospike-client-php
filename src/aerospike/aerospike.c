@@ -304,7 +304,7 @@ static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS
                 aerospike_destroy(intern_obj_p->as_ref_p->as_p);
             }
             intern_obj_p->as_ref_p->ref_as_p = 0;
-    	    intern_obj_p->as_ref_p->as_p = NULL;
+            intern_obj_p->as_ref_p->as_p = NULL;
             if (intern_obj_p->as_ref_p) {
                 efree(intern_obj_p->as_ref_p);
             }
@@ -393,7 +393,7 @@ PHP_METHOD(Aerospike, __construct)
     zend_bool              persistent_connection = true;
     HashTable              *persistent_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
- 
+
     persistent_list = (AEROSPIKE_G(persistent_list_g));
 
     if (!aerospike_obj_p) {
@@ -464,11 +464,11 @@ PHP_METHOD(Aerospike, __construct)
 exit:
    // pthread_mutex_unlock(&aerospike_mutex);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::__destruct()
  *******************************************************************************************************
@@ -491,11 +491,11 @@ PHP_METHOD(Aerospike, __destruct)
 
     DEBUG_PHP_EXT_INFO("Destruct method of aerospike object executed");
 exit:
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::isConnected()
  *******************************************************************************************************
@@ -554,12 +554,12 @@ PHP_METHOD(Aerospike, close)
     } else {
         PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
-   
+
     /* Now as connection is getting closed we need to set the connection flag to false */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
 exit:
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -656,11 +656,11 @@ exit:
         as_key_destroy(&as_key_for_get_record);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::put()
  *******************************************************************************************************
@@ -730,11 +730,11 @@ exit:
         as_key_destroy(&as_key_for_put_record);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getNodes()
  *******************************************************************************************************
@@ -869,12 +869,12 @@ exit:
         as_key_destroy(&as_key_for_get_record);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::remove()
  *******************************************************************************************************
@@ -938,11 +938,11 @@ exit:
         as_key_destroy(&as_key_for_put_record);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::exists()
  *******************************************************************************************************
@@ -990,8 +990,8 @@ exit:
     }
     RETURN_LONG(status);
 }
-    
-/* 
+ 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getMetadata
  *******************************************************************************************************
@@ -1043,7 +1043,7 @@ exit:
 }
 
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getHeader()
  *******************************************************************************************************
@@ -1168,7 +1168,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  **************************************************************************************************************************
  * PHP Method:  Aerospike::increment()
  **************************************************************************************************************************
@@ -1252,11 +1252,11 @@ exit:
         as_key_destroy(&as_key_for_get_record);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::touch()
  *******************************************************************************************************
@@ -1335,11 +1335,11 @@ exit:
         as_key_destroy(&as_key_for_get_record);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::initKey()
  *******************************************************************************************************
@@ -1510,7 +1510,7 @@ PHP_METHOD(Aerospike, removeBin)
         DEBUG_PHP_EXT_ERROR("Unable to remove bin");
         goto exit;
     }
-    
+ 
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
@@ -1765,7 +1765,7 @@ exit:
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for record stream.
  *******************************************************************************************************
@@ -2197,7 +2197,7 @@ exit:
         as_key_destroy(&as_key_for_apply_udf);
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2344,7 +2344,7 @@ PHP_METHOD(Aerospike, getRegistered)
     }
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2420,11 +2420,11 @@ exit:
     } else {
         PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC); 
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Method:  Aerospike::setLogHandler()
  *******************************************************************************************************
@@ -2464,7 +2464,7 @@ PHP_METHOD(Aerospike, setLogHandler)
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setLogHandler");
         RETURN_FALSE;
     }
-	
+    
     if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, &aerospike_helper_log_callback)) {
 	    is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);

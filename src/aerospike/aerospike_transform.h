@@ -788,7 +788,7 @@ do {                                                                           \
 
 /*
  *******************************************************************************************************
- * GET function calls for level = LIST 
+ * GET function calls for level = LIST
  *******************************************************************************************************
  */
 #define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool, err)   \
@@ -822,7 +822,7 @@ do {                                                                           \
     ADD_LIST_APPEND_PAIR(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_BYTES(key, value, array, static_pool, err)   \
-    ADD_LIST_APPEND_BYTES(key, value, &array, err TSRMLS_CC) 
+    ADD_LIST_APPEND_BYTES(key, value, &array, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -867,7 +867,7 @@ do {                                                                           \
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool,      \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_BYTES(key, value, array, err TSRMLS_CC) 
+    ADD_DEFAULT_ASSOC_BYTES(key, value, array, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -905,7 +905,7 @@ do {                                                                           \
     ADD_MAP_ASSOC_PAIR(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_BYTES(key, value, array, static_pool, err)     \
-    ADD_MAP_ASSOC_BYTES(key, value, &array, err TSRMLS_CC) 
+    ADD_MAP_ASSOC_BYTES(key, value, &array, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -956,7 +956,7 @@ do {                                                                           \
         err)                                                                   \
     ADD_MAP_INDEX_BYTES(key, value, &array, err TSRMLS_CC)
 
-/* 
+/*
  *******************************************************************************************************
  * Macros for ZVAL processing at different levels
  *******************************************************************************************************

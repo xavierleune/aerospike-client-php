@@ -9,7 +9,7 @@
 #include "pthread.h"
 #include "aerospike_common.h"
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland logger callback.
  *******************************************************************************************************
@@ -18,8 +18,8 @@ zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
-pthread_mutex_t      aerospike_mutex;  
-/* 
+pthread_mutex_t      aerospike_mutex;
+/*
  *******************************************************************************************************
  * aerospike-client-php global log level
  *******************************************************************************************************
@@ -46,7 +46,7 @@ as_log_level php_log_level_set = __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__;
  * @return true if log callback succeeds. Otherwise false.
  *******************************************************************************************************
  */
-extern bool 
+extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, const char * file, uint32_t line, const char * fmt, ...)
 {
     if (level & 0x08) {
@@ -136,7 +136,7 @@ extern int parseLogParameters(as_log* as_log_p)
  *
  *******************************************************************************************************
  */
-extern void 
+extern void
 aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 {
 

@@ -139,7 +139,7 @@ set_policy_ex(as_config *as_config_p,
               zval *options_p,
               as_error *error_p TSRMLS_DC)
 {
-    if ((!read_policy_p) && (!write_policy_p) && 
+    if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p)
         && (!serializer_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -357,7 +357,7 @@ exit:
 extern void
 set_policy(as_policy_read *read_policy_p, 
            as_policy_write *write_policy_p, 
-           as_policy_operate *operate_policy_p, 
+           as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            as_policy_info *info_policy_p,
            uint32_t *serializer_policy_p,
@@ -383,7 +383,7 @@ set_policy(as_policy_read *read_policy_p,
  *******************************************************************************************************
  */
 extern void
-set_general_policies(as_config *as_config_p, 
+set_general_policies(as_config *as_config_p,
                      zval *options_p,
                      as_error *error_p TSRMLS_DC)
 {

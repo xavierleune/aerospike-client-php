@@ -245,7 +245,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
         zval* options_p)
 {
     as_udf_files            udf_files;
-    uint32_t                init_udf_files = 0; 
+    uint32_t                init_udf_files = 0;
     uint32_t                i=0;
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);

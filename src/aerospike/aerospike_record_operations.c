@@ -44,7 +44,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
-  
+
     if (AEROSPIKE_OK != (status = aerospike_key_exists(as_object_p, error_p,
                     &read_policy, as_key_p, &record_p))) {
         goto exit;
@@ -74,7 +74,7 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status 
+extern as_status
 aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
                                    as_key* as_key_p,
                                    as_error *error_p,
@@ -232,7 +232,7 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status 
+extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
                                        as_key* as_key_p,
                                        zval* bins_p,
@@ -249,7 +249,7 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     as_record_inita(&rec, zend_hash_num_elements(bins_array_p));
-    
+
     if ((!as_object_p) || (!error_p) || (!as_key_p) || (!bins_array_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
@@ -298,10 +298,10 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status 
-aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p, 
-                              zval* key_record_p, 
-                              zval* metadata_p, 
+extern as_status
+aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
+                              zval* key_record_p,
+                              zval* metadata_p,
                               zval* options_p,
                               as_error* error_p)
 {

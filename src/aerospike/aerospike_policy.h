@@ -77,7 +77,7 @@ enum Aerospike_values {
 };
 
 #define MAX_CONSTANT_STR_SIZE 512
-/* 
+/*
  *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike constants.
  *******************************************************************************************************
@@ -89,12 +89,12 @@ typedef struct Aerospike_Constants {
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
 
-/* 
+/*
  *******************************************************************************************************
  * Instance of Mapper of constant number to constant name string for Aerospike constants.
  *******************************************************************************************************
  */
-static 
+static
 AerospikeConstants aerospike_constants[] = {
     { OPT_CONNECT_TIMEOUT               ,   "OPT_CONNECT_TIMEOUT"               },
     { OPT_READ_TIMEOUT                  ,   "OPT_READ_TIMEOUT"                  },
@@ -129,8 +129,8 @@ set_policy(as_policy_read *read_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
            as_error *error_p TSRMLS_DC);
-extern void 
-set_general_policies(as_config* as_config_p, 
+extern void
+set_general_policies(as_config* as_config_p,
                      zval *options_p,
                      as_error *error_p TSRMLS_DC);
 
