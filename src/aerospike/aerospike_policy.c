@@ -355,8 +355,8 @@ exit:
  *******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p, 
-           as_policy_write *write_policy_p, 
+set_policy(as_policy_read *read_policy_p,
+           as_policy_write *write_policy_p,
            as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            as_policy_info *info_policy_p,

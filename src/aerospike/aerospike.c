@@ -990,7 +990,7 @@ exit:
     }
     RETURN_LONG(status);
 }
- 
+
 /*
  *******************************************************************************************************
  * PHP Method:  Aerospike::getMetadata
@@ -1510,7 +1510,7 @@ PHP_METHOD(Aerospike, removeBin)
         DEBUG_PHP_EXT_ERROR("Unable to remove bin");
         goto exit;
     }
- 
+
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
@@ -2464,7 +2464,7 @@ PHP_METHOD(Aerospike, setLogHandler)
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setLogHandler");
         RETURN_FALSE;
     }
-    
+
     if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, &aerospike_helper_log_callback)) {
 	    is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
