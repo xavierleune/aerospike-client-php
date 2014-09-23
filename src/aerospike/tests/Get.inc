@@ -85,7 +85,6 @@ class Get extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($status);
         }
-        echo "Compare\n";
         var_dump($bin_arr);
         if (strcmp($bin_arr["key"]["ns"], $key["ns"]) == 0 &&
             strcmp($bin_arr["key"]["set"], $key["set"]) == 0 &&
@@ -573,7 +572,7 @@ class Get extends AerospikeTestCommon
                   return Aerospike::ERR;
               }
           }
-      if ($db->isConnected()) {  
+      if ($db->isConnected()) { 
       $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
           =>Aerospike::POLICY_RETRY_NONE));
       } else {
@@ -1073,7 +1072,7 @@ class Get extends AerospikeTestCommon
      if ($status != AEROSPIKE::OK) {
          return($status);
      }
-     
+
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], $key["key"]) == 0) {
