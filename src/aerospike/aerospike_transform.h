@@ -939,7 +939,7 @@ do {                                                                           \
 #define AEROSPIKE_MAP_GET_INDEX_LIST(key, value, array, static_pool,           \
         err)                                                                   \
     ADD_MAP_INDEX_LIST(key, value, &array, err TSRMLS_CC)
- 
+
 #define AEROSPIKE_MAP_GET_INDEX_MAP(key, value, array, static_pool,            \
         err)                                                                   \
     ADD_MAP_INDEX_MAP(key, value, &array, err TSRMLS_CC)
