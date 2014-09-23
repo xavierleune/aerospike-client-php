@@ -81,6 +81,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.serializer", "4097", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.key_policy", "268435457", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
@@ -1362,25 +1363,10 @@ PHP_METHOD(Aerospike, initKey)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, "ns", ns_p, ns_p_length, 1);
-    add_assoc_stringl(return_value, "set", set_p, set_p_length, 1);
 
-    switch(Z_TYPE_P(pk_p)) {
-        case IS_LONG:
-            add_assoc_long(return_value, "key", Z_LVAL_P(pk_p));
-            break;
-        case IS_STRING:
-            if (strlen(Z_STRVAL_P(pk_p)) == 0) {
-                php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
-                DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-                RETURN_NULL();
-            }
-            add_assoc_string(return_value, "key", Z_STRVAL_P(pk_p), 1);
-            break;
-        default:
-            php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
-            DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-            RETURN_NULL();
+    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, return_value)) {
+        DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
+        RETURN_NULL();
     }
 }
 

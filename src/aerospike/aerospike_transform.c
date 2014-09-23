@@ -34,6 +34,17 @@
 #define PHP_AS_KEY_DEFINE_FOR_SET_LEN                 3
 #define PHP_AS_KEY_DEFINE_FOR_KEY                     "key"
 #define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                 3
+#define PHP_AS_KEY_DEFINE_FOR_DIGEST                  "digest"
+#define PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN              6
+
+#define PHP_AS_RECORD_DEFINE_FOR_TTL                  "ttl"
+#define PHP_AS_RECORD_DEFINE_FOR_TTL_LEN              3
+#define PHP_AS_RECORD_DEFINE_FOR_GENERATION           "generation"
+#define PHP_AS_RECORD_DEFINE_FOR_GENERATION_LEN       10
+#define PHP_AS_RECORD_DEFINE_FOR_METADATA             "metadata"
+#define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN         8
+#define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
+#define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
 
 /*
  *******************************************************************************************************
@@ -327,6 +338,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
                     DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes using standard php unserializer");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                             "Unable to unserialize bytes using standard php unserializer");
+                    PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
                     goto exit;
                 }
                 PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
@@ -2726,6 +2738,232 @@ exit:
 
 /* 
  *******************************************************************************************************
+ * Creates php key(ns, set, pk) 
+ *
+ * @param ns_p                      Namespace
+ * @param ns_p_length               Namespace length
+ * @param set_p                     Set
+ * @param set_p_length              Set length
+ * @param pk_p                      Primary key of a record
+ * @param reurn_value               Result of initkey
+ * @param record_key_p              Key of a record
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, zval *pk_p, zval *return_value, as_key *record_key_p)
+{
+    as_status       status = AEROSPIKE_OK;
+
+    if (!ns_p || !set_p || !return_value) {
+        DEBUG_PHP_EXT_DEBUG("Parameter error");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    if (0 != add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_NS, ns_p, ns_p_length, 1)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get namespace");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    if ( 0 != add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_SET, set_p, set_p_length, 1)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get set");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    if (pk_p) {
+        switch(Z_TYPE_P(pk_p)) {
+            case IS_LONG:
+                add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_LVAL_P(pk_p));
+                break;
+            case IS_STRING:
+                if (strlen(Z_STRVAL_P(pk_p)) == 0) {
+                    DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+                add_assoc_string(return_value, "key", Z_STRVAL_P(pk_p), 1);
+                break;
+            default:
+                DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+                status = AEROSPIKE_ERR;
+                goto exit;
+        }
+    } else {
+        if (!record_key_p || !record_key_p->valuep) {
+            status = AEROSPIKE_ERR;
+            goto exit;
+        }
+
+        switch (((as_val*)(record_key_p->valuep))->type) {
+            case AS_STRING:
+                if (0 != add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, record_key_p->value.string.value, 1)) {
+                    DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+                break;
+            case AS_INTEGER:
+                if (0 != add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, record_key_p->value.integer.value)) {
+                    DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+exit:
+    return status;
+}
+
+/* 
+ *******************************************************************************************************
+ * Get record key and key digest. 
+ *
+ * @param get_record_p              Record
+ * @param record_key_p              Key of record
+ * @param key_container_p           Key container
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+static as_status
+aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p)
+{
+    as_status                  status = AEROSPIKE_OK;
+    
+    if (!get_record_p || !record_key_p || !key_container_p) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
+            record_key_p->set, strlen(record_key_p->set), NULL,
+            key_container_p, record_key_p))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST,
+                (as_key_digest(record_key_p))->value, AS_DIGEST_VALUE_SIZE, 1)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+exit:
+    return status;
+}
+
+/* 
+ *******************************************************************************************************
+ * Get record metadata(ttl, generation)
+ *
+ * @param get_record_p              Record
+ * @param metadata_container_p      It holds metadata of a record.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+as_status
+aerospike_get_record_metadata(as_record* get_record_p, zval* metadata_container_p)
+{
+    as_status           status = AEROSPIKE_OK;
+
+    if (!get_record_p) {
+        DEBUG_PHP_EXT_DEBUG("Incorrect Record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    if (0 != add_assoc_long(metadata_container_p, PHP_AS_RECORD_DEFINE_FOR_TTL, get_record_p->ttl)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get time to live of a record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+
+    }
+    if (0 != add_assoc_long(metadata_container_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION, get_record_p->gen)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+exit:
+    return status;
+}
+
+/* 
+ *******************************************************************************************************
+ * Get record key, metadata and bins of a record.
+ *
+ * @param get_record_p              Record
+ * @param record_key_p              Key of a record
+ * @param outer_container_p         Return value 
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p)
+{
+    as_status           status = AEROSPIKE_OK;
+    zval*               metadata_container_p = NULL;
+    zval*               key_container_p = NULL;
+    zval*               bins_container_p = NULL;
+
+    if (!get_record_p || !record_key_p || ! outer_container_p) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get a record");
+        status = AEROSPIKE_ERR;
+        goto exit; 
+    }
+
+    MAKE_STD_ZVAL(key_container_p);
+    array_init(key_container_p);
+    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p);
+    if (status != AEROSPIKE_OK) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
+        goto exit;
+    }
+
+    MAKE_STD_ZVAL(metadata_container_p);
+    array_init(metadata_container_p);
+    status = aerospike_get_record_metadata(get_record_p, metadata_container_p);
+    if (status != AEROSPIKE_OK) {
+        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
+        goto exit;
+    }
+
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+exit:
+    if (AEROSPIKE_OK != status) {
+        if (key_container_p) {
+            zval_dtor(key_container_p);
+        }
+
+        if (metadata_container_p) {
+            zval_dtor(metadata_container_p);
+        }
+    }
+
+    return status;
+}
+
+/* 
+ *******************************************************************************************************
  * Read all bins for the record specified by get_rec_key_p.
  *
  * @param as_object_p               The C client's aerospike object.
@@ -2745,18 +2983,22 @@ aerospike_transform_get_record(aerospike* as_object_p,
                                as_key* get_rec_key_p,
                                zval* options_p,
                                as_error *error_p,
-                               zval* get_record_p,
+                               zval* outer_container_p,
                                zval* bins_p)
 {
     as_status               status = AEROSPIKE_OK;
     as_policy_read          read_policy;
     as_record               *get_record = NULL;
     foreach_callback_udata  foreach_record_callback_udata;
+    zval*                   get_record_p = NULL;
+
+    MAKE_STD_ZVAL(get_record_p);
+    array_init(get_record_p);
 
     foreach_record_callback_udata.udata_p = get_record_p;
     foreach_record_callback_udata.error_p = error_p;
 
-    if ((!as_object_p) || (!get_rec_key_p) || (!error_p) || (!get_record_p)) {
+    if ((!as_object_p) || (!get_rec_key_p) || (!error_p) || (!outer_container_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
@@ -2783,9 +3025,27 @@ aerospike_transform_get_record(aerospike* as_object_p,
         goto exit;
     }
 
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get a record");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
 exit:
     if (get_record) {
         as_record_destroy(get_record);
     }
+
+    if (AEROSPIKE_OK != status) {
+        if (get_record_p) {
+            zval_dtor(get_record_p);
+        }
+    }
+
     return status;
 }

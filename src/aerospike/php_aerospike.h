@@ -41,6 +41,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int serializer;
     char *lua_system_path;
     char *lua_user_path;
+    int key_policy;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS

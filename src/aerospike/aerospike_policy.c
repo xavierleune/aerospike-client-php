@@ -17,6 +17,7 @@
 #define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
 #define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
+#define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 
 /* 
  *******************************************************************************************************
@@ -41,6 +42,7 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
     { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
     { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
+    { OPT_POLICY_KEY                    ,   "OPT_POLICY_KEY"                    },
     { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
     { OPT_SCAN_PRIORITY                 ,   "OPT_SCAN_PRIORITY"                 },
     { OPT_SCAN_PERCENTAGE               ,   "OPT_SCAN_PERCENTAGE"               },
@@ -65,7 +67,9 @@ AerospikeConstants aerospike_constants[] = {
     { SCAN_STATUS_UNDEF                 ,   "SCAN_STATUS_UNDEF"                 },
     { SCAN_STATUS_INPROGRESS            ,   "SCAN_STATUS_INPROGRESS"            },
     { SCAN_STATUS_ABORTED               ,   "SCAN_STATUS_ABORTED"               },
-    { SCAN_STATUS_COMPLETED             ,   "SCAN_STATUS_COMPLETED"             }
+    { SCAN_STATUS_COMPLETED             ,   "SCAN_STATUS_COMPLETED"             },
+    { POLICY_KEY_DIGEST                 ,   "POLICY_KEY_DIGEST"                 },
+    { POLICY_KEY_SEND                   ,   "POLICY_KEY_SEND"                   }
 };
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
@@ -142,6 +146,9 @@ check_and_set_default_policies(as_config *as_config_p,
     if (ini_value = READ_TIMEOUT_PHP_INI) {
         if (read_policy_p) {
             read_policy_p->timeout = ini_value;
+            if (KEY_POLICY_PHP_INI) {
+                read_policy_p->key = KEY_POLICY_PHP_INI;
+            }
         }
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
@@ -151,12 +158,21 @@ check_and_set_default_policies(as_config *as_config_p,
     if (ini_value = WRITE_TIMEOUT_PHP_INI) {
         if (write_policy_p) {
             write_policy_p->timeout = ini_value;
+            if (KEY_POLICY_PHP_INI) {
+                write_policy_p->key = KEY_POLICY_PHP_INI;
+            }
         }
         if (operate_policy_p) {
             operate_policy_p->timeout = ini_value;
+            if (KEY_POLICY_PHP_INI) {
+                operate_policy_p->key = KEY_POLICY_PHP_INI;
+            }
         }
         if (remove_policy_p) {
             remove_policy_p->timeout = ini_value;
+            if (KEY_POLICY_PHP_INI) {
+                remove_policy_p->key = KEY_POLICY_PHP_INI;
+            }
         }
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
@@ -471,6 +487,26 @@ set_policy_ex(as_config *as_config_p,
                     if (!as_scan_set_nobins(as_scan_p, scan_nobins)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set scan no bins");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set scan no bins");
+                        goto exit;
+                    }
+                    break;
+                case OPT_POLICY_KEY:
+                    if((Z_TYPE_PP(options_value) != IS_LONG) && ((Z_LVAL_PP(options_value) & AS_POLICY_KEY_DIGEST) != AS_POLICY_KEY_DIGEST)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        goto exit;
+                    }
+                    if (read_policy_p) {
+                        read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                    } else if (write_policy_p) {
+                        write_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                    } else if(operate_policy_p) {
+                        operate_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                    } else if(remove_policy_p) {
+                        remove_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         goto exit;
                     }
                     break;

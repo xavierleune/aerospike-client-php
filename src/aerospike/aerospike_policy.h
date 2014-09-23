@@ -17,7 +17,8 @@ enum Aerospike_constants {
     OPT_SCAN_PRIORITY,        /* set to a Aerospike::SCAN_PRIORITY_* value*/
     OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
     OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
-    OPT_SCAN_NOBINS           /* boolean value, default: false */
+    OPT_SCAN_NOBINS,          /* boolean value, default: false */
+    OPT_POLICY_KEY            /* records store the digest unique ID, optionally also its (ns,set,key) inputs*/
 };
 
 /*
@@ -62,6 +63,7 @@ enum Aerospike_constants {
 #define AS_UDF_TYPE 0x00010000
 #define AS_SCAN_PRIORITY 0x00100000
 #define AS_SCAN_STATUS 0x01000000
+#define AS_POLICY_KEY_DIGEST 0x10000000
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant values. (POLICY_* or SERIALIZER_*)
@@ -87,7 +89,9 @@ enum Aerospike_values {
     SCAN_STATUS_UNDEF      = AS_SCAN_STATUS,        /* Undefined scan status likely due to the status not being properly checked */
     SCAN_STATUS_INPROGRESS,                         /* The scan is currently running*/
     SCAN_STATUS_ABORTED,                            /* The scan was aborted due to failure or the user */
-    SCAN_STATUS_COMPLETED                           /* The scan completed successfully  */
+    SCAN_STATUS_COMPLETED,                          /* The scan completed successfully  */
+    POLICY_KEY_DIGEST = AS_POLICY_KEY_DIGEST,       /* hashes (ns,set,key) data into a unique record ID (default) */
+    POLICY_KEY_SEND                                 /* also send, store, and get the actual (ns,set,key) with each record */
 };
 
 /*
