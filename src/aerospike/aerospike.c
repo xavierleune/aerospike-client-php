@@ -1758,7 +1758,6 @@ exit:
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_ERROR(error.message);
     }
-    //PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     as_query_destroy(&query);
