@@ -438,7 +438,7 @@ PHP_METHOD(Aerospike, __construct)
 
     DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object")
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -512,7 +512,7 @@ PHP_METHOD(Aerospike, close)
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -520,7 +520,7 @@ PHP_METHOD(Aerospike, close)
     if (aerospike_obj_p->is_persistent == false) {
         if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_ref_p->as_p, &error))) {
             DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
-            PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+            aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
         }
         /* Now as connection is getting closed we need to set the connection flag to false */
         aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
@@ -627,7 +627,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -700,7 +700,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_put_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -838,7 +838,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -906,7 +906,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_put_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -952,7 +952,7 @@ PHP_METHOD(Aerospike, exists)
 
 exit:
     if (status != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     } else {
         PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
     }
@@ -1002,7 +1002,7 @@ PHP_METHOD(Aerospike, getMetadata)
 
 exit:
     if (status != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     } else {
         PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
     }
@@ -1130,7 +1130,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -1217,7 +1217,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -1299,7 +1299,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -1476,7 +1476,7 @@ PHP_METHOD(Aerospike, removeBin)
     }
     
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -1720,7 +1720,7 @@ exit:
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_ERROR(error.message);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     as_query_destroy(&query);
     RETURN_LONG(status);
 }
@@ -1870,7 +1870,7 @@ exit:
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_ERROR(error.message);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     as_scan_destroy(&scan);
     RETURN_LONG(status);
 }
@@ -1959,7 +1959,7 @@ PHP_METHOD(Aerospike, register)
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -2029,7 +2029,7 @@ PHP_METHOD(Aerospike, deregister)
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -2151,7 +2151,7 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_apply_udf);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -2217,7 +2217,7 @@ PHP_METHOD(Aerospike, listRegistered)
                 goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -2296,7 +2296,7 @@ PHP_METHOD(Aerospike, getRegistered)
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     RETURN_LONG(status);
 }
 
@@ -2368,7 +2368,7 @@ PHP_METHOD(Aerospike, setLogLevel)
 
 exit:
     if (status != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        aerospike_helper_set_error(Aerospike_ce, getThis(), &error, false);
     } else {
         PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
     }
