@@ -45,7 +45,6 @@
 #define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN         8
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
-#define PHP_AS_KEY_VALUE_NULL                         "NULL"
 /*
  *******************************************************************************************************
  * MACRO TO COMPARE TWO KEYS OF A PHP ARRAY
@@ -2797,7 +2796,6 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_len
         }
         if (!record_key_p->valuep) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
-            //if (0 != add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, PHP_AS_KEY_VALUE_NULL, 1)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
                 status = AEROSPIKE_ERR;
                 goto exit;

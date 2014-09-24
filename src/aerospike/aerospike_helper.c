@@ -412,10 +412,6 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return true;
     }
 
-    /*
-     * Get whole record
-     */
-
     MAKE_STD_ZVAL(outer_container_p);
     array_init(outer_container_p);
     if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec, &(current_as_rec->key), outer_container_p))) {
@@ -434,7 +430,6 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     user_func_p = (userland_callback *) udata;
     fci_p = user_func_p->fci_p;
     fcc_p = user_func_p->fcc_p;
-    //args[0] = &record_p;
     args[0] = &outer_container_p;
     fci_p->param_count = 1;
     fci_p->params = args;
