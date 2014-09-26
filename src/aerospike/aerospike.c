@@ -138,7 +138,7 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     if (globals->persistent_list_g) {
-        if (AEROSPIKE_G(persistent_ref_count) == 1) {
+        if (AEROSPIKE_G(persistent_ref_count) == 0) {
             zend_hash_clean(&AEROSPIKE_G(persistent_list_g));
             zend_hash_destroy(AEROSPIKE_G(persistent_list_g));
             AEROSPIKE_G(persistent_list_g) = NULL;
@@ -441,10 +441,10 @@ PHP_METHOD(Aerospike, __construct)
 
     aerospike_obj_p->is_persistent = persistent_connection;
 
-    if (PHP_TYPE_ISNOTARR(config_p) || 
-            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) { 
+    if (PHP_TYPE_ISNOTARR(config_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for construct not proper"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for construct not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for construct not proper");
         goto exit;
     }
@@ -624,7 +624,7 @@ PHP_METHOD(Aerospike, get)
 
     if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "get: connection not established"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "get: connection not established");
         DEBUG_PHP_EXT_ERROR("get: connection not established");
         goto exit;
     }
@@ -927,7 +927,7 @@ PHP_METHOD(Aerospike, remove)
 
     if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "remove: connection not established"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "remove: connection not established");
         DEBUG_PHP_EXT_ERROR("remove: connection not established");
         goto exit;
     }
@@ -2154,7 +2154,7 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (PHP_TYPE_ISNOTARR(key_record_p) || 
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
             ((args_p) &&
              (PHP_TYPE_ISNOTARR(args_p)) &&
              (PHP_TYPE_ISNOTNULL(args_p))) ||
