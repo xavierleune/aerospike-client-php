@@ -265,7 +265,7 @@ class Udf extends AerospikeTestCommon
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         $testList = array("bin1" => array(94, 222, 25, 58));
-        $result = array_diff_assoc_recursive($testList, $returned);
+        $result = array_diff_assoc_recursive($testList, $returned["bins"]);
         if(!empty($result)) {
             return Aerospike::ERR;
         }
@@ -352,7 +352,7 @@ class Udf extends AerospikeTestCommon
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         $testMap = array("bin1"=>array("k30"=>55555, "k20"=>55555, "k10"=>55555));
-        $result = array_diff_assoc_recursive($returned, $testMap);
+        $result = array_diff_assoc_recursive($returned["bins"], $testMap);
         if (!empty($result)) {
             return Aerospike::ERR;
         }

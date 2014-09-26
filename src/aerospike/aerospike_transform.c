@@ -2803,7 +2803,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
     unsigned char *result = NULL;
     size_t i, j;
 
-    if (NULL != (result = (unsigned char *) malloc((oldlen * 2 * sizeof(char))))) {
+    if (NULL != (result = (unsigned char *) malloc((oldlen * 2 * sizeof(char) + 1)))) {
         for (i = j = 0; i < oldlen; i++) {
             result[j++] = hexconvtab[old[i] >> 4];
             result[j++] = hexconvtab[old[i] & 15];
