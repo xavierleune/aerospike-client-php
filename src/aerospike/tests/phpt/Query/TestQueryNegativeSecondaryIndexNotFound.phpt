@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Query", "testQueryNegativeSecondaryIndexNotFound");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryNegativeSecondaryIndexNotFound");
 --EXPECT--
-ERR_INDEX_NOT_FOUND
+ERR_INDEX
 

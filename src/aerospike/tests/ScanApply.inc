@@ -87,22 +87,22 @@ class ScanApply extends AerospikeTestCommon
         $i = 0;
         $key = $db->initKey("test", "demo", "Get_key");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         $key = $db->initKey("test", "demo", "Get_key1");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         $key = $db->initKey("test", "demo", "Get_key2");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         $key = $db->initKey("test", "demo", "Get_key3");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         for ($i = 0; $i < 4; $i++) {
@@ -453,22 +453,22 @@ class ScanApply extends AerospikeTestCommon
         $i = 0;
         $key = $db->initKey("test", "demo", "Get_key");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         $key = $db->initKey("test", "demo", "Get_key1");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         $key = $db->initKey("test", "demo", "Get_key2");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         $key = $db->initKey("test", "demo", "Get_key3");
         if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["age"];
+            $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
         for ($i = 0; $i < 4; $i++) {

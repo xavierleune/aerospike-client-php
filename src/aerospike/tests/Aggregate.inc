@@ -107,7 +107,7 @@ class Aggregate extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return($db->errorno());
         }
-        $where = $db->predicateEquals("first_name", "raunak");
+        $where = $db->predicateEquals("first_nameaa", "raunak");
         $status = $db->aggregate("test", "demo", $where,
             "stream_udf", "group_count", array("first_name"), $names);
         if ($status != Aerospike::OK) {
@@ -141,7 +141,7 @@ class Aggregate extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        if (empty($names)) {
+        if (empty($names["bins"])) {
             return Aerospike::OK;
         }
         return Aerospike::ERR;
