@@ -397,8 +397,8 @@ class Query extends AerospikeTestCommon
                         global $total, $in_thirties;
                         if (array_key_exists("email", $record["bins"]) &&
                             (!is_null($record["bins"]["email"]))) {
-                            if ($record["bins"]["email"] == "ajit") {
-                                return Aerospike::OK;
+                                if ($record["bins"]["email"] == "ajit") {
+                                    return Aerospike::OK;
                             }
                             $total += (int) $record["bins"]["age"];
                             $in_thirties++;
@@ -442,7 +442,8 @@ class Query extends AerospikeTestCommon
                     $record["key"]["set"]) == 0) {
                         if (array_key_exists("email", $record["bins"]) &&
                             !is_null($record["bins"]["email"])) {
-                            if ($record["bins"]["email"] == "ajit") {
+                                if ($record["bins"]["email"] == "ajit") {
+                                    echo "match found\n";
                                 $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
                                 $db = new Aerospike($config);
                                 $key = $db->initKey("test", "demo", "testKey");

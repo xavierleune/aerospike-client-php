@@ -15,38 +15,6 @@
 
 /*
  *******************************************************************************************************
- * EXPECTED KEYS IN INPUT FROM PHP USERLAND.
- *******************************************************************************************************
- */
-#define PHP_AS_KEY_DEFINE_FOR_HOSTS                   "hosts"
-#define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN               5
-#define PHP_AS_KEY_DEFINE_FOR_USER                    "user"
-#define PHP_AS_KEY_DEFINE_FOR_USER_LEN                4
-#define PHP_AS_KEY_DEFINE_FOR_PASSWORD                "pass"
-#define PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN            4
-#define PHP_AS_KEY_DEFINE_FOR_ADDR                    "addr"
-#define PHP_AS_KEY_DEFINE_FOR_ADDR_LEN                4
-#define PHP_AS_KEY_DEFINE_FOR_PORT                    "port"
-#define PHP_AS_KEY_DEFINE_FOR_PORT_LEN                4
-#define PHP_AS_KEY_DEFINE_FOR_NS                      "ns"
-#define PHP_AS_KEY_DEFINE_FOR_NS_LEN                  2
-#define PHP_AS_KEY_DEFINE_FOR_SET                     "set"
-#define PHP_AS_KEY_DEFINE_FOR_SET_LEN                 3
-#define PHP_AS_KEY_DEFINE_FOR_KEY                     "key"
-#define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                 3
-#define PHP_AS_KEY_DEFINE_FOR_DIGEST                  "digest"
-#define PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN              6
-
-#define PHP_AS_RECORD_DEFINE_FOR_TTL                  "ttl"
-#define PHP_AS_RECORD_DEFINE_FOR_TTL_LEN              3
-#define PHP_AS_RECORD_DEFINE_FOR_GENERATION           "generation"
-#define PHP_AS_RECORD_DEFINE_FOR_GENERATION_LEN       10
-#define PHP_AS_RECORD_DEFINE_FOR_METADATA             "metadata"
-#define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN         8
-#define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
-#define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
-/*
- *******************************************************************************************************
  * MACRO TO COMPARE TWO KEYS OF A PHP ARRAY
  *******************************************************************************************************
  */
@@ -2796,7 +2764,7 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_len
         }
         if (!record_key_p->valuep) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
-                DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
+                DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
                 status = AEROSPIKE_ERR;
                 goto exit;
             } else {

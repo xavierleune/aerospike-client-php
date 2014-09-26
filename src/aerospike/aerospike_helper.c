@@ -419,7 +419,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return false;
     }
 
-    if (0 != add_assoc_zval(outer_container_p, "bins"/*PHP_AS_RECORD_DEFINE_FOR_BINS*/, record_p)) {
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, record_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
         return false;
     }
@@ -440,7 +440,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         zval_ptr_dtor(&record_p);
         return true;
     }
-    zval_ptr_dtor(&record_p);
+    //zval_ptr_dtor(&record_p);
     if (retval) {
         if ((Z_TYPE_P(retval) == IS_BOOL) && !Z_BVAL_P(retval)) {
             do_continue = false;
