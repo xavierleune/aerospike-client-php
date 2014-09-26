@@ -2796,6 +2796,24 @@ exit:
     return status;
 }
 
+static char hexconvtab[] = "0123456789abcdef";
+
+static char* bin2hex(const unsigned char *old, const int oldlen)
+{
+    unsigned char *result = NULL;
+    size_t i, j;
+
+    if (NULL != (result = (unsigned char *) malloc((oldlen * 2 * sizeof(char))))) {
+        for (i = j = 0; i < oldlen; i++) {
+            result[j++] = hexconvtab[old[i] >> 4];
+            result[j++] = hexconvtab[old[i] & 15];
+        }
+        result[j] = '\0';
+    }
+
+    return (char *)result;
+}
+
 /* 
  *******************************************************************************************************
  * Get record key and key digest. 
@@ -2811,11 +2829,14 @@ static as_status
 aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p)
 {
     as_status                  status = AEROSPIKE_OK;
-    
+    php_unserialize_data_t     var_hash;
+    int8_t*                    hex_str_p = NULL;
+
     if (!get_record_p || !record_key_p || !key_container_p) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
+
     if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
             record_key_p->set, strlen(record_key_p->set), NULL,
             key_container_p, record_key_p))) {
@@ -2824,14 +2845,26 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
         goto exit;
     }
 
-    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST,
-                (as_key_digest(record_key_p))->value, AS_DIGEST_VALUE_SIZE, 1)) {
+    /* 
+     * Returns allocated memory, need to free
+     */
+    if (NULL == (hex_str_p = bin2hex(((as_key_digest(record_key_p))->value), AS_DIGEST_VALUE_SIZE))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to allocate memory for digest");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST, hex_str_p, strlen(hex_str_p), 1)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
 exit:
+    if (hex_str_p) {
+        free(hex_str_p);
+    }
+
     return status;
 }
 
