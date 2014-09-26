@@ -456,9 +456,9 @@ class Get extends AerospikeTestCommon
             } else {
                 return AEROSPIKE::ERR;
             }
-      if ($db->isConnected()) {  
-      /*$status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));*/
+      if ($db->isConnected()) {
+          $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
+              =>Aerospike::POLICY_RETRY_NONE));
       } else {
           return($db->errorno());
       }
@@ -2879,5 +2879,5 @@ class Get extends AerospikeTestCommon
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));*/
  }
-}  
+}
 ?>

@@ -255,7 +255,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     as_query                    query;
     bool                        is_init_query = false;
     foreach_callback_udata      aggregate_result_callback_udata;
-    zval*                       key_container_p = NULL; 
+    zval*                       key_container_p = NULL;
     zval*                       return_value_p = NULL;
 
     MAKE_STD_ZVAL(return_value_p);
@@ -290,7 +290,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
             goto exit;
         }
     }
- 
+
     if (NULL == as_query_init(&query, namespace_p, set_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initialize a query");
         error_p->code = AEROSPIKE_ERR;
@@ -345,7 +345,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
             error_p->code = AEROSPIKE_ERR;
             goto exit;
         }
-        
+
         if ( 0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_SET, query.set, strlen(query.set), 1)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get set");
             error_p->code = AEROSPIKE_ERR;
@@ -357,7 +357,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
             error_p->code = AEROSPIKE_ERR;
             goto exit;
         }
-        
+
         if (0 != add_assoc_null(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
             error_p->code = AEROSPIKE_ERR;
