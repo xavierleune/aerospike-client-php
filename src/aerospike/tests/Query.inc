@@ -344,7 +344,7 @@ class Query extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             $where = $db->predicateEquals("first_nameaa", "raunak");
-    	    $total = 0;
+            $total = 0;
 	        $in_thirties = 0;
             $status = $db->query("test", "demo", $where, function ($record) {
                 if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
