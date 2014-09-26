@@ -18,7 +18,6 @@ zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
 zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
-pthread_mutex_t      aerospike_mutex;
 /*
  *******************************************************************************************************
  * aerospike-client-php global log level
@@ -139,7 +138,6 @@ extern int parseLogParameters(as_log* as_log_p)
 extern void
 aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 {
-
     zval*    err_code_p = NULL;
     zval*    err_msg_p = NULL;
     aerospike_global_error error_t = AEROSPIKE_G(error_g);
@@ -169,7 +167,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
  */
 #define ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT()                              \
 do {                                                                          \
-    if (NULL != (as_object_p->as_ref_p = ecalloc(1,                           \
+    if (NULL != (as_object_p->as_ref_p = pemalloc(1,                          \
                     sizeof(aerospike_ref)))) {                                \
         as_object_p->as_ref_p->as_p = NULL;                                   \
         as_object_p->as_ref_p->ref_as_p = 0;                                  \
@@ -191,21 +189,23 @@ do {                                                                           \
     new_le.ptr = as_object_p->as_ref_p;                                        \
     new_le.type = val_persist;                                                 \
     if (new_flag) {                                                            \
-        pthread_mutex_lock(&aerospike_mutex);                                  \
-        DEBUG_PHP_EXT_DEBUG("Before:(%.4x) Elements in list are %d",           \
-                persistent_list, persistent_list->nNumOfElements);             \
+        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));                     \
+        DEBUG_PHP_EXT_DEBUG("Before:(%.4x) Head:(%.4x) Count in list are %d.", \
+                persistent_list, persistent_list->pListHead,                   \
+                persistent_list->nNumOfElements);                              \
         zend_hash_add(persistent_list, alias, alias_len,                       \
                 (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);         \
-        DEBUG_PHP_EXT_DEBUG("After:(%.4x) Elements in list are %d",            \
-                persistent_list, persistent_list->nNumOfElements);             \
-        pthread_mutex_unlock(&aerospike_mutex);                                \
+        DEBUG_PHP_EXT_DEBUG("After:(%.4x) Head:(%.4x) Count in list are %d",   \
+                persistent_list, persistent_list->pListHead,                   \
+                persistent_list->nNumOfElements);                              \
+        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));                   \
         goto exit;                                                             \
     } else {                                                                   \
-        pthread_mutex_lock(&aerospike_mutex);                                  \
+        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));                     \
         zend_hash_update(persistent_list,                                      \
                 alias, alias_len, (void *) &new_le,                            \
                 sizeof(zend_rsrc_list_entry), (void **) &le);                  \
-        pthread_mutex_unlock(&aerospike_mutex);                                \
+        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));                   \
         goto exit;                                                             \
     }                                                                          \
 } while(0)
@@ -297,20 +297,19 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
     strcat(alias_to_search, ":");
     strcat(alias_to_search, port);
     for(itr_user=0; itr_user < conf->hosts_size; itr_user++) {
-        pthread_mutex_lock(&aerospike_mutex);
+        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));
         if (zend_hash_find(persistent_list, alias_to_search,
                 strlen(alias_to_search), (void **) &le) == SUCCESS) {
             if (alias_to_search) {
                 efree(alias_to_search);
                 alias_to_search = NULL;
             }
-            pthread_mutex_unlock(&aerospike_mutex);
+            pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));
             tmp_ref = le->ptr;
             goto use_existing;
         }
-        pthread_mutex_unlock(&aerospike_mutex);
+        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));
     }
-   // pthread_mutex_unlock(&aerospike_mutex);
 
     ZEND_HASH_CREATE_ALIAS_NEW(alias_to_search, strlen(alias_to_search), 1);
     for(itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
@@ -319,10 +318,10 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         strcpy(alias_to_hash, conf->hosts[itr_user].addr);
         strcat(alias_to_hash, ":");
         strcat(alias_to_hash, port);
-        pthread_mutex_lock(&aerospike_mutex);
+        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));
         zend_hash_add(persistent_list, alias_to_hash,
                 strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
-        pthread_mutex_unlock(&aerospike_mutex);
+        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));
         efree(alias_to_hash);
         alias_to_hash = NULL;
    }
