@@ -809,7 +809,7 @@ static void ADD_DEFAULT_ASSOC_NULL(void *key, void *value, void *array, void *er
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_NULL((zval *) array);
+        //ZVAL_NULL((zval *) array);
     } else {
         add_assoc_null(((zval *) array), (char *) key);
     }
@@ -835,7 +835,12 @@ static void ADD_DEFAULT_ASSOC_BOOL(void *key, void *value, void *array, void *er
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_BOOL((zval *) array, (int) as_boolean_get((as_boolean *) value));
+        zval* bool_zval_p = NULL;
+        ALLOC_INIT_ZVAL(bool_zval_p);
+        ZVAL_BOOL(bool_zval_p, (int) as_boolean_get((as_boolean *) value));
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, bool_zval_p, 1, 1);
+        //ZVAL_BOOL((zval *) array, (int) as_boolean_get((as_boolean *) value));
     } else {
         add_assoc_bool(((zval *) array), (char *) key,
                 (int) as_boolean_get((as_boolean *) value));
@@ -862,7 +867,11 @@ static void ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array, void *er
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_LONG((zval *) array, (long) as_integer_get((as_integer *) value));
+        zval* long_zval_p = NULL;
+        ALLOC_INIT_ZVAL(long_zval_p);
+        ZVAL_LONG(long_zval_p, (long) as_integer_get((as_integer *) value));
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, long_zval_p, 1, 1);
     } else {
        add_assoc_long(((zval *) array),  (char *) key,
                (long) as_integer_get((as_integer *) value));
@@ -889,8 +898,14 @@ static void ADD_DEFAULT_ASSOC_STRING(void *key, void *value, void *array, void *
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_STRINGL((zval *) array, as_string_get((as_string *) value),
-                strlen(as_string_get((as_string *) value)), 1);
+        zval* string_zval_p = NULL;
+        ALLOC_INIT_ZVAL(string_zval_p);
+        ZVAL_STRINGL(string_zval_p, as_string_get((as_string *) value),
+                 strlen(as_string_get((as_string *) value)), 1);
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, string_zval_p, 1, 1);
+        //ZVAL_STRINGL((zval *) array, as_string_get((as_string *) value),
+                //strlen(as_string_get((as_string *) value)), 1);
     } else {
         add_assoc_stringl(((zval *) array), (char *) key,
                 as_string_get((as_string *) value),
