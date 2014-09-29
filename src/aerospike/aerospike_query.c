@@ -257,12 +257,8 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     foreach_callback_udata      aggregate_result_callback_udata;
     zval*                       key_container_p = NULL;
     zval*                       return_value_p = NULL;
-
-    MAKE_STD_ZVAL(return_value_p);
-    array_init(return_value_p);
-
-    MAKE_STD_ZVAL(key_container_p);
-    array_init(key_container_p);
+    bool                        key_container_assoc = false;
+    bool                        return_value_assoc = false;
 
     if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) ||
             (!args_pp && (!(*args_pp))) || (!namespace_p) || (!set_p) ||
@@ -306,6 +302,17 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
+    MAKE_STD_ZVAL(return_value_p);
+    /* No need for array initialization as we do that internally in the as_query
+     * for each callback.
+     */
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
+       DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
+       error_p->code = AEROSPIKE_ERR;
+       goto exit;
+    }
+
+    return_value_assoc = true;
     aggregate_result_callback_udata.udata_p = return_value_p;
     aggregate_result_callback_udata.error_p = error_p;
 
@@ -340,6 +347,10 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     if (is_init_query == true) {
+
+        MAKE_STD_ZVAL(key_container_p);
+        array_init(key_container_p);
+
         if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_NS, query.ns, strlen(query.ns), 1)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get namespace");
             error_p->code = AEROSPIKE_ERR;
@@ -370,17 +381,19 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
             goto exit;
         }
 
+        key_container_assoc = true;
+
         if (0 != add_assoc_null(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
             error_p->code = AEROSPIKE_ERR;
             goto exit;
         }
 
-        if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
+      /*  if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
             error_p->code = AEROSPIKE_ERR;
             goto exit;
-        }
+        }*/
     }
 
 exit:
@@ -393,8 +406,13 @@ exit:
     }
 
     if (error_p->code == AEROSPIKE_ERR) {
-        zval_dtor(return_value_p);
+        if (return_value_p && !return_value_assoc)
+            zval_dtor(return_value_p);
+        if (key_container_p && (false == key_container_assoc)) {
+            zval_dtor(key_container_p);
+        }
     }
+
     aerospike_helper_free_static_pool(&udf_pool);
     return error_p->code;
 }
