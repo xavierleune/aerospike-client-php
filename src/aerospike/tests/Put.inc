@@ -1199,7 +1199,7 @@ class Put extends AerospikeTestCommon
   * @test_plans{1.1}
   */
  function testPutNestedMapOfObjectsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+   $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {   

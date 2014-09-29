@@ -125,10 +125,11 @@ static void tmp(void *p) {
 
 static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
-    DEBUG_PHP_EXT_DEBUG("In here");
+    DEBUG_PHP_EXT_DEBUG("In ctor");
     if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
         AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
-        zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, tmp, 1);
+        DEBUG_PHP_EXT_DEBUG("Pointer is at: (%.4x)",AEROSPIKE_G(persistent_list_g));
+        zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &tmp, 1);
         AEROSPIKE_G(persistent_ref_count) = 1;
     } else {
         AEROSPIKE_G(persistent_ref_count)++;
@@ -138,8 +139,9 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     if (globals->persistent_list_g) {
-        if (AEROSPIKE_G(persistent_ref_count) == 0) {
-            zend_hash_clean(&AEROSPIKE_G(persistent_list_g));
+        if (AEROSPIKE_G(persistent_ref_count) == 1) {
+            DEBUG_PHP_EXT_DEBUG("Ref count is working");
+            zend_hash_clean(AEROSPIKE_G(persistent_list_g));
             zend_hash_destroy(AEROSPIKE_G(persistent_list_g));
             AEROSPIKE_G(persistent_list_g) = NULL;
             AEROSPIKE_G(persistent_ref_count) = 0;
@@ -371,7 +373,7 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
     Aerospike_object *intern_obj_p;
 
     if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
-        printf("intern_obj_p = %u \n", intern_obj_p);
+      //  printf("intern_obj_p = %u \n", intern_obj_p);
         zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
 #if PHP_VERSION_ID < 50399
         zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
@@ -1005,7 +1007,7 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-    status = aerospike_php_exists_metadata(aerospike_obj_p->as_ref_p->as_p, key_record_p, metadata_p, options_p, &error);
+    status = aerospike_php_exists_metadata(aerospike_obj_p, key_record_p, metadata_p, options_p, &error);
 
 exit:
     if (status != AEROSPIKE_OK) {
@@ -1807,7 +1809,6 @@ bool record_stream_callback(const as_val* p_val, void* udata)
     foreach_callback_udata  foreach_record_callback_udata;
     Aerospike_object *aerospike_obj_p = ((userland_callback *) udata)->obj;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
-
     if (!p_val) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
         return true;

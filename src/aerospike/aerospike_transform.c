@@ -261,6 +261,7 @@ static void serialize_based_on_serializer_policy(int32_t serializer_policy,
                          "Unable to serialize using standard json serializer");
                  goto exit;
         case SERIALIZER_USER:
+            DEBUG_PHP_EXT_DEBUG("Should come here");
             if (is_user_serializer_registered) {
                 execute_user_callback(&user_serializer_call_info,
                                       &user_serializer_call_info_cache,
@@ -1209,6 +1210,7 @@ exit:
 */
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
+    DEBUG_PHP_EXT_DEBUG("Jhol over here");
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
     TSRMLS_FETCH_FROM_CTX(aerospike_object->ts);
@@ -1836,7 +1838,7 @@ static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
 {
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
-
+    //DEBUG_PHP_EXT_DEBUG("Call came from here");
     serialize_based_on_serializer_policy(serializer_policy, bytes,
             (zval **) value, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -2758,7 +2760,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
     as_record               *get_record = NULL;
     aerospike               *as_object_p = aerospike_obj_p->as_ref_p->as_p;
     foreach_callback_udata  foreach_record_callback_udata;
-
+    DEBUG_PHP_EXT_DEBUG("I guess over here");
     foreach_record_callback_udata.udata_p = get_record_p;
     foreach_record_callback_udata.error_p = error_p;
     foreach_record_callback_udata.obj = aerospike_obj_p;
