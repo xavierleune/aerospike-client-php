@@ -15,6 +15,18 @@
 # limitations under the License.
 ################################################################################
 
+export CLIENTREPO_3X=${PWD}/../aerospike-client-c
+export AEROSPIKE_C_CLIENT=3.0.80
+if [ ! -d $CLIENTREPO_3X ]; then
+    echo "Downloading Aerospike C Client SDK..."
+else
+    echo "Aerospike C Client SDK is present."
+fi
+scripts/aerospike-client-c.sh
+if [ $? -gt 0 ]; then
+    exit 1
+fi
+
 LOGLEVEL="AS_LOG_LEVEL_OFF"
 
 parse_args () {
@@ -71,12 +83,18 @@ parse_args () {
     done
 }
 
+if [ ! -z "$(which php-config)" ]; then
+    PHP_CONFIG=`which php-config`
+else
+    PHP_CONFIG="php-config"
+fi
+
 if [ -f Makefile ]; then
   make clean
 fi
 parse_args $@
 phpize
-./configure "CFLAGS=-g -O3" --enable-aerospike
+./configure --enable-aerospike --with-php-config=$PHP_CONFIG "CFLAGS=-g -O3"
 
 OS=`uname`
 INCLUDE_LUA_5_1=/usr/include/lua5.1
@@ -84,14 +102,13 @@ if [ -d $INCLUDE_LUA_5_1 ] ; then
   LUA_SUFFIX=5.1
 fi
 
-CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
+CFLAGS="-g -H -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
-LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX"
-#LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike"
 
 if [ $OS = "Darwin" ] ; then
-    LDFLAGS="$LDFLAGS -lcrypto"
+    LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX -lcrypto"
 else
+    LDFLAGS="-Wl,-Bstatic -L$CLIENTREPO_3X/lib -laerospike -Wl,-Bdynamic -llua$LUA_SUFFIX"
     # Find and link to libcrypto (provided by OpenSSL)
     ec=`ls /usr/local/lib/libcrypto.a || ls /usr/local/lib/libcrypto.so`
     if [ $? -eq 0 ] ; then
@@ -123,9 +140,9 @@ fi
 make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
-    exit 1
+    exit 2
 fi
-test-cleanup
+scripts/test-cleanup.sh
 
 headline()
 {

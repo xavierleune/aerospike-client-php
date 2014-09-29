@@ -52,25 +52,24 @@ To switch PHP versions [see this gist](https://gist.github.com/rbotzer/198a04f23
 
 ## Build Instructions
 
-To build the PHP extension, you must first invoke the setup script, which will
-download the Aerospike C client SDK if necessary (into `aerospike-client-c/`):
+To build the PHP extension run the `build.sh` script in the `src/aerospike/`
+directory.
 
-    $ . scripts/setup
+    cd src/aerospike
+    ./build.sh
 
-This will set the `CLIENTREPO_3X` environment variable, add the `scripts/` 
-directory to your path, and change the working directory to `src/aerospike/`.
-To grab the latest release of the C client SDK (rather than a specified
-version) modify the `AEROSPIKE_C_CLIENT` variable of the setup script
-to *latest*. You may need to remove the `aerospike-client-c` directory before
-running the setup script once more.
+This will download the Aerospike C client SDK if necessary into 
+`aerospike-client-c/`, and set the `CLIENTREPO_3X` environment variable
+for `make`.
 
-Next, build the Aerospike PHP extension.
-
-    $ build
+To grab the latest release of the C client SDK (rather than the specified
+version) modify the `AEROSPIKE_C_CLIENT` variable of `scripts/setup` to
+*latest*. You may need to remove the `aerospike-client-c`
+directory before running `build.sh` once more.
 
 For a debug build specify the log level (default being OFF):
 
-    $ build [-l|--loglevel <Desired log level: one among TRACE, DEBUG, INFO, WARN, ERROR, OFF>] [--help]
+    ./build.sh [-l|--loglevel <Desired log level: one among TRACE, DEBUG, INFO, WARN, ERROR, OFF>] [--help]
 
 The PHP extension will be built as `modules/aerospike.so`
 
@@ -78,14 +77,14 @@ The PHP extension will be built as `modules/aerospike.so`
 
 To test the Aerospike PHP Client interactively after building, do:
 
-    $ php -dextension=modules/aerospike.so -a
+    php -dextension=modules/aerospike.so -a
 
 ## Installing the PHP Extension
 
 To install the PHP extension do:
 
-    $ sudo make install
-    $ php -i | grep ".ini "
+    sudo make install
+    php -i | grep ".ini "
 
 Now edit the php.ini file.  If PHP is configured --with-config-file-scan-dir
 (usually set to `/etc/php.d/`) you can create an `aerospike.ini` file in the
@@ -95,16 +94,8 @@ directory, otherwise edit php.ini directly. Add the following directive:
 
 The *aerospike* module should now be available to the PHP CLI:
 
-    $ php -m | grep aerospike
+    php -m | grep aerospike
     aerospike
-
-## Cleanup
-
-To clean up artifacts created by the build process you can do:
-
-    $ build-cleanup
-
-At this point if you want to use **make** you will need to rebuild.
 
 ## License
 
