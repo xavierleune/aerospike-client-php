@@ -1412,6 +1412,10 @@ PHP_METHOD(Aerospike, setSerializer)
 {
     as_status              status = AEROSPIKE_OK;
 
+    if (user_serializer_call_info.function_name) {
+        RETURN_TRUE;
+    }
+
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
                              &user_serializer_call_info,
                              &user_serializer_call_info_cache,
@@ -2578,7 +2582,6 @@ PHP_METHOD(Aerospike, getRegistered)
     }
 
     zval_dtor(udf_code_p);
-    ZVAL_EMPTY_STRING(udf_code_p);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_get_registered_udf_module_code(aerospike_obj_p,
@@ -2586,6 +2589,7 @@ PHP_METHOD(Aerospike, getRegistered)
                                                                udf_code_p,
                                                                language, 
                                                                options_p))) {
+        ZVAL_EMPTY_STRING(udf_code_p);
         DEBUG_PHP_EXT_ERROR("getRegistered function returned an error");
         goto exit;
     }
@@ -2875,6 +2879,14 @@ PHP_RINIT_FUNCTION(aerospike)
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
     /*** TO BE IMPLEMENTED ***/
+    if (is_user_serializer_registered && user_serializer_call_info.function_name) {
+        //Z_DELREF_P(user_serializer_call_info.function_name);
+        //zend_fcall_info_args_clear(&user_serializer_call_info, 1);
+        if (Z_ISREF_P(user_serializer_call_info.function_name)) {
+            zval_ptr_dtor(user_serializer_call_info.function_name);
+        }
+        user_serializer_call_info.function_name = NULL;
+    }
 
     return SUCCESS;
 }
