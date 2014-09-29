@@ -343,8 +343,8 @@ class Query extends AerospikeTestCommon
     function testQueryNegativeSecondaryIndexNotFound($db)
     {
         if ($db->isConnected()) {
-            $where = $db->predicateEquals("first_name", "raunak");
-    	    $total = 0;
+            $where = $db->predicateEquals("first_nameaa", "raunak");
+            $total = 0;
 	        $in_thirties = 0;
             $status = $db->query("test", "demo", $where, function ($record) {
                 if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
@@ -397,8 +397,8 @@ class Query extends AerospikeTestCommon
                         global $total, $in_thirties;
                         if (array_key_exists("email", $record["bins"]) &&
                             (!is_null($record["bins"]["email"]))) {
-                            if ($record["bins"]["email"] == "ajit") {
-                                return Aerospike::OK;
+                                if ($record["bins"]["email"] == "ajit") {
+                                    return Aerospike::OK;
                             }
                             $total += (int) $record["bins"]["age"];
                             $in_thirties++;
@@ -442,7 +442,7 @@ class Query extends AerospikeTestCommon
                     $record["key"]["set"]) == 0) {
                         if (array_key_exists("email", $record["bins"]) &&
                             !is_null($record["bins"]["email"])) {
-                            if ($record["bins"]["email"] == "ajit") {
+                                if ($record["bins"]["email"] == "ajit") {
                                 $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
                                 $db = new Aerospike($config);
                                 $key = $db->initKey("test", "demo", "testKey");
@@ -462,7 +462,7 @@ class Query extends AerospikeTestCommon
             $key = $db->initKey("test", "demo", "testKey");
             $db->get($key, $record);
             $db->remove($key, array(Aerospike::OPT_READ_TIMEOUT=>3000));
-            $result = array_diff_assoc_recursive($record, array("name"=>"ajit"));
+            $result = array_diff_assoc_recursive($record["bins"], array("name"=>"ajit"));
             if(!empty($result)) {
                 return Aerospike::ERR;
             }

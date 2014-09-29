@@ -11,5 +11,5 @@ aerospike_phpt_skipif("Aggregate", "testAggregateNegativeSecondaryIndexNotFound"
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateNegativeSecondaryIndexNotFound");
 --EXPECT--
-ERR_INDEX_NOT_FOUND
+ERR_INDEX
 

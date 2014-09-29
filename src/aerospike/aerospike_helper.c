@@ -416,12 +416,16 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     array_init(outer_container_p);
     if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec, &(current_as_rec->key), outer_container_p))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
-        return false;
+        zval_ptr_dtor(&record_p);
+        zval_ptr_dtor(&outer_container_p);
+        return true;
     }
 
-    if (0 != add_assoc_zval(outer_container_p, "bins"/*PHP_AS_RECORD_DEFINE_FOR_BINS*/, record_p)) {
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, record_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
-        return false;
+        zval_ptr_dtor(&record_p);
+        zval_ptr_dtor(&outer_container_p);
+        return true;
     }
 
     /*
@@ -437,10 +441,12 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     if (zend_call_function(fci_p, fcc_p TSRMLS_CC) == FAILURE) {
         DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "stream callback could not invoke userland function.");
-        zval_ptr_dtor(&record_p);
+        zval_ptr_dtor(&outer_container_p);
         return true;
     }
-    zval_ptr_dtor(&record_p);
+
+    zval_ptr_dtor(&outer_container_p);
+
     if (retval) {
         if ((Z_TYPE_P(retval) == IS_BOOL) && !Z_BVAL_P(retval)) {
             do_continue = false;

@@ -158,21 +158,12 @@ check_and_set_default_policies(as_config *as_config_p,
     if (ini_value = WRITE_TIMEOUT_PHP_INI) {
         if (write_policy_p) {
             write_policy_p->timeout = ini_value;
-            if (KEY_POLICY_PHP_INI) {
-                write_policy_p->key = KEY_POLICY_PHP_INI;
-            }
         }
         if (operate_policy_p) {
             operate_policy_p->timeout = ini_value;
-            if (KEY_POLICY_PHP_INI) {
-                operate_policy_p->key = KEY_POLICY_PHP_INI;
-            }
         }
         if (remove_policy_p) {
             remove_policy_p->timeout = ini_value;
-            if (KEY_POLICY_PHP_INI) {
-                remove_policy_p->key = KEY_POLICY_PHP_INI;
-            }
         }
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
@@ -498,17 +489,12 @@ set_policy_ex(as_config *as_config_p,
                     }
                     if (read_policy_p) {
                         read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
-                    } else if (write_policy_p) {
-                        write_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
-                    } else if(operate_policy_p) {
-                        operate_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
-                    } else if(remove_policy_p) {
-                        remove_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         goto exit;
                     }
+                    read_flag = 1;
                     break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");

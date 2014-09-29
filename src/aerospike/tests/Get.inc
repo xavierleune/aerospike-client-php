@@ -85,7 +85,6 @@ class Get extends AerospikeTestCommon
         if($status != Aerospike::OK) {
             return($status);
         }
-        var_dump($bin_arr);
         if (strcmp($bin_arr["key"]["ns"], $key["ns"]) == 0 &&
             strcmp($bin_arr["key"]["set"], $key["set"]) == 0 &&
             strcmp($bin_arr["key"]["key"], $key["key"]) == 0) {
@@ -446,7 +445,7 @@ class Get extends AerospikeTestCommon
       if($status != Aerospike::OK) {
           return($status);
       }
-        if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
+      if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
             strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
             strcmp($get_rec["key"]["key"], $key1["key"]) == 0) {
                 $comp_res = array_diff_assoc_recursive(array("bin1"=>array("speaking", "reading",
@@ -457,9 +456,9 @@ class Get extends AerospikeTestCommon
             } else {
                 return AEROSPIKE::ERR;
             }
-      if ($db->isConnected()) {  
-      $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
+      if ($db->isConnected()) {
+          $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
+              =>Aerospike::POLICY_RETRY_NONE));
       } else {
           return($db->errorno());
       }
@@ -2809,12 +2808,13 @@ class Get extends AerospikeTestCommon
          return ($db->errorno());
      }
      $key = $db->initKey("test", "demo", "policy_key_digest");
-     $map = array("k1"=>10, "k22"=>89, 1);
-     $status = $db->put($key, "bin1"=>$map);
+     $put_record = array("bin1"=>45);
+     $status = $db->put($key, $put_record);
 
      if ($status != AEROSPIKE::OK) {
          return($db->errorno());
      }
+
      $status = $db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
      if ($status != AEROSPIKE::OK) {
@@ -2849,8 +2849,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- /*function testGetMapOfObjectsKeyIsObject($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+ function testGetMapOfObjectsKeyIsObject($dummydb, $dummykey) {
+     /*$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
@@ -2877,7 +2877,7 @@ class Get extends AerospikeTestCommon
          return self::$status_get_record_fail;
      }
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
- }*/
-}  
+         Aerospike::POLICY_RETRY_NONE));*/
+ }
+}
 ?>

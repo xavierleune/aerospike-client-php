@@ -81,7 +81,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.serializer", "4097", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
-    STD_PHP_INI_ENTRY("aerospike.key_policy", "268435457", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_policy", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
@@ -1825,6 +1825,9 @@ PHP_METHOD(Aerospike, aggregate)
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
 
+    zval_dtor(returned_p);
+    array_init(returned_p);
+
     if (AEROSPIKE_OK !=
             (status = aerospike_query_aggregate(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
@@ -1929,9 +1932,7 @@ PHP_METHOD(Aerospike, scan)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
                                      &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, /*percent,
-                                     scan_priority, concurrent,
-                                     no_bins,*/ options_p))) {
+                                     bins_ht_p, options_p))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }

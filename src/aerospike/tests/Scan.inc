@@ -24,12 +24,12 @@ class Scan extends AerospikeTestCommon
     }
 
     protected function tearDown(&$db, &$key) {
-        /*$key = $db->initKey("test", "demo", "Get_key");
+        $key = $db->initKey("test", "demo", "Get_key");
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
         $key = $db->initKey("test", "demo", "Get_key1");
         $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));*/
+            =>Aerospike::POLICY_RETRY_NONE));
         $db->close();
     }
     /**
@@ -317,8 +317,9 @@ class Scan extends AerospikeTestCommon
                         if ($processed == 2) {
                             return Aerospike::OK;
                         }
+                    } else {
+                        return(AEROSPIKE::ERR);
                     }
-
             }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
             if ($status != AEROSPIKE::OK) {
                     return $db->errorno();
@@ -363,6 +364,8 @@ class Scan extends AerospikeTestCommon
                         if ($processed == 2) {
                             return Aerospike::OK;
                         }
+                    } else {
+                        return(AEROSPIKE::ERR);
                     }
             }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000, Aerospike::OPT_SCAN_CONCURRENTLY=>true));
             if ($status != AEROSPIKE::OK) {
@@ -408,6 +411,8 @@ class Scan extends AerospikeTestCommon
                         if ($processed == 2) {
                             return Aerospike::OK;
                         }
+                    } else {
+                        return AEROSPIKE::ERR;
                     }
             });
             if ($status != AEROSPIKE::OK) {
@@ -453,6 +458,8 @@ class Scan extends AerospikeTestCommon
                         if ($processed == 2) {
                             return Aerospike::OK;
                         }
+                    } else {
+                        return AEROSPIKE::ERR;
                     }
             }, array("email"));
             if ($status != AEROSPIKE::OK) {
