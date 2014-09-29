@@ -8,7 +8,7 @@ public array Aerospike::initKey ( string $ns, string $set, string $pk )
 
 ### [Aerospike::put](aerospike_put.md)
 ```
-public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
+public int Aerospike::put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
 ```
 
 ### [Aerospike::get](aerospike_get.md)
@@ -91,9 +91,9 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$put_val = array("email" => "hey@example.com", "name" => "Hey There");
+$bins = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $put_val, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
+$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
@@ -113,8 +113,8 @@ if ($db->exists($key, $foo) == Aerospike::OK) {
 // filtering for specific keys
 $res = $db->get($key, $record, array("email"), Aerospike::POLICY_RETRY_ONCE);
 if ($res == Aerospike::OK) {
-    echo "The email for this user is ". $record['email']. "\n";
-    echo "The name bin should be filtered out: ".var_export(is_null($record['name']), true). "\n";
+    echo "The email for this user is ". $record['bins']['email']. "\n";
+    echo "The name bin should be filtered out: ".var_export(is_null($record['bins']['name']), true). "\n";
 }
 ?>
 ```

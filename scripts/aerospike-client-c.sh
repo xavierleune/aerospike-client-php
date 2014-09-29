@@ -167,7 +167,7 @@ download()
 
   # Compose the URL for the client tgz
   URL="http://www.aerospike.com/download/client/c/${AEROSPIKE_C_VERSION}/artifact/${PKG_DIST}"
-  
+
   # Download and extract the client tgz.
   # Use non-slient mode to show progress about the download. Important for slower networks.
   printf "info: downloading '${URL}' to '${AEROSPIKE}/package/aerospike-client-c.tgz'\n"
@@ -197,9 +197,23 @@ if [ ! $DOWNLOAD ] && [ ! $PREFIX ]; then
   if [ -d ${AEROSPIKE} ] && [ -f ${AEROSPIKE}/package/usr/lib/libaerospike.a ] && [ -f ${AEROSPIKE}/package/usr/include/aerospike/aerospike.h ]; then
     # first, check to see if there is a local client
     PREFIX=${AEROSPIKE}/package/usr
+    if [ -f ${AEROSPIKE}/package/opt/aerospike/client/sys/udf/lua/aerospike.lua ]; then
+      LUA_PATH=${AEROSPIKE}/package/opt/aerospike/client/sys/udf/lua
+      LUA_SYSPATH_PREFIX=/opt/aerospike
+    elif [ -f ${AEROSPIKE}/package/usr/local/aerospike/client/sys/udf/lua/aerospike.lua ]; then
+      LUA_PATH=${AEROSPIKE}/package/usr/local/aerospike/client/sys/udf/lua
+      LUA_SYSPATH_PREFIX=/usr/local/aerospike
+    fi
   elif [ -f /usr/lib/libaerospike.a ] && [ -f /usr/include/aerospike/aerospike.h ]; then
     # next, check to see if there is an installed client
     PREFIX=/usr
+    if [ -f /opt/aerospike/client/sys/udf/lua/aerospike.lua ]; then
+      LUA_PATH=/opt/aerospike/client/sys/udf/lua
+      LUA_SYSPATH_PREFIX=/opt/aerospike
+    elif [ -f /usr/local/aerospike/client/sys/udf/lua/aerospike.lua ]; then
+      LUA_PATH=/usr/local/aerospike/client/sys/udf/lua
+      LUA_SYSPATH_PREFIX=/usr/local/aerospike
+    fi
   fi
 
   # If we can't find it, then download it.
@@ -230,6 +244,8 @@ if [ $DOWNLOAD ] && [ $DOWNLOAD == 1 ]; then
 
       IFS=" " read PKG_DIST PKG_TYPE <<< "${result}"
       PKG_PATH=${AEROSPIKE}/package/usr
+      LUA_PATH=${AEROSPIKE}/package/opt/aerospike/client/sys/udf/lua
+      LUA_SYSPATH_PREFIX=/opt/aerospike
       ;;
 
     ############################################################################
@@ -239,6 +255,8 @@ if [ $DOWNLOAD ] && [ $DOWNLOAD == 1 ]; then
       PKG_DIST="mac"
       PKG_TYPE="pkg"
       PKG_PATH=${AEROSPIKE}/package/usr/local
+      LUA_PATH=${AEROSPIKE}/package/usr/local/aerospike/client/sys/udf/lua
+      LUA_SYSPATH_PREFIX=/usr/local/aerospike
       ;;
 
     ############################################################################
@@ -279,7 +297,6 @@ if [ $DOWNLOAD ] && [ $DOWNLOAD == 1 ]; then
       printf "warning: \n"
     else
       download
-      
     fi
 
     ##############################################################################
@@ -333,6 +350,7 @@ fi
 
 AEROSPIKE_LIBRARY=${PREFIX}/lib/libaerospike.a
 AEROSPIKE_INCLUDE=${PREFIX}/include/aerospike
+AEROSPIKE_LUA=${LUA_PATH}
 
 printf "\n" >&1
 
@@ -352,6 +370,13 @@ else
   FAILED=1
 fi
 
+if [ -f ${AEROSPIKE_LUA}/aerospike.lua ]; then
+  printf "   [✓] ${AEROSPIKE_LUA}/aerospike.lua\n" >&1
+else
+  printf "   [✗] ${AEROSPIKE_LUA}/aerospike.lua\n" >&1
+  FAILED=1
+fi
+
 printf "\n" >&1
 
 if [ $FAILED ]; then
@@ -365,3 +390,30 @@ cp ${PREFIX}/lib/libaerospike.a ${AEROSPIKE}/lib/.
 rm -rf ${AEROSPIKE}/include
 mkdir -p ${AEROSPIKE}/include
 cp -R ${PREFIX}/include ${AEROSPIKE}
+
+rm -rf ${AEROSPIKE}/lua
+mkdir -p ${AEROSPIKE}/lua
+cp -R ${AEROSPIKE_LUA}/* ${AEROSPIKE}/lua
+
+LUA_SYSPATH=${LUA_SYSPATH_PREFIX}/client-php/${AEROSPIKE_C_CLIENT}/sys/udf/lua
+if [ ! -d $LUA_SYSPATH ]; then
+    scripts/lua-paths.sh "${LUA_SYSPATH_PREFIX}" "${AEROSPIKE_C_CLIENT}"
+fi
+
+if [ ! -d $LUA_SYSPATH ]; then
+    printf "Failed to create the Lua system files path.  Please run:\n"
+    printf "    sudo scripts/lua-paths.sh ${LUA_SYSPATH_PREFIX} ${AEROSPIKE_C_CLIENT}\n"
+    printf "Then re-run this scripts:\n    . scripts/setup\n"
+    exit 1
+fi
+
+if [ ! -f ${LUA_SYSPATH}/aerospike.lua ]; then
+    cp ${AEROSPIKE_LUA}/*.lua ${LUA_SYSPATH}
+    if [ $? -gt 0 ] ; then
+        printf "Failed to copy the Lua system files.  Please run:\n"
+        printf "    sudo cp ${AEROSPIKE_LUA}/*.lua ${LUA_SYSPATH}\n"
+        printf "Then re-run this scripts:\n    . scripts/setup\n"
+        exit 2
+    fi
+fi
+

@@ -20,7 +20,8 @@ and non-existent records will return as NULL.
 
 **metadata** filled by an associative array of metadata.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT** and **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

@@ -6,26 +6,32 @@ Aerospike::scan - scans a set in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $select [, array $options ]] )
 ```
 
 **Aerospike::scan()** will scan a *set* and invoke a callback function 
 *record_cb* on each record in the result stream.
-The bins returned can be filtered by passing an associative array of the *bins*
-needed, otherwise all bins in the record are returned (similar to a SELECT \*).
+A selection of bins returned can be determined by passing an array in *select*,
+otherwise all bins in the record are returned.
+.
 Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
 **ns** the namespace
 
-**set** the set
+**set** the set to be scanned
 
-**record_cb** a callback function invoked for each record streaming back from the server.
+**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
 
-**bins** an array of bin names to be returned.
+**select** an array of bin names which are the subset to be returned.
 
-**options** including **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
+- **Aerospike::OPT_SCAN_PRIORITY**
+- **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
+- **Aerospike::OPT_SCAN_CONCURRENTLY** whether to run the scan in parallel
+- **Aerospike::OPT_SCAN_NOBINS** whether to not retrieve bins for the records
 
 ## Return Values
 
@@ -45,11 +51,12 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
+$options = array(Aerospike::OPT_SCAN_PRIORITY => Aerospike::SCAN_PRIORITY_MEDIUM);
 $processed = 0;
 $res = $db->scan("test", "users", function ($record) {
-    if (!is_null($record['email'])) echo $record['email']."\n";
+    if (!is_null($record['bins']['email'])) echo $record['bins']['email']."\n";
     if ($processed++ > 19) return false; // halt the stream by returning a false
-}, array("email"));
+}, array("email"), $options);
 if ($res == Aerospike::ERR_SCAN) {
     echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";
 } else if ($res == Aerospike::ERR_SCAN_ABORTED) {
@@ -68,3 +75,6 @@ bar@example.com
 I think a sample of 20 records is enough
 ```
 
+## See Also
+
+- [Aerospike::get()](aerospike_get.md)

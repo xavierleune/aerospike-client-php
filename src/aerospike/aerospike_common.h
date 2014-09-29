@@ -1,7 +1,7 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
-#include<aerospike/as_arraylist.h>
-#include<aerospike/as_hashmap.h>
+#include <aerospike/as_arraylist.h>
+#include <aerospike/as_hashmap.h>
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
@@ -25,13 +25,73 @@
                 (void **) &datavalue, &position) == SUCCESS;     \
          zend_hash_move_forward_ex(ht, &position))
 
+/* 
+ *******************************************************************************************************
+ * MACROS FOR MAX STORE SIZE.
+ *******************************************************************************************************
+ */
 #define AS_MAX_STORE_SIZE 1024
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
 
+/* 
+ *******************************************************************************************************
+ * MACROS FOR UDF KEYS AND FILE READING BUFFER SIZE.
+ *******************************************************************************************************
+ */
 #define UDF_MODULE_NAME "name"
 #define UDF_MODULE_TYPE "type"
 #define LUA_FILE_BUFFER_FRAME 512
+
+/* 
+ *******************************************************************************************************
+ * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR LUA SYSTEM AND USER PATHS IF
+ * SPECIFIED, ELSE RETURN DEFAULTS.
+ *******************************************************************************************************
+ */
+#define LUA_SYSTEM_PATH_PHP_INI INI_STR("aerospike.udf.lua_system_path") ? INI_STR("aerospike.udf.lua_system_path") : ""
+#define LUA_USER_PATH_PHP_INI INI_STR("aerospike.udf.lua_user_path") ? INI_STR("aerospike.udf.lua_user_path") : ""
+
+/* 
+ *******************************************************************************************************
+ * MACROS FOR PREDICATE ARRAY KEYS.
+ *******************************************************************************************************
+ */
+#define BIN "bin"
+#define OP "op"
+#define VAL "val"
+
+/*
+ *******************************************************************************************************
+ * EXPECTED KEYS IN INPUT FROM PHP USERLAND.
+ *******************************************************************************************************
+ */
+#define PHP_AS_KEY_DEFINE_FOR_HOSTS                   "hosts"
+#define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN               5
+#define PHP_AS_KEY_DEFINE_FOR_USER                    "user"
+#define PHP_AS_KEY_DEFINE_FOR_USER_LEN                4
+#define PHP_AS_KEY_DEFINE_FOR_PASSWORD                "pass"
+#define PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN            4
+#define PHP_AS_KEY_DEFINE_FOR_ADDR                    "addr"
+#define PHP_AS_KEY_DEFINE_FOR_ADDR_LEN                4
+#define PHP_AS_KEY_DEFINE_FOR_PORT                    "port"
+#define PHP_AS_KEY_DEFINE_FOR_PORT_LEN                4
+#define PHP_AS_KEY_DEFINE_FOR_NS                      "ns"
+#define PHP_AS_KEY_DEFINE_FOR_NS_LEN                  2
+#define PHP_AS_KEY_DEFINE_FOR_SET                     "set"
+#define PHP_AS_KEY_DEFINE_FOR_SET_LEN                 3
+#define PHP_AS_KEY_DEFINE_FOR_KEY                     "key"
+#define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                 3
+#define PHP_AS_KEY_DEFINE_FOR_DIGEST                  "digest"
+#define PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN              6
+#define PHP_AS_RECORD_DEFINE_FOR_TTL                  "ttl"
+#define PHP_AS_RECORD_DEFINE_FOR_TTL_LEN              3
+#define PHP_AS_RECORD_DEFINE_FOR_GENERATION           "generation"
+#define PHP_AS_RECORD_DEFINE_FOR_GENERATION_LEN       10
+#define PHP_AS_RECORD_DEFINE_FOR_METADATA             "metadata"
+#define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN         8
+#define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
+#define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
 
 /*
  *******************************************************************************************************
@@ -121,11 +181,27 @@ extern zend_fcall_info_cache user_deserializer_call_info_cache;
 extern zval                  *user_deserializer_callback_retval_p;
 extern uint32_t              is_user_deserializer_registered;
 
+/*
+ ****************************************************************************
+ * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
+ * that allows for userland function callbacks from within a C-callback
+ * context, by having both passed within this struct as a void *udata.
+ ****************************************************************************
+ */
+typedef struct _userland_callback {
+    zend_fcall_info *fci_p;
+    zend_fcall_info_cache *fcc_p;
+} userland_callback;
+
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
+extern bool
+aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
+extern bool
+aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p);
 
-/* 
+/*
  * Need to re-direct the same to log function that we have written
  * if per Aerospike_obj has been decided then we have to pass the object
  * as well into the callback method
@@ -192,7 +268,7 @@ extern as_log_level   php_log_level_set;
 #define PHP_IS_STRING(type)      (IS_STRING == type)
 #define PHP_IS_NOT_STRING(type)  (IS_STRING != type)
 #define PHP_IS_LONG(type)        (IS_LONG == type)
-
+#define PHP_IS_NOT_LONG(type)    (IS_LONG != type)
 
 /* 
  *******************************************************************************************************
@@ -203,9 +279,11 @@ extern as_log_level   php_log_level_set;
  */
 #define PHP_TYPE_ISNULL(zend_val)        PHP_IS_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISSTR(zend_val)         PHP_IS_STRING(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISLONG(zend_val)        PHP_IS_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISARR(zend_val)         PHP_IS_ARRAY(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTNULL(zend_val)     PHP_IS_NOT_NULL(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
+#define PHP_TYPE_ISNOTLONG(zend_val)     PHP_IS_NOT_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
  
 /* 
@@ -256,30 +334,21 @@ extern as_log_level   php_log_level_set;
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);
 
 extern as_status
-aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, 
-                                               as_key* as_key_p, 
-                                               int16_t* set_val_p);
+aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
+        as_key* as_key_p, int16_t* set_val_p);
 
 extern as_status
-aerospike_transform_check_and_set_config(HashTable* ht_p, 
-                                         zval** retdata_pp,
-                                         as_config* config_p);
+aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
+        as_config* config_p);
 
 extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p,
-                                 zval **record_pp, 
-                                 as_key* as_key_p,
-                                 as_error *error_p,
-                                 u_int32_t ttl_u32,
-                                 zval* options_p);
+aerospike_transform_key_data_put(aerospike* as_object_p, zval **record_pp,
+        as_key* as_key_p, as_error *error_p, u_int32_t ttl_u32,
+        zval* options_p);
 
 extern as_status
-aerospike_transform_get_record(aerospike* as_object_p,
-                               as_key* get_rec_key_p,
-                               zval* options_p,
-                               as_error *error_p,
-                               zval* get_record_p,
-                               zval* bins_p);
+aerospike_transform_get_record(aerospike* as_object_p, as_key* get_rec_key_p,
+        zval* options_p, as_error *error_p, zval* get_record_p, zval* bins_p);
 
 /*
  *******************************************************************************************************
@@ -287,58 +356,41 @@ aerospike_transform_get_record(aerospike* as_object_p,
  *******************************************************************************************************
  */
 extern as_status
-aerospike_record_operations_exists(aerospike* as_object_p, 
-                                   as_key* as_key_p, 
-                                   as_error *error_p, 
-                                   zval* metadata_p, 
-                                   zval* options_p);
-extern as_status
-aerospike_record_operations_remove(aerospike* as_object_p, 
-                                   as_key* as_key_p, 
-                                   as_error *error_p, 
-                                   zval* options_p);
-extern as_status
-aerospike_record_operations_ops(aerospike* as_object_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                int8_t* bin_name_p,
-                                int8_t* str,
-                                u_int64_t offset,
-                                u_int64_t initial_value,
-                                u_int64_t time_to_live,
-                                u_int64_t operation);
-extern as_status
-aerospike_record_operations_remove_bin(aerospike* as_object_p, 
-                                       as_key* as_key_p, 
-                                       zval* bin_name_p, 
-                                       as_error* error_p, 
-                                       zval* options_p);
+aerospike_record_operations_exists(aerospike* as_object_p, as_key* as_key_p,
+        as_error *error_p, zval* metadata_p, zval* options_p);
 
 extern as_status
-aerospike_php_exists_metadata(aerospike*  as_object_p, 
-                              zval* key_record_p, 
-                              zval* metadata_p, 
-                              zval* options_p, 
-                              as_error *error_p);
+aerospike_record_operations_remove(aerospike* as_object_p,
+        as_key* as_key_p, as_error *error_p, zval* options_p);
+
+extern as_status
+aerospike_record_operations_ops(aerospike* as_object_p, as_key* as_key_p,
+        zval* options_p, as_error* error_p, int8_t* bin_name_p, int8_t* str,
+        u_int64_t offset, u_int64_t initial_value, u_int64_t time_to_live,
+        u_int64_t operation);
+
+extern as_status
+aerospike_record_operations_remove_bin(aerospike* as_object_p,
+        as_key* as_key_p, zval* bin_name_p, as_error* error_p,
+        zval* options_p);
+
+extern as_status
+aerospike_php_exists_metadata(aerospike*  as_object_p, zval* key_record_p,
+        zval* metadata_p, zval* options_p, as_error *error_p);
 
 /*
  *******************************************************************************************************
  * Extern declarations of helper functions.
  *******************************************************************************************************
  */
-extern void 
-aerospike_helper_set_error(zend_class_entry *ce_p, 
-                           zval *object_p, 
-                           as_error *error_p, 
-                           bool reset_flag TSRMLS_DC);
+extern void
+aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p,
+        as_error *error_p, bool reset_flag TSRMLS_DC);
 
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
-                                        bool persist_flag,
-                                        as_config* conf,
-                                        HashTable persistent_list,
-                                        int persist);
+        bool persist_flag, as_config* conf, HashTable persistent_list,
+        int persist);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);
@@ -348,43 +400,63 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool);
  * Extern declarations of UDF functions.
  ******************************************************************************************************
  */
+extern as_status
+aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
+        char *path_p, char *module_p, long language, zval *options_p);
 
 extern as_status
-aerospike_udf_register(Aerospike_object* aerospike_obj_p,
-                       as_error* error_p,
-                       char *path_p,
-                       char *module_p,
-                       long language,
-                       zval *options_p);
+aerospike_udf_deregister(Aerospike_object* aerospike_obj_p, as_error* error_p,
+        char *module_p, zval *options_p);
 
 extern as_status
-aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
-                         as_error* error_p,
-                         char *module_p,
-                         zval *options_p);
-
-extern as_status
-aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
-                    as_key* as_key_p,
-                    as_error* error_p,
-                    char* module_p,
-                    char* function_p,
-                    zval** args_pp,
-                    zval* return_value_p,
-                    zval* options_p);
+aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* as_key_p,
+        as_error* error_p, char* module_p, char* function_p, zval** args_pp,
+        zval* return_value_p, zval* options_p);
 
 extern as_status
 aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
-                                      as_error *error_p,
-                                      zval* array_of_modules_p,
-                                      long language,
-                                      zval* options_p);
+        as_error *error_p, zval* array_of_modules_p, long language,
+        zval* options_p);
 
 extern as_status
 aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
-                                         as_error *error_p,
-                                         char* module_p,
-                                         zval* udf_code_p,
-                                         long language,
-                                         zval* options_p);
+        as_error *error_p, char* module_p, zval* udf_code_p, long language,
+        zval* options_p);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of scan functions.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
+        char* namespace_p, char* set_p, userland_callback* user_func_p,
+        HashTable* bins_ht_p, /*long percent, long scan_priority,
+        bool concurrent, bool no_bins,*/ zval* options_p);
+
+extern as_status
+aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
+        char *module_p, char *function_p, zval** args_pp, char* namespace_p,
+        char* set_p, zval* scan_id_p, /*long percent,
+        long scan_priority, bool concurrent, bool no_bins,*/ zval *options_p);
+
+extern as_status
+aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
+        uint64_t scan_id, zval* scan_info_p, zval* options_p);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of query functions.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
+        char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
+        HashTable* predicate_ht_p, zval* options_p);
+
+extern as_status
+aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
+        const char* module_p, const char* function_p, zval** args_pp,
+        char* namespace_p, char* set_p, HashTable* bins_ht_p,
+        HashTable* predicate_ht_p, zval* return_value_p, zval* options_p);
 #endif

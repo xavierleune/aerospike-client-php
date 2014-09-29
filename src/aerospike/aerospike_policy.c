@@ -4,6 +4,7 @@
 #include "aerospike/as_config.h"
 #include "aerospike/as_policy.h"
 #include "aerospike/as_status.h"
+#include "aerospike/as_scan.h"
 
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
@@ -16,6 +17,7 @@
 #define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
 #define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
+#define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 
 /* 
  *******************************************************************************************************
@@ -40,7 +42,12 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
     { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
     { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
+    { OPT_POLICY_KEY                    ,   "OPT_POLICY_KEY"                    },
     { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
+    { OPT_SCAN_PRIORITY                 ,   "OPT_SCAN_PRIORITY"                 },
+    { OPT_SCAN_PERCENTAGE               ,   "OPT_SCAN_PERCENTAGE"               },
+    { OPT_SCAN_CONCURRENTLY             ,   "OPT_SCAN_CONCURRENTLY"             },
+    { OPT_SCAN_NOBINS                   ,   "OPT_SCAN_NOBINS"                   },
     { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
     { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
     { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
@@ -52,7 +59,17 @@ AerospikeConstants aerospike_constants[] = {
     { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
     { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
     { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
-    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      }
+    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      },
+    { SCAN_PRIORITY_AUTO                ,   "SCAN_PRIORITY_AUTO"                },
+    { SCAN_PRIORITY_LOW                 ,   "SCAN_PRORITY_LOW"                  },
+    { SCAN_PRIORITY_MEDIUM              ,   "SCAN_PRIORITY_MEDIUM"              },
+    { SCAN_PRIORITY_HIGH                ,   "SCAN_PRIORITY_HIGH"                },
+    { SCAN_STATUS_UNDEF                 ,   "SCAN_STATUS_UNDEF"                 },
+    { SCAN_STATUS_INPROGRESS            ,   "SCAN_STATUS_INPROGRESS"            },
+    { SCAN_STATUS_ABORTED               ,   "SCAN_STATUS_ABORTED"               },
+    { SCAN_STATUS_COMPLETED             ,   "SCAN_STATUS_COMPLETED"             },
+    { POLICY_KEY_DIGEST                 ,   "POLICY_KEY_DIGEST"                 },
+    { POLICY_KEY_SEND                   ,   "POLICY_KEY_SEND"                   }
 };
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
@@ -98,10 +115,17 @@ exit:
  *
  * @param as_config_p           The as_config object to be passed in case of connect.
  * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
- * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param info_policy_p         The as_policy_info to be passed in case of
+ *                              scan_info, register, deregister, get_registered,
+ *                              list_registered udfs.
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan
+ *                              and scanApply.
+ * @param query_policy_p        The as_policy_query to be passed in case of
+ *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  *
  *******************************************************************************************************
@@ -113,6 +137,8 @@ check_and_set_default_policies(as_config *as_config_p,
                                as_policy_operate *operate_policy_p,
                                as_policy_remove *remove_policy_p,
                                as_policy_info *info_policy_p,
+                               as_policy_scan *scan_policy_p,
+                               as_policy_query *query_policy_p,
                                uint32_t *serializer_policy_p)
 {
     uint32_t ini_value = 0;
@@ -120,6 +146,9 @@ check_and_set_default_policies(as_config *as_config_p,
     if (ini_value = READ_TIMEOUT_PHP_INI) {
         if (read_policy_p) {
             read_policy_p->timeout = ini_value;
+            if (KEY_POLICY_PHP_INI) {
+                read_policy_p->key = KEY_POLICY_PHP_INI;
+            }
         }
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
@@ -139,6 +168,12 @@ check_and_set_default_policies(as_config *as_config_p,
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
         }
+        if (scan_policy_p) {
+            scan_policy_p->timeout = ini_value;
+        }
+        if (query_policy_p) {
+            query_policy_p->timeout = ini_value;
+        }
     }
 
     if ((ini_value = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
@@ -157,10 +192,17 @@ check_and_set_default_policies(as_config *as_config_p,
  *
  * @param as_config_p           The as_config object to be passed in case of connect.
  * @param read_policy_p         The as_policy_read to be passed in case of connect/get.
- * @param write_policy_p        The as_policy_write to be passed in case of connect/put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of connect/put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param info_policy_p         The as_policy_info to be passed in case of
+ *                              scan_info, register, deregister, get_registered,
+ *                              list_registered udfs.
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan
+ *                              and scanApply.
+ * @param query_policy_p        The as_policy_query to be passed in case of
+ *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
@@ -175,13 +217,16 @@ set_policy_ex(as_config *as_config_p,
               as_policy_operate *operate_policy_p,
               as_policy_remove *remove_policy_p,
               as_policy_info *info_policy_p,
+              as_policy_scan *scan_policy_p,
+              as_policy_query *query_policy_p,
               uint32_t *serializer_policy_p,
+              as_scan* as_scan_p,
               zval *options_p,
               as_error *error_p)
 {
-    if ((!read_policy_p) && (!write_policy_p) && 
-        (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p)
-        && (!serializer_policy_p)) {
+    if ((!read_policy_p) && (!write_policy_p) &&
+        (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
+        (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy");
         goto exit;
@@ -216,12 +261,23 @@ set_policy_ex(as_config *as_config_p,
          * case: info
          */
         as_policy_info_init(info_policy_p);
+    } else if (scan_policy_p) {
+        /*
+         * case: scan, scanApply
+         */
+        as_policy_scan_init(scan_policy_p);
+    } else if (query_policy_p) {
+        /*
+         * case: query, aggregate
+         */
+        as_policy_query_init(query_policy_p);
     }
 
     if (options_p == NULL) {
         check_and_set_default_policies(as_config_p, read_policy_p,
                        write_policy_p, operate_policy_p, remove_policy_p,
-                       info_policy_p, serializer_policy_p);
+                       info_policy_p, scan_policy_p, query_policy_p,
+                       serializer_policy_p);
     } else {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -231,7 +287,10 @@ set_policy_ex(as_config *as_config_p,
         int16_t             write_flag = 0;
         int16_t             connect_flag = 0;
         int16_t             serializer_flag = 0;
-
+        uint32_t            scan_percentage = 0;
+        uint32_t            scan_priority = SCAN_PRIORITY_AUTO;
+        bool                scan_concurrent = false;
+        bool                scan_nobins = false;
         foreach_hashtable(options_array, options_pointer, options_value) {
             uint options_key_len;
             ulong options_index;
@@ -266,6 +325,15 @@ set_policy_ex(as_config *as_config_p,
                         read_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if (info_policy_p) {
                         info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (scan_policy_p) {
+                        scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (query_policy_p) {
+                        query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        goto exit;
                     }
                     read_flag = 1;
                     break;
@@ -284,6 +352,10 @@ set_policy_ex(as_config *as_config_p,
                         remove_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if(info_policy_p) {
                         info_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if(scan_policy_p) {
+                        scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if(query_policy_p) {
+                        query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -345,6 +417,85 @@ set_policy_ex(as_config *as_config_p,
                     }
                     serializer_flag = 1;
                     break;
+                case OPT_SCAN_PRIORITY:
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        goto exit;
+                    }
+                    scan_priority = (uint32_t) Z_LVAL_PP(options_value); 
+                    if ((scan_priority & AS_SCAN_PRIORITY) != AS_SCAN_PRIORITY) {
+                        DEBUG_PHP_EXT_DEBUG("Invalid value for scan priority");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Invalid value for scan priority");
+                        goto exit;
+                    } else if (!as_scan_set_priority(as_scan_p, (scan_priority - AS_SCAN_PRIORITY))) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set scan priority");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set scan priority");
+                        goto exit;
+                    }
+                    break;
+                case OPT_SCAN_PERCENTAGE:
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_PERCENTAGE");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_SCAN_PERCENTAGE");
+                        goto exit;
+                    }
+                    scan_percentage = (uint32_t) Z_LVAL_PP(options_value); 
+                    if (scan_percentage < 0 || scan_percentage > 100) {
+                        DEBUG_PHP_EXT_DEBUG("Invalid value for scan percent");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Invalid value for scan percent");
+                        goto exit;
+                    } else if (!as_scan_set_percent(as_scan_p, scan_percentage)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set scan percent");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set scan percent");
+                        goto exit;
+                    }
+                    break;
+                case OPT_SCAN_CONCURRENTLY:
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        goto exit;
+                    }
+                    scan_concurrent = (uint32_t) Z_BVAL_PP(options_value); 
+                    if (!as_scan_set_concurrent(as_scan_p, scan_concurrent)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set scan concurrency");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set scan concurrency");
+                        goto exit;
+                    }
+                    break;
+                case OPT_SCAN_NOBINS:
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        goto exit;
+                    }
+                    scan_nobins = (uint32_t) Z_BVAL_PP(options_value); 
+                    if (!as_scan_set_nobins(as_scan_p, scan_nobins)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set scan no bins");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set scan no bins");
+                        goto exit;
+                    }
+                    break;
+                case OPT_POLICY_KEY:
+                    if((Z_TYPE_PP(options_value) != IS_LONG) && ((Z_LVAL_PP(options_value) & AS_POLICY_KEY_DIGEST) != AS_POLICY_KEY_DIGEST)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        goto exit;
+                    }
+                    if (read_policy_p) {
+                        read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        goto exit;
+                    }
+                    read_flag = 1;
+                    break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -354,21 +505,21 @@ set_policy_ex(as_config *as_config_p,
         }
         if (!write_flag && write_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
-                    NULL, write_policy_p, NULL, NULL, NULL, NULL);
+                    NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL, NULL);
             connect_flag = 1;
-        } 
+        }
         if (!read_flag && read_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
-                    read_policy_p, NULL, NULL, NULL, NULL, NULL);
+                    read_policy_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
             connect_flag = 1;
-        } 
+        }
         if (!connect_flag && as_config_p) {
             check_and_set_default_policies(as_config_p, NULL, NULL, NULL,
-                    NULL, NULL, NULL);
+                    NULL, NULL, NULL, NULL, NULL);
         }
         if (!serializer_flag && serializer_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, NULL, NULL,
-                    NULL, serializer_policy_p);
+                    NULL, NULL, NULL, serializer_policy_p);
         }
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -383,10 +534,17 @@ exit:
  * (Called by all methods except connect.)
  *
  * @param read_policy_p         The as_policy_read to be passed in case of get.
- * @param write_policy_p        The as_policy_write to be passed in case of put. 
+ * @param write_policy_p        The as_policy_write to be passed in case of put.
  * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
  *                              append, prepend, increment and touch.
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
+ * @param info_policy_p         The as_policy_info to be passed in case of
+ *                              scan_info, register, deregister, get_registered,
+ *                              list_registered udfs.
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan
+ *                              and scanApply.
+ * @param query_policy_p        The as_policy_query to be passed in case of
+ *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
@@ -395,20 +553,32 @@ exit:
  *******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p, 
-           as_policy_write *write_policy_p, 
-           as_policy_operate *operate_policy_p, 
+set_policy(as_policy_read *read_policy_p,
+           as_policy_write *write_policy_p,
+           as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
            as_policy_info *info_policy_p,
+           as_policy_scan *scan_policy_p,
+           as_policy_query *query_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
            as_error *error_p)
 {
     set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p,
-            remove_policy_p, info_policy_p, serializer_policy_p, options_p,
-            error_p);
+            remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
+            serializer_policy_p, NULL, options_p, error_p);
 }
 
+extern void
+set_policy_scan(as_policy_scan *scan_policy_p,
+        uint32_t *serializer_policy_p,
+        as_scan *as_scan_p,
+        zval *options_p,
+        as_error *error_p)
+{
+    set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, scan_policy_p, NULL,
+            serializer_policy_p, as_scan_p, options_p, error_p);
+}
 /*
  *******************************************************************************************************
  * Wrapper function for setting the relevant aerospike policies by using the user's
@@ -434,7 +604,7 @@ set_general_policies(as_config *as_config_p,
     }
 
     set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write,
-                           NULL, NULL, NULL, NULL, options_p, error_p);
+                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p);
 exit:
     return;
 }

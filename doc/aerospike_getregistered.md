@@ -20,7 +20,8 @@ UDF *module* that was previously registered with the server.
 
 **language** one of Aerospike::UDF_TYPE_*.
 
-**options** including **Aerospike::OPT_READ_TIMEOUT**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

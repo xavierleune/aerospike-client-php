@@ -5,10 +5,12 @@ setenv PATH ${PATH}:${PWD}/scripts
 echo "Using Aerospike C API version: $AEROSPIKE_C_CLIENT"
 
 if ( ! -d $CLIENTREPO_3X ) then
-   echo "Downloading Aerospike C Client SDK..."
-   scripts/aerospike-client-c.sh
+    echo "Downloading Aerospike C Client SDK..."
+else
+    echo "Aerospike C Client SDK is present."
 endif
+scripts/aerospike-client-c.sh
 
-echo "Aerospike C Client SDK is present."
-
-cd src/aerospike
+if ( $? -eq 0 ) then
+    cd src/aerospike
+endif

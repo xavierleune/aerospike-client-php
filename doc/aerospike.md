@@ -10,16 +10,16 @@ The main Aerospike class
 
 class Aerospike
 {
-    //
-    // Policy flags:
-    // The policy constants map to the C client
-    //  src/include/aerospike/as_policy.h
-    //
+    // The key policy can be determined by setting OPT_POLICY_KEY to one of
+    const POLICY_KEY_DIGEST = 1; hashes (ns,set,key) data into a unique record ID (default)
+    const POLICY_KEY_SEND = 2; also send, store, and get the actual (ns,set,key) with each record
+
+    // The retry policy can be determined by setting OPT_POLICY_RETRY to one of
     const POLICY_RETRY_NONE = 1; // do not retry an operation (default)
     const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
 
     // By default writes will try to create or replace records and bins
-    // behaving similar to an associative array in PHP. Setting
+    // behaving similar to an array in PHP. Setting
     // OPT_POLICY_EXISTS with one of these values will overwrite this.
     // POLICY_EXISTS_IGNORE (aka CREATE_OR_UPDATE) is the default value
     const POLICY_EXISTS_IGNORE = 1; // interleave bins of a record if it exists
@@ -29,22 +29,31 @@ class Aerospike
     const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // overwrite the bins if record exists
 
     // Determines a handler for writing values of unsupported type into bins
+    // Set OPT_SERIALIZER to one of the following:
     const SERIALIZER_NONE = 0;
     const SERIALIZER_PHP  = 1; // default handler
     const SERIALIZER_JSON = 2;
     const SERIALIZER_USER = 3;
 
-    //
+    // OPT_SCAN_PRIORITY can be set to one of the following:
+    const SCAN_PRIORITY_AUTO = 0; //The cluster will auto adjust the scan priority
+    const SCAN_PRIORITY_LOW = 1; //Low priority scan.
+    const SCAN_PRIORITY_MEDIUM = 2; //Medium priority scan.
+    const SCAN_PRIORITY_HIGH = 3; //High priority scan.
+
     // Options can be assigned values that modify default behavior
-    //
     const OPT_CONNECT_TIMEOUT = 1; // value in milliseconds, default: 1000
     const OPT_READ_TIMEOUT = 2; // value in milliseconds, default: 1000
     const OPT_WRITE_TIMEOUT = 3; // value in milliseconds, default: 1000
     const OPT_POLICY_RETRY = 4; // set to a Aerospike::POLICY_RETRY_* value
     const OPT_POLICY_EXISTS = 5; // set to a Aerospike::POLICY_EXISTS_* value
     const OPT_SERIALIZER = 6; // set the unsupported type handler
+    const OPT_SCAN_PRIORITY = 7; // set to a Aerospike::SCAN_PRIORITY_* value
+    const OPT_SCAN_PERCENTAGE = 8; // integer value 1-100, default: 100
+    const OPT_SCAN_CONCURRENTLY = 9; // boolean value, default: false
+    const OPT_SCAN_NOBINS = 10; // boolean value, default: false
+    const OPT_POLICY_KEY = 11; // records store the digest unique ID, optionally also its (ns,set,key) inputs
 
-    //
     // Aerospike Status Codes:
     //
     // Each Aerospike API method invocation returns a status code
@@ -103,9 +112,13 @@ class Aerospike
     const ERR_UDF_FILE_NOT_FOUND  = 1301; // Source file for the module not found
     const ERR_LUA_FILE_NOT_FOUND  = 1301; // Source file for the module not found
 
-    //
+    // Status values returned by scanInfo()
+    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
+    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
+    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
+    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
+
     // Logger
-    //
     const LOG_LEVEL_OFF   = 6;
     const LOG_LEVEL_ERROR = 5;
     const LOG_LEVEL_WARN  = 4;
@@ -113,13 +126,10 @@ class Aerospike
     const LOG_LEVEL_DEBUG = 2;
     const LOG_LEVEL_TRACE = 1;
 
-    //
     // Query Predicate Operators
-    //
     const OP_EQ = '=';
     const OP_BETWEEN = 'BETWEEN';
 
-    //
     // Multi-operation operators map to the C client
     //  src/include/aerospike/as_operations.h
     const OPERATOR_WRITE   = 0;
@@ -138,58 +148,59 @@ class Aerospike
 
 
     // lifecycle and connection methods
-    public int Aerospike::__construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
-    public void Aerospike::__destruct ( void )
-    public boolean Aerospike::isConnected ( void )
-    public void Aerospike::close ( void )
-    public void Aerospike::reconnect ( void )
-    public int Aerospike::getNodes ( array &$metadata [, array $options ] )
+    public int __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
+    public void __destruct ( void )
+    public boolean isConnected ( void )
+    public void close ( void )
+    public void reconnect ( void )
+    public int getNodes ( array &$metadata [, array $options ] )
 
     // error handling methods
-    public string Aerospike::error ( void )
-    public int Aerospike::errorno ( void )
-    public void Aerospike::setLogLevel ( int $log_level )
-    public void Aerospike::setLogHandler ( callback $log_handler )
+    public string error ( void )
+    public int errorno ( void )
+    public void setLogLevel ( int $log_level )
+    public void setLogHandler ( callback $log_handler )
 
     // key-value methods
-    public array Aerospike::initKey ( string $ns, string $set, int|string $pk )
-    public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
-    public int Aerospike::get ( array $key, array &$record [, array $filter [, array $options ]] )
-    public int Aerospike::exists ( array $key, array &$metadata [, array $options ] )
-    public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
-    public int Aerospike::remove ( array $key [, array $options ] )
-    public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
-    public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
-    public int Aerospike::append ( array $key, string $bin, string $value [, array $options ] )
-    public int Aerospike::prepend ( array $key, string $bin, string $value [, array $options ] )
-    public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
+    public array initKey ( string $ns, string $set, int|string $pk )
+    public int put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
+    public int get ( array $key, array &$record [, array $filter [, array $options ]] )
+    public int exists ( array $key, array &$metadata [, array $options ] )
+    public int touch ( array $key, int $ttl = 0 [, array $options ] )
+    public int remove ( array $key [, array $options ] )
+    public int removeBin ( array $key, array $bins [, array $options ] )
+    public int increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+    public int append ( array $key, string $bin, string $value [, array $options ] )
+    public int prepend ( array $key, string $bin, string $value [, array $options ] )
+    public int operate ( array $key, array $operations [, array &$returned ] )
 
     // unsupported type handler methods
-    public static void Aerospike::setSerializer ( callback $serialize_cb )
-    public static void Aerospike::setDeserializer ( callback $unserialize_cb )
+    public static void setSerializer ( callback $serialize_cb )
+    public static void setDeserializer ( callback $unserialize_cb )
 
     // batch operation methods
-    public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
-    public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
+    public int getMany ( array $keys, array &$records [, array $filter [, array $options]] )
+    public int existsMany ( array $keys, array &$metadata [, array $options ] )
 
     // UDF methods
-    public int Aerospike::register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
-    public int Aerospike::deregister ( string $module )
-    public int Aerospike::listRegistered ( array &$modules [, int $language ] )
-    public int Aerospike::getRegistered ( string $module, string &$code )
-    public int Aerospike::apply ( array $key, string $module, string $function[,
-            array $args [, mixed &$returned [, array $options ]]] )
-    public int Aerospike::aggregate ( string $module, string $function, array $args, string $ns, string $set, array $where, mixed &$value )
+    public int register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+    public int deregister ( string $module )
+    public int listRegistered ( array &$modules [, int $language ] )
+    public int getRegistered ( string $module, string &$code )
+    public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options ]]] )
+    public int aggregate ( string $ns, string $set, array $where, string $module, string $function, array $args, mixed &$returned [, array $options ] )
+    public int scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$scan_id [, array $options ] )
+    public int scanInfo ( integer $scan_id, array &$info [, array $options ] )
 
     // query and scan methods
-    public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
-    public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
-    public array Aerospike::predicateEquals ( string $bin, int|string $val )
-    public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
+    public int query ( string $ns, string $set, array $where, callback $record_cb [, array $select [, array $options ]] )
+    public int scan ( string $ns, string $set, callback $record_cb [, array $select [, array $options ]] )
+    public array predicateEquals ( string $bin, int|string $val )
+    public array predicateBetween ( string $bin, int $min, int $max )
 
     // admin methods
-    public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name )
-    public int Aerospike::dropIndex ( string $ns, string $name )
+    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name )
+    public int dropIndex ( string $ns, string $name )
 }
 ```
 
@@ -198,6 +209,6 @@ class Aerospike
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
-### [User Defined Methods](apiref_udf.md) \[to be implemented\]
+### [User Defined Methods](apiref_udf.md)
 ### [Admin Methods](apiref_admin.md) \[to be implemented\]
 

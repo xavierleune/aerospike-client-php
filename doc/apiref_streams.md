@@ -3,12 +3,12 @@
 
 ### [Aerospike::query](aerospike_query.md)
 ```
-public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $select [, array $options ]] )
 ```
 
 ### [Aerospike::scan](aerospike_scan.md)
 ```
-public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::scan ( string $ns, string $set, callback $record_cb [, array $select [, array $options ]] )
 ```
 
 ### [Aerospike::predicateEquals](aerospike_predicateequals.md)
@@ -37,8 +37,8 @@ $total = 0;
 $in_thirties = 0;
 $where = Aerospike::predicateBetween("age", 30, 39);
 $res = $db->query("test", "users", $where, function ($record) {
-    echo "{$record['email']} age {$record['age']}\n";
-    $total += (int) $record['age'];
+    echo "{$record['bins']['email']} age {$record['bins']['age']}\n";
+    $total += (int) $record['bins']['age'];
     $in_thirties++;
     if ($in_thirties >= 10) return false; // stop the stream at the tenth record
 }, array("email", "age"));

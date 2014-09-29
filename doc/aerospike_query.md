@@ -6,7 +6,7 @@ Aerospike::query - queries a secondary index on a set in the Aerospike database
 ## Description
 
 ```
-public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $bins [, array $options ]] )
+public int Aerospike::query ( string $ns, string $set, array $where, callback $record_cb [, array $select [, array $options ]] )
 ```
 
 **Aerospike::query()** will query a *set* with a specified *where* predicate
@@ -19,7 +19,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 **ns** the namespace
 
-**set** the set
+**set** the set to be queried
 
 **where** the predicate conforming to one of the following:
 ```
@@ -34,11 +34,12 @@ array("bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo")
 array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
 ```
 
-**record_cb** a callback function invoked for each record streaming back from the server.
+**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
 
-**bins** an array of bin names to be returned.
+**select** an array of bin names which are the subset to be returned.
 
-**options** including **Aerospike::OPT_POLICY_RETRY**.
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 
@@ -62,8 +63,8 @@ $total = 0;
 $in_thirties = 0;
 $where = Aerospike::predicateBetween("age", 30, 39);
 $res = $db->query("test", "users", $where, function ($record) {
-    echo "{$record['email']} age {$record['age']}\n";
-    $total += (int) $record['age'];
+    echo "{$record['bins']['email']} age {$record['bins']['age']}\n";
+    $total += (int) $record['bins']['age'];
     $in_thirties++;
 }, array("email", "age"));
 if ($res == Aerospike::ERR_QUERY) {
@@ -82,4 +83,10 @@ foo age 32
 bar age 35
 The average age of employees in their thirties is 34
 ```
+
+## See Also
+
+- [Aerospike::predicateEquals()](aerospike_predicateequals.md)
+- [Aerospike::predicateBetween()](aerospike_predicatebetween.md)
+- [Aerospike::scan()](aerospike_scan.md)
 

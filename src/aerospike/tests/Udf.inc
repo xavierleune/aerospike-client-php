@@ -17,7 +17,7 @@ class Udf extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $udf_register_status =
-            $db->register("./tests/phpt/Udf/bin_transform.lua", "module.lua");
+            $db->register("tests/lua/bin_transform.lua", "module.lua");
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -59,7 +59,7 @@ class Udf extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $udf_register_status = $db->register("./tests/phpt/Udf/bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
+        $udf_register_status = $db->register("tests/lua/bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
             array(Aerospike::OPT_WRITE_TIMEOUT => 5000));
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
@@ -211,11 +211,12 @@ class Udf extends AerospikeTestCommon
         $key = $db->initKey("test","demo", "udf_for_string");
         if ($db->isConnected()) {
             $status = $db->put($key,array("bin1"=>"hello"));
-        } else{
+        } else {
             $db->close();
             return($db->errorno());
         }
-        $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1", "world"), $returned);
+        $status = $db->apply($key, "module", "bin_udf_operation_string", array("bin1",
+            "world"), $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -264,7 +265,7 @@ class Udf extends AerospikeTestCommon
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         $testList = array("bin1" => array(94, 222, 25, 58));
-        $result = array_diff_assoc_recursive($testList, $returned);
+        $result = array_diff_assoc_recursive($testList, $returned["bins"]);
         if(!empty($result)) {
             return Aerospike::ERR;
         }
@@ -351,8 +352,8 @@ class Udf extends AerospikeTestCommon
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         $testMap = array("bin1"=>array("k30"=>55555, "k20"=>55555, "k10"=>55555));
-        $result = array_diff_assoc_recursive($returned, $testMap);
-        if(!empty($result)) {
+        $result = array_diff_assoc_recursive($returned["bins"], $testMap);
+        if (!empty($result)) {
             return Aerospike::ERR;
         }
         return Aerospike::OK;
@@ -479,7 +480,7 @@ class Udf extends AerospikeTestCommon
         }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        if($returned!="") {
+        if ($returned != "") {
             return Aerospike::ERR;
         }
         return Aerospike::OK;
@@ -611,8 +612,8 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            foreach($modules as $moduleeach) {
-                if($moduleeach['name']=='module.lua') {
+            foreach ($modules as $moduleeach) {
+                if ($moduleeach['name'] == 'module.lua') {
                     return Aerospike::OK;
                 }
             }
@@ -646,8 +647,8 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            foreach($modules as $moduleeach) {
-                if($moduleeach['name']=='module.lua') {
+            foreach ($modules as $moduleeach) {
+                if ($moduleeach['name']=='module.lua') {
                     return Aerospike::OK;
                 }
             }
@@ -681,8 +682,8 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($db->errorno());
             }
-            foreach($modules as $moduleeach) {
-                if($moduleeach['name']=='module.lua') {
+            foreach ($modules as $moduleeach) {
+                if ($moduleeach['name'] == 'module.lua') {
                     return Aerospike::OK;
                 }
             }
@@ -719,8 +720,8 @@ class Udf extends AerospikeTestCommon
                 return($db->errorno());
             }
         }
-        $handle = fopen("tests/phpt/Udf/bin_transform.lua","r");
-        $mycode = fread($handle,filesize("tests/phpt/Udf/bin_transform.lua"));
+        $handle = fopen("tests/lua/bin_transform.lua","r");
+        $mycode = fread($handle,filesize("tests/lua/bin_transform.lua"));
         $result = strcmp($code, $mycode);
         if(!$result) {
             return Aerospike::OK;
