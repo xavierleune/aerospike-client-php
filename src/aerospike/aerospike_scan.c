@@ -163,7 +163,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     }
 
     if (module_p && function_p && (!as_scan_apply_each(scan_p, module_p,
-                    function_p, args_list_p))) {
+                    function_p, (as_list*)args_list_p))) {
         DEBUG_PHP_EXT_DEBUG("Unable to apply UDF on the scan");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Unable to initiate background scan");
