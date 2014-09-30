@@ -69,7 +69,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Ensuring that a record is put at test.users with PK=2345 ≻", 'black', true);
 $start = __LINE__;
 $key = $db->initKey("test", "users", 2345);
-$put_vals = array("email" => "peter.john@hal-inst.org", "name" => "Peter");
+$put_vals = array("email" => "roberto@hal-inst.org", "name" => "Roberto");
 $res = $db->put($key, $put_vals);
 if ($res == Aerospike::OK) {
     echo success();
@@ -83,10 +83,10 @@ $start = __LINE__;
 $processed = 0;
 $status = $db->scan("test", "users", function ($record) {
     global $processed;
-    if (array_key_exists('email', $record) && !is_null($record['email']) &&
-        array_key_exists('name', $record) && !is_null($record['name']))
+    if (array_key_exists('email', $record['bins']) && !is_null($record['bins']['email']) &&
+        array_key_exists('name', $record['bins']) && !is_null($record['bins']['name']))
     {
-        echo "\nName: " . $record['name'] . "\nEmail:" . $record['email'];
+        echo "\nName: " . $record['bins']['name'] . "\nEmail:" . $record['bins']['email'];
     }
     if ($processed++ > 20) {
         return false; // halt the stream by returning a false

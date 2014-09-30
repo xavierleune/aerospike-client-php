@@ -191,7 +191,18 @@ abstract class LDT
 
     /**
      * Destroy the LDT at the key and bin the class was initialized to.
-     *
+     * <code>
+     * namespace Aerospike\LDT;
+     * use Aerospike;
+     * $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
+     * $db = new \Aerospike($config);
+     * $key = $db->initKey("test", "user", 1);
+     * $llist = new \Aerospike\LDT\LList($db, $key, "timeline2");
+     * $res = $llist->destroy();
+     * if ($res !== \Aerospike\LDT::OK) {
+     *     var_dump($llist->error(), $llist->errorno());
+     * }
+     * </code>
      * @return int status code of the operation
      */
     public function destroy() {
