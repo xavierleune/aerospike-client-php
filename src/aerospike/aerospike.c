@@ -402,7 +402,7 @@ PHP_METHOD(Aerospike, __construct)
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
-
+    DEBUG_PHP_EXT_DEBUG("Over here right build");
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
@@ -1384,6 +1384,10 @@ PHP_METHOD(Aerospike, setDeserializer)
 {
     as_status              status = AEROSPIKE_OK;
 
+    if (user_deserializer_call_info.function_name &&
+            (Z_ISREF_P(user_deserializer_call_info.function_name))) {
+        RETURN_TRUE;
+    }
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
                              &user_deserializer_call_info,
                              &user_deserializer_call_info_cache,
@@ -1412,7 +1416,13 @@ PHP_METHOD(Aerospike, setSerializer)
 {
     as_status              status = AEROSPIKE_OK;
 
-    if (user_serializer_call_info.function_name) {
+    if (user_serializer_call_info.function_name &&
+        (Z_ISREF_P(user_serializer_call_info.function_name))) {
+        /*
+         * once set the same serializer would be used. Incase a new 
+         * serializer is to be given, then we would have to unref the older
+         * serialiser function and then attach the new serializer callback
+         */
         RETURN_TRUE;
     }
 
@@ -2878,14 +2888,21 @@ PHP_RINIT_FUNCTION(aerospike)
  */
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
-    /*** TO BE IMPLEMENTED ***/
-    if (is_user_serializer_registered && user_serializer_call_info.function_name) {
-        //Z_DELREF_P(user_serializer_call_info.function_name);
-        //zend_fcall_info_args_clear(&user_serializer_call_info, 1);
-        if (Z_ISREF_P(user_serializer_call_info.function_name)) {
-            zval_ptr_dtor(user_serializer_call_info.function_name);
+    if (user_serializer_call_info.function_name) {
+        if (1 == Z_REFCOUNT_P(user_serializer_call_info.function_name)) {
+            zval_ptr_dtor(&user_serializer_call_info.function_name);
+            user_serializer_call_info.function_name = NULL;
+        } else {
+            DEBUG_PHP_EXT_ERROR("leak for user serializer function");
         }
-        user_serializer_call_info.function_name = NULL;
+    }
+    if (user_deserializer_call_info.function_name) {
+        if (1 == Z_REFCOUNT_P(user_deserializer_call_info.function_name)) {
+            zval_ptr_dtor(&user_deserializer_call_info.function_name);
+            user_deserializer_call_info.function_name = NULL;
+        } else {
+            DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+        }
     }
 
     return SUCCESS;
