@@ -1123,7 +1123,7 @@ static void ADD_MAP_INDEX_LIST(void *key, void *value, void *array, void *err)
  */
 static void ADD_DEFAULT_ASSOC_MAP(void *key, void *value, void *array, void *err)
 {
-    if (NULL == key) {
+    if ((NULL == key)) {
         zval_dtor((zval *)array);
     }
     AS_ASSOC_MAP_TO_DEFAULT(key, value, array, err);

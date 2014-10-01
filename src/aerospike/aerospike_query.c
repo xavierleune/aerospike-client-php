@@ -303,9 +303,8 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     MAKE_STD_ZVAL(return_value_p);
-    /* No need for array initialization as we do that internally in the as_query
-     * for each callback.
-     */
+    array_init(return_value_p);
+
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
        DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
        error_p->code = AEROSPIKE_ERR;
