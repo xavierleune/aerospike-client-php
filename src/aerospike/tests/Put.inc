@@ -1210,8 +1210,8 @@ class Put extends AerospikeTestCommon
  }
 
 /**
-  * @test  
-  * PUT List containing Map of objects with PHP Serializer.  
+  * @test
+  * PUT List containing Map of objects with PHP Serializer.
   *
   * @pre
   * Connect using aerospike object to the specified node
