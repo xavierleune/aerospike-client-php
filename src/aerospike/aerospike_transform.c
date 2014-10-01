@@ -134,11 +134,11 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
     int8_t*     bytes_val_p = bytes->value;
 
     ALLOC_INIT_ZVAL(bytes_string);
-    ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 0);
 
     if (serialize_flag) {
         params[0] = value;
     } else {
+        ZVAL_STRINGL(bytes_string, bytes_val_p, bytes->size, 1);
         params[0] = &bytes_string;
     }
 
@@ -489,6 +489,10 @@ static void ADD_LIST_APPEND_BYTES(void *key, void *value, void *array, void *err
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
+    if (AEROSPIKE_OK != ((as_error *) err)->code) {
+        if (unserialized_zval)
+            zval_ptr_dtor(&unserialized_zval);
+    }
     return;
 }
 
@@ -781,6 +785,10 @@ static void ADD_MAP_INDEX_BYTES(void *key, void *value, void *array, void *err)
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
+    if (AEROSPIKE_OK != ((as_error *) err)->code) {
+        if (unserialized_zval)
+            zval_ptr_dtor(&unserialized_zval);
+    }
     return;
 }
 
@@ -809,7 +817,7 @@ static void ADD_DEFAULT_ASSOC_NULL(void *key, void *value, void *array, void *er
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_NULL((zval *) array);
+        //ZVAL_NULL((zval *) array);
     } else {
         add_assoc_null(((zval *) array), (char *) key);
     }
@@ -835,7 +843,11 @@ static void ADD_DEFAULT_ASSOC_BOOL(void *key, void *value, void *array, void *er
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_BOOL((zval *) array, (int) as_boolean_get((as_boolean *) value));
+        zval* bool_zval_p = NULL;
+        ALLOC_INIT_ZVAL(bool_zval_p);
+        ZVAL_BOOL(bool_zval_p, (int) as_boolean_get((as_boolean *) value));
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, bool_zval_p, 1, 1);
     } else {
         add_assoc_bool(((zval *) array), (char *) key,
                 (int) as_boolean_get((as_boolean *) value));
@@ -862,7 +874,11 @@ static void ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array, void *er
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_LONG((zval *) array, (long) as_integer_get((as_integer *) value));
+        zval* long_zval_p = NULL;
+        ALLOC_INIT_ZVAL(long_zval_p);
+        ZVAL_LONG(long_zval_p, (long) as_integer_get((as_integer *) value));
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, long_zval_p, 1, 1);
     } else {
        add_assoc_long(((zval *) array),  (char *) key,
                (long) as_integer_get((as_integer *) value));
@@ -889,8 +905,12 @@ static void ADD_DEFAULT_ASSOC_STRING(void *key, void *value, void *array, void *
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_STRINGL((zval *) array, as_string_get((as_string *) value),
-                strlen(as_string_get((as_string *) value)), 1);
+        zval* string_zval_p = NULL;
+        ALLOC_INIT_ZVAL(string_zval_p);
+        ZVAL_STRINGL(string_zval_p, as_string_get((as_string *) value),
+                 strlen(as_string_get((as_string *) value)), 1);
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, string_zval_p, 1, 1);
     } else {
         add_assoc_stringl(((zval *) array), (char *) key,
                 as_string_get((as_string *) value),
@@ -961,13 +981,17 @@ static void ADD_DEFAULT_ASSOC_BYTES(void *key, void *value, void *array, void *e
      * NULL will differentiate UDF from normal GET calls.
      */
     if (key == NULL) {
-        ZVAL_ZVAL((zval *) array, unserialized_zval, 1, 0);
+        ZVAL_ZVAL((zval *) array, unserialized_zval, 1, 1);
     } else {
         add_assoc_zval(((zval*)array), (char*) key, unserialized_zval);
     }
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
+    if (AEROSPIKE_OK != ((as_error *) err)->code) {
+        if (unserialized_zval)
+            zval_ptr_dtor(&unserialized_zval);
+    }
     return;
 }
 
@@ -1099,6 +1123,9 @@ static void ADD_MAP_INDEX_LIST(void *key, void *value, void *array, void *err)
  */
 static void ADD_DEFAULT_ASSOC_MAP(void *key, void *value, void *array, void *err)
 {
+    if ((NULL == key)) {
+        zval_dtor((zval *)array);
+    }
     AS_ASSOC_MAP_TO_DEFAULT(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -1117,6 +1144,9 @@ static void ADD_DEFAULT_ASSOC_MAP(void *key, void *value, void *array, void *err
  */
 static void ADD_DEFAULT_ASSOC_LIST(void *key, void *value, void *array, void *err)
 {
+    if (NULL == key) {
+        zval_dtor((zval *)array);
+    }
     AS_ASSOC_LIST_TO_DEFAULT(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -3001,7 +3031,7 @@ aerospike_transform_get_record(aerospike* as_object_p,
     foreach_callback_udata  foreach_record_callback_udata;
     zval*                   get_record_p = NULL;
 
-    MAKE_STD_ZVAL(get_record_p);
+    ALLOC_INIT_ZVAL(get_record_p);
     array_init(get_record_p);
 
     foreach_record_callback_udata.udata_p = get_record_p;
@@ -3052,7 +3082,7 @@ exit:
 
     if (AEROSPIKE_OK != status) {
         if (get_record_p) {
-            zval_dtor(get_record_p);
+            zval_ptr_dtor(&get_record_p);
         }
     }
 

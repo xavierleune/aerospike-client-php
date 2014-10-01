@@ -401,8 +401,10 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         DEBUG_PHP_EXT_WARNING("stream returned a non-as_record object to the callback.");
         return true;
     }
+
     MAKE_STD_ZVAL(record_p);
     array_init(record_p);
+
     foreach_record_callback_udata.udata_p = record_p;
     foreach_record_callback_udata.error_p = &error;
     if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
@@ -414,6 +416,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 
     MAKE_STD_ZVAL(outer_container_p);
     array_init(outer_container_p);
+
     if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec, &(current_as_rec->key), outer_container_p))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
         zval_ptr_dtor(&record_p);

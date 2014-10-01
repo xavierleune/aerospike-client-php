@@ -973,7 +973,7 @@ do {                                                                           \
  */
 #define ADD_DEFAULT_ASSOC_ZVAL(array, key, store)                              \
     if (key == NULL) {                                                         \
-        ZVAL_ZVAL((zval *) array, store, 1, 0);                                \
+        ZVAL_ZVAL((zval *) array, store, 1, 1);                                \
     } else {                                                                   \
         add_assoc_zval((zval *) array, key, store);                            \
     }
