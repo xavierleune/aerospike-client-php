@@ -51,7 +51,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     int persistent_ref_count;
-    pthread_mutex_t aerospike_mutex;
+    pthread_rwlock_t aerospike_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS

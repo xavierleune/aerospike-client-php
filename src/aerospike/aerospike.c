@@ -97,6 +97,7 @@ PHP_INI_END()
 
 
 static void tmp(void *p) {
+    TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In destructor function");
     aerospike_ref *as_ref_p = p;
     as_error error;
@@ -126,6 +127,8 @@ static void tmp(void *p) {
 static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     DEBUG_PHP_EXT_DEBUG("In ctor");
+   // pthread_mutex_init(&AEROSPIKE_G(aerospike_mutex), NULL);
+    pthread_rwlock_init(&AEROSPIKE_G(aerospike_mutex), NULL);
     if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
         AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
         DEBUG_PHP_EXT_DEBUG("Pointer is at: (%.4x)",AEROSPIKE_G(persistent_list_g));
@@ -1808,7 +1811,7 @@ bool record_stream_callback(const as_val* p_val, void* udata)
     bool                    do_continue = true;
     foreach_callback_udata  foreach_record_callback_udata;
     Aerospike_object *aerospike_obj_p = ((userland_callback *) udata)->obj;
-    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
+    TSRMLS_FETCH();
     if (!p_val) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
         return true;
@@ -1923,6 +1926,7 @@ PHP_METHOD(Aerospike, scan)
     userland_callback user_func;
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
+    user_func.obj = aerospike_obj_p;
     if (aerospike_scan_foreach(aerospike_obj_p->as_ref_p->as_p, &error, NULL, &scan, record_stream_callback, &user_func) != AEROSPIKE_OK) {
         e_level = E_WARNING;
         PHP_EXT_SET_AS_ERR(&error, error.code, error.message);

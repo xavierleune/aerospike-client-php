@@ -189,7 +189,7 @@ do {                                                                           \
     new_le.ptr = as_object_p->as_ref_p;                                        \
     new_le.type = val_persist;                                                 \
     if (new_flag) {                                                            \
-        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));                     \
+        pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
         DEBUG_PHP_EXT_DEBUG("Before:(%.4x) Head:(%.4x) Count in list are %d.", \
                 persistent_list, persistent_list->pListHead,                   \
                 persistent_list->nNumOfElements);                              \
@@ -198,14 +198,14 @@ do {                                                                           \
         DEBUG_PHP_EXT_DEBUG("After:(%.4x) Head:(%.4x) Count in list are %d",   \
                 persistent_list, persistent_list->pListHead,                   \
                 persistent_list->nNumOfElements);                              \
-        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));                   \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
         goto exit;                                                             \
     } else {                                                                   \
-        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));                     \
+        pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
         zend_hash_update(persistent_list,                                      \
                 alias, alias_len, (void *) &new_le,                            \
                 sizeof(zend_rsrc_list_entry), (void **) &le);                  \
-        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));                   \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
         goto exit;                                                             \
     }                                                                          \
 } while(0)
@@ -297,18 +297,18 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
     strcat(alias_to_search, ":");
     strcat(alias_to_search, port);
     for(itr_user=0; itr_user < conf->hosts_size; itr_user++) {
-        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));
+        pthread_rwlock_rdlock(&AEROSPIKE_G(aerospike_mutex));
         if (zend_hash_find(persistent_list, alias_to_search,
                 strlen(alias_to_search), (void **) &le) == SUCCESS) {
             if (alias_to_search) {
                 efree(alias_to_search);
                 alias_to_search = NULL;
             }
-            pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));
+            pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
             tmp_ref = le->ptr;
             goto use_existing;
         }
-        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
     }
 
     ZEND_HASH_CREATE_ALIAS_NEW(alias_to_search, strlen(alias_to_search), 1);
@@ -318,10 +318,10 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         strcpy(alias_to_hash, conf->hosts[itr_user].addr);
         strcat(alias_to_hash, ":");
         strcat(alias_to_hash, port);
-        pthread_mutex_lock(&AEROSPIKE_G(aerospike_mutex));
+        pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));
         zend_hash_add(persistent_list, alias_to_hash,
                 strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
-        pthread_mutex_unlock(&AEROSPIKE_G(aerospike_mutex));
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
         efree(alias_to_hash);
         alias_to_hash = NULL;
    }

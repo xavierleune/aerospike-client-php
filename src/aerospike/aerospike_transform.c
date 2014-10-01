@@ -1166,7 +1166,7 @@ extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
-    TSRMLS_FETCH_FROM_CTX(aerospike_object->ts);
+    TSRMLS_FETCH();
     AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(((foreach_callback_udata *) array)->error_p,
             NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
 
@@ -1189,7 +1189,7 @@ bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
-    TSRMLS_FETCH_FROM_CTX(aerospike_object->ts);
+    TSRMLS_FETCH();
     AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(((foreach_callback_udata *) array)->error_p,
             NULL, NULL, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
 
@@ -1210,10 +1210,9 @@ exit:
 */
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
-    DEBUG_PHP_EXT_DEBUG("Jhol over here");
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
-    TSRMLS_FETCH_FROM_CTX(aerospike_object->ts);
+    TSRMLS_FETCH();
     if (FETCH_VALUE_GET(key) == AS_INTEGER) {
         AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(((foreach_callback_udata *) array)->error_p,
                 NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p,
@@ -2760,7 +2759,6 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
     as_record               *get_record = NULL;
     aerospike               *as_object_p = aerospike_obj_p->as_ref_p->as_p;
     foreach_callback_udata  foreach_record_callback_udata;
-    DEBUG_PHP_EXT_DEBUG("I guess over here");
     foreach_record_callback_udata.udata_p = get_record_p;
     foreach_record_callback_udata.error_p = error_p;
     foreach_record_callback_udata.obj = aerospike_obj_p;

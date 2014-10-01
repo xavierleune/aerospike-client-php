@@ -1206,41 +1206,7 @@ class Put extends AerospikeTestCommon
          $db->close();
          return ($db->errorno());
      }
-     $key = $db->initKey("test", "demo", "map_of_objects_with_UDF_serializer");
-
-     #Set Serializer
-     Aerospike::setSerializer(function ($val) {
-         if (is_bool ($val)) {
-             return "b||". serialize($val);
-         }
-         if (is_object ($val)) {
-             return "o||". serialize($val);
-         }
-         if (is_double ($val)) {
-             return "d||". serialize($val);
-         }
-         return "r||". $val;
-     });
-
-     #Creating objects
-     $obj1 = new Employee();
-     $obj2 = new Employee();
-     $obj3 = new Employee();
-     $obj4 = new Employee();
-
-     $map1 = array(12=>$obj1, $obj3);
-     $map2 = array($map1, $obj2, " ");
-     $map3 = array("k1", $obj4, 56=>$map2);
-     $status = $db->put($key, array("bin1"=>$map3), NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         $db->close();
-         return($status);
-     }
-     $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     $db->close();
-     return($status);
+    return($status);
  }
 
 /**
