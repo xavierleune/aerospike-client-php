@@ -5,7 +5,7 @@
  */
 $autoloaders = spl_autoload_functions();
 if (!$autoloaders || !array_key_exists('Aerospike\\LDT\\Autoloader', $autoloaders)) {
-    require __DIR__. '/src/LDT/Loader.php';
+    require __DIR__. '/src/LDT/Autoloader.php';
     \Aerospike\LDT\Autoloader::register();
 }
 

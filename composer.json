@@ -26,5 +26,11 @@
         "psr-4": {
             "Aerospike\\": "src/"
         }
+    },
+    "scripts": {
+        "post-package-install": ["cd src/aerospike && ./build.sh"],
+        "post-install-cmd": ["cd src/aerospike && ./build.sh"],
+        "post-update-cmd": ["cd src/aerospike && ./build.sh"]
     }
 }
+

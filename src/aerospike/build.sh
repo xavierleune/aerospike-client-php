@@ -102,7 +102,7 @@ if [ -d $INCLUDE_LUA_5_1 ] ; then
   LUA_SUFFIX=5.1
 fi
 
-CFLAGS="-g -H -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
+CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
 
 if [ $OS = "Darwin" ] ; then
@@ -184,7 +184,7 @@ config()
 
 echo "----------------------------------------------------------------------"
 headline "Installing the Aerospike PHP Extension"
-echo "To install the extension run:"
+echo "To install the extension run inside src/aerospike:"
 code "sudo make install"
 
 HAS_PHP_CONF_D=`php -i 2>&1 | grep "Scan this dir for additional .ini files"`
