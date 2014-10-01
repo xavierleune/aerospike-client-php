@@ -11,7 +11,7 @@ The Aerospike PHP client API is described in the following sections:
 ### [Query and Scan Methods](apiref_streams.md)
 ### [User Defined Methods](apiref_udf.md)
 ### [Admin Methods](apiref_admin.md) \[to be implemented\]
-### Large Data Type Methods
+### [Large Data Type Methods](aerospike_ldt.md)
 
 ## Implementation Status
 So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*

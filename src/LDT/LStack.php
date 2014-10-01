@@ -14,38 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @package    Aerospike
- * @subpackage LDT
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  * @copyright  Copyright 2013-2014 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
- * @link       http://www.aerospike.com/docs/guide/lset.html
+ * @link       http://www.aerospike.com/docs/guide/lstack.html
+ * @filesource
  */
-
 namespace Aerospike\LDT;
 use Aerospike;
 
-require 'LDT.php';
-
 /**
- * Large Set (lset) is a large data type optimized for storing unique values
- * and checking the existance of a value in the set. Large sets are suited for
- * storing a large number of unique values.
+ * Large Stack (lstack) is a large data type optimized for stack-based
+ * operations, such as push and peek. The lstack provides the ability to
+ * continously grow a very large collection of data.
  *
  * @package    Aerospike
  * @subpackage LDT
- * @link       http://www.aerospike.com/docs/guide/lset.html
+ * @link       http://www.aerospike.com/docs/guide/lstack.html
+ * @link       http://www.aerospike.com/docs/guide/data-types.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  */
-class LSet extends LDT
+class LStack extends LDT
 {
     // error messages
     const MSG_TYPE_NOT_SUPPORTED = "\$value must be a supported type (string|integer|array)";
-    const MSG_TYPE_NOT_ATOMIC = "\$value must be an atomic type (string|integer)";
+    const MSG_NUM_NOT_INT = "\$num must be an integer";
 
     /**
-     * Constructor for the \Aerospike\LDT\LSet class.
+     * Constructor for the \Aerospike\LDT\LStack class.
      *
      * @param Aerospike $db
      * @param array $key initialized with Aerospike::initKey()
@@ -53,104 +50,88 @@ class LSet extends LDT
      * @see LDT::__construct()
      */
     public function __construct(Aerospike $db, array $key, $bin) {
-        parent::__construct($db, $key, $bin, LDT::LSET);
+        parent::__construct($db, $key, $bin, LDT::LSTACK);
     }
 
     /**
-     * Adds a value of a supported type to the LSet.
-     * The elements added must be consistently the same type
-     * (string, integer, array).
+     * Push the value pair onto the LStack.
      *
      * @param int|string|array $value
      * @return int status code of the operation
      */
-    public function add($value) {
+    public function push($value) {
         if (!is_string($value) && !is_int($value) && !is_array($value)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lset', 'add', array($this->bin, $value));
+        $res = $this->db->apply($this->key, 'lstack', 'push', array($this->bin, $value));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Adds values of a supported type to the LSet.
+     * Push multiple values onto the LStack.
      * The elements added must be consistently the same type
      * (string, integer, array).
      *
      * @param array $values
      * @return int status code of the operation
+     * @see push
      */
-    public function addMany(array $values) {
-        $res = $this->db->apply($this->key, 'lset', 'add_all', array($this->bin, $values));
+    public function pushMany(array $values) {
+        $res = $this->db->apply($this->key, 'lstack', 'push_all', array($this->bin, $values));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Check whether the element exists in the LSet.
-     * Atomic elements (integer, string) will be directly compared. In complex
-     * types (array) the value of a key named 'key' is used for comparison.
+     * Finds the element at the $num position in the LStack.
      *
-     * @param int|string $value
-     * @param boolean $found filled by the result of the operation
+     * @param int $num of elements to peek at from the top of stack.
+     * @param array $elements matched
      * @return int status code of the operation
      */
-    public function exists($value, &$found) {
-        if (!is_string($value) && !is_int($value)) {
+    public function peek($num, &$elements) {
+        if (!is_int($num)) {
             $this->errorno = self::ERR_INPUT_PARAM;
-            $this->error = self::MSG_TYPE_NOT_ATOMIC;
-            $found = false;
+            $this->error = self::MSG_NUM_NOT_INT;
             return $this->errorno;
         }
         $elements = array();
-        $res = $this->db->apply($this->key, 'lset', 'exists', array($this->bin, $value), $found);
+        $res = $this->db->apply($this->key, 'lstack', 'peek', array($this->bin, $num), $elements);
         $this->processStatusCode($res);
-        if ($res !== Aerospike::OK) {
-            $found = false;
-        } else {
-            $found = (boolean) $found;
-        }
         return $res;
     }
 
     /**
-     * Find and remove the element matching the given value from the LSet.
-     * Atomic elements (integer, string) will be directly compared. In complex
-     * types (array) the value of a key named 'key' is used to identify the
-     * element which is to be removed.
+     * Remove an element from the top of the LStack.
      *
-     * @param int|string $value
+     * @todo To be implemented.
+     * @param int|string|array $element
      * @return int status code of the operation
      */
-    public function remove($value) {
-        if (!is_string($value) && !is_int($value)) {
-            $this->errorno = self::ERR_INPUT_PARAM;
-            $this->error = self::MSG_TYPE_NOT_ATOMIC;
-            return $this->errorno;
-        }
-        $res = $this->db->apply($this->key, 'lset', 'remove', array($this->bin, $value));
-        $this->processStatusCode($res);
-        return $res;
+    public function pop(&$element) {
+        $this->error = "Method not implemented";
+        $this->errorno = self::ERR_LDT;
+        return $this->errorno;
     }
 
     /**
-     * Returns the elements in the LSet.
+     * Returns the elements in the LStack.
      *
+     * @todo To be implemented.
      * @param array $elements returned
      * @return int status code of the operation
      */
     public function scan(&$elements) {
-        $elements = array();
-        $res = $this->db->apply($this->key, 'lset', 'scan', array($this->bin), $elements);
-        $this->processStatusCode($res);
-        return $res;
+        $this->error = "Method not implemented";
+        $this->errorno = self::ERR_LDT;
+        return $this->errorno;
     }
 
     /**
-     * Scan the LSet and apply a UDF to its elements.
+     * Scan the LStack and apply a UDF to its elements.
      * If the UDF returns null the element will be filtered out of the results.
      * Otherwise, the UDF may transform the value of the element prior to
      * returning it to the result set.

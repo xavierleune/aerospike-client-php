@@ -14,39 +14,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @package    Aerospike
- * @subpackage LDT
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  * @copyright  Copyright 2013-2014 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
- * @link       http://www.aerospike.com/docs/guide/lstack.html
+ * @link       http://www.aerospike.com/docs/guide/lmap.html
+ * @filesource
  */
-
 namespace Aerospike\LDT;
 use Aerospike;
 
-require 'LDT.php';
-
 /**
- * Large Stack (lstack) is a large data type optimized for stack-based
- * operations, such as push and peek. The lstack provides the ability to
- * continously grow a very large collection of data.
+ * Large Map (lmap) is a large data type that employs the standard "key/value"
+ * map functionality. It is optimized for complex values where the key
+ * may be an integer or string, and the value may be any supported data type.
  *
  * @package    Aerospike
  * @subpackage LDT
- * @link       http://www.aerospike.com/docs/guide/lstack.html
+ * @link       http://www.aerospike.com/docs/guide/lmap.html
  * @link       http://www.aerospike.com/docs/guide/data-types.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  */
-class LStack extends LDT
+class LMap extends LDT
 {
     // error messages
     const MSG_TYPE_NOT_SUPPORTED = "\$value must be a supported type (string|integer|array)";
-    const MSG_NUM_NOT_INT = "\$num must be an integer";
+    const MSG_TYPE_NOT_ATOMIC = "\$key must be an atomic type (string|integer)";
 
     /**
-     * Constructor for the \Aerospike\LDT\LStack class.
+     * Constructor for the \Aerospike\LDT\LMap class.
      *
      * @param Aerospike $db
      * @param array $key initialized with Aerospike::initKey()
@@ -54,88 +50,98 @@ class LStack extends LDT
      * @see LDT::__construct()
      */
     public function __construct(Aerospike $db, array $key, $bin) {
-        parent::__construct($db, $key, $bin, LDT::LSTACK);
+        parent::__construct($db, $key, $bin, LDT::LMAP);
     }
 
     /**
-     * Push the value pair onto the LStack.
+     * Puts the key-value pair in the LMap.
      *
+     * @param int|string $key
      * @param int|string|array $value
      * @return int status code of the operation
      */
-    public function push($value) {
+    public function put($key, $value) {
+        if (!is_string($key) && !is_int($key)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_ATOMIC;
+            return $this->errorno;
+        }
         if (!is_string($value) && !is_int($value) && !is_array($value)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lstack', 'push', array($this->bin, $value));
+        $res = $this->db->apply($this->key, 'lmap', 'put', array($this->bin, $key, $value));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Push multiple values onto the LStack.
-     * The elements added must be consistently the same type
-     * (string, integer, array).
+     * Puts multiple key-value pairs in the LMap.
+     * Each one of the elements added must conform to the same type rules as in
+     * the {put()} method.
      *
-     * @param array $values
+     * @param array $key_values
      * @return int status code of the operation
-     * @see push
+     * @see put
      */
-    public function pushMany(array $values) {
-        $res = $this->db->apply($this->key, 'lstack', 'push_all', array($this->bin, $values));
+    public function putMany(array $key_values) {
+        $res = $this->db->apply($this->key, 'lmap', 'put_all', array($this->bin, $key_values));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Finds the element at the $num position in the LStack.
+     * Gets the element matching the given key in the LMap.
      *
-     * @param int $num of elements to peek at from the top of stack.
-     * @param array $elements matched
+     * @param int|string $key
+     * @param array $element matched
      * @return int status code of the operation
      */
-    public function peek($num, &$elements) {
-        if (!is_int($num)) {
+    public function get($key, &$element) {
+        if (!is_string($key) && !is_int($key)) {
             $this->errorno = self::ERR_INPUT_PARAM;
-            $this->error = self::MSG_NUM_NOT_INT;
+            $this->error = self::MSG_TYPE_NOT_ATOMIC;
             return $this->errorno;
         }
-        $elements = array();
-        $res = $this->db->apply($this->key, 'lstack', 'peek', array($this->bin, $num), $elements);
+        $element = array();
+        $res = $this->db->apply($this->key, 'lmap', 'get', array($this->bin, $key), $element);
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Remove an element from the top of the LStack.
+     * Remove an element matching the given key in the LMap.
      *
-     * @todo To be implemented.
-     * @param int|string|array $element
+     * @param int|string $key
      * @return int status code of the operation
      */
-    public function pop(&$element) {
-        $this->error = "Method not implemented";
-        $this->errorno = self::ERR_LDT;
-        return $this->errorno;
+    public function remove($key) {
+        if (!is_string($key) && !is_int($key)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_ATOMIC;
+            return $this->errorno;
+        }
+        $res = $this->db->apply($this->key, 'lmap', 'remove', array($this->bin, $key));
+        $this->processStatusCode($res);
+        return $res;
     }
 
     /**
-     * Returns the elements in the LStack.
+     * Returns the elements in the LMap.
      *
-     * @todo To be implemented.
      * @param array $elements returned
      * @return int status code of the operation
      */
     public function scan(&$elements) {
-        $this->error = "Method not implemented";
-        $this->errorno = self::ERR_LDT;
-        return $this->errorno;
+        $elements = array();
+        $res = $this->db->apply($this->key, 'lmap', 'scan', array($this->bin), $elements);
+        $this->processStatusCode($res);
+        return $res;
     }
 
     /**
-     * Scan the LStack and apply a UDF to its elements.
+     * Scan the LMap and apply a UDF to its elements.
      * If the UDF returns null the element will be filtered out of the results.
      * Otherwise, the UDF may transform the value of the element prior to
      * returning it to the result set.

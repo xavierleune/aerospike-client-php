@@ -14,13 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @package    Aerospike
- * @subpackage LDT
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  * @copyright  Copyright 2013-2014 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
- * @link       http://www.aerospike.com/docs/guide/llist.html
+ * @link       http://www.aerospike.com/docs/guide/ldt.html
+ * @filesource
  */
 
 namespace Aerospike\LDT;
@@ -34,7 +33,7 @@ use Aerospike;
  *
  * @package    Aerospike
  * @subpackage LDT
- * @link       http://www.aerospike.com/docs/guide/llist.html
+ * @link       http://www.aerospike.com/docs/guide/ldt.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  */
 abstract class LDT
@@ -52,41 +51,152 @@ abstract class LDT
      * The error status codes map to the C client AEROSPIKE_ERR_LDT_* codes
      *  src/include/aerospike/as_status.h
      */
-    const OK                        =    0; // Success
-    const ERR_LDT                   = 1300; // Generic LDT error
-    const ERR_INPUT_PARAM           = 1409; // Generic input parameter error
-    const ERR_INTERNAL              = 1400; // Generic server-side error
-    const ERR_NOT_FOUND             = 1401; // Element not found
-    const ERR_UNIQUE_KEY            = 1402; // Duplicate element written when 'unique key' set
-    const ERR_INSERT                = 1403; // Generic error for insertion op
-    const ERR_SEARCH                = 1404; // Generic error for search op
-    const ERR_DELETE                = 1405; // Generic error for delete op
-    const ERR_TYPE_MISMATCH         = 1410; // LDT type mismatched for the bin
-    const ERR_NULL_BIN_NAME         = 1411; // The LDT bin name is null
-    const ERR_BIN_NAME_NOT_STRING   = 1412; // The LDT bin name must be a string
-    const ERR_BIN_NAME_TOO_LONG     = 1413; // The LDT bin name exceeds 14 chars
-    const ERR_TOO_MANY_OPEN_SUBRECS = 1414; // Server-side error: open subrecs
-    const ERR_TOP_REC_NOT_FOUND     = 1415; // record containing the LDT not found
-    const ERR_SUB_REC_NOT_FOUND     = 1416; // Server-side error: subrec not found
-    const ERR_BIN_DOES_NOT_EXIST    = 1417; // LDT bin does not exist
-    const ERR_BIN_ALREADY_EXISTS    = 1418; // Collision creating LDT at bin
-    const ERR_BIN_DAMAGED           = 1419; // Control structures in the top record are damaged
-    const ERR_SUBREC_POOL_DAMAGED   = 1420; // Subrec pool is damaged
-    const ERR_SUBREC_DAMAGED        = 1421; // Control structures in the sub record are damaged
-    const ERR_SUBREC_OPEN           = 1422; // Error while opening the sub record
-    const ERR_SUBREC_UPDATE         = 1423; // Error while updating the sub record
-    const ERR_SUBREC_CREATE         = 1424; // Error while creating the sub record
-    const ERR_SUBREC_DELETE         = 1425; // Error while deleting the sub record
-    const ERR_SUBREC_CLOSE          = 1426; // Error while closing the sub record
-    const ERR_TOPREC_UPDATE         = 1427; // Error while updating the top record
-    const ERR_TOPREC_CREATE         = 1428; // Error while creating the top record
+    const OK                        =    0;
+    /**
+     * Generic LDT Error
+     */
+    const ERR_LDT                   = 1300;
+    /**
+     * Generic input parameter error
+     */
+    const ERR_INPUT_PARAM           = 1409;
+    /**
+     * Generic server-side error
+     */
+    const ERR_INTERNAL              = 1400;
+    /**
+     * Element not found
+     */
+    const ERR_NOT_FOUND             = 1401;
+    /**
+     * Duplicate element written when 'unique key' set
+     */
+    const ERR_UNIQUE_KEY            = 1402;
+    /**
+     * Generic error for insertion op
+     */
+    const ERR_INSERT                = 1403;
+    /**
+     *  Generic error for search op
+     */
+    const ERR_SEARCH                = 1404;
+    /**
+     * Generic error for delete op
+     */
+    const ERR_DELETE                = 1405;
+    /**
+     * LDT type mismatched for the bin
+     */
+    const ERR_TYPE_MISMATCH         = 1410;
+    /**
+     * The LDT bin name is null
+     */
+    const ERR_NULL_BIN_NAME         = 1411;
+    /**
+     * The LDT bin name must be a string
+     */
+    const ERR_BIN_NAME_NOT_STRING   = 1412;
+    /**
+     * The LDT bin name exceeds 14 chars
+     */
+    const ERR_BIN_NAME_TOO_LONG     = 1413;
+    /**
+     * Server-side error: open subrecs
+     */
+    const ERR_TOO_MANY_OPEN_SUBRECS = 1414;
+    /**
+     * record containing the LDT not found
+     */
+    const ERR_TOP_REC_NOT_FOUND     = 1415;
+    /**
+     * Server-side error: subrec not found
+     */
+    const ERR_SUB_REC_NOT_FOUND     = 1416;
+    /**
+     * LDT bin does not exist
+     */
+    const ERR_BIN_DOES_NOT_EXIST    = 1417;
+    /**
+     * Collision creating LDT at bin
+     */
+    const ERR_BIN_ALREADY_EXISTS    = 1418;
+    /**
+     * Control structures in the top record are damaged
+     */
+    const ERR_BIN_DAMAGED           = 1419;
+    /**
+     * Subrec pool is damaged
+     */
+    const ERR_SUBREC_POOL_DAMAGED   = 1420;
+    /**
+     * Control structures in the sub record are damaged
+     */
+    const ERR_SUBREC_DAMAGED        = 1421;
+    /**
+     * Error while opening the sub record
+     */
+    const ERR_SUBREC_OPEN           = 1422;
+    /**
+     * Error while updating the sub record
+     */
+    const ERR_SUBREC_UPDATE         = 1423;
+    /**
+     * Error while creating the sub record
+     */
+    const ERR_SUBREC_CREATE         = 1424;
+    /**
+     * Error while deleting the sub record
+     */
+    const ERR_SUBREC_DELETE         = 1425;
+    /**
+     * Error while closing the sub record
+     */
+    const ERR_SUBREC_CLOSE          = 1426;
+    /**
+     * Error while updating the top record
+     */
+    const ERR_TOPREC_UPDATE         = 1427;
+    /**
+     * Error while updating the top record
+     */
+    const ERR_TOPREC_CREATE         = 1428;
 
+    /**
+     * The key for the record containing the LDT
+     * @var string
+     */
     protected $key;
+    /**
+     * The name of the bin within the recod that is an LDT
+     * @var string
+     */
     protected $bin;
+    /**
+     * The type of LDT at the bin
+     * @var string
+     */
     protected $type;
+    /**
+     * The name of the UDF module providing the functionality that this class wraps around
+     * @var string
+     */
     protected $module;
+    /**
+     * The database connection class
+     * @var Aerospike
+     */
     protected $db;
+    /**
+     * The error message for the last operation
+     * @var string
+     * @see LDT::error()
+     */
     protected $error;
+    /**
+     * The status code for the last operation
+     * @var integer
+     * @see LDT::errorno()
+     */
     protected $errorno;
 
     /**
@@ -191,18 +301,7 @@ abstract class LDT
 
     /**
      * Destroy the LDT at the key and bin the class was initialized to.
-     * <code>
-     * namespace Aerospike\LDT;
-     * use Aerospike;
-     * $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-     * $db = new \Aerospike($config);
-     * $key = $db->initKey("test", "user", 1);
-     * $llist = new \Aerospike\LDT\LList($db, $key, "timeline2");
-     * $res = $llist->destroy();
-     * if ($res !== \Aerospike\LDT::OK) {
-     *     var_dump($llist->error(), $llist->errorno());
-     * }
-     * </code>
+     *
      * @return int status code of the operation
      */
     public function destroy() {
@@ -226,6 +325,10 @@ abstract class LDT
         }
     }
 
+    /**
+     * Finds the name of the UDF module providing the functionality needed by the given LDT
+     * @return string
+     */
     private function getModuleName() {
         switch($this->type) {
             case self::LLIST:

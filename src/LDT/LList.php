@@ -14,19 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @package    Aerospike
- * @subpackage LDT
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  * @copyright  Copyright 2013-2014 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       http://www.aerospike.com/docs/guide/llist.html
+ * @filesource
  */
-
 namespace Aerospike\LDT;
 use Aerospike;
-
-require 'LDT.php';
 
 /**
  * Large Ordered List (llist) is optimized for searching and updating sorted

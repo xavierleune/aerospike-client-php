@@ -14,39 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @package    Aerospike
- * @subpackage LDT
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  * @copyright  Copyright 2013-2014 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
- * @link       http://www.aerospike.com/docs/guide/lmap.html
+ * @link       http://www.aerospike.com/docs/guide/lset.html
+ * @filesource
  */
-
 namespace Aerospike\LDT;
 use Aerospike;
 
-require 'LDT.php';
-
 /**
- * Large Map (lmap) is a large data type that employs the standard "key/value"
- * map functionality. It is optimized for complex values where the key
- * may be an integer or string, and the value may be any supported data type.
+ * Large Set (lset) is a large data type optimized for storing unique values
+ * and checking the existance of a value in the set. Large sets are suited for
+ * storing a large number of unique values.
  *
  * @package    Aerospike
  * @subpackage LDT
- * @link       http://www.aerospike.com/docs/guide/lmap.html
- * @link       http://www.aerospike.com/docs/guide/data-types.html
+ * @link       http://www.aerospike.com/docs/guide/lset.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  */
-class LMap extends LDT
+class LSet extends LDT
 {
     // error messages
     const MSG_TYPE_NOT_SUPPORTED = "\$value must be a supported type (string|integer|array)";
-    const MSG_TYPE_NOT_ATOMIC = "\$key must be an atomic type (string|integer)";
+    const MSG_TYPE_NOT_ATOMIC = "\$value must be an atomic type (string|integer)";
 
     /**
-     * Constructor for the \Aerospike\LDT\LMap class.
+     * Constructor for the \Aerospike\LDT\LSet class.
      *
      * @param Aerospike $db
      * @param array $key initialized with Aerospike::initKey()
@@ -54,98 +49,104 @@ class LMap extends LDT
      * @see LDT::__construct()
      */
     public function __construct(Aerospike $db, array $key, $bin) {
-        parent::__construct($db, $key, $bin, LDT::LMAP);
+        parent::__construct($db, $key, $bin, LDT::LSET);
     }
 
     /**
-     * Puts the key-value pair in the LMap.
+     * Adds a value of a supported type to the LSet.
+     * The elements added must be consistently the same type
+     * (string, integer, array).
      *
-     * @param int|string $key
      * @param int|string|array $value
      * @return int status code of the operation
      */
-    public function put($key, $value) {
-        if (!is_string($key) && !is_int($key)) {
-            $this->errorno = self::ERR_INPUT_PARAM;
-            $this->error = self::MSG_TYPE_NOT_ATOMIC;
-            return $this->errorno;
-        }
+    public function add($value) {
         if (!is_string($value) && !is_int($value) && !is_array($value)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lmap', 'put', array($this->bin, $key, $value));
+        $res = $this->db->apply($this->key, 'lset', 'add', array($this->bin, $value));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Puts multiple key-value pairs in the LMap.
-     * Each one of the elements added must conform to the same type rules as in
-     * the {put()} method.
+     * Adds values of a supported type to the LSet.
+     * The elements added must be consistently the same type
+     * (string, integer, array).
      *
-     * @param array $key_values
+     * @param array $values
      * @return int status code of the operation
-     * @see put
      */
-    public function putMany(array $key_values) {
-        $res = $this->db->apply($this->key, 'lmap', 'put_all', array($this->bin, $key_values));
+    public function addMany(array $values) {
+        $res = $this->db->apply($this->key, 'lset', 'add_all', array($this->bin, $values));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Gets the element matching the given key in the LMap.
+     * Check whether the element exists in the LSet.
+     * Atomic elements (integer, string) will be directly compared. In complex
+     * types (array) the value of a key named 'key' is used for comparison.
      *
-     * @param int|string $key
-     * @param array $element matched
+     * @param int|string $value
+     * @param boolean $found filled by the result of the operation
      * @return int status code of the operation
      */
-    public function get($key, &$element) {
-        if (!is_string($key) && !is_int($key)) {
+    public function exists($value, &$found) {
+        if (!is_string($value) && !is_int($value)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_ATOMIC;
+            $found = false;
+            return $this->errorno;
+        }
+        $elements = array();
+        $res = $this->db->apply($this->key, 'lset', 'exists', array($this->bin, $value), $found);
+        $this->processStatusCode($res);
+        if ($res !== Aerospike::OK) {
+            $found = false;
+        } else {
+            $found = (boolean) $found;
+        }
+        return $res;
+    }
+
+    /**
+     * Find and remove the element matching the given value from the LSet.
+     * Atomic elements (integer, string) will be directly compared. In complex
+     * types (array) the value of a key named 'key' is used to identify the
+     * element which is to be removed.
+     *
+     * @param int|string $value
+     * @return int status code of the operation
+     */
+    public function remove($value) {
+        if (!is_string($value) && !is_int($value)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_ATOMIC;
             return $this->errorno;
         }
-        $element = array();
-        $res = $this->db->apply($this->key, 'lmap', 'get', array($this->bin, $key), $element);
+        $res = $this->db->apply($this->key, 'lset', 'remove', array($this->bin, $value));
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Remove an element matching the given key in the LMap.
-     *
-     * @param int|string $key
-     * @return int status code of the operation
-     */
-    public function remove($key) {
-        if (!is_string($key) && !is_int($key)) {
-            $this->errorno = self::ERR_INPUT_PARAM;
-            $this->error = self::MSG_TYPE_NOT_ATOMIC;
-            return $this->errorno;
-        }
-        $res = $this->db->apply($this->key, 'lmap', 'remove', array($this->bin, $key));
-        $this->processStatusCode($res);
-        return $res;
-    }
-
-    /**
-     * Returns the elements in the LMap.
+     * Returns the elements in the LSet.
      *
      * @param array $elements returned
      * @return int status code of the operation
      */
     public function scan(&$elements) {
         $elements = array();
-        $res = $this->db->apply($this->key, 'lmap', 'scan', array($this->bin), $elements);
+        $res = $this->db->apply($this->key, 'lset', 'scan', array($this->bin), $elements);
         $this->processStatusCode($res);
         return $res;
     }
 
     /**
-     * Scan the LMap and apply a UDF to its elements.
+     * Scan the LSet and apply a UDF to its elements.
      * If the UDF returns null the element will be filtered out of the results.
      * Otherwise, the UDF may transform the value of the element prior to
      * returning it to the result set.
