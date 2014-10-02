@@ -94,6 +94,45 @@ enum Aerospike_values {
     POLICY_KEY_SEND                                 /* also send, store, and get the actual (ns,set,key) with each record */
 };
 
+#define MAX_CONSTANT_STR_SIZE 512
+/*
+ *******************************************************************************************************
+ * Structure to map constant number to constant name string for Aerospike constants.
+ *******************************************************************************************************
+ */
+typedef struct Aerospike_Constants {
+    int     constantno;
+    char    constant_str[MAX_CONSTANT_STR_SIZE];
+} AerospikeConstants;
+
+#define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
+
+/*
+ *******************************************************************************************************
+ * Instance of Mapper of constant number to constant name string for Aerospike constants.
+ *******************************************************************************************************
+ */
+static
+AerospikeConstants aerospike_constants[] = {
+    { OPT_CONNECT_TIMEOUT               ,   "OPT_CONNECT_TIMEOUT"               },
+    { OPT_READ_TIMEOUT                  ,   "OPT_READ_TIMEOUT"                  },
+    { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
+    { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
+    { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
+    { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
+    { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
+    { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
+    { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
+    { POLICY_EXISTS_CREATE              ,   "POLICY_EXISTS_CREATE"              },
+    { POLICY_EXISTS_UPDATE              ,   "POLICY_EXISTS_UPDATE"              },
+    { POLICY_EXISTS_REPLACE             ,   "POLICY_EXISTS_REPLACE"             },
+    { POLICY_EXISTS_CREATE_OR_REPLACE   ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   },
+    { SERIALIZER_NONE                   ,   "SERIALIZER_NONE"                   },
+    { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
+    { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
+    { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
+    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      }
+};
 /*
  *******************************************************************************************************
  * Extern declarations of policy functions.
@@ -109,12 +148,12 @@ set_policy(as_policy_read *read_policy_p,
            as_policy_query *query_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
-           as_error *error_p);
+           as_error *error_p TSRMLS_DC);
 
 extern void
 set_general_policies(as_config* as_config_p,
                      zval *options_p,
-                     as_error *error_p);
+                     as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_scan(as_policy_scan *scan_policy_p,

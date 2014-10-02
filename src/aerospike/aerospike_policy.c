@@ -9,7 +9,6 @@
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
 
-#define MAX_CONSTANT_STR_SIZE 512
 #define NESTING_DEPTH_PHP_INI INI_STR("aerospike.nesting_depth") ? atoi(INI_STR("aerospike.nesting_depth")) : 0
 #define CONNECT_TIMEOUT_PHP_INI INI_STR("aerospike.connect_timeout") ? (uint32_t) atoi(INI_STR("aerospike.connect_timeout")) : 0
 #define READ_TIMEOUT_PHP_INI INI_STR("aerospike.read_timeout") ? (uint32_t) atoi(INI_STR("aerospike.read_timeout")) : 0
@@ -19,60 +18,6 @@
 #define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 
-/* 
- *******************************************************************************************************
- * Structure to map constant number to constant name string for Aerospike constants.
- *******************************************************************************************************
- */
-typedef struct Aerospike_Constants {
-    int     constantno;
-    char    constant_str[MAX_CONSTANT_STR_SIZE];
-} AerospikeConstants;
-
-
-/* 
- *******************************************************************************************************
- * Instance of Mapper of constant number to constant name string for Aerospike constants.
- *******************************************************************************************************
- */
-static 
-AerospikeConstants aerospike_constants[] = {
-    { OPT_CONNECT_TIMEOUT               ,   "OPT_CONNECT_TIMEOUT"               },
-    { OPT_READ_TIMEOUT                  ,   "OPT_READ_TIMEOUT"                  },
-    { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
-    { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
-    { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
-    { OPT_POLICY_KEY                    ,   "OPT_POLICY_KEY"                    },
-    { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
-    { OPT_SCAN_PRIORITY                 ,   "OPT_SCAN_PRIORITY"                 },
-    { OPT_SCAN_PERCENTAGE               ,   "OPT_SCAN_PERCENTAGE"               },
-    { OPT_SCAN_CONCURRENTLY             ,   "OPT_SCAN_CONCURRENTLY"             },
-    { OPT_SCAN_NOBINS                   ,   "OPT_SCAN_NOBINS"                   },
-    { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
-    { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
-    { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
-    { POLICY_EXISTS_CREATE              ,   "POLICY_EXISTS_CREATE"              },
-    { POLICY_EXISTS_UPDATE              ,   "POLICY_EXISTS_UPDATE"              },
-    { POLICY_EXISTS_REPLACE             ,   "POLICY_EXISTS_REPLACE"             },
-    { POLICY_EXISTS_CREATE_OR_REPLACE   ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   },
-    { SERIALIZER_NONE                   ,   "SERIALIZER_NONE"                   },
-    { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
-    { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
-    { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
-    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      },
-    { SCAN_PRIORITY_AUTO                ,   "SCAN_PRIORITY_AUTO"                },
-    { SCAN_PRIORITY_LOW                 ,   "SCAN_PRORITY_LOW"                  },
-    { SCAN_PRIORITY_MEDIUM              ,   "SCAN_PRIORITY_MEDIUM"              },
-    { SCAN_PRIORITY_HIGH                ,   "SCAN_PRIORITY_HIGH"                },
-    { SCAN_STATUS_UNDEF                 ,   "SCAN_STATUS_UNDEF"                 },
-    { SCAN_STATUS_INPROGRESS            ,   "SCAN_STATUS_INPROGRESS"            },
-    { SCAN_STATUS_ABORTED               ,   "SCAN_STATUS_ABORTED"               },
-    { SCAN_STATUS_COMPLETED             ,   "SCAN_STATUS_COMPLETED"             },
-    { POLICY_KEY_DIGEST                 ,   "POLICY_KEY_DIGEST"                 },
-    { POLICY_KEY_SEND                   ,   "POLICY_KEY_SEND"                   }
-};
-
-#define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
 
 /*
  *******************************************************************************************************
@@ -84,7 +29,7 @@ AerospikeConstants aerospike_constants[] = {
  *******************************************************************************************************
  */
 extern
-as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce)
+as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
 {
     int32_t i;
     as_status   status = AEROSPIKE_OK;
@@ -222,7 +167,7 @@ set_policy_ex(as_config *as_config_p,
               uint32_t *serializer_policy_p,
               as_scan* as_scan_p,
               zval *options_p,
-              as_error *error_p)
+              as_error *error_p TSRMLS_DC)
 {
     if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
@@ -566,11 +511,11 @@ set_policy(as_policy_read *read_policy_p,
            as_policy_query *query_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
-           as_error *error_p)
+           as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p,
             remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
-            serializer_policy_p, NULL, options_p, error_p);
+            serializer_policy_p, NULL, options_p, error_p TSRMLS_CC);
 }
 
 extern void
@@ -597,9 +542,9 @@ set_policy_scan(as_policy_scan *scan_policy_p,
  *******************************************************************************************************
  */
 extern void
-set_general_policies(as_config *as_config_p, 
+set_general_policies(as_config *as_config_p,
                      zval *options_p,
-                     as_error *error_p)
+                     as_error *error_p TSRMLS_DC)
 {
     if (!as_config_p) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid as_config");
@@ -608,7 +553,7 @@ set_general_policies(as_config *as_config_p,
     }
 
     set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write,
-                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p);
+                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 exit:
     return;
 }

@@ -27,9 +27,18 @@
 
 #ifndef PHP_AEROSPIKE_H
 #define PHP_AEROSPIKE_H 1
-
 #define PHP_AEROSPIKE_VERSION "3.0"
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
+#ifdef ZTS
+#include "TSRM.h"
+#endif
+#include "aerospike/as_error.h"
+#include "pthread.h"
+
+typedef struct global_error {
+    int reset;
+    as_error error;
+} aerospike_global_error;
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int nesting_depth;
@@ -42,15 +51,20 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     char *lua_system_path;
     char *lua_user_path;
     int key_policy;
+    aerospike_global_error error_g;
+    HashTable *persistent_list_g;
+    int persistent_ref_count;
+    pthread_rwlock_t aerospike_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 #ifdef ZTS
-#define AEROSPIKE_G(v) TSRMG(aerospike_globals_id, zend_aerospike_globals *v)
-extern int aerospike_globals_id;
+#define AEROSPIKE_G(v) (((zend_aerospike_globals*)(*((void ***)tsrm_ls))[(aerospike_globals_id)-1])->v)
+zend_aerospike_globals *globals;
 #else
 #define AEROSPIKE_G(v) (aerospike_globals.v)
-extern zend_aerospike_globals aerospike_globals;
 #endif
+
+ZEND_DECLARE_MODULE_GLOBALS(aerospike);
 
 PHP_MINIT_FUNCTION(aerospike);
 PHP_MSHUTDOWN_FUNCTION(aerospike);

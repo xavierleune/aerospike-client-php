@@ -137,6 +137,9 @@ typedef struct Aerospike_object {
     bool is_persistent;
     aerospike_ref *as_ref_p;
     u_int16_t is_conn_16;
+#ifdef ZTS
+    void ***ts;
+#endif
 } Aerospike_object;
 
 /*
@@ -149,9 +152,10 @@ typedef struct Aerospike_object {
 typedef struct foreach_callback_udata_t {
     zval        *udata_p;
     as_error    *error_p;
+    Aerospike_object *obj;
 } foreach_callback_udata;
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland Logger callback
  *******************************************************************************************************
@@ -180,7 +184,6 @@ extern zend_fcall_info       user_deserializer_call_info;
 extern zend_fcall_info_cache user_deserializer_call_info_cache;
 extern zval                  *user_deserializer_callback_retval_p;
 extern uint32_t              is_user_deserializer_registered;
-
 /*
  ****************************************************************************
  * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
@@ -191,10 +194,11 @@ extern uint32_t              is_user_deserializer_registered;
 typedef struct _userland_callback {
     zend_fcall_info *fci_p;
     zend_fcall_info_cache *fcc_p;
+    Aerospike_object *obj;
 } userland_callback;
 
 extern bool
-aerospike_helper_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...);
+aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
 extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
@@ -221,13 +225,16 @@ extern as_log_level   php_log_level_set;
 #define __DEBUG_PHP__
 #ifdef __DEBUG_PHP__
 #define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, php_log_level, args...)                                \
+do {                                                                                                  \
     if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                                                     \
         if (php_log_level_set >= log_level) {                                                         \
-            php_error_docref(NULL TSRMLS_CC, php_log_level, ##args);                                  \
-            aerospike_helper_log_callback((log_level | 0x08), __func__, __FILE__, __LINE__, ##args);  \
-        }
+            php_error_docref(NULL TSRMLS_CC, php_log_level, args);                                    \
+            aerospike_helper_log_callback((log_level | 0x08), __func__ TSRMLS_CC,                     \
+                    __FILE__, __LINE__, ##args);                                                      \
+        }                                                                                             \
+} while(0)
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS TO SET LOGGING MESSAGES FOR THE VARIOUS LOG LEVELS.
  *
@@ -240,10 +247,10 @@ extern as_log_level   php_log_level_set;
 #define DEBUG_PHP_EXT_DEBUG(args...)          DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_DEBUG, E_NOTICE, args)
 #define DEBUG_PHP_EXT_INFO(args...)           DEBUG_PHP_EXT_COMPARE_LEVEL(AS_LOG_LEVEL_INFO, E_NOTICE, args)
 #else
-#define DEBUG_PHP_EXT_ERROR(args...)
-#define DEBUG_PHP_EXT_WARNING(args...)
-#define DEBUG_PHP_EXT_DEBUG(args...)
-#define DEBUG_PHP_EXT_INFO(args...)
+#define DEBUG_PHP_EXT_ERROR(TSRM, args...)
+#define DEBUG_PHP_EXT_WARNING(TSRM, args...)
+#define DEBUG_PHP_EXT_DEBUG(TSRM, args...)
+#define DEBUG_PHP_EXT_INFO(TSRM, args...)
 #endif
 
 /*
@@ -323,9 +330,16 @@ extern as_log_level   php_log_level_set;
  *                                  read and set into the class member.
  *******************************************************************************************************
  */
-#define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj_p)    aerospike_helper_set_error(aerospike_class_p, getThis(), as_err_obj_p, false)
-#define PHP_EXT_RESET_AS_ERR_IN_CLASS(aerospike_class_p)                aerospike_helper_set_error(aerospike_class_p, getThis(), NULL, true)
+//#define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj_p)    aerospike_helper_set_error(aerospike_class_p, getThis(), as_err_obj_p, false)
+//#define PHP_EXT_RESET_AS_ERR_IN_CLASS(aerospike_class_p)                aerospike_helper_set_error(aerospike_class_p, getThis(), NULL, true)
 
+#define PHP_EXT_SET_AS_ERR_IN_CLASS(as_err_obj_p) \
+    memcpy(&(AEROSPIKE_G(error_g.error)), as_err_obj_p, sizeof(as_error)); \
+    AEROSPIKE_G(error_g.reset) = 0;
+
+#define PHP_EXT_RESET_AS_ERR_IN_CLASS() \
+    memset(&(AEROSPIKE_G(error_g.error)), 0, sizeof(as_error)); \
+    AEROSPIKE_G(error_g.reset) = 1;
 /*
  *******************************************************************************************************
  * Extern declarations of transform functions.
@@ -342,13 +356,20 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
         as_config* config_p);
 
 extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p, zval **record_pp,
-        as_key* as_key_p, as_error *error_p, u_int32_t ttl_u32,
-        zval* options_p);
+aerospike_transform_key_data_put(aerospike* as_object_p,
+                                 zval **record_pp,
+                                 as_key* as_key_p,
+                                 as_error *error_p,
+                                 u_int32_t ttl_u32,
+                                 zval* options_p TSRMLS_DC);
 
 extern as_status
-aerospike_transform_get_record(aerospike* as_object_p, as_key* get_rec_key_p,
-        zval* options_p, as_error *error_p, zval* get_record_p, zval* bins_p);
+aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
+                               as_key* get_rec_key_p,
+                               zval* options_p,
+                               as_error *error_p,
+                               zval* get_record_p,
+                               zval* bins_p TSRMLS_DC);
 
 /*
  *******************************************************************************************************
@@ -356,27 +377,40 @@ aerospike_transform_get_record(aerospike* as_object_p, as_key* get_rec_key_p,
  *******************************************************************************************************
  */
 extern as_status
-aerospike_record_operations_exists(aerospike* as_object_p, as_key* as_key_p,
-        as_error *error_p, zval* metadata_p, zval* options_p);
+aerospike_record_operations_exists(aerospike* as_object_p,
+                                   as_key* as_key_p,
+                                   as_error *error_p,
+                                   zval* metadata_p,
+                                   zval* options_p TSRMLS_DC);
+extern as_status
+aerospike_record_operations_remove(Aerospike_object* aerospike_object_p,
+                                   as_key* as_key_p,
+                                   as_error *error_p,
+                                   zval* options_p);
+extern as_status
+aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                int8_t* bin_name_p,
+                                int8_t* str,
+                                u_int64_t offset,
+                                u_int64_t initial_value,
+                                u_int64_t time_to_live,
+                                u_int64_t operation);
+extern as_status
+aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,
+                                       as_key* as_key_p,
+                                       zval* bin_name_p,
+                                       as_error* error_p,
+                                       zval* options_p);
 
 extern as_status
-aerospike_record_operations_remove(aerospike* as_object_p,
-        as_key* as_key_p, as_error *error_p, zval* options_p);
-
-extern as_status
-aerospike_record_operations_ops(aerospike* as_object_p, as_key* as_key_p,
-        zval* options_p, as_error* error_p, int8_t* bin_name_p, int8_t* str,
-        u_int64_t offset, u_int64_t initial_value, u_int64_t time_to_live,
-        u_int64_t operation);
-
-extern as_status
-aerospike_record_operations_remove_bin(aerospike* as_object_p,
-        as_key* as_key_p, zval* bin_name_p, as_error* error_p,
-        zval* options_p);
-
-extern as_status
-aerospike_php_exists_metadata(aerospike*  as_object_p, zval* key_record_p,
-        zval* metadata_p, zval* options_p, as_error *error_p);
+aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
+                              zval* key_record_p,
+                              zval* metadata_p,
+                              zval* options_p,
+                              as_error *error_p);
 
 /*
  *******************************************************************************************************
@@ -384,13 +418,15 @@ aerospike_php_exists_metadata(aerospike*  as_object_p, zval* key_record_p,
  *******************************************************************************************************
  */
 extern void
-aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p,
-        as_error *error_p, bool reset_flag TSRMLS_DC);
+aerospike_helper_set_error(zend_class_entry *ce_p,
+                           zval *object_p TSRMLS_DC);
 
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
-        bool persist_flag, as_config* conf, HashTable persistent_list,
-        int persist);
+                                        bool persist_flag,
+                                        as_config* conf,
+                                        HashTable *persistent_list,
+                                        int persist TSRMLS_DC);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);
