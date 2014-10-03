@@ -544,18 +544,24 @@ class Udf extends AerospikeTestCommon
             return ($db->errorno());
         }
         $key = $db->initKey("test", "demo", "udf_put_bytes");
-        $status = $db->apply($key, "module", "udf_put_bytes", array("bin1"));
+        $list = array(94, 5, 25);
+        if ($db->isConnected()) {
+            $status = $db->put($key, array("bin1"=>$list), NULL);
+        } else {
+            $db->close();
+            return($db->errorno());
+        }
+        $status = $db->apply($key, "module", "udf_put_bytes", array("bin1"),
+            $returned);
         if ($status != Aerospike::OK) {
             return ($db->errorno());
         }
-        $mystatus = $db->get($key,$myrecord);
-        $myerror = $db->error();
+        if (!empty($returned)) {
+             return Aerospike::ERR;
+        }
         $status = $db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        if(!strcmp($myerror,"No unserializer callback registered")) {
-            return Aerospike::OK;
-        }
-        return Aerospike::ERR;
+        return $status;
     }
 
     /**
@@ -758,5 +764,47 @@ class Udf extends AerospikeTestCommon
         } 
         return($status);
     }
+    /**
+     * @test
+     * apply Udf on a record and returned parameter of udf is initialized to
+     * NULL.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveReturnvalueInitializedNULL)
+     *
+     * @test_plans{1.1}
+     */
+     function testUdfPositiveReturnvalueInitializedNULL($db, $key) {
+         if (!$db->isConnected()) {
+             return ($db->errorno());
+         }
+         $key = $db->initKey("test","demo", "udf_list_no_return_value");
+         $list = array(94, 5, 25);
+         if ($db->isConnected()) {
+             $status = $db->put($key, array("bin1"=>$list), NULL);
+         } else {
+             $db->close();
+             return($db->errorno());
+         }
+         $returned = NULL;
+         $udf_apply_status = $db->apply($key, "module",
+             "list_iterate", array("bin1", 2, 20), $returned,
+             array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+         if ($udf_apply_status != Aerospike::OK) {
+             return ($db->errorno());
+         }
+         if (!empty($returned)) {
+             return Aerospike::ERR;
+         }
+         $status = $db->remove($key,
+             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+         return ($status);
+     }
 }
 ?>
