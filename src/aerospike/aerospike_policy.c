@@ -523,10 +523,10 @@ set_policy_scan(as_policy_scan *scan_policy_p,
         uint32_t *serializer_policy_p,
         as_scan *as_scan_p,
         zval *options_p,
-        as_error *error_p)
+        as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, scan_policy_p, NULL,
-            serializer_policy_p, as_scan_p, options_p, error_p);
+            serializer_policy_p, as_scan_p, options_p, error_p TSRMLS_CC);
 }
 /*
  *******************************************************************************************************

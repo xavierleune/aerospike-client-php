@@ -452,7 +452,6 @@ PHP_METHOD(Aerospike, __construct)
     char*                  ini_value = NULL;
     HashTable              *persistent_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-
     persistent_list = (AEROSPIKE_G(persistent_list_g));
 
     if (!aerospike_obj_p) {
@@ -461,7 +460,6 @@ PHP_METHOD(Aerospike, __construct)
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
-    DEBUG_PHP_EXT_DEBUG("Over here right build");
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
@@ -1771,7 +1769,7 @@ PHP_METHOD(Aerospike, query)
             (status = aerospike_query_run(aerospike_obj_p->as_ref_p->as_p,
                                           &error, ns_p, set_p, &user_func,
                                           bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                          options_p))) {
+                                          options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -1920,7 +1918,7 @@ PHP_METHOD(Aerospike, aggregate)
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                                returned_p, options_p))) {
+                                                returned_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("aggregate returned an error");
         goto exit;
     }
@@ -2021,7 +2019,7 @@ PHP_METHOD(Aerospike, scan)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
                                      &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, options_p))) {
+                                     bins_ht_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -2160,7 +2158,7 @@ PHP_METHOD(Aerospike, scanApply)
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                scan_id_p, options_p))) {
+                                                scan_id_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
@@ -2249,7 +2247,7 @@ PHP_METHOD(Aerospike, scanInfo)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_get_info(aerospike_obj_p->as_ref_p->as_p,
                                               &error, scan_id, scan_info_p,
-                                              options_p))) {
+                                              options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanInfo returned an error");
         goto exit;
     }

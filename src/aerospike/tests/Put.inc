@@ -1205,7 +1205,7 @@ class Put extends AerospikeTestCommon
          $db->close();
          return ($db->errorno());
      }
-    return($status);
+    return(Aerospike::OK);
  }
 
 /**

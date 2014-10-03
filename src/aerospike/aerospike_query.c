@@ -32,7 +32,7 @@
 static as_status
 aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
         char* set_p, HashTable *predicate_ht_p, const char* module_p,
-        const char* function_p, as_arraylist* args_list_p)
+        const char* function_p, as_arraylist* args_list_p TSRMLS_DC)
 {
     zval**              op_pp = NULL;
     zval**              bin_pp = NULL;
@@ -155,7 +155,7 @@ exit:
 extern as_status
 aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        HashTable* predicate_ht_p, zval* options_p)
+        HashTable* predicate_ht_p, zval* options_p TSRMLS_DC)
 {
     as_query            query;
     bool                is_init_query = false;
@@ -168,7 +168,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
     }
 
     set_policy(NULL, NULL, NULL, NULL, NULL, NULL, &query_policy, NULL,
-            options_p, error_p);
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -178,7 +178,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
     is_init_query = true;
     as_query_where_inita(&query, 1);
     if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
-                    set_p, predicate_ht_p, NULL, NULL, NULL))) {
+                    set_p, predicate_ht_p, NULL, NULL, NULL TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to define scan");
         goto exit;
     }
@@ -245,7 +245,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* outer_container_p,
-        zval* options_p)
+        zval* options_p TSRMLS_DC)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
@@ -269,7 +269,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     set_policy(NULL, NULL, NULL, NULL, NULL, NULL, &query_policy,
-            &serializer_policy, options_p, error_p);
+            &serializer_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -297,7 +297,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     as_query_where_inita(&query, 1);
     if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
                     set_p, predicate_ht_p, module_p, function_p,
-                    args_list_p))) {
+                    args_list_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to define query");
         goto exit;
     }

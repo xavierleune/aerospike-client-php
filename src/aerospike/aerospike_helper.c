@@ -200,14 +200,14 @@ do {                                                                           \
         DEBUG_PHP_EXT_DEBUG("After:(%.4x) Head:(%.4x) Count in list are %d",   \
                 persistent_list, persistent_list->pListHead,                   \
                 persistent_list->nNumOfElements);                              \
-        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
+          pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                \
         goto exit;                                                             \
     } else {                                                                   \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
         zend_hash_update(persistent_list,                                      \
                 alias, alias_len, (void *) &new_le,                            \
                 sizeof(zend_rsrc_list_entry), (void **) &le);                  \
-        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
+          pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                \
         goto exit;                                                             \
     }                                                                          \
 } while(0)
@@ -310,7 +310,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
             tmp_ref = le->ptr;
             goto use_existing;
         }
-        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
+       pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
     }
 
     ZEND_HASH_CREATE_ALIAS_NEW(alias_to_search, strlen(alias_to_search), 1);
@@ -409,7 +409,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     bool                    do_continue = true;
     foreach_callback_udata  foreach_record_callback_udata;
     zval                    *outer_container_p = NULL;
-
+    TSRMLS_FETCH();
     if (!p_val) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
         return true;
@@ -495,6 +495,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 extern bool
 aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p)
 {
+    TSRMLS_FETCH();
     if (!val_p) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
         return true;

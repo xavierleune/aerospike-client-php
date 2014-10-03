@@ -468,17 +468,17 @@ extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
         char* namespace_p, char* set_p, userland_callback* user_func_p,
         HashTable* bins_ht_p, /*long percent, long scan_priority,
-        bool concurrent, bool no_bins,*/ zval* options_p);
+        bool concurrent, bool no_bins,*/ zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char* namespace_p,
         char* set_p, zval* scan_id_p, /*long percent,
-        long scan_priority, bool concurrent, bool no_bins,*/ zval *options_p);
+        long scan_priority, bool concurrent, bool no_bins,*/ zval *options_p TSRMLS_DC);
 
 extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
-        uint64_t scan_id, zval* scan_info_p, zval* options_p);
+        uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -488,11 +488,11 @@ aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
 extern as_status
 aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        HashTable* predicate_ht_p, zval* options_p);
+        HashTable* predicate_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
-        HashTable* predicate_ht_p, zval* return_value_p, zval* options_p);
+        HashTable* predicate_ht_p, zval* return_value_p, zval* options_p TSRMLS_DC);
 #endif
