@@ -18,7 +18,7 @@ enum Aerospike_constants {
     OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
     OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
     OPT_SCAN_NOBINS,          /* boolean value, default: false */
-    OPT_POLICY_KEY            /* records store the digest unique ID, optionally also its (ns,set,key) inputs*/
+    OPT_POLICY_KEY            /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
 };
 
 /*
