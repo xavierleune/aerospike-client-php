@@ -417,7 +417,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     MAKE_STD_ZVAL(outer_container_p);
     array_init(outer_container_p);
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec, &(current_as_rec->key), outer_container_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec, &(current_as_rec->key), outer_container_p, NULL))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);

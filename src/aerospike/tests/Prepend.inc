@@ -105,8 +105,9 @@ class Prepend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPrependValueNotString($db, $key) {
-        $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE, 
-                     Aerospike::OPT_WRITE_TIMEOUT=>1000);
+        $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
+            Aerospike::OPT_WRITE_TIMEOUT=>1000,
+            Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND);
         if ($db->isConnected()) {
             return($db->prepend($key, 'Greet', 888888, $opts));
         } else {

@@ -44,7 +44,8 @@ class Remove extends AerospikeTestCommon
     function testKeyRemove($db, $key) {
         if ($db->isConnected()) {
             return ($db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                =>Aerospike::POLICY_RETRY_NONE)));
+                =>Aerospike::POLICY_RETRY_NONE,
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
         } else {
             return($db->errorno());
         }
@@ -69,7 +70,8 @@ class Remove extends AerospikeTestCommon
         $key1 = array("ns" => "test", "set" => "demo", "key" => "-----ss-----");
         if ($db->isConnected()) {
             return ($db->remove($key1, array(Aerospike::OPT_POLICY_RETRY =>
-                Aerospike::POLICY_RETRY_NONE)));
+                Aerospike::POLICY_RETRY_NONE,
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
         } else {
             return($db->errorno());
         }

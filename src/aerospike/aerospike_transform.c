@@ -2797,7 +2797,8 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_len
         if (options_p) {
             zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
         }
-        if ((!record_key_p->valuep) || (!key_policy_pp) || (Z_LVAL_PP(key_policy_pp) == POLICY_KEY_DIGEST)) {
+        if ((!record_key_p->valuep) || (!key_policy_pp) || (key_policy_pp &&
+                    Z_LVAL_PP(key_policy_pp) == POLICY_KEY_DIGEST)) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
                 status = AEROSPIKE_ERR;

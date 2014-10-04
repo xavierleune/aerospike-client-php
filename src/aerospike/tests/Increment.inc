@@ -45,8 +45,9 @@ class Increment extends AerospikeTestCommon
      */
     function testBinIncrementByOffsetValue($db, $key) {
         if ($db->isConnected()) {
-        return($db->increment($key, 'bin1', 4, 0,
-            array(Aerospike::OPT_WRITE_TIMEOUT=>100)));
+            return($db->increment($key, 'bin1', 4, 0,
+                array(Aerospike::OPT_WRITE_TIMEOUT=>100,
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
         } else {
             return($db->errorno());
         }
@@ -69,8 +70,9 @@ class Increment extends AerospikeTestCommon
     function testBinIncrementKeyNotExist($db, $key) {
         $key1 = array("ns" => "test", "set" => "demo", "key" => "----ssss----");
         if ($db->isConnected()) {
-            return($db->increment($key1, 'bin1', 4, 0, 
-                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE)));
+            return($db->increment($key1, 'bin1', 4, 0,
+                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE,
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
         } else {
             return($db->errorno());
         }

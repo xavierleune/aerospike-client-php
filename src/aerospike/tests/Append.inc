@@ -65,7 +65,8 @@ class Append  extends AerospikeTestCommon
               "---------AppendKey-------");
         if ($db->isConnected()) {
             return($db->append($key1, 'Greet', ' World',
-                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
+                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
         } else {
             return($db->errorno());
         }
