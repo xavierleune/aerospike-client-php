@@ -30,6 +30,7 @@ class Aggregate extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
+        sleep(2);
     }
 
     protected function tearDown(&$db, &$key) {
