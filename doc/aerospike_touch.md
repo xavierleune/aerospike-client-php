@@ -14,13 +14,14 @@ and incrementing its generation.
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key for the record. An associative array with keys <'ns','set','key'> or <'ns','set','digest'>.
 
 **ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 
