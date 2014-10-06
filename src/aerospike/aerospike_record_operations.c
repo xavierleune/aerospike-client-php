@@ -25,11 +25,13 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
                                                     as_key* as_key_p,
                                                     as_error *error_p,
                                                     zval* metadata_p,
-                                                    zval* options_p)
+                                                    zval* options_p TSRMLS_DC)
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_read              read_policy;
     as_record*                  record_p = NULL;
+    /*Aerospike_object *aerospike_object = PHP_AEROSPIKE_GET_OBJECT;
+    TSRMLS_FETCH_FROM_CTX(aerospike_object->ts);*/
 
     if ( (!as_key_p) || (!error_p) ||
          (!as_object_p) || (!metadata_p)) {
@@ -38,7 +40,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
     }
 
     set_policy(&read_policy, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            options_p, error_p);
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -73,14 +75,16 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status 
-aerospike_record_operations_remove(aerospike* as_object_p,
+extern as_status
+aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
                                    as_key* as_key_p,
                                    as_error *error_p,
                                    zval* options_p)
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_remove            remove_policy;
+    aerospike*                  as_object_p = aerospike_obj_p->as_ref_p->as_p;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     if ( (!as_key_p) || (!error_p) ||
          (!as_object_p)) {
@@ -89,7 +93,7 @@ aerospike_record_operations_remove(aerospike* as_object_p,
     }
 
     set_policy(NULL, NULL, NULL, &remove_policy, NULL, NULL, NULL, NULL,
-            options_p, error_p);
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -123,7 +127,7 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospike_record_operations_ops(aerospike* as_object_p,
+aerospike_record_operations_ops(Aerospike_object* aerospike_obj_p,
                                 as_key* as_key_p,
                                 zval* options_p,
                                 as_error* error_p,
@@ -143,6 +147,8 @@ aerospike_record_operations_ops(aerospike* as_object_p,
     as_integer          initial_int_val;
     int16_t             initialize_int = 0;
     const char *select[] = {bin_name_p, NULL};
+    aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     as_operations_inita(&ops, 1);
     as_policy_operate_init(&operate_policy);
@@ -153,7 +159,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
     }
 
     set_policy(NULL, NULL, &operate_policy, NULL, NULL, NULL, NULL,
-            &serializer_policy, options_p, error_p);
+            &serializer_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -228,8 +234,8 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status 
-aerospike_record_operations_remove_bin(aerospike* as_object_p,
+extern as_status
+aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
                                        as_key* as_key_p,
                                        zval* bins_p,
                                        as_error* error_p,
@@ -241,16 +247,18 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
     HashPosition        pointer;
     zval                **bin_names;
     as_policy_write     write_policy;
+    aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     as_record_inita(&rec, zend_hash_num_elements(bins_array_p));
-    
+
     if ((!as_object_p) || (!error_p) || (!as_key_p) || (!bins_array_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
     set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL,
-            NULL, NULL, options_p, error_p);
+            NULL, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -267,7 +275,7 @@ aerospike_record_operations_remove_bin(aerospike* as_object_p,
              status = AEROSPIKE_ERR;
              goto exit;
         }
-    }         
+    }
 
     if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p,
                     NULL, as_key_p, &rec))) {
@@ -293,17 +301,19 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status 
-aerospike_php_exists_metadata(aerospike* as_object_p, 
-                              zval* key_record_p, 
-                              zval* metadata_p, 
+extern as_status
+aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
+                              zval* key_record_p,
+                              zval* metadata_p,
                               zval* options_p,
-                              as_error* error_p) {
-
+                              as_error* error_p)
+{
     as_status              status = AEROSPIKE_OK;
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
+    aerospike*             as_object_p = aerospike_obj_p->as_ref_p->as_p;
 
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     if ((!as_object_p) || (!key_record_p)) {
         status = AEROSPIKE_ERR;
         goto exit;
@@ -333,7 +343,7 @@ aerospike_php_exists_metadata(aerospike* as_object_p,
 
     if (AEROSPIKE_OK != (status =
                 aerospike_record_operations_exists(as_object_p, &as_key_for_put_record,
-                    error_p, metadata_p, options_p))) {
+                    error_p, metadata_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("exists/getMetadata: unable to fetch the record");
         goto exit;
     }

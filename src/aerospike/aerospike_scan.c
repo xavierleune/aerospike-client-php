@@ -37,7 +37,7 @@
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        zval* options_p)
+        zval* options_p TSRMLS_DC)
 {
     as_scan             scan;
     as_scan*            scan_p = NULL;
@@ -56,7 +56,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
     scan_p = &scan;
     as_scan_init(scan_p, namespace_p, set_p);
 
-    set_policy_scan(&scan_policy, &serializer_policy, scan_p, options_p, error_p);
+    set_policy_scan(&scan_policy, &serializer_policy, scan_p, options_p, error_p TSRMLS_CC);
     
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -119,7 +119,7 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, zval* options_p)
+        char* set_p, zval* scan_id_p, zval* options_p TSRMLS_DC)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
@@ -155,7 +155,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     scan_p = &scan;
     as_scan_init(scan_p, namespace_p, set_p);
 
-    set_policy_scan(&scan_policy, &serializer_policy, scan_p, options_p, error_p);
+    set_policy_scan(&scan_policy, &serializer_policy, scan_p, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -208,13 +208,13 @@ exit:
  */
 extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
-        uint64_t scan_id, zval* scan_info_p, zval* options_p)
+        uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC)
 {
     as_scan_info                scan_info;
     as_policy_info              info_policy;
 
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
-            options_p, error_p);
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

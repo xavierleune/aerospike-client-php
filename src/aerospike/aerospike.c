@@ -54,6 +54,8 @@
 #include "aerospike_policy.h"
 #include "aerospike_logger.h"
 
+bool record_stream_callback(const as_val* p_val, void* udata);
+
 /*
  ********************************************************************
  * GLOBAL AEROSPIKE CLASS ENTRY
@@ -84,58 +86,109 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.key_policy", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
-ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
-static void aerospike_globals_ctor(zend_aerospike_globals *globals)
-{
+static void tmp(void *p) {
+    TSRMLS_FETCH();
+    DEBUG_PHP_EXT_DEBUG("In destructor function");
+    aerospike_ref *as_ref_p = p;
+    as_error error;
+    if (as_ref_p) {
+        if (as_ref_p->ref_as_p > 1) {
+            as_ref_p->ref_as_p--;
+        } else {
+            if (as_ref_p->as_p) {
+                if (AEROSPIKE_OK != aerospike_close(as_ref_p->as_p, &error)) {
+                    DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
+                }
+                aerospike_destroy(as_ref_p->as_p);
+            }
+            as_ref_p->ref_as_p = 0;
+            as_ref_p->as_p = NULL;
+            if (as_ref_p) {
+                pefree(as_ref_p, 1);
+            }
+            as_ref_p = NULL;
+        }
+        DEBUG_PHP_EXT_INFO("aerospike c sdk object destroyed");
+    } else {
+        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+    }
 }
 
-static void aerospike_globals_dtor(zend_aerospike_globals *globals)
+static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
+    DEBUG_PHP_EXT_DEBUG("In ctor");
+   // pthread_mutex_init(&AEROSPIKE_G(aerospike_mutex), NULL);
+    pthread_rwlock_init(&AEROSPIKE_G(aerospike_mutex), NULL);
+    if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
+        AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
+        DEBUG_PHP_EXT_DEBUG("Pointer is at: (%.4x)",AEROSPIKE_G(persistent_list_g));
+        zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &tmp, 1);
+        AEROSPIKE_G(persistent_ref_count) = 1;
+    } else {
+        AEROSPIKE_G(persistent_ref_count)++;
+    }
+}
+
+static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
+{
+    if (globals->persistent_list_g) {
+        if (AEROSPIKE_G(persistent_ref_count) == 1) {
+            DEBUG_PHP_EXT_DEBUG("Ref count is working");
+            zend_hash_clean(AEROSPIKE_G(persistent_list_g));
+            zend_hash_destroy(AEROSPIKE_G(persistent_list_g));
+            AEROSPIKE_G(persistent_list_g) = NULL;
+            AEROSPIKE_G(persistent_ref_count) = 0;
+        } else {
+            AEROSPIKE_G(persistent_ref_count)--;
+        }
+    }
 }
 
 static PHP_GINIT_FUNCTION(aerospike)
 {
 }
 
-/*
- ********************************************************************
- * Using "arginfo_first_by_ref" in zend_arg_info argument of a
- * zend_function_entry accepts first argument of the
- * corresponding functions by reference and rest by value.
- ********************************************************************
- */
-ZEND_BEGIN_ARG_INFO(arginfo_first_by_ref, 0)
-    ZEND_ARG_PASS_INFO(1)
-ZEND_END_ARG_INFO()
 
-/*
- ********************************************************************
- * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
- * zend_function_entry accepts second argument of the
- * corresponding functions by reference and rest by value.
- ********************************************************************
- */
-ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-ZEND_END_ARG_INFO()
 
-/*
- ********************************************************************
- * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
- * zend_function_entry accepts fifth argument of the
- * corresponding functions by reference and rest by value.
- ********************************************************************
- */
-ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
+    /*
+    ********************************************************************
+    * Using "arginfo_first_by_ref" in zend_arg_info argument of a
+    * zend_function_entry accepts first argument of the
+    * corresponding functions by reference and rest by value.
+    ********************************************************************
+    */
+    ZEND_BEGIN_ARG_INFO(arginfo_first_by_ref, 0)
+    ZEND_ARG_PASS_INFO(1)
+    ZEND_END_ARG_INFO()
+
+    /*
+     ********************************************************************
+     * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
+     * zend_function_entry accepts second argument of the
+     * corresponding functions by reference and rest by value.
+     ********************************************************************
+     */
+    ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(1)
+    ZEND_END_ARG_INFO()
+
+    /*
+     ********************************************************************
+     * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
+     * zend_function_entry accepts fifth argument of the
+     * corresponding functions by reference and rest by value.
+     ********************************************************************
+     */
+    ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(0)
     ZEND_ARG_PASS_INFO(1)
     ZEND_ARG_PASS_INFO(0)
-ZEND_END_ARG_INFO()
+    ZEND_END_ARG_INFO()
 
 /*
  ********************************************************************
@@ -187,19 +240,19 @@ zend_module_entry aerospike_module_entry =
     PHP_AEROSPIKE_VERSION,
 #endif
     STANDARD_MODULE_PROPERTIES
-};
+    };
 
 #ifdef COMPILE_DL_AEROSPIKE
 ZEND_GET_MODULE(aerospike)
 #endif
 
-/*
- ********************************************************************
- *  The function entries for the main Aerospike class.
- ********************************************************************
- */
-static zend_function_entry Aerospike_class_functions[] =
-{
+    /*
+     ********************************************************************
+     *  The function entries for the main Aerospike class.
+     ********************************************************************
+     */
+    static zend_function_entry Aerospike_class_functions[] =
+    {
     /*
      ********************************************************************
      *  Client Object APIs:
@@ -263,6 +316,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanApply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      * UDF APIs:
@@ -281,7 +335,7 @@ static zend_function_entry Aerospike_class_functions[] =
 
 #endif
 
-    { NULL, NULL, NULL }
+        { NULL, NULL, NULL }
 };
 
 /*
@@ -293,28 +347,30 @@ static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS
 {
     Aerospike_object *intern_obj_p = (Aerospike_object *) object;
     as_error error;
+    /*Aerospike_object *intern_obj_p;
+      intern_obj_p = aerospike_object; */
 
-    if (intern_obj_p && intern_obj_p->as_ref_p) {
-        if (intern_obj_p->as_ref_p->ref_as_p > 1) {
-            intern_obj_p->as_ref_p->ref_as_p--;
-        } else {
-            if (intern_obj_p->as_ref_p->as_p) {
-                if (AEROSPIKE_OK != aerospike_close(intern_obj_p->as_ref_p->as_p, &error)) {
-                    DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
-                }
-                aerospike_destroy(intern_obj_p->as_ref_p->as_p);
-            }
-            intern_obj_p->as_ref_p->ref_as_p = 0;
-    	    intern_obj_p->as_ref_p->as_p = NULL;
-            if (intern_obj_p->as_ref_p) {
-                efree(intern_obj_p->as_ref_p);
-            }
-            intern_obj_p->as_ref_p = NULL;
-        }
-        DEBUG_PHP_EXT_INFO("aerospike c sdk object destroyed");
-    } else {
-        DEBUG_PHP_EXT_ERROR("invalid aerospike object");
-    }
+    /* if (intern_obj_p && intern_obj_p->as_ref_p) {
+       if (intern_obj_p->as_ref_p->ref_as_p > 1) {
+       intern_obj_p->as_ref_p->ref_as_p--;
+       } else {
+       if (intern_obj_p->as_ref_p->as_p) {
+       if (AEROSPIKE_OK != aerospike_close(intern_obj_p->as_ref_p->as_p, &error)) {
+       DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
+       }
+       aerospike_destroy(intern_obj_p->as_ref_p->as_p);
+       }
+       intern_obj_p->as_ref_p->ref_as_p = 0;
+       intern_obj_p->as_ref_p->as_p = NULL;
+       if (intern_obj_p->as_ref_p) {
+       efree(intern_obj_p->as_ref_p);
+       }
+       intern_obj_p->as_ref_p = NULL;
+       }
+       DEBUG_PHP_EXT_INFO("aerospike c sdk object destroyed");
+       } else {
+       DEBUG_PHP_EXT_ERROR("invalid aerospike object");
+       }*/
 }
 
 /*
@@ -327,7 +383,7 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
     Aerospike_object *intern_obj_p = (Aerospike_object *) object;
 
     if (intern_obj_p) {
-    	zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
+        zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
         efree(intern_obj_p);
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
@@ -348,6 +404,7 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
     Aerospike_object *intern_obj_p;
 
     if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
+      //  printf("intern_obj_p = %u \n", intern_obj_p);
         zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
 #if PHP_VERSION_ID < 50399
         zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
@@ -360,7 +417,7 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
         intern_obj_p->as_ref_p = NULL;
         return (retval);
     } else {
-    	DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+        DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
     }
 }
 
@@ -386,23 +443,23 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
  */
 PHP_METHOD(Aerospike, __construct)
 {
-    zval*                   config_p = NULL;
-    zval*                   options_p = NULL;
-    as_error                error;
-    as_status               status = AEROSPIKE_OK;
-    as_config               config;
-    zend_bool               persistent_connection = true;
-    char*                   ini_value = NULL;
-    HashTable               persistent_list;
-    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
- 
+    zval*                  config_p = NULL;
+    zval*                  options_p = NULL;
+    as_error               error;
+    as_status              status = AEROSPIKE_OK;
+    as_config              config;
+    zend_bool              persistent_connection = true;
+    char*                  ini_value = NULL;
+    HashTable              *persistent_list;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    persistent_list = (AEROSPIKE_G(persistent_list_g));
+
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
-    DEBUG_PHP_EXT_DEBUG("Over here right build");
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
@@ -438,21 +495,19 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* check and set config policies */
-    set_general_policies(&config, options_p, &error);
+    set_general_policies(&config, options_p, &error TSRMLS_CC);
     if (AEROSPIKE_OK != (error.code)) {
         status = error.code;
         DEBUG_PHP_EXT_ERROR("Unable to set policies");
         goto exit;
     }
-
     if (AEROSPIKE_OK != (status = aerospike_helper_object_from_alias_hash(aerospike_obj_p,
-                    persistent_connection, &config, persistent_list, persist))){
+                    persistent_connection, &config, persistent_list, persist TSRMLS_CC))){
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find object from alias");
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
         goto exit;
     }
-
     /* Connect to the cluster */
     if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
             (AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error)))) {
@@ -464,9 +519,11 @@ PHP_METHOD(Aerospike, __construct)
     /* connection is established, set the connection flag now */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 
-    DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object")
+    DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object");
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    // pthread_mutex_unlock(&aerospike_mutex);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -491,8 +548,9 @@ PHP_METHOD(Aerospike, __destruct)
     }
 
 
-    DEBUG_PHP_EXT_INFO("Destruct method of aerospike object executed")
+    DEBUG_PHP_EXT_INFO("Destruct method of aerospike object executed");
 exit:
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -540,7 +598,7 @@ PHP_METHOD(Aerospike, close)
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -548,18 +606,19 @@ PHP_METHOD(Aerospike, close)
     if (aerospike_obj_p->is_persistent == false) {
         if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_ref_p->as_p, &error))) {
             DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
-            PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+            PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         }
         /* Now as connection is getting closed we need to set the connection flag to false */
         aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
     } else {
-        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
+        PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
-   
+
     /* Now as connection is getting closed we need to set the connection flag to false */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
 exit:
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -596,16 +655,16 @@ PHP_METHOD(Aerospike, get)
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
- 
+
     if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "get: connection not established"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "get: connection not established");
         DEBUG_PHP_EXT_ERROR("get: connection not established");
         goto exit;
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz",
-        &key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
+                &key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for get function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for get function.");
@@ -613,8 +672,8 @@ PHP_METHOD(Aerospike, get)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-        ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) && (PHP_TYPE_ISNOTNULL(bins_p)))) ||
-        ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) && (PHP_TYPE_ISNOTNULL(options_p))))) {
+            ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) && (PHP_TYPE_ISNOTNULL(bins_p)))) ||
+            ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) && (PHP_TYPE_ISNOTNULL(options_p))))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for get function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for get function not proper.");
@@ -622,7 +681,7 @@ PHP_METHOD(Aerospike, get)
     }
 
     if (bins_p && PHP_TYPE_ISNULL(bins_p)) {
-       bins_p = NULL;
+        bins_p = NULL;
     }
 
     if (options_p && PHP_TYPE_ISNULL(options_p)) {
@@ -633,20 +692,20 @@ PHP_METHOD(Aerospike, get)
     array_init(record_p);
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                                                                                 &as_key_for_get_record,
-                                                                                 &initializeKey))) {
+                    &as_key_for_get_record,
+                    &initializeKey))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for get function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for get function ");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_get_record(aerospike_obj_p->as_ref_p->as_p,
-                                                                 &as_key_for_get_record,
-                                                                 options_p,
-                                                                 &error,
-                                                                 record_p,
-                                                                 bins_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_transform_get_record(aerospike_obj_p,
+                    &as_key_for_get_record,
+                    options_p,
+                    &error,
+                    record_p,
+                    bins_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("get function returned an error");
         goto exit;
     }
@@ -655,7 +714,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -702,8 +762,8 @@ PHP_METHOD(Aerospike, put)
     }
 
     if ((PHP_TYPE_ISNOTARR(key_record_p)) ||
-        (PHP_TYPE_ISNOTARR(record_p)) ||
-        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+            (PHP_TYPE_ISNOTARR(record_p)) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for get function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for put function not proper");
@@ -719,7 +779,7 @@ PHP_METHOD(Aerospike, put)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p->as_ref_p->as_p,
-                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p))) {
+                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
     }
@@ -728,7 +788,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_put_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -823,8 +884,8 @@ PHP_METHOD(Aerospike, append)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
-        &key_record_p, &bin_name_p, &bin_name_len,
-        &append_str_p, &append_str_len, &options_p) == FAILURE) {
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &append_str_p, &append_str_len, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for append function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for append function");
@@ -832,8 +893,8 @@ PHP_METHOD(Aerospike, append)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-        (!bin_name_p) || (!append_str_p) ||
-         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+            (!bin_name_p) || (!append_str_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for append function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for append function not proper.");
@@ -841,23 +902,23 @@ PHP_METHOD(Aerospike, append)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                                                                                  &as_key_for_get_record,
-                                                                                  &initializeKey))) {
+                    &as_key_for_get_record,
+                    &initializeKey))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for append function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for append function");
         goto exit;
     }
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_ref_p->as_p,
-                                                                  &as_key_for_get_record,
-                                                                  options_p,
-                                                                  &error,
-                                                                  bin_name_p,
-                                                                  append_str_p,
-                                                                  0,
-                                                                  0,
-                                                                  0,
-                                                                  AS_OPERATOR_APPEND))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+                    &as_key_for_get_record,
+                    options_p,
+                    &error,
+                    bin_name_p,
+                    append_str_p,
+                    0,
+                    0,
+                    0,
+                    AS_OPERATOR_APPEND))) {
         DEBUG_PHP_EXT_ERROR("Append function returned an error");
         goto exit;
     }
@@ -866,7 +927,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -896,10 +958,10 @@ PHP_METHOD(Aerospike, remove)
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
- 
+
     if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "remove: connection not established"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "remove: connection not established");
         DEBUG_PHP_EXT_ERROR("remove: connection not established");
         goto exit;
     }
@@ -924,7 +986,7 @@ PHP_METHOD(Aerospike, remove)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_remove(aerospike_obj_p->as_ref_p->as_p, &as_key_for_put_record, &error, options_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_remove(aerospike_obj_p, &as_key_for_put_record, &error, options_p))) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to remove record");
         DEBUG_PHP_EXT_ERROR("Unable to remove record");
         goto exit;
@@ -934,7 +996,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_put_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -976,14 +1039,15 @@ PHP_METHOD(Aerospike, exists)
         goto exit;
     }
 
-    status = aerospike_php_exists_metadata(aerospike_obj_p->as_ref_p->as_p, key_record_p, metadata_p, options_p, &error);
+    status = aerospike_php_exists_metadata(aerospike_obj_p, key_record_p, metadata_p, options_p, &error);
 
 exit:
     if (status != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     } else {
-        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
+        PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1004,7 +1068,7 @@ PHP_METHOD(Aerospike, getMetadata)
     zval*                  metadata_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
- 
+
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
@@ -1026,14 +1090,15 @@ PHP_METHOD(Aerospike, getMetadata)
         goto exit;
     }
 
-    status = aerospike_php_exists_metadata(aerospike_obj_p->as_ref_p->as_p, key_record_p, metadata_p, options_p, &error);
+    status = aerospike_php_exists_metadata(aerospike_obj_p, key_record_p, metadata_p, options_p, &error);
 
 exit:
     if (status != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     } else {
-        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
+        PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1114,8 +1179,8 @@ PHP_METHOD(Aerospike, prepend)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
-        &key_record_p, &bin_name_p, &bin_name_len,
-        &prepend_str_p, &prepend_str_len, &options_p) == FAILURE) {
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &prepend_str_p, &prepend_str_len, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for prepend function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for prepend function");
@@ -1123,8 +1188,8 @@ PHP_METHOD(Aerospike, prepend)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-        (!bin_name_p) || (!prepend_str_p) ||
-         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+            (!bin_name_p) || (!prepend_str_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for prepend function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for prepend function not proper");
@@ -1132,24 +1197,24 @@ PHP_METHOD(Aerospike, prepend)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                                                                                  &as_key_for_get_record,
-                                                                                  &initializeKey))) {
+                    &as_key_for_get_record,
+                    &initializeKey))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for prepend function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for prepend function");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_ref_p->as_p,
-                                                                  &as_key_for_get_record,
-                                                                  options_p,
-                                                                  &error,
-                                                                  bin_name_p,
-                                                                  prepend_str_p,
-                                                                  0,
-                                                                  0,
-                                                                  0,
-                                                                  AS_OPERATOR_PREPEND))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+                    &as_key_for_get_record,
+                    options_p,
+                    &error,
+                    bin_name_p,
+                    prepend_str_p,
+                    0,
+                    0,
+                    0,
+                    AS_OPERATOR_PREPEND))) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
     }
@@ -1158,7 +1223,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1201,8 +1267,8 @@ PHP_METHOD(Aerospike, increment)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|la",
-        &key_record_p, &bin_name_p, &bin_name_len,
-        &offset, &initial_value, &options_p) == FAILURE) {
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &offset, &initial_value, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for increment function");
@@ -1210,8 +1276,8 @@ PHP_METHOD(Aerospike, increment)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-        (!bin_name_p) ||
-        ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+            (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for increment function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for increment function not proper");
@@ -1219,24 +1285,24 @@ PHP_METHOD(Aerospike, increment)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                                                                                  &as_key_for_get_record,
-                                                                                  &initializeKey))) {
+                    &as_key_for_get_record,
+                    &initializeKey))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for increment function");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_ref_p->as_p,
-                                                                  &as_key_for_get_record,
-                                                                  options_p,
-                                                                  &error,
-                                                                  bin_name_p,
-                                                                  NULL,
-                                                                  offset,
-                                                                  initial_value,
-                                                                  0,
-                                                                  AS_OPERATOR_INCR))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+                    &as_key_for_get_record,
+                    options_p,
+                    &error,
+                    bin_name_p,
+                    NULL,
+                    offset,
+                    initial_value,
+                    0,
+                    AS_OPERATOR_INCR))) {
         DEBUG_PHP_EXT_ERROR("Increment function returned an error");
         goto exit;
     }
@@ -1245,7 +1311,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1285,7 +1352,7 @@ PHP_METHOD(Aerospike, touch)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zl|a",
-        &key_record_p, &time_to_live, &options_p) == FAILURE) {
+                &key_record_p, &time_to_live, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for touch function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for touch function");
@@ -1293,7 +1360,7 @@ PHP_METHOD(Aerospike, touch)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for touch function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for touch function not proper");
@@ -1301,24 +1368,24 @@ PHP_METHOD(Aerospike, touch)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                                                                                  &as_key_for_get_record,
-                                                                                  &initializeKey))) {
+                    &as_key_for_get_record,
+                    &initializeKey))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for touch function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for touch function");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p->as_ref_p->as_p,
-                                                                  &as_key_for_get_record,
-                                                                  options_p,
-                                                                  &error,
-                                                                  NULL,
-                                                                  NULL,
-                                                                  0,
-                                                                  0,
-                                                                  time_to_live,
-                                                                  AS_OPERATOR_TOUCH))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+                    &as_key_for_get_record,
+                    options_p,
+                    &error,
+                    NULL,
+                    NULL,
+                    0,
+                    0,
+                    time_to_live,
+                    AS_OPERATOR_TOUCH))) {
         DEBUG_PHP_EXT_ERROR("Touch function returned an error");
         goto exit;
     }
@@ -1327,7 +1394,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_get_record);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1389,14 +1457,14 @@ PHP_METHOD(Aerospike, setDeserializer)
         RETURN_TRUE;
     }
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                             &user_deserializer_call_info,
-                             &user_deserializer_call_info_cache,
-                             &user_deserializer_call_info.params,
-                             &user_deserializer_call_info.param_count) == FAILURE) {
+                &user_deserializer_call_info,
+                &user_deserializer_call_info_cache,
+                &user_deserializer_call_info.params,
+                &user_deserializer_call_info.param_count) == FAILURE) {
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setDeserializer");
         RETURN_FALSE;
     }
-	
+
     is_user_deserializer_registered = 1;
     Z_ADDREF_P(user_deserializer_call_info.function_name);
     RETURN_TRUE;
@@ -1427,14 +1495,14 @@ PHP_METHOD(Aerospike, setSerializer)
     }
 
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                             &user_serializer_call_info,
-                             &user_serializer_call_info_cache,
-                             &user_serializer_call_info.params,
-                             &user_serializer_call_info.param_count) == FAILURE) {
+                &user_serializer_call_info,
+                &user_serializer_call_info_cache,
+                &user_serializer_call_info.params,
+                &user_serializer_call_info.param_count) == FAILURE) {
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setSerializer");
         RETURN_FALSE;
     }
-	
+
     is_user_serializer_registered = 1;
     Z_ADDREF_P(user_serializer_call_info.function_name);
     RETURN_TRUE;
@@ -1481,7 +1549,7 @@ PHP_METHOD(Aerospike, removeBin)
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for removeBin");
         goto exit;
     }
-   
+
     if (PHP_TYPE_ISNOTARR(key_record_p) || PHP_TYPE_ISNOTARR(bins_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for removeBin function not proper");
@@ -1490,21 +1558,22 @@ PHP_METHOD(Aerospike, removeBin)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                                                                                  &as_key_for_put_record,
-                                                                                  &initializeKey))) {
+                    &as_key_for_put_record,
+                    &initializeKey))) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for removeBin function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for removeBin function");
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_remove_bin(aerospike_obj_p->as_ref_p->as_p, &as_key_for_put_record, bins_p, &error, options_p))) {
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_remove_bin(aerospike_obj_p, &as_key_for_put_record, bins_p, &error, options_p))) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Unable to remove bin");
         DEBUG_PHP_EXT_ERROR("Unable to remove bin");
         goto exit;
     }
-    
+
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1692,6 +1761,7 @@ PHP_METHOD(Aerospike, query)
     userland_callback user_func;
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
+    user_func.obj = aerospike_obj_p;
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
 
@@ -1699,13 +1769,14 @@ PHP_METHOD(Aerospike, query)
             (status = aerospike_query_run(aerospike_obj_p->as_ref_p->as_p,
                                           &error, ns_p, set_p, &user_func,
                                           bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                          options_p))) {
+                                          options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
 
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -1847,12 +1918,13 @@ PHP_METHOD(Aerospike, aggregate)
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                                returned_p, options_p))) {
+                                                returned_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("aggregate returned an error");
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 /*
@@ -1940,19 +2012,21 @@ PHP_METHOD(Aerospike, scan)
     userland_callback user_func;
     user_func.fci_p =  &fci;
     user_func.fcc_p = &fcc;
+    user_func.obj = aerospike_obj_p;
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
                                      &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, options_p))) {
+                                     bins_ht_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
 
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2084,12 +2158,13 @@ PHP_METHOD(Aerospike, scanApply)
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                scan_id_p, options_p))) {
+                                                scan_id_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2172,12 +2247,13 @@ PHP_METHOD(Aerospike, scanInfo)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_get_info(aerospike_obj_p->as_ref_p->as_p,
                                               &error, scan_id, scan_info_p,
-                                              options_p))) {
+                                              options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanInfo returned an error");
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 /*
@@ -2264,7 +2340,8 @@ PHP_METHOD(Aerospike, register)
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2334,7 +2411,8 @@ PHP_METHOD(Aerospike, deregister)
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2391,13 +2469,13 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (PHP_TYPE_ISNOTARR(key_record_p) || 
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
             ((args_p) &&
-                (PHP_TYPE_ISNOTARR(args_p)) &&
-                (PHP_TYPE_ISNOTNULL(args_p))) ||
+             (PHP_TYPE_ISNOTARR(args_p)) &&
+             (PHP_TYPE_ISNOTNULL(args_p))) ||
             ((options_p) &&
-                (PHP_TYPE_ISNOTARR(options_p)) &&
-                (PHP_TYPE_ISNOTNULL(options_p))) ||
+             (PHP_TYPE_ISNOTARR(options_p)) &&
+             (PHP_TYPE_ISNOTNULL(options_p))) ||
             (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(function_zval_p))) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2457,7 +2535,8 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_apply_udf);
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2520,11 +2599,12 @@ PHP_METHOD(Aerospike, listRegistered)
                                                             array_of_modules_p,
                                                             language,
                                                             options_p))) {
-                DEBUG_PHP_EXT_ERROR("listRegistered function returned an error");
-                goto exit;
+        DEBUG_PHP_EXT_ERROR("listRegistered function returned an error");
+        goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2604,7 +2684,8 @@ PHP_METHOD(Aerospike, getRegistered)
         goto exit;
     }
 exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2676,10 +2757,11 @@ PHP_METHOD(Aerospike, setLogLevel)
 
 exit:
     if (status != AEROSPIKE_OK) {
-        PHP_EXT_SET_AS_ERR_IN_CLASS(Aerospike_ce, &error);
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     } else {
-        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
+        PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
 
@@ -2717,17 +2799,17 @@ PHP_METHOD(Aerospike, setLogHandler)
     }
 
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                             &func_call_info, &func_call_info_cache,
-                             &func_call_info.params, &func_call_info.param_count) == FAILURE) {
+                &func_call_info, &func_call_info_cache,
+                &func_call_info.params, &func_call_info.param_count) == FAILURE) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for setLogHandler");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setLogHandler");
         RETURN_FALSE;
     }
-	
+
     if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, &aerospike_helper_log_callback)) {
-	    is_callback_registered = 1;
+        is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
-        PHP_EXT_RESET_AS_ERR_IN_CLASS(Aerospike_ce);
+        PHP_EXT_RESET_AS_ERR_IN_CLASS();
         RETURN_TRUE;
     } else {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to set LogHandler");
@@ -2803,20 +2885,48 @@ static int zend_std_cast_object_tostring(zval *readobj, zval *writeobj, int type
 #endif
 
 /*
+ *******************************************************************************************************
+ * Function to declare policy constants in Aerospike class.
+ *
+ * @param Aerospike_ce          The zend class entry for Aerospike class.
+ *
+ * @return AEROSPIKE_OK if the success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+/*
+static as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
+{
+    int32_t i;
+    as_status   status = AEROSPIKE_OK;
+
+    if (!Aerospike_ce) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    for (i = 0; i <= AEROSPIKE_CONSTANTS_ARR_SIZE; i++) {
+        zend_declare_class_constant_long(
+                Aerospike_ce, aerospike_constants[i].constant_str,
+                strlen(aerospike_constants[i].constant_str),
+                aerospike_constants[i].constantno TSRMLS_CC);
+    }
+
+exit:
+    return status;
+}
+*/
+//zend_class_entry *Aerospike_ce;
+//static zend_class_entry ce;
+/*
  ********************************************************************
  * Aerospike module init.
  ********************************************************************
  */
 PHP_MINIT_FUNCTION(aerospike)
 {
-    REGISTER_INI_ENTRIES();
-
-    ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
-
-    zend_class_entry ce;
-
+    DEBUG_PHP_EXT_DEBUG("Inside minit");
+    zend_class_entry ce={0};
     INIT_CLASS_ENTRY(ce, "Aerospike", Aerospike_class_functions);
-
     if (!(Aerospike_ce = zend_register_internal_class(&ce TSRMLS_CC))) {
         return FAILURE;
     }
@@ -2833,19 +2943,26 @@ PHP_MINIT_FUNCTION(aerospike)
     //	zend_class_implements(Aerospike_ce TSRMLS_CC, 1, zend_ce_iterator);
 
     Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+#ifdef ZTS
+    ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, aerospike_globals_dtor);
+#else
+    ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
+#endif
+    REGISTER_INI_ENTRIES();
     //	Aerospike_ce->get_iterator = Aerospike_get_iterator;
-
     /* Refer aerospike_policy.h
      * This will expose the policy values for PHP
      * as well as CSDK to PHP client.
      */
-    declare_policy_constants_php(Aerospike_ce);
+    declare_policy_constants_php(Aerospike_ce TSRMLS_CC);
+
+    //declare_policy_constants_php(Aerospike_ce);
     /* Refer aerospike_status.h
      * This will expose the status code from CSDK
      * to PHP client.
      */
-    zend_declare_property_long(Aerospike_ce, "errorno", strlen("errorno"), DEFAULT_ERRORNO, ZEND_ACC_PRIVATE TSRMLS_DC);
-    zend_declare_property_string(Aerospike_ce, "error", strlen("error"), DEFAULT_ERROR, ZEND_ACC_PRIVATE TSRMLS_DC);
+    zend_declare_property_long(Aerospike_ce, "errorno", strlen("errorno"), DEFAULT_ERRORNO, ZEND_ACC_PRIVATE TSRMLS_CC);
+    zend_declare_property_string(Aerospike_ce, "error", strlen("error"), DEFAULT_ERROR, ZEND_ACC_PRIVATE TSRMLS_CC);
 
     EXPOSE_LOGGER_CONSTANTS_STR_ZEND(Aerospike_ce);
     EXPOSE_STATUS_CODE_ZEND(Aerospike_ce);
@@ -2862,10 +2979,13 @@ PHP_MINIT_FUNCTION(aerospike)
  */
 PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
+    DEBUG_PHP_EXT_DEBUG("Inside mshutdown");
+    UNREGISTER_INI_ENTRIES();
 #ifndef ZTS
     aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
+#else
+    ts_free_id(aerospike_globals_id);
 #endif
-    UNREGISTER_INI_ENTRIES();
     return SUCCESS;
 }
 
@@ -2878,6 +2998,7 @@ PHP_RINIT_FUNCTION(aerospike)
 {
     /*** TO BE IMPLEMENTED ***/
 
+    DEBUG_PHP_EXT_DEBUG("Inside rinit of this build");
     return SUCCESS;
 }
 
@@ -2905,6 +3026,7 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
         }
     }
 
+    DEBUG_PHP_EXT_DEBUG("Inside rshutdown of this build");
     return SUCCESS;
 }
 

@@ -94,6 +94,60 @@ enum Aerospike_values {
     POLICY_KEY_SEND                                 /* also send, store, and get the actual (ns,set,key) with each record */
 };
 
+#define MAX_CONSTANT_STR_SIZE 512
+/*
+ *******************************************************************************************************
+ * Structure to map constant number to constant name string for Aerospike constants.
+ *******************************************************************************************************
+ */
+typedef struct Aerospike_Constants {
+    int     constantno;
+    char    constant_str[MAX_CONSTANT_STR_SIZE];
+} AerospikeConstants;
+
+#define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
+
+/*
+ *******************************************************************************************************
+ * Instance of Mapper of constant number to constant name string for Aerospike constants.
+ *******************************************************************************************************
+ */
+static
+AerospikeConstants aerospike_constants[] = {
+    { OPT_CONNECT_TIMEOUT               ,   "OPT_CONNECT_TIMEOUT"               },
+    { OPT_READ_TIMEOUT                  ,   "OPT_READ_TIMEOUT"                  },
+    { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
+    { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
+    { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
+    { OPT_POLICY_KEY 			,   "OPT_POLICY_KEY" 			},
+    { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
+    { OPT_SCAN_PRIORITY 		,   "OPT_SCAN_PRIORITY" 		},
+    { OPT_SCAN_PERCENTAGE 		,   "OPT_SCAN_PERCENTAGE" 		},
+    { OPT_SCAN_CONCURRENTLY 		,   "OPT_SCAN_CONCURRENTLY" 		},
+    { OPT_SCAN_NOBINS 			,   "OPT_SCAN_NOBINS" 			},
+    { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
+    { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
+    { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
+    { POLICY_EXISTS_CREATE              ,   "POLICY_EXISTS_CREATE"              },
+    { POLICY_EXISTS_UPDATE              ,   "POLICY_EXISTS_UPDATE"              },
+    { POLICY_EXISTS_REPLACE             ,   "POLICY_EXISTS_REPLACE"             },
+    { POLICY_EXISTS_CREATE_OR_REPLACE   ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   },
+    { SERIALIZER_NONE                   ,   "SERIALIZER_NONE"                   },
+    { SERIALIZER_PHP                    ,   "SERIALIZER_PHP"                    },
+    { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
+    { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
+    { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      },
+    { SCAN_PRIORITY_AUTO 		,   "SCAN_PRIORITY_AUTO" 		},
+    { SCAN_PRIORITY_LOW 		,   "SCAN_PRORITY_LOW" 			},
+    { SCAN_PRIORITY_MEDIUM 		,   "SCAN_PRIORITY_MEDIUM" 		},
+    { SCAN_PRIORITY_HIGH 		,   "SCAN_PRIORITY_HIGH" 		},
+    { SCAN_STATUS_UNDEF 		,   "SCAN_STATUS_UNDEF" 		},
+    { SCAN_STATUS_INPROGRESS 		,   "SCAN_STATUS_INPROGRESS" 		},
+    { SCAN_STATUS_ABORTED 		,   "SCAN_STATUS_ABORTED" 		},
+    { SCAN_STATUS_COMPLETED 		,   "SCAN_STATUS_COMPLETED" 		},
+    { POLICY_KEY_DIGEST 		,   "POLICY_KEY_DIGEST" 		},
+    { POLICY_KEY_SEND 			,   "POLICY_KEY_SEND" 			}
+};
 /*
  *******************************************************************************************************
  * Extern declarations of policy functions.
@@ -109,21 +163,21 @@ set_policy(as_policy_read *read_policy_p,
            as_policy_query *query_policy_p,
            uint32_t *serializer_policy_p,
            zval *options_p,
-           as_error *error_p);
+           as_error *error_p TSRMLS_DC);
 
 extern void
 set_general_policies(as_config* as_config_p,
                      zval *options_p,
-                     as_error *error_p);
+                     as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_scan(as_policy_scan *scan_policy_p,
         uint32_t *serializer_policy_p,
         as_scan *as_scan_p,
         zval *options_p,
-        as_error *error_p);
+        as_error *error_p TSRMLS_DC);
 
 extern as_status
-declare_policy_constants_php(zend_class_entry *Aerospike_ce);
+declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC);
 
 #endif /* end of __AEROSPIKE_POLICY_H__ */
