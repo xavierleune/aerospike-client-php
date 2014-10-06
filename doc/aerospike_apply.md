@@ -18,7 +18,7 @@ Currently the only UDF language supported is Lua.  See the
 
 ## Parameters
 
-**key** the key under which to store the record. An associative array with keys 'ns','set','key'.
+**key** the key under which to store the record. An associative array with keys <'ns','set','key'> or <'ns', 'set', 'digest'>.
 
 **module** the name of the UDF module registered against the Aerospike DB.
 
