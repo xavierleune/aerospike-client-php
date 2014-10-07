@@ -137,7 +137,8 @@
         array, err, static_pool, label, serializer_policy)                       \
     case IS_##datatype:                                                          \
         AEROSPIKE_##level##_##method##_##action##_##datatype(                    \
-                key, value, array, static_pool, serializer_policy, err);         \
+                key, value, array, static_pool, serializer_policy,               \
+                err);                                                            \
         if (AEROSPIKE_OK != (err->code)) {                                       \
             goto label;                                                          \
         }                                                                        \
@@ -568,7 +569,6 @@ do {                                                                           \
     hashtable = Z_ARRVAL_PP((zval**)value);                                    \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
     if (zend_hash_num_elements(hashtable) == 0) {                              \
-        DEBUG_PHP_EXT_DEBUG("Got an empty array from PHP");                    \
         PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_ERR_PARAM,              \
                 "Got an empty array from PHP");                                \
         goto label;                                                            \
@@ -617,24 +617,24 @@ do {                                                                           \
  */
 #define AEROSPIKE_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name,     \
         err)                                                                   \
-    AS_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name, err)
+    AS_LIST_SET_APPEND_LIST(outer_store, inner_store, bin_name, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_SET_APPEND_MAP(outer_store, inner_store, bin_name, err) \
-    AS_LIST_SET_APPEND_MAP(outer_store, inner_store, bin_name, err)
+    AS_LIST_SET_APPEND_MAP(outer_store, inner_store, bin_name, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_SET_ASSOC_LIST(outer_store, inner_store, bin_name,   \
         err)                                                                   \
-    AS_DEFAULT_SET_ASSOC_LIST(outer_store, inner_store, bin_name, err)
+    AS_DEFAULT_SET_ASSOC_LIST(outer_store, inner_store, bin_name, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_SET_ASSOC_MAP(outer_store, inner_store, bin_name,    \
         err)                                                                   \
-    AS_DEFAULT_SET_ASSOC_MAP(outer_store, inner_store, bin_name, err)
+    AS_DEFAULT_SET_ASSOC_MAP(outer_store, inner_store, bin_name, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_SET_ASSOC_LIST(outer_store, inner_store, bin_name, err)  \
-    AS_MAP_SET_ASSOC_LIST(outer_store, inner_store, bin_name, err)
+    AS_MAP_SET_ASSOC_LIST(outer_store, inner_store, bin_name, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name, err)   \
-    AS_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name, err)
+    AS_MAP_SET_ASSOC_MAP(outer_store, inner_store, bin_name, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -644,47 +644,47 @@ do {                                                                           \
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
     AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_INT64(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_STRING(key, value, array, static_pool,       \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_STR(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool,        \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_ARRAY(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LIST(key, value, array, static_pool,         \
             serializer_policy, err)                                            \
     AS_LIST_PUT_APPEND_LIST(key, value, array, static_pool,                    \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_MAP(key, value, array, static_pool,          \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_MAP(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_OBJECT(key, value, array, static_pool,       \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_DOUBLE(key, value, array, static_pool,       \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_BOOL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -694,47 +694,47 @@ do {                                                                           \
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool,       \
            serializer_policy, err)                                             \
     AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool,       \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_INT64(key, value, array, static_pool,                 \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_STRING(key, value, array, static_pool,     \
            serializer_policy, err)                                             \
     AS_DEFAULT_PUT_ASSOC_STR(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool,      \
            serializer_policy, err)                                             \
     AS_DEFAULT_PUT_ASSOC_ARRAY(key, value, array, static_pool,                 \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool,       \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_LIST(key, value, array, static_pool,                  \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool,        \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_MAP(key, value, array, static_pool,                   \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_OBJECT(key, value, array, static_pool,     \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_DOUBLE(key, value, array, static_pool,     \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_BOOL(key, value, array, static_pool,       \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -744,85 +744,85 @@ do {                                                                           \
 #define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool,           \
            serializer_policy, err)                                             \
     AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array, static_pool,           \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_INT64(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_STRING(key, value, array, static_pool,         \
             erializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_STR(key, value, array, static_pool,                       \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool,          \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_ARRAY(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_LIST(key, value, array, static_pool,           \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_LIST(key, value, array, static_pool,                      \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_MAP(key, value, array, static_pool,            \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_MAP(key, value, array, static_pool,                       \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_OBJECT(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_DOUBLE(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_BOOL(key, value, array, static_pool,           \
            serializer_policy, err)                                             \
     AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
-        serializer_policy, err)
+        serializer_policy, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
- * GET function calls for level = LIST 
+ * GET function calls for level = LIST
  *******************************************************************************************************
  */
 #define AEROSPIKE_LIST_GET_APPEND_UNDEF(key, value, array, static_pool, err)   \
-    ADD_LIST_APPEND_NULL(key, value, &array, err)
+    ADD_LIST_APPEND_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_UNKNOWN(key, value, array, static_pool, err) \
-    ADD_LIST_APPEND_NULL(key, value, &array, err)
+    ADD_LIST_APPEND_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_NIL(key, value, array, static_pool, err)     \
-    ADD_LIST_APPEND_NULL(key, value, &array, err)
+    ADD_LIST_APPEND_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_BOOLEAN(key, value, array, static_pool, err) \
-    ADD_LIST_APPEND_BOOL(key, value, &array, err)
+    ADD_LIST_APPEND_BOOL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_INTEGER(key, value, array, static_pool, err) \
-    ADD_LIST_APPEND_LONG(key, value, &array, err)
+    ADD_LIST_APPEND_LONG(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_STRING(key, value, array, static_pool, err)  \
-    ADD_LIST_APPEND_STRING(key, value, &array, err)
+    ADD_LIST_APPEND_STRING(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_LIST(key, value, array, static_pool, err)    \
-    ADD_LIST_APPEND_LIST(key, value, &array, err)
+    ADD_LIST_APPEND_LIST(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_MAP(key, value, array, static_pool, err)     \
-    ADD_LIST_APPEND_MAP(key, value, &array, err)
+    ADD_LIST_APPEND_MAP(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_REC(key, value, array, static_pool, err)     \
-    ADD_LIST_APPEND_REC(key, value, &array, err)
+    ADD_LIST_APPEND_REC(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_PAIR(key, value, array, static_pool, err)    \
-    ADD_LIST_APPEND_PAIR(key, value, &array, err)
+    ADD_LIST_APPEND_PAIR(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_BYTES(key, value, array, static_pool, err)   \
-    ADD_LIST_APPEND_BYTES(key, value, &array, err) 
+    ADD_LIST_APPEND_BYTES(key, value, &array, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -831,43 +831,43 @@ do {                                                                           \
  */
 #define AEROSPIKE_DEFAULT_GET_ASSOC_UNDEF(key, value, array, static_pool,      \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_NULL(key, value, array, err)
+    ADD_DEFAULT_ASSOC_NULL(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_UNKNOWN(key, value, array, static_pool,    \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_NULL(key, value, array, err)
+    ADD_DEFAULT_ASSOC_NULL(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_NIL(key, value, array, static_pool, err)   \
-    ADD_DEFAULT_ASSOC_NULL(key, value, array, err)
+    ADD_DEFAULT_ASSOC_NULL(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_BOOLEAN(key, value, array, static_pool,    \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_BOOL(key, value, array, err)
+    ADD_DEFAULT_ASSOC_BOOL(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_INTEGER(key, value, array, static_pool,    \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_LONG(key, value, array, err)
+    ADD_DEFAULT_ASSOC_LONG(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_STRING(key, value, array, static_pool,     \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_STRING(key, value, array, err)
+    ADD_DEFAULT_ASSOC_STRING(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_LIST(key, value, array, static_pool, err)  \
-    ADD_DEFAULT_ASSOC_LIST(key, value, array, err)
+    ADD_DEFAULT_ASSOC_LIST(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_MAP(key, value, array, static_pool,        \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_MAP(key, value, array, err)
+    ADD_DEFAULT_ASSOC_MAP(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_REC(key, value, array, static_pool, err)   \
-    ADD_DEFAULT_ASSOC_REC(key, value, array, err)
+    ADD_DEFAULT_ASSOC_REC(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_PAIR(key, value, array, static_pool, err)  \
-    ADD_DEFAULT_ASSOC_PAIR(key, value, array, err)
+    ADD_DEFAULT_ASSOC_PAIR(key, value, array, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool,      \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_BYTES(key, value, array, err) 
+    ADD_DEFAULT_ASSOC_BYTES(key, value, array, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -875,37 +875,37 @@ do {                                                                           \
  *******************************************************************************************************
  */
 #define   AEROSPIKE_MAP_GET_ASSOC_UNDEF(key, value, array, static_pool, err)   \
-    ADD_MAP_ASSOC_NULL(key, value, &array, err)
+    ADD_MAP_ASSOC_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_UNKNOWN(key, value, array, static_pool, err)   \
-    ADD_MAP_ASSOC_NULL(key, value, &array, err)
+    ADD_MAP_ASSOC_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_NIL(key, value, array, static_pool, err)       \
-    ADD_MAP_ASSOC_NULL(key, value, &array, err)
+    ADD_MAP_ASSOC_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_BOOLEAN(key, value, array, static_pool, err)   \
-    ADD_MAP_ASSOC_BOOL(key, value, &array, err)
+    ADD_MAP_ASSOC_BOOL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_INTEGER(key, value, array, static_pool, err)   \
-    ADD_MAP_ASSOC_LONG(key, value, &array, err)
+    ADD_MAP_ASSOC_LONG(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_STRING(key, value, array, static_pool, err)    \
-    ADD_MAP_ASSOC_STRING(key, value, &array, err)
+    ADD_MAP_ASSOC_STRING(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_LIST(key, value, array, static_pool, err)      \
-    ADD_MAP_ASSOC_LIST(key, value, &array, err)
+    ADD_MAP_ASSOC_LIST(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_MAP(key, value, array, static_pool, err)       \
-    ADD_MAP_ASSOC_MAP(key, value, &array, err)
+    ADD_MAP_ASSOC_MAP(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_REC(key, value, array, static_pool, err)       \
-    ADD_MAP_ASSOC_REC(key, value, &array, err)
+    ADD_MAP_ASSOC_REC(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_PAIR(key, value, array, static_pool, err)      \
-    ADD_MAP_ASSOC_PAIR(key, value, &array, err)
+    ADD_MAP_ASSOC_PAIR(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_BYTES(key, value, array, static_pool, err)     \
-    ADD_MAP_ASSOC_BYTES(key, value, &array, err) 
+    ADD_MAP_ASSOC_BYTES(key, value, &array, err TSRMLS_CC)
 
 /*
  *******************************************************************************************************
@@ -914,49 +914,49 @@ do {                                                                           \
  */
 #define AEROSPIKE_MAP_GET_INDEX_UNDEF(key, value, array, static_pool,          \
         err)                                                                   \
-    ADD_MAP_INDEX_NULL(key, value, &array, err)
+    ADD_MAP_INDEX_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_UNKNOWN(key, value, array, static_pool,        \
         err)                                                                   \
-    ADD_MAP_INDEX_NULL(key, value, &array, err)
+    ADD_MAP_INDEX_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_NIL(key, value, array, static_pool,            \
         err)                                                                   \
-    ADD_MAP_INDEX_NULL(key, value, &array, err)
+    ADD_MAP_INDEX_NULL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_BOOLEAN(key, value, array, static_pool,        \
         err)                                                                   \
-    ADD_MAP_INDEX_BOOL(key, value, &array, err)
+    ADD_MAP_INDEX_BOOL(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_INTEGER(key, value, array, static_pool,        \
         err)                                                                   \
-    ADD_MAP_INDEX_LONG(key, value, &array, err)
+    ADD_MAP_INDEX_LONG(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_STRING(key, value, array, static_pool,         \
         err)                                                                   \
-    ADD_MAP_INDEX_STRING(key, value, &array, err)
+    ADD_MAP_INDEX_STRING(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_LIST(key, value, array, static_pool,           \
         err)                                                                   \
-    ADD_MAP_INDEX_LIST(key, value, &array, err)
- 
+    ADD_MAP_INDEX_LIST(key, value, &array, err TSRMLS_CC)
+
 #define AEROSPIKE_MAP_GET_INDEX_MAP(key, value, array, static_pool,            \
         err)                                                                   \
-    ADD_MAP_INDEX_MAP(key, value, &array, err)
+    ADD_MAP_INDEX_MAP(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_REC(key, value, array, static_pool,            \
         err)                                                                   \
-    ADD_MAP_INDEX_REC(key, value, &array, err)
+    ADD_MAP_INDEX_REC(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_PAIR(key, value, array, static_pool,           \
         err)                                                                   \
-    ADD_MAP_INDEX_PAIR(key, value, &array, err)
+    ADD_MAP_INDEX_PAIR(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_BYTES(key, value, array, static_pool,          \
         err)                                                                   \
-    ADD_MAP_INDEX_BYTES(key, value, &array, err)
+    ADD_MAP_INDEX_BYTES(key, value, &array, err TSRMLS_CC)
 
-/* 
+/*
  *******************************************************************************************************
  * Macros for ZVAL processing at different levels
  *******************************************************************************************************

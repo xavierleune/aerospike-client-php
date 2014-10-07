@@ -65,6 +65,7 @@ class Aggregate extends AerospikeTestCommon
      */
     function testAggregatePositive($db, $key)
     {
+	sleep(10);
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -133,6 +134,7 @@ class Aggregate extends AerospikeTestCommon
      */
     function testAggregatePositiveEmptyAggregationResult($db, $key)
     {
+	sleep(10);
         if (!$db->isConnected()) {
             return($db->errorno());
         }
@@ -601,6 +603,7 @@ class Aggregate extends AerospikeTestCommon
      */
     function testAggregateWithWhereContainingBoolValue($db, $key)
     {
+	sleep(10);
         if ($db->isConnected()) {
             $where = $db->predicateBetween("age", true, true);
             $status = $db->aggregate("test", "demo", $where,
