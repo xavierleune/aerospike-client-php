@@ -1,8 +1,8 @@
-# Aerospike PHP Client
+# Aerospike PHP Client [![Build Status](https://travis-ci.org/aerospike/aerospike-client-php.svg?branch=master)](https://travis-ci.org/aerospike/aerospike-client-php)
 
 The Aerospike PHP Client works with PHP 5.3, 5.4, 5.5, and 5.6.
 
-The PHP extension was tested to build on
+The PHP extension was tested to build on 64-bit
 
  - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7 and related distros using the **apt** package manager
  - CentOS 6.x, 7.x, RedHat 6.x, 7.x and related distros using the **yum** package manager
@@ -58,7 +58,7 @@ directory.
     cd src/aerospike
     ./build.sh
 
-This will download the Aerospike C client SDK if necessary into 
+This will download the Aerospike C client SDK if necessary into
 `aerospike-client-c/`, and set the `CLIENTREPO_3X` environment variable
 for `make`.
 

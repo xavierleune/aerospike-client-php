@@ -126,7 +126,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 echo colorize("Performing scan info ≻", 'black', true);
 $start = __LINE__;
 do {
-    sleep(10);
+    sleep(1);
     $status = $db->scanInfo($scan_id, $info);
     if ($status != Aerospike::OK) {
         return($db->errorno());

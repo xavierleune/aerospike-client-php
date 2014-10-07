@@ -95,7 +95,7 @@ for ($num_ops = 1; $num_ops < $total_ops; $num_ops++) {
         $reads++;
         if ($res != Aerospike::OK) {
             $read_fails++;
-        } elseif ($r['v'] != $kv['v']) {
+        } elseif ($r['bins']['v'] != $kv['v']) {
             $read_fails++;
         }
     }
