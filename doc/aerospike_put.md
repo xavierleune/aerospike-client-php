@@ -19,7 +19,7 @@ associative array keys and values. This behavior can be modified using the
 
 ## Parameters
 
-**key** the key under which to store the record. An array with keys <'ns','set','key'> or <'ns','set','digest'>.
+**key** the key under which to store the record. An array with keys 'ns','set','key'.
 
 **bins** the array of bin names and values to write.
 
@@ -30,7 +30,6 @@ associative array keys and values. This behavior can be modified using the
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_EXISTS**
 - **Aerospike::OPT_POLICY_RETRY**
-- **Aerospike::OPT_POLICY_GEN**
 - **Aerospike::OPT_SERIALIZER**.
 
 ## Return Values

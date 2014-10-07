@@ -17,7 +17,7 @@ The bins returned can be filtered by passing an associative array of the bins ne
 
 ## Parameters
 
-**keys** an array of initialized keys, each an associative array with keys <'ns','set','key'> or <'ns','set','digest'>.
+**keys** an array of initialized keys, each an associative array with keys 'ns','set','key'.
 
 **record** filled by an associative array of bins and values.
 

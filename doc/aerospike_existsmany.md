@@ -16,7 +16,7 @@ and non-existent records will return as NULL.
 
 ## Parameters
 
-**keys** an array of initialized keys, each an associative array with keys <'ns','set','key'> or <'ns','set','digest'>.
+**keys** an array of initialized keys, each an associative array with keys 'ns','set','key'.
 
 **metadata** filled by an associative array of metadata.
 

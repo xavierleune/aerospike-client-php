@@ -16,7 +16,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 
 ## Parameters
 
-**key** the key under which to store the record. An array with keys <'ns','set','key'> or <'ns','set','digest'>.
+**key** the key under which to store the record. An array with keys 'ns','set','key'.
 
 **record** an array of key, metadata, and bins:
 ```

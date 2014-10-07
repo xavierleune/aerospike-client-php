@@ -14,7 +14,7 @@ set it to the *initial_value* if it does not exist.
 
 ## Parameters
 
-**key** the key under which the bin can be found. An associative array with keys <'ns','set','key'> or <'ns','set','digest'>.
+**key** the key under which the bin can be found. An associative array with keys 'ns','set','key'.
 
 **bin** the name of the bin in which we have a numeric value.
 
@@ -26,7 +26,6 @@ set it to the *initial_value* if it does not exist.
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
-- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 
