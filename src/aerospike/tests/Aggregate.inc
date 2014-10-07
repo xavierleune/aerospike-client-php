@@ -13,6 +13,11 @@ class Aggregate extends AerospikeTestCommon
      */
     static $parameter_exception = 2000;
     static $status_err = 2001;
+    static $lua_user_path = "tests/lua";
+
+    public function __construct() {
+        self::$lua_user_path = file_exists("/opt/aerospike/client-php/usr-lua") ? "/opt/aerospike/client-php/usr-lua" : (file_exists("/usr/local/aerospike/client-php/usr-lua") ? "/usr/local/aerospike/client-php/usr-lua" : "tests/lua");
+    }
 
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -26,7 +31,7 @@ class Aggregate extends AerospikeTestCommon
         $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
         $register_status =
-            $db->register("tests/lua/stream_udf.lua", "stream_udf.lua");
+            $db->register(self::$lua_user_path . "/stream_udf.lua", "stream_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
@@ -411,7 +416,7 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $register_status =
-            $db->register("tests/lua/aggregate_udf_extra_parameter.lua",
+            $db->register(self::$lua_user_path . "/aggregate_udf_extra_parameter.lua",
                 "aggregate_udf_extra_parameter");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
@@ -450,7 +455,7 @@ class Aggregate extends AerospikeTestCommon
             return($db->errorno());
         }
         $register_status =
-            $db->register("tests/lua/aggregate_udf_less_parameter.lua",
+            $db->register(self::$lua_user_path . "/aggregate_udf_less_parameter.lua",
                 "aggregate_udf_less_parameter.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
@@ -488,7 +493,7 @@ class Aggregate extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $register_status =
-                    $db->register("tests/lua/aggregate_udf_less_parameter.lua",
+                    $db->register(self::$lua_user_path . "/aggregate_udf_less_parameter.lua",
                     "aggregate_udf_less_parameter.lua");
                 if ($register_status != Aerospike::OK) {
                     return($db->errorno());
@@ -528,7 +533,7 @@ class Aggregate extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $register_status =
-                    $db->register("tests/lua/aggregate_udf_less_parameter.lua",
+                    $db->register(self::$lua_user_path . "/aggregate_udf_less_parameter.lua",
                     "aggregate_udf_less_parameter.lua");
                 if ($register_status != Aerospike::OK) {
                     return($db->errorno());
@@ -569,7 +574,7 @@ class Aggregate extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             $register_status =
-                $db->register("tests/lua/aggregate_udf_less_parameter.lua",
+                $db->register(self::$lua_user_path . "/aggregate_udf_less_parameter.lua",
                 "aggregate_udf_less_parameter.lua");
             if ($register_status != Aerospike::OK) {
                 return($db->errorno());
@@ -634,7 +639,7 @@ class Aggregate extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $register_status =
-                    $db->register("tests/lua/aggregate_udf_less_parameter.lua",
+                    $db->register(self::$lua_user_path . "/aggregate_udf_less_parameter.lua",
                     "aggregate_udf_less_parameter.lua");
                 if ($register_status != Aerospike::OK) {
                     return($db->errorno());

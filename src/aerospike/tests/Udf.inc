@@ -11,13 +11,18 @@ class Udf extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
+    static $lua_user_path = "tests/lua";
+
+    public function __construct() {
+        self::$lua_user_path = file_exists("/opt/aerospike/client-php/usr-lua") ? "/opt/aerospike/client-php/usr-lua" : (file_exists("/usr/local/aerospike/client-php/usr-lua") ? "/usr/local/aerospike/client-php/usr-lua" : "tests/lua");
+    }
 
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $udf_register_status =
-            $db->register("tests/lua/bin_transform.lua", "module.lua");
+            $db->register(self::$lua_user_path . "/bin_transform.lua", "module.lua");
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -60,7 +65,7 @@ class Udf extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $udf_register_status = $db->register("tests/lua/bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
+        $udf_register_status = $db->register(self::$lua_user_path . "/bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
             array(Aerospike::OPT_WRITE_TIMEOUT => 5000));
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
@@ -84,7 +89,7 @@ class Udf extends AerospikeTestCommon
      */
     function testUdfNegativeRegisterUnknownModule($db, $key) {
         if ($db->isConnected()) {
-            $udf_register_status = $db->register("unknown.lua","unknown_udf");
+            $udf_register_status = $db->register("unknown.lua", "unknown_udf");
         } else{
             $db->close();
             return($db->errorno());
@@ -112,7 +117,7 @@ class Udf extends AerospikeTestCommon
      */
     function testUdfNegativeRegisterEmptyStringAsModule($db, $key) {
         if ($db->isConnected()) {
-            $udf_register_status = $db->register("","");
+            $udf_register_status = $db->register("", "");
         } else{
             $db->close();
             return($db->errorno());
