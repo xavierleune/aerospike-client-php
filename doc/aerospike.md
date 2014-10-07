@@ -14,13 +14,6 @@ class Aerospike
     const POLICY_KEY_DIGEST = 1; hashes (ns,set,key) data into a unique record ID (default)
     const POLICY_KEY_SEND = 2; also send, store, and get the actual (ns,set,key) with each record
 
-    // The generation policy can be determined by setting OPT_POLICY_GEN to one of
-    const POLICY_GEN_UNDEF = 1; // The policy is undefined. If set, then the value will default to either as_config.policies.gen or `AS_POLICY_GEN_DEFAULT`
-    const POLICY_GEN_IGNORE = 2; // Write a record, regardless of generation
-    const POLICY_GEN_EQ = 3; // Write a record, ONLY if generations are equal
-    const POLICY_GEN_GT = 4; // Write a record, ONLY if local generation is greater-than remote generation
-    const POLICY_GEN_DUP = 5; // Write a record creating a duplicate, ONLY if the generation collides (?)
-
     // The retry policy can be determined by setting OPT_POLICY_RETRY to one of
     const POLICY_RETRY_NONE = 1; // do not retry an operation (default)
     const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
@@ -60,7 +53,6 @@ class Aerospike
     const OPT_SCAN_CONCURRENTLY = 9; // boolean value, default: false
     const OPT_SCAN_NOBINS = 10; // boolean value, default: false
     const OPT_POLICY_KEY = 11; // records store the digest unique ID, optionally also its (ns,set,key) inputs
-    const OPT_POLICY_GEN = 12; // Specifies the behavior of record modifications with regard to the generation value.
 
     // Aerospike Status Codes:
     //
