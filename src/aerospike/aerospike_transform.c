@@ -2755,7 +2755,7 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, zval *pk_p, zval *return_value, as_key *record_key_p TSRMLS_DC)
+aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, zval *pk_p, zval *return_value, as_key *record_key_p, zval *options_p TSRMLS_DC)
 {
     as_status       status = AEROSPIKE_OK;
 
@@ -2794,11 +2794,17 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_len
                 goto exit;
         }
     } else {
+        zval **key_policy_pp = NULL;
+
         if (!record_key_p) {
             status = AEROSPIKE_ERR;
             goto exit;
         }
-        if (!record_key_p->valuep) {
+        if (options_p) {
+            zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
+        }
+        if ((!record_key_p->valuep) || (!key_policy_pp) || (key_policy_pp &&
+                    Z_LVAL_PP(key_policy_pp) == POLICY_KEY_DIGEST)) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
                 status = AEROSPIKE_ERR;
@@ -2862,7 +2868,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  *******************************************************************************************************
  */
 static as_status
-aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p TSRMLS_DC)
+aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p TSRMLS_DC)
 {
     as_status                  status = AEROSPIKE_OK;
     php_unserialize_data_t     var_hash;
@@ -2875,7 +2881,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
 
     if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
             record_key_p->set, strlen(record_key_p->set), NULL,
-            key_container_p, record_key_p TSRMLS_CC))) {
+            key_container_p, record_key_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
         status = AEROSPIKE_ERR;
         goto exit;
@@ -2952,7 +2958,7 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p TSRMLS_DC)
+aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p, zval* options_p TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     zval*               metadata_container_p = NULL;
@@ -2967,7 +2973,7 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
 
     MAKE_STD_ZVAL(key_container_p);
     array_init(key_container_p);
-    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p TSRMLS_CC);
+    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p, options_p TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
         status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
@@ -3072,7 +3078,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p TSRMLS_CC))) {
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
         status = AEROSPIKE_ERR;
         goto exit;

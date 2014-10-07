@@ -12,6 +12,12 @@ class ScanApply extends AerospikeTestCommon
      * constants.
      */
     private $ages = array(29, 27, 22, 32);
+    static $lua_user_path = "tests/lua";
+
+    public function __construct() {
+        self::$lua_user_path = file_exists("/opt/aerospike/client-php/usr-lua") ? "/opt/aerospike/client-php/usr-lua" : (file_exists("/usr/local/aerospike/client-php/usr-lua") ? "/usr/local/aerospike/client-php/usr-lua" : "tests/lua");
+    }
+
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
@@ -25,10 +31,11 @@ class ScanApply extends AerospikeTestCommon
         $db->put($key, array("first_name"=>"ajit", "age"=>($this->ages[3])));
          
         $register_status =
-            $db->register("tests/lua/my_udf.lua", "my_udf.lua");
+            $db->register(self::$lua_user_path . "/my_udf.lua", "my_udf.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
+        sleep(2);
     }
 
     protected function tearDown(&$db, &$key) {
@@ -366,7 +373,7 @@ class ScanApply extends AerospikeTestCommon
             return($db->errorno());
         }
         $register_status =
-            $db->register("tests/lua/my_udf_extra_parameter.lua",
+            $db->register(self::$lua_user_path . "/my_udf_extra_parameter.lua",
                 "my_udf_extra_parameter.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
@@ -403,7 +410,7 @@ class ScanApply extends AerospikeTestCommon
             return($db->errorno());
         }
         $register_status =
-            $db->register("tests/lua/my_udf_less_parameter.lua",
+            $db->register(self::$lua_user_path . "/my_udf_less_parameter.lua",
                 "my_udf_less_parameter.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());

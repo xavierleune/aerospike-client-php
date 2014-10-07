@@ -1432,7 +1432,7 @@ PHP_METHOD(Aerospike, initKey)
 
     array_init(return_value);
 
-    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, return_value)) {
+    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, return_value, NULL)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
         RETURN_NULL();
     }
@@ -2522,6 +2522,11 @@ PHP_METHOD(Aerospike, apply)
         DEBUG_PHP_EXT_ERROR("Unable to iterate through apply key params");
         goto exit;
     }
+
+    if (return_value_of_udf_p) {
+        zval_dtor(return_value_of_udf_p);
+    }
+    array_init(return_value_of_udf_p);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_udf_apply(aerospike_obj_p, 

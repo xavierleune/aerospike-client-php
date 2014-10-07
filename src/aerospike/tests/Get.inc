@@ -87,7 +87,7 @@ class Get extends AerospikeTestCommon
         }
         if (strcmp($bin_arr["key"]["ns"], $key["ns"]) == 0 &&
             strcmp($bin_arr["key"]["set"], $key["set"]) == 0 &&
-            strcmp($bin_arr["key"]["key"], $key["key"]) == 0) {
+            strcmp($bin_arr["key"]["key"], NULL) == 0) {
                 $comp_res = array_diff_assoc_recursive(self::$put_rec, $bin_arr["bins"]);
                 if (!empty($comp_res)) {
                     return Aerospike::ERR;
@@ -126,7 +126,7 @@ class Get extends AerospikeTestCommon
         }
         if (strcmp($rec_arr["key"]["ns"], $key["ns"]) == 0 &&
             strcmp($rec_arr["key"]["set"], $key["set"]) == 0 &&
-            strcmp($rec_arr["key"]["key"], $key["key"]) == 0) {
+            strcmp($rec_arr["key"]["key"], NULL) == 0) {
                 $comp_res = array_diff_assoc_recursive(self::$put_rec,
                     $rec_arr["bins"]);
                 if (!empty($comp_res)) {
@@ -193,7 +193,7 @@ class Get extends AerospikeTestCommon
         }
         if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
             strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-            strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+            strcmp($get_record["key"]["key"], NULL) == 0) {
                 $comp_res = array_diff_assoc_recursive(self::$put_rec,
                     $get_record["bins"]);
                 if (!empty($comp_res)) {
@@ -447,7 +447,7 @@ class Get extends AerospikeTestCommon
       }
       if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
             strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
-            strcmp($get_rec["key"]["key"], $key1["key"]) == 0) {
+            strcmp($get_rec["key"]["key"], NULL) == 0) {
                 $comp_res = array_diff_assoc_recursive(array("bin1"=>array("speaking", "reading",
                     "writing")), $get_rec["bins"]);
                 if (!empty($comp_res)) {
@@ -502,7 +502,7 @@ class Get extends AerospikeTestCommon
       }
       if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
           strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
-          strcmp($get_rec["key"]["key"], $key1["key"]) == 0) {
+          strcmp($get_rec["key"]["key"], NULL) == 0) {
               $comp_res = array_diff_assoc_recursive(array("bin1"=>$map1),
                   $get_rec["bins"]);
               if (!empty($comp_res)) {
@@ -565,7 +565,7 @@ class Get extends AerospikeTestCommon
       }
       if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
           strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
-          strcmp($get_rec["key"]["key"], $key1["key"]) == 0) {
+          strcmp($get_rec["key"]["key"], NULL) == 0) {
               $comp_res = array_diff_assoc_recursive($rec, $get_rec["bins"]);
               if (!empty($comp_res)) {
                   return Aerospike::ERR;
@@ -652,7 +652,7 @@ class Get extends AerospikeTestCommon
 
       if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
           strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-          strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+          strcmp($get_record["key"]["key"], NULL) == 0) {
               $comp_res = array_diff_assoc_recursive($put_record,
                   $get_record["bins"]);
               if(!empty($comp_res)) {
@@ -735,7 +735,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res))
@@ -796,7 +796,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -878,7 +878,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -935,7 +935,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1016,7 +1016,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1074,7 +1074,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1155,7 +1155,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1210,7 +1210,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1286,7 +1286,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1340,7 +1340,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1416,7 +1416,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1483,7 +1483,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1564,7 +1564,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1623,7 +1623,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1704,7 +1704,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1759,7 +1759,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1835,7 +1835,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1889,7 +1889,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -1965,7 +1965,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2024,7 +2024,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2105,7 +2105,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2164,7 +2164,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2245,7 +2245,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2317,7 +2317,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2391,7 +2391,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2463,7 +2463,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2537,7 +2537,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2609,7 +2609,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2683,7 +2683,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2736,7 +2736,7 @@ class Get extends AerospikeTestCommon
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2788,7 +2788,7 @@ class Get extends AerospikeTestCommon
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+         strcmp($get_record["key"]["key"], NULL) == 0) {
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
@@ -2800,14 +2800,29 @@ class Get extends AerospikeTestCommon
      return ($status);
  }
 
- function testGetWithDigestKeyOptions($dummydb, $dummykey) {
+/**
+  * @test  
+  * Get a record from DB, POLICY_KEY_SEND is passed as a option. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetWithPolicyKeySend)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetWithPolicyKeySend($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
      {
          return ($db->errorno());
      }
-     $key = $db->initKey("test", "demo", "policy_key_digest");
+     $key = $db->initKey("test", "demo", "policy_key_send");
      $put_record = array("bin1"=>45);
      $status = $db->put($key, $put_record);
 
@@ -2834,6 +2849,205 @@ class Get extends AerospikeTestCommon
      return ($status);
  }
 
+/**
+  * @test  
+  * Get a record from DB, POLICY_KEY_DIGEST is passed as a option. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetWithDigestKeyOptions)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetWithPolicyKeyDigest($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "policy_key_digest");
+     $put_record = array("bin1"=>45);
+     $status = $db->put($key, $put_record);
+
+     if ($status != AEROSPIKE::OK) {
+         return($db->errorno());
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"),
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], NULL) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return self::$status_get_record_fail;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+/**
+  * @test  
+  * Get a record from DB, POLICY_KEY_SEND and read timeout is passed in options. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetWithPolicyKeySendAndReadTimeout)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetWithPolicyKeySendAndReadTimeout($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "policy_key_send_and_read_timeout");
+     $put_record = array("bin1"=>45);
+     $status = $db->put($key, $put_record);
+
+     if ($status != AEROSPIKE::OK) {
+         return($db->errorno());
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"),
+         array(Aerospike::OPT_READ_TIMEOUT=>2000,
+         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return self::$status_get_record_fail;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+/**
+  * @test  
+  * Get a record from DB, POLICY_KEY_DIGEST and read timeout is passed in
+    options. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetWithPolicyKeyDigestAndReadTimeout)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetWithPolicyKeyDigestAndReadTimeout($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "policy_key_digest_and_read_timeout");
+     $put_record = array("bin1"=>45);
+     $status = $db->put($key, $put_record);
+
+     if ($status != AEROSPIKE::OK) {
+         return($db->errorno());
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"),
+         array(Aerospike::OPT_READ_TIMEOUT=>2000,
+         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], NULL) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return self::$status_get_record_fail;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
+/**
+  * @test  
+  * Get a record from DB, POLICY_KEY_SEND and read timeout is passed in
+    options. Also, While Put POLICY_KEY_SEND option is passed. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetAndPutWithPolicyKeySend)
+  *
+  * @test_plans{1.1}
+  */
+ function testGetAndPutWithPolicyKeySend($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "policy_key_send_for_get_and_put");
+     $put_record = array("bin1"=>45);
+     $status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
+         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+
+     if ($status != AEROSPIKE::OK) {
+         return($db->errorno());
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"),
+         array(Aerospike::OPT_READ_TIMEOUT=>2000,
+         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return self::$status_get_record_fail;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }
 /**
   * @test  
   * PUT Map of objects, Object as a key.  
