@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Get", "testCheckParameterSequenceChangeInKeyArray
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckParameterSequenceChangeInKeyArray");
 --EXPECT--
-ERR_REQUEST_INVALID
+ERR_NAMESPACE_NOT_FOUND

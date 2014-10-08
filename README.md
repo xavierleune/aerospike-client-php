@@ -1,4 +1,8 @@
-# Aerospike PHP Client [![Build Status](https://travis-ci.org/aerospike/aerospike-client-php.svg?branch=master)](https://travis-ci.org/aerospike/aerospike-client-php)
+# Aerospike PHP Client
+[![Build Status](https://travis-ci.org/aerospike/aerospike-client-php.svg?branch=master)](https://travis-ci.org/aerospike/aerospike-client-php)
+[![Latest Stable Version](https://poser.pugx.org/aerospike/aerospike-client-php/v/stable.svg)](https://packagist.org/packages/aerospike/aerospike-client-php)
+[![Total Downloads](https://poser.pugx.org/aerospike/aerospike-client-php/downloads.svg)](https://packagist.org/packages/aerospike/aerospike-client-php)
+[![License](https://poser.pugx.org/aerospike/aerospike-client-php/license.svg)](https://packagist.org/packages/aerospike/aerospike-client-php)
 
 The Aerospike PHP Client works with PHP 5.3, 5.4, 5.5, and 5.6.
 
@@ -50,34 +54,32 @@ The dependencies can be installed through the OS X package manager [Homebrew](ht
 
 To switch PHP versions [see this gist](https://gist.github.com/rbotzer/198a04f2315e88c75322).
 
-## Build Instructions
+## Installation
+### Building with Composer
 
-To build the PHP extension run the `build.sh` script in the `src/aerospike/`
-directory.
+Using [Composer](https://getcomposer.org/) you can download and build the PHP
+extension:
+
+    composer require aerospike/aerospike-client-php "*"
+    find vendor/aerospike/aerospike-client-php/ -name "*.sh" -exec chmod +x {} \;
+    cd vendor/aerospike/aerospike-client-php/ && composer run-script post-install-cmd
+
+### Building Manually
+
+To build the PHP extension manually you will need to fetch the
+[latest release](https://github.com/aerospike/aerospike-client-php/releases/latest)
+from Github, then run the `build.sh` script in the `src/aerospike/` directory.
 
     cd src/aerospike
     ./build.sh
 
 This will download the Aerospike C client SDK if necessary into
-`aerospike-client-c/`, and set the `CLIENTREPO_3X` environment variable
-for `make`.
+`src/aerospike-client-c/`, and initiate `make`.
 
 To grab the latest release of the C client SDK (rather than the specified
-version) modify the `AEROSPIKE_C_CLIENT` variable of `scripts/setup` to
-*latest*. You may need to remove the `aerospike-client-c`
+version) modify the `AEROSPIKE_C_CLIENT` variable of `build.sh` to
+*latest*. You may need to remove the `src/aerospike-client-c`
 directory before running `build.sh` once more.
-
-For a debug build specify the log level (default being OFF):
-
-    ./build.sh [-l|--loglevel <Desired log level: one among TRACE, DEBUG, INFO, WARN, ERROR, OFF>] [--help]
-
-The PHP extension will be built as `modules/aerospike.so`
-
-## Confirming the Build
-
-To test the Aerospike PHP Client interactively after building, do:
-
-    php -dextension=modules/aerospike.so -a
 
 ## Installing the PHP Extension
 
@@ -91,6 +93,8 @@ Now edit the php.ini file.  If PHP is configured --with-config-file-scan-dir
 directory, otherwise edit php.ini directly. Add the following directive:
 
     extension=aerospike.so
+    aerospike.udf.lua_system_path=/path/to/client-php/sys-lua
+    aerospike.udf.lua_user_path=/path/to/client-php/usr-lua
 
 The *aerospike* module should now be available to the PHP CLI:
 

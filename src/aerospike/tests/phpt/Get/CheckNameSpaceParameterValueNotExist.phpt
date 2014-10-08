@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Get", "testCheckNameSpaceValueNotExistInDB");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckNameSpaceValueNotExistInDB");
 --EXPECT--
-ERR_REQUEST_INVALID
+ERR_NAMESPACE_NOT_FOUND
