@@ -153,7 +153,6 @@ class Aerospike
     public boolean isConnected ( void )
     public void close ( void )
     public void reconnect ( void )
-    public int getNodes ( array &$metadata [, array $options ] )
 
     // error handling methods
     public string error ( void )
@@ -201,6 +200,20 @@ class Aerospike
     // admin methods
     public int createIndex ( string $ns, string $set, string $bin, int $type, string $name )
     public int dropIndex ( string $ns, string $name )
+
+    // info methods
+    public int getNodes ( array &$metadata [, array $config [, array $options ]]] )
+    public int getBins( array &$metadata [, array $config [, string $ns [, array $options ]]] )
+    public int getNamespaces( array &$namespaces [, array $options ] )
+    public int getNamespaceStatistics( array &$statistics [, array $config [,string $ns [, array $options ]]] )
+    public int getSetStatistics( array &$statistics [, array $config [, string $ns [, string $set [, array $options ]]]] )
+    public int getNodeStatistics( array &$statistics [, array $config [, array $options ]] )
+    public int getNamespaceConfig( array &$ns_config [, array $config [, string $ns [, array $options ]]])
+    public int getNodeConfig( array &$node_config [, array $config [, array $options ]] )
+    public int getThroughput( array &$throughput [, array $config [, string $histogram=<all> [, int $back=<minimum to get last slice> [, int $duration=0 [, int $slice=0 [, array $options ]]]]]] )
+    public int getLatency( array &$latency [, array $config [, string $histogram=<all> [, int $back=<minimum to get last slice> [, int $duration=0 [, int $slice=0 [, array $options ]]]]]] )
+    public int getNodeInfo( array &$info [, array $config [, array $options ]] )
+
 }
 ```
 
@@ -212,4 +225,5 @@ class Aerospike
 ### [User Defined Methods](apiref_udf.md)
 ### [Admin Methods](apiref_admin.md) \[to be implemented\]
 ### [Large Data Type Methods](aerospike_ldt.md)
+### [Info Methods](apiref_info.md)
 

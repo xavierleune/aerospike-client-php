@@ -1,20 +1,20 @@
 
-# Aerospike::getNodes \[to be implemented\]
+# Aerospike::getBins \[to be implemented\]
 
-Aerospike::getNodes - get node metadata from the cluster
+Aerospike::getBins - get bins from the cluster
 
 ## Description
 
 ```
-public int Aerospike::getNodes ( array &$metadata [, array $config [, array $options ]] )
+public int Aerospike::getBins( array &$metadata [, array $config [, string $ns [, array $options ]]] )
 ```
 
-**Aerospike::getNodes()** will get node related metadata from the database.
+**Aerospike::getBins()** will get bins related metadata from the database.
 The metadata will be returned in the *metadata* variable, otherwise it will be an empty array.
 
 ## Parameters
 
-**metadata** filled by an associative array of metadata.
+**metadata** filled by an associative array of metadata of bins.
 
 **config** an associative array holding the cluster connection information. One
 node or more (for failover) may be defined. Once a connection is established to
@@ -49,9 +49,9 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->getNodes($node_metadata);
+$res = $db->getBins($bins_metadata);
 if ($res == Aerospike::OK) {
-    var_dump($node_metadata);
+    var_dump($bins_metadata, $config);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }
@@ -62,39 +62,45 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-array(3) {
+array(1) {
   [0]=>
   array(4) {
     ["addr"]=>
     string(12) "192.168.1.10"
     ["port"]=>
     string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [1]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.11"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [2]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.12"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
+    ["test"]=>
+    array(3) {
+        ["num-bin-names"]=>
+        int(3)
+        ["bin-names-quota"]=>
+        int(32768)
+        ["bin-names"]=>
+        array(3) {
+            [0]=>
+            "age"
+            [1]=>
+            "email"
+            [2]=>
+            "name"
+        }
+    }
+    ["bar"]=>
+    array(3) {
+        ["num-bin-names"]=>
+        int(3)
+        ["bin-names-quota"]=>
+        int(32768)
+        ["bin-names"]=>
+        array(3) {
+            [0]=>
+            "age"
+            [1]=>
+            "email"
+            [2]=>
+            "name"
+        }
+    }
   }
 }
 ```

@@ -1,20 +1,20 @@
 
-# Aerospike::getNodes \[to be implemented\]
+# Aerospike::getNodeConfig \[to be implemented\]
 
-Aerospike::getNodes - get node metadata from the cluster
+Aerospike::getNodeConfig - get node config from the cluster
 
 ## Description
 
 ```
-public int Aerospike::getNodes ( array &$metadata [, array $config [, array $options ]] )
+public int Aerospike::getNodeConfig( array &$node_config [, array $config [, array $options ]] )
 ```
 
-**Aerospike::getNodes()** will get node related metadata from the database.
-The metadata will be returned in the *metadata* variable, otherwise it will be an empty array.
+**Aerospike::getNodeConfig()** will get node config from the database.
+The configuration will be returned in the *node_config* variable, otherwise it will be an empty array.
 
 ## Parameters
 
-**metadata** filled by an associative array of metadata.
+**node_config** filled by an associative array of node configuration.
 
 **config** an associative array holding the cluster connection information. One
 node or more (for failover) may be defined. Once a connection is established to
@@ -49,9 +49,9 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->getNodes($node_metadata);
+$res = $db->getNodeConfig($node_conf, $config);
 if ($res == Aerospike::OK) {
-    var_dump($node_metadata);
+    var_dump($node_conf);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }
@@ -62,39 +62,33 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-array(3) {
+array(1) {
   [0]=>
   array(4) {
     ["addr"]=>
     string(12) "192.168.1.10"
     ["port"]=>
     string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [1]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.11"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [2]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.12"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
+    ["transaction-queues"]=>
+    int(4)
+    ["transaction-threads-per-queue"]=>
+    int(4)
+    ["transaction-duplicate-threads"]=>
+    int(0)
+    ["transaction-pending-limit"]=>
+    int(20)
+    ["migrate-threads"]=>
+    int(1)
+    ["migrate-priority"]=>
+    int(40)
+    ["migrate-xmit-priority"]=>
+    int(40)
+    ["migrate-xmit-sleep"]=>
+    int(500)
+    ["migrate-read-priority"]=>
+    int(10)
+    ....... 
+        }
   }
 }
 ```

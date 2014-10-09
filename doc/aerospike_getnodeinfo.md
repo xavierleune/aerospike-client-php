@@ -1,20 +1,20 @@
 
-# Aerospike::getNodes \[to be implemented\]
+# Aerospike::getNodeInfo \[to be implemented\]
 
-Aerospike::getNodes - get node metadata from the cluster
+Aerospike::getNodeInfo - get node info from the cluster
 
 ## Description
 
 ```
-public int Aerospike::getNodes ( array &$metadata [, array $config [, array $options ]] )
+public int Aerospike::getNodeInfo ( array &$info [, array $config [, array $options ]] )
 ```
 
-**Aerospike::getNodes()** will get node related metadata from the database.
-The metadata will be returned in the *metadata* variable, otherwise it will be an empty array.
+**Aerospike::getNodeInfo()** will get node related information from the database.
+The info will be returned in the *info* variable, otherwise it will be an empty array.
 
 ## Parameters
 
-**metadata** filled by an associative array of metadata.
+**info** filled by an associative array of node info.
 
 **config** an associative array holding the cluster connection information. One
 node or more (for failover) may be defined. Once a connection is established to
@@ -49,9 +49,9 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->getNodes($node_metadata);
+$res = $db->getNodeInfo($node_info, $config);
 if ($res == Aerospike::OK) {
-    var_dump($node_metadata);
+    var_dump($node_info);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }
@@ -62,39 +62,26 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-array(3) {
+array(1) {
   [0]=>
   array(4) {
     ["addr"]=>
     string(12) "192.168.1.10"
     ["port"]=>
     string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [1]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.11"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [2]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.12"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
+    ["status"]=>
+    string(2) "ok"
+    ["build"]=>
+    string(6) "3.3.17"
+    ["services"]=>
+    array(3)=> {
+        [0]=>
+        string(17) "192.168.1.11:3000"
+        [1]=>
+        string(17) "192.168.1.13:3000"
+        [2]=>
+        string(17) "192.168.1.14:3000"
+    }
   }
 }
 ```

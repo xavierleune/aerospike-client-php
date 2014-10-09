@@ -1,20 +1,20 @@
 
-# Aerospike::getNodes \[to be implemented\]
+# Aerospike::getSetStatistics \[to be implemented\]
 
-Aerospike::getNodes - get node metadata from the cluster
+Aerospike::getSetStatistics - get set statistics from the cluster
 
 ## Description
 
 ```
-public int Aerospike::getNodes ( array &$metadata [, array $config [, array $options ]] )
+public int Aerospike::getSetStatistics( array &$statistics [, array $config [, string $ns [, string $set [, array $options ]]]] )
 ```
 
-**Aerospike::getNodes()** will get node related metadata from the database.
-The metadata will be returned in the *metadata* variable, otherwise it will be an empty array.
+**Aerospike::getSetStatistics()** will get set statistics from the database.
+The statistics will be returned in the *statistics* variable, otherwise it will be an empty array.
 
 ## Parameters
 
-**metadata** filled by an associative array of metadata.
+**statistics** filled by an associative array of set statistics.
 
 **config** an associative array holding the cluster connection information. One
 node or more (for failover) may be defined. Once a connection is established to
@@ -26,6 +26,10 @@ cluster and manage its connections to them.
   - *port*
 - *user*
 - *pass*
+
+**ns** the namespace for which statistics of sets is to be obtained. (default: all namespaces)
+
+**set** the set for which statistics are to be obtained. (default: all sets)
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
@@ -49,9 +53,9 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->getNodes($node_metadata);
+$res = $db->getSetStatistics($set_stats, $config, "test", "demo");
 if ($res == Aerospike::OK) {
-    var_dump($node_metadata);
+    var_dump($set_stats);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }
@@ -62,39 +66,28 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-array(3) {
+array(1) {
   [0]=>
   array(4) {
     ["addr"]=>
     string(12) "192.168.1.10"
     ["port"]=>
     string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [1]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.11"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [2]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.12"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
+    ["test"]=>
+    array(1) {
+        ["demo"]=>
+        array(5) {
+            ["n_objects"]=>
+            int(281)
+            ["set-stop-write-count"]=>
+            int(0)
+            ["set-evict-hwm-count"]=>
+            int(0)
+            ["set-enable-xdr"]=>
+            string(11) "use-default"
+            ["set-delete"]=>
+            bool(false)
+        }
   }
 }
 ```
