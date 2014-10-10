@@ -126,6 +126,13 @@ PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
 
 /*
+ * Secondary Index APIs:
+ */
+
+PHP_METHOD(Aerospike, createIndex);
+PHP_METHOD(Aerospike, dropIndex);
+
+/*
  * Query and Scan APIs:
  */
 
@@ -149,7 +156,6 @@ PHP_METHOD(Aerospike, getRegistered);
 
 /*
  * TBD
- * Secondary Index APIs:
  * Large Data Type (LDT) APIs:
  * Shared Memory APIs:
  */

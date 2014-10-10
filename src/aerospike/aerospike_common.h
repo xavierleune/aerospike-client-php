@@ -1,7 +1,9 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
-#include <aerospike/as_arraylist.h>
-#include <aerospike/as_hashmap.h>
+#include "aerospike/as_arraylist.h"
+#include "aerospike/as_hashmap.h"
+#include "aerospike/as_key.h"
+
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
@@ -495,4 +497,18 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* return_value_p, zval* options_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of index functions.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
+        char* ns_p, char* set_p, char* bin_p, uint32_t type,
+        char *name_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
+        char* ns_p, char *name_p, zval* options_p TSRMLS_DC);
 #endif

@@ -199,8 +199,8 @@ class Aerospike
     public array predicateBetween ( string $bin, int $min, int $max )
 
     // admin methods
-    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name )
-    public int dropIndex ( string $ns, string $name )
+    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name [, array $options ] )
+    public int dropIndex ( string $ns, string $name [, array $options ] )
 }
 ```
 

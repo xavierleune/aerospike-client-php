@@ -6,7 +6,7 @@ Aerospike::createIndex - creates a secondary index on a bin
 ## Description
 
 ```
-public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name )
+public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name [, array $options ] )
 ```
 
 **Aerospike::createIndex()** will create a secondary index of a given *type* on
@@ -23,6 +23,9 @@ a namespace, *set* and *bin* with a specified *name*.
 **type** one of *Aerospike::INDEX_TYPE_\**
 
 **name** the name of the index
+
+**options** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
 
 ## Return Values
 
