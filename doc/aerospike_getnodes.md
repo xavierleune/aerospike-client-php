@@ -1,40 +1,29 @@
 
 # Aerospike::getNodes \[to be implemented\]
 
-Aerospike::getNodes - get node metadata from the cluster
+Aerospike::getNodes - get the addresses of the cluster nodes
 
 ## Description
 
 ```
-public int Aerospike::getNodes ( array &$metadata [, array $config [, array $options ]] )
+public array Aerospike::getNodes ( void )
 ```
 
-**Aerospike::getNodes()** will get node related metadata from the database.
-The metadata will be returned in the *metadata* variable, otherwise it will be an empty array.
+**Aerospike::getNodes()** will return an array of cluster node addresses.
 
 ## Parameters
 
-**metadata** filled by an associative array of metadata.
-
-**config** an associative array holding the cluster connection information. One
-node or more (for failover) may be defined. Once a connection is established to
-a node of the Aerospike DB the client will retrieve the full list of nodes in the
-cluster and manage its connections to them.
-
-- *hosts* an array of host data
-  - *addr* hostname or IP of the node
-  - *port*
-- *user*
-- *pass*
-
-**[options](aerospike.md)** including
-- **Aerospike::OPT_READ_TIMEOUT**
+This method has no parameters.
 
 ## Return Values
 
-Returns an integer status code.  Compare to the Aerospike class status
-constants.  When non-zero the **Aerospike::error()** and
-**Aerospike::errorno()** methods can be used.
+Returns an array with the following structure:
+```
+Array:
+  Array:
+    'addr' => the IP address of the node
+    'port' => the port of the node
+```
 
 ## Examples
 
@@ -42,59 +31,35 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 
-$config = array("hosts"=>array(array("addr"=>"192.168.1.10", "port"=>3000)));
+$config = array("hosts"=>array(array("addr"=>"192.168.120.144", "port"=>3000)));
 $db = new Aerospike($config);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
 }
 
-$res = $db->getNodes($node_metadata);
-if ($res == Aerospike::OK) {
-    var_dump($node_metadata);
-} else {
-    echo "[{$db->errorno()}] ".$db->error();
-}
-
+$nodes = $db->getNodes();
+var_dump($nodes);
 ?>
 ```
 
 We expect to see:
 
 ```
-array(3) {
+array(2) {
   [0]=>
-  array(4) {
+  array(2) {
     ["addr"]=>
-    string(12) "192.168.1.10"
+    string(15) "192.168.120.145"
     ["port"]=>
     string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
   }
   [1]=>
-  array(4) {
+  array(2) {
     ["addr"]=>
-    string(12) "192.168.1.11"
+    string(15) "192.168.120.144"
     ["port"]=>
     string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
-  }
-  [2]=>
-  array(4) {
-    ["addr"]=>
-    string(12) "192.168.1.12"
-    ["port"]=>
-    string(4) "3000"
-    ["friends"]=>
-    int(2)
-    ["active"]=>
-    bool(true)
   }
 }
 ```
