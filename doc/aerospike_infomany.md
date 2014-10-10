@@ -58,7 +58,7 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$response = $db->info('build');
+$response = $db->infoMany('build');
 var_dump($response);
 
 ?>
