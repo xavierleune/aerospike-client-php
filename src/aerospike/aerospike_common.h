@@ -4,7 +4,7 @@
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_key.h"
 
-/* 
+/*
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.

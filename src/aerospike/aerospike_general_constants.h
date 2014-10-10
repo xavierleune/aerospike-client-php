@@ -13,7 +13,7 @@ enum Aerospike_index_constants {
     INDEX_TYPE_INTEGER = 2    /* Secondary index on an integer bin */
 };
 
-/* 
+/*
  *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike General Long constants.
  *******************************************************************************************************
@@ -23,7 +23,7 @@ typedef struct Aerospike_General_Long_Constants {
     char constant_str[MAX_GENERAL_CONSTANT_STR_SIZE];
 } AerospikeGeneralLongConstants;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike General String constants.
  *******************************************************************************************************
@@ -33,7 +33,7 @@ typedef struct Aerospike_General_String_Constants {
     char constant_str[MAX_GENERAL_CONSTANT_STR_SIZE];
 } AerospikeGeneralStringConstants;
 
-/* 
+/*
  *******************************************************************************************************
  * Instance of Mapper of constant number to constant name string for Aerospike General Long constants.
  *******************************************************************************************************
@@ -43,7 +43,7 @@ static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
     { INDEX_TYPE_INTEGER,   "INDEX_TYPE_INTEGER" }
 };
 
-/* 
+/*
  *******************************************************************************************************
  * Instance of Mapper of constant number to constant name string for Aerospike General String constants.
  *******************************************************************************************************
