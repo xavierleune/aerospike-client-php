@@ -84,6 +84,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_policy", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_gen", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -1405,7 +1406,17 @@ exit:
  *******************************************************************************************************
  * Helper method for building the key array
  * Method prototype for PHP userland:
- * public array Aerospike::initKey ( string $ns, string $set, int|string $pk )
+ * public array Aerospike::initKey ( string $ns, string $set, int|string $pk [,
+ *                                   boolean $digest = false ])
+ *
+ * @param ns                The namespace
+ * @param set               The name of set within the namespace
+ * @param pk                It can be primary key or digest value
+ *                          that identifies the record uniquely.
+ * @param digest            It can be true or false.
+ *                          false - Indicates pk contains primary key(default)
+ *                          true - Indicates pk contains digest value.
+ *
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, initKey)
@@ -1417,9 +1428,11 @@ PHP_METHOD(Aerospike, initKey)
     char                   *set_p = NULL;
     int                    set_p_length = 0;
     zval                   *pk_p ;
+    zend_bool              is_digest = false;
 
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length, &set_p, &set_p_length, &pk_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz|b", &ns_p, &ns_p_length,
+                                         &set_p, &set_p_length, &pk_p, &is_digest)) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
         DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
         RETURN_NULL();
@@ -1432,7 +1445,7 @@ PHP_METHOD(Aerospike, initKey)
 
     array_init(return_value);
 
-    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, return_value, NULL)) {
+    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, is_digest, return_value, NULL)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
         RETURN_NULL();
     }

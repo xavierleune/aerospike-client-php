@@ -677,7 +677,7 @@ class Put extends AerospikeTestCommon
       $innermostlist = array("twitter", 100);
       $innerlist = array(1,2,"facebook", $innermostlist);
       $mylist = array(10, 20, "whatsup", $innerlist, $mymap);
-      $rec = array("bin1"=>$mylist);	
+      $rec = array("bin1"=>$mylist);
       if ($db->isConnected()) {
           $status = $db->put($key,$rec, NULL, 
               array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
@@ -1951,7 +1951,7 @@ class Put extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- /*function testPutMapOfBoolsKeyIsBool($dummydb, $dummykey) {
+ function testPutMapOfBoolsKeyIsBool($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
@@ -1976,7 +1976,7 @@ class Put extends AerospikeTestCommon
          Aerospike::POLICY_RETRY_NONE));
      $db->close();
      return ($status);
- }*/
+ }
 
 /**
   * @test  
@@ -2446,6 +2446,406 @@ class Put extends AerospikeTestCommon
          $db->close();
          return($status);
      }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_IGNORE and generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyIgnoreWithGenValPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyIgnoreWithGenValPositive($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_ignore");
+     $put_status = $db->put($key, array("bin1"=>5));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $put_status = $db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, 56)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_EQ and generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyEQWithGenValPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyEQWithGenValPositive($dummydb, $dummykey) 
+ {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_equal");
+     $put_status = $db->put($key, array("bin1"=>5));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $exists_status = $db->exists($key, $metadata);
+     if ($exists_status != AEROSPIKE::OK) {
+         $db->close();
+         return($exists_status);
+     }
+     $gen_value = $metadata["generation"];
+     $put_record =  array("bin1"=>10);
+     $put_status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ,
+         $gen_value)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], NULL) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return AEROSPIKE::ERR;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_GT and generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTWithGenValPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyGTWithGenValPositive($dummydb, $dummykey) 
+ {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_greater");
+     $put_status = $db->put($key, array("bin1"=>5));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $exists_status = $db->exists($key, $metadata);
+     if ($exists_status != AEROSPIKE::OK) {
+         $db->close();
+         return($exists_status);
+     }
+     $gen_value = $metadata["generation"] + 10;
+     $put_record = array("bin1"=>10);
+     $put_status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT,
+         $gen_value)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], NULL) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return AEROSPIKE::ERR;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_DUP and generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyDUPWithGenValPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyDUPWithGenValPositive($dummydb, $dummykey) 
+ {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+
+     $key = $db->initKey("test", "demo", "key_gen_dup_with_gen_val");
+     $put_status = $db->put($key, array("bin1"=>50));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $exists_status = $db->exists($key, $metadata);
+     if ($exists_status != AEROSPIKE::OK) {
+         $db->close();
+         return($exists_status);
+     }
+     $gen_value = $metadata["generation"] + 1;
+     $put_record =  array("bin1"=>100);
+     $put_status = $db->put($key, $put_record, NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_DUP,
+         $gen_value)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->get($key, $get_record);
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], NULL) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return AEROSPIKE::ERR;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_IGNORE and no generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyIgnorePositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyIgnorePositive($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_ignore");
+     $put_status = $db->put($key, array("bin1"=>5));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $put_status = $db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_GEN=>
+         array(Aerospike::POLICY_GEN_IGNORE)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_EQ and no generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyEQPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyEQPositive($dummydb, $dummykey) 
+ {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_equal");
+     $put_status = $db->put($key, array("bin1"=>5));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $put_status = $db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_GT and no generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyGTPositive($dummydb, $dummykey) 
+ {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_greater");
+     $put_status = $db->put($key, array("bin1"=>5));
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $put_status = $db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+/**
+  * @test  
+  * PUT with generation policy POLICY_GEN_DUP and no generation value.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyDUPPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyDUPPositive($dummydb, $dummykey) 
+ {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", "key_gen_dup");
+     $put_record = array("bin1"=>5);
+     $put_status = $db->put($key, $put_record);
+     if ($put_status != AEROSPIKE::OK) {
+          return ($db->errorno());
+     }
+     $put_status = $db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_DUP)));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->get($key, $get_record, array("bin1"));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], NULL) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return AEROSPIKE::ERR;
+             }
+         }
+
      $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
          Aerospike::POLICY_RETRY_NONE));
      $db->close();

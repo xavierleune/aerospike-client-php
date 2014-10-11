@@ -2084,6 +2084,7 @@ typedef struct asputkeydatamap {
     int8_t* namespace_p;
     int8_t* set_p;
     zval**  key_pp;
+    int     is_digest;
 } as_put_key_data_map;
 
 /* 
@@ -2457,7 +2458,7 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace_p, int8_t* set_p, zval** key_pp)
+aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace_p, int8_t* set_p, zval** key_pp, int is_digest)
 {
     as_status      status = AEROSPIKE_OK;
 
@@ -2466,16 +2467,21 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace
         goto exit;
     }
 
-    switch(key_type) {
-        case IS_LONG:
-            as_key_init_int64(as_key_p, namespace_p, set_p, (int64_t) Z_LVAL_PP(key_pp));
-            break;
-        case IS_STRING:
-            as_key_init_str(as_key_p, namespace_p, set_p, (int8_t *) Z_STRVAL_PP(key_pp));
-            break;
-        default:
-            status = AEROSPIKE_ERR;
-            break;
+    if (!is_digest) {
+        switch(key_type) {
+            case IS_LONG:
+                as_key_init_int64(as_key_p, namespace_p, set_p, (int64_t) Z_LVAL_PP(key_pp));
+                break;
+            case IS_STRING:
+                as_key_init_str(as_key_p, namespace_p, set_p, (int8_t *) Z_STRVAL_PP(key_pp));
+                break;
+            default:
+                status = AEROSPIKE_ERR;
+                break;
+        }
+    } else {
+        as_digest_value digest = {Z_STRVAL_PP(key_pp)};
+        as_key_init_digest(as_key_p, namespace_p, set_p, digest);
     }
 
 exit:
@@ -2519,7 +2525,11 @@ aerospike_transform_putkey_callback(HashTable* ht_p,
     } else if(/*PHP_IS_STRING(key_data_type_u32) &&  -- need to check on the type*/
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_KEY, PHP_AS_KEY_DEFINE_FOR_KEY_LEN, key_p, key_len_u32 - 1)) {
         as_put_key_data_map_p->key_pp = retdata_pp;
-    } else {
+        as_put_key_data_map_p->is_digest = 0;
+    } else if(PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_DIGEST, PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN, key_p, key_len_u32 - 1)) {
+        as_put_key_data_map_p->key_pp = retdata_pp;
+        as_put_key_data_map_p->is_digest = 1;
+    }else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
     }
@@ -2571,7 +2581,8 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
                                                           Z_TYPE_P(key_record_p),
                                                           put_key_data_map.namespace_p,
                                                           put_key_data_map.set_p,
-                                                          &key_record_p))) {
+                                                          put_key_data_map.key_pp/*&key_record_p*/,
+                                                          put_key_data_map.is_digest))) {
         goto exit;
     }
 
@@ -2647,6 +2658,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;
+    int                         gen_value = 0;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
@@ -2664,6 +2676,12 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
+    get_generation_value(options_p, &gen_value, error_p);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set generation value");
+        goto exit;
+    }
+
     aerospike_transform_iterate_records(record_pp, &record, &static_pool,
             serializer_policy, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -2671,6 +2689,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
+    record.gen = gen_value;
     record.ttl = ttl_u32;
     aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, &record);
 
@@ -2748,14 +2767,17 @@ exit:
  * @param set_p                     Set
  * @param set_p_length              Set length
  * @param pk_p                      Primary key of a record
+ * @param is_digest                 The flag which indicates whether pk_p
+ *                                  is primary key or digest.
  * @param reurn_value               Result of initkey
  * @param record_key_p              Key of a record
+ * @param options_p                 The options array
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
 extern as_status
-aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, zval *pk_p, zval *return_value, as_key *record_key_p, zval *options_p TSRMLS_DC)
+aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, zval *pk_p, bool is_digest, zval *return_value, as_key *record_key_p, zval *options_p TSRMLS_DC)
 {
     as_status       status = AEROSPIKE_OK;
 
@@ -2776,22 +2798,26 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_len
         goto exit;
     }
     if (pk_p) {
-        switch(Z_TYPE_P(pk_p)) {
-            case IS_LONG:
-                add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_LVAL_P(pk_p));
-                break;
-            case IS_STRING:
-                if (strlen(Z_STRVAL_P(pk_p)) == 0) {
+        if(!is_digest) {
+            switch(Z_TYPE_P(pk_p)) {
+                case IS_LONG:
+                    add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_LVAL_P(pk_p));
+                    break;
+                case IS_STRING:
+                    if (strlen(Z_STRVAL_P(pk_p)) == 0) {
+                        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    }
+                    add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_STRVAL_P(pk_p), 1);
+                    break;
+                default:
                     DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
                     status = AEROSPIKE_ERR;
                     goto exit;
-                }
-                add_assoc_string(return_value, "key", Z_STRVAL_P(pk_p), 1);
-                break;
-            default:
-                DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-                status = AEROSPIKE_ERR;
-                goto exit;
+            }
+        } else {
+            add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_STRVAL_P(pk_p), 1);
         }
     } else {
         zval **key_policy_pp = NULL;
@@ -2800,9 +2826,11 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_len
             status = AEROSPIKE_ERR;
             goto exit;
         }
+
         if (options_p) {
             zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
         }
+
         if ((!record_key_p->valuep) || (!key_policy_pp) || (key_policy_pp &&
                     Z_LVAL_PP(key_policy_pp) == POLICY_KEY_DIGEST)) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
@@ -2880,7 +2908,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
     }
 
     if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
-            record_key_p->set, strlen(record_key_p->set), NULL,
+            record_key_p->set, strlen(record_key_p->set), NULL, false,
             key_container_p, record_key_p, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
         status = AEROSPIKE_ERR;
