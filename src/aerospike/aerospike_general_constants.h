@@ -65,8 +65,8 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
  */
 #define EXPOSE_GENERAL_CONSTANTS_LONG_ZEND(Aerospike_ce)                                        \
 do {                                                                                            \
-    int32_t i;                                                           						\
-    for (i = 0; i < AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE; i++) {          	                \
+    int32_t i;                                                                                  \
+    for (i = 0; i < AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE; i++) {                           \
         zend_declare_class_constant_long(                                                       \
                 Aerospike_ce, aerospike_general_long_constants[i].constant_str,                 \
                     strlen(aerospike_general_long_constants[i].constant_str),                   \
