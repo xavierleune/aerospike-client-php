@@ -169,8 +169,8 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
  */
 #define ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT()                              \
 do {                                                                          \
-    if (NULL != (as_object_p->as_ref_p = pemalloc(1,                          \
-                    sizeof(aerospike_ref)))) {                                \
+    if (NULL != (as_object_p->as_ref_p = pemalloc(sizeof(aerospike_ref), 1))) \
+    {                                                                         \
         as_object_p->as_ref_p->as_p = NULL;                                   \
         as_object_p->as_ref_p->ref_as_p = 0;                                  \
     }                                                                         \
