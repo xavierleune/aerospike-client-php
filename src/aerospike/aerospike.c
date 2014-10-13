@@ -268,7 +268,7 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, isConnected, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, close, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, info, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, info, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     /*
      ********************************************************************
      * Error Handling APIs:
@@ -327,6 +327,7 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, apply, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, listRegistered, arginfo_first_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getRegistered, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+
 #if 0 // TBD
 
     // Secondary Index APIs:
@@ -821,12 +822,61 @@ PHP_METHOD(Aerospike, getNodes)
  */
 PHP_METHOD(Aerospike, info)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    char*                  request = NULL;
+    char*                  response = NULL;
+    long                   request_len = 0;
+    long                   response_len = 0;
+    zval*                  host = NULL;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    /*** TO BE IMPLEMENTED ***/
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Info: connection not established");
+        DEBUG_PHP_EXT_ERROR("Info: connection not established");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|aa",
+                &request, &request_len, &response, &response_len,
+                &host, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for Info function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for Info function.");
+        goto exit;
+    }
+
+    if ((host && PHP_TYPE_ISNOTARR(host)) || ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for Info function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for Info function not proper.");
+        goto exit;
+    }
+
+    //efree(response);
+    //ZVAL_EMPTY_STRING(response);
+
+    response = NULL;
+
+    if (AEROSPIKE_OK != (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
+                    request, response, host, options_p))) {
+        DEBUG_PHP_EXT_ERROR("Info function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
 }
 
 /*

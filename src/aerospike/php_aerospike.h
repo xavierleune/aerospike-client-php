@@ -147,6 +147,9 @@ PHP_METHOD(Aerospike, apply);
 PHP_METHOD(Aerospike, listRegistered);
 PHP_METHOD(Aerospike, getRegistered);
 
+PHP_METHOD(Aerospike, info);
+
+
 /*
  * TBD
  * Secondary Index APIs:
