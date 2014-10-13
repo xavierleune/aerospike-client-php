@@ -35,6 +35,8 @@ class Aggregate extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
+        $db->createIndex("test", "demo", "age", Aerospike::INDEX_TYPE_INTEGER,
+            "age_index");
         sleep(2);
     }
 
@@ -49,6 +51,7 @@ class Aggregate extends AerospikeTestCommon
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
         }
+        $db->dropIndex("test", "age_index");
         $db->close();
     }
 

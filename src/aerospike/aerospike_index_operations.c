@@ -49,7 +49,7 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
     switch (type) {
         case INDEX_TYPE_STRING:
             if (AEROSPIKE_OK !=
-                    (status = aerospike_index_integer_create(as_object_p, error_p,
+                    (status = aerospike_index_string_create(as_object_p, error_p,
                                                              &info_policy, ns_p,
                                                              set_p, bin_p, name_p))) {
                 DEBUG_PHP_EXT_DEBUG(error_p->message);
@@ -59,7 +59,7 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
 
         case INDEX_TYPE_INTEGER:
             if (AEROSPIKE_OK !=
-                    (status = aerospike_index_string_create(as_object_p, error_p,
+                    (status = aerospike_index_integer_create(as_object_p, error_p,
                                                             &info_policy, ns_p,
                                                             set_p, bin_p, name_p))) {
                 DEBUG_PHP_EXT_DEBUG(error_p->message);

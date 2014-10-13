@@ -2824,8 +2824,8 @@ PHP_METHOD(Aerospike, dropIndex)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
-                &ns_p, &ns_p_length, &name_p, &name_p_length)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|z",
+                &ns_p, &ns_p_length, &name_p, &name_p_length, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for dropIndex()");
@@ -2839,6 +2839,13 @@ PHP_METHOD(Aerospike, dropIndex)
                 "Aerospike::dropIndex() expects parameters 1-2 to be non-empty strings");
         DEBUG_PHP_EXT_ERROR("Aerospike::dropIndex() expects parameters 1-2 to be non-empty strings");
         goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for dropIndex function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for dropIndex function not proper");
     }
 
     if (AEROSPIKE_OK !=

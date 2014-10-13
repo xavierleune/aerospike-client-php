@@ -26,6 +26,9 @@ class Query extends AerospikeTestCommon
         $db->put($key,array("email"=>"bhushan", "age"=>22));
         $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("email"=>"ajit", "age"=>32));
+        $db->createIndex("test", "demo", "age", Aerospike::INDEX_TYPE_INTEGER,
+            "age_index");
+        sleep(2);
     }
 
     protected function tearDown(&$db, &$key) {
@@ -37,6 +40,7 @@ class Query extends AerospikeTestCommon
             $db->remove($key, array(Aerospike::OPT_READ_TIMEOUT
                 =>3000));
         }
+        $db->dropIndex("test", "age_index");
         $db->close();
     }
     /**
