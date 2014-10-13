@@ -2851,7 +2851,80 @@ class Put extends AerospikeTestCommon
      $db->close();
      return ($status);
  }
-
+/**
+  * @test  
+  * PUT with initkey digest and option is POLICY_KEY_DIGEST.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutInitKeyWithDigestAndOptionKeyDigestPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutInitKeyWithDigestAndOptionKeyDigestPositive($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo",
+         base64_decode("put_option_policy_key_digest"), true);
+     $put_status = $db->put($key, array("binA"=>10, "binB"=>20), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }
+ /*
+  * This testcase will be uncommented, When aerospike csdk resolves the bug. 
+  */
+/**
+  * @test  
+  * PUT with initkey digest and option is POLICY_KEY_SEND.  
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutInitKeyWithDigestAndOptionKeySendPositive)
+  *
+  * @test_plans{1.1}
+  */
+ /*function testPutInitKeyWithDigestAndOptionKeySendPositive($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         $db->close();
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", base64_decode("policy_key_send"), true);
+     $put_status = $db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($put_status != AEROSPIKE::OK) {
+         $db->close();
+         return($put_status);
+     }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     $db->close();
+     return ($status);
+ }*/
 /**
   * @test  
   * PUT Map of floats, Float as a key.  

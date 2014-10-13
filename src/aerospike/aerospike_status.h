@@ -49,7 +49,7 @@ AerospikeStatus aerospike_status[] = {
   { AEROSPIKE_ERR_RECORD_TOO_BIG       ,   "ERR_RECORD_TOO_BIG"       },
   { AEROSPIKE_ERR_BIN_INCOMPATIBLE_TYPE,   "ERR_BIN_INCOMPATIBLE_TYPE"},
   { AEROSPIKE_ERR_RECORD_KEY_MISMATCH  ,   "ERR_RECORD_KEY_MISMATCH"  },
-  { AEROSPIKE_ERR_BIN_NAME             ,   "ERR_BIN_NAME"             },
+  //{ AEROSPIKE_ERR_BIN_NAME             ,   "ERR_BIN_NAME"             },
   { AEROSPIKE_ERR_NO_XDR               ,   "ERR_NO_XDR"               },
   { AEROSPIKE_ERR_SCAN                 ,   "ERR_SCAN"                 },
   { AEROSPIKE_ERR_SCAN_ABORTED         ,   "ERR_SCAN_ABORTED"         },
