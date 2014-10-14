@@ -817,7 +817,9 @@ PHP_METHOD(Aerospike, getNodes)
  *******************************************************************************************************
  * PHP Method:  Aerospike::info()
  *******************************************************************************************************
- * Send an Info. request to an Aerospike cluster.
+ * Send an Info request to an Aerospike cluster.
+ * Method prototype for PHP userland:
+ * public int Aerospike::info ( string $request, string &$response [, array $host [, array options ]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, info)
@@ -862,8 +864,6 @@ PHP_METHOD(Aerospike, info)
     }
 
     zval_dtor(response_p);
-
-    //ZVAL_STRINGL(response_p, "", 0, 1);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,

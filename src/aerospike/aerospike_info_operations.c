@@ -7,6 +7,21 @@
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
 
+/*
+ *******************************************************************************************************
+ * Wrapper function to perform an aerospike_info_host within the C client.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param request_str_p         The request string for info.
+ * @param response_str_p        The response zval to be initialized as a string and populated with the
+ *                              actual info response by this method.
+ * @param host                  The optional host array containing a single addr and port.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ *
+ *******************************************************************************************************
+ */
 extern as_status
 aerospike_info_specific_host(aerospike* as_object_p,
         as_error* error_p, char* request_str_p,
@@ -50,9 +65,7 @@ aerospike_info_specific_host(aerospike* as_object_p,
         }
         address = Z_STRVAL_PP(host_name);
         port_no = Z_LVAL_PP(port);
-    }/* else {
-        address = (char *) as_object_p->config.hosts[0].addr;
-    }*/
+    }
 
     if (AEROSPIKE_OK != aerospike_info_host(as_object_p, error_p, &info_policy,
                 (const char *) address, (uint16_t) port_no, request_str_p, &response_p)) {
@@ -64,7 +77,6 @@ aerospike_info_specific_host(aerospike* as_object_p,
         ZVAL_STRINGL(response_str_p, response_p, strlen(response_p), 1);
     } else {
         ZVAL_STRINGL(response_str_p, "", 0, 1);
-        //ZVAL_EMPTY_STRING(response_str_p);
     }
 
 exit:
