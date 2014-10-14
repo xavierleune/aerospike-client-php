@@ -503,5 +503,5 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
  */
 extern as_status
 aerospike_info_specific_host(aerospike* as_object_p, as_error* error_p,
-        char* request, zval* response_p, zval* host, zval* options_p);
+        char* request, zval* response_p, zval* host, zval* options_p TSRMLS_DC);
 #endif

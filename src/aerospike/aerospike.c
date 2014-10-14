@@ -862,10 +862,12 @@ PHP_METHOD(Aerospike, info)
     }
 
     zval_dtor(response_p);
-    ZVAL_STRING(response_p, "", 0);
 
-    if (AEROSPIKE_OK != (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
-                    request, response_p, host, options_p))) {
+    //ZVAL_STRINGL(response_p, "", 0, 1);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
+                    request, response_p, host, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("Info function returned an error");
         goto exit;
     }
