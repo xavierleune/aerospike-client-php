@@ -7,13 +7,6 @@ require_once 'Common.inc';
 
 class Index extends AerospikeTestCommon
 {
-    /*
-     * TODO: Remove these constants and map with actual Aerospike class
-     * constants.
-     */
-    static $status_ok = 0;
-    static $status_err = 201;
-
     function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
@@ -245,7 +238,7 @@ class Index extends AerospikeTestCommon
 
     /**
      * @test
-     * Negative index create and drop operation on integer bin: non existing bin
+     * Positive index create and drop operation on integer bin: non existing bin
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -258,7 +251,7 @@ class Index extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateAndDropIndexIntegerBinInvalidBinNegative($db, $key) {
+    function testCreateAndDropIndexIntegerBinInvalidBinPositive($db, $key) {
         if ($db->isConnected()) {
             if (Aerospike::OK == $db->createIndex("test", "demo",
                 "invalid_bin", Aerospike::INDEX_TYPE_INTEGER,
@@ -271,6 +264,36 @@ class Index extends AerospikeTestCommon
             return($db->errorno());
         }
     }
+
+    /**
+     * @test
+     * Positive index create and drop operation on integer bin: non existing set
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCreateIndexIntegerBinPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testCreateAndDropIndexIntegerBinInvalidSetPositive($db, $key) {
+        if ($db->isConnected()) {
+            if (Aerospike::OK == $db->createIndex("test", "invalid_set",
+                "bin2", Aerospike::INDEX_TYPE_INTEGER,
+                "bin2_integer_index")) {
+                return($db->dropIndex("test", "bin2_integer_index"));
+            } else {
+                return($db->errorno());
+            }
+        } else {
+            return($db->errorno());
+        }
+    }
+
 
     /**
      * @test
@@ -290,35 +313,6 @@ class Index extends AerospikeTestCommon
     function testCreateAndDropIndexIntegerBinInvalidNamespaceNegative($db, $key) {
         if ($db->isConnected()) {
             if (Aerospike::OK == $db->createIndex("invalid_namespace", "demo",
-                "bin2", Aerospike::INDEX_TYPE_INTEGER,
-                "bin2_integer_index")) {
-                return($db->dropIndex("test", "bin2_integer_index"));
-            } else {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
-        }
-    }
-
-    /**
-     * @test
-     * Negative index create and drop operation on integer bin: non existing set
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
-     *
-     * @test_plans{1.1}
-     */
-    function testCreateAndDropIndexIntegerBinInvalidSetNegative($db, $key) {
-        if ($db->isConnected()) {
-            if (Aerospike::OK == $db->createIndex("test", "invalid_set",
                 "bin2", Aerospike::INDEX_TYPE_INTEGER,
                 "bin2_integer_index")) {
                 return($db->dropIndex("test", "bin2_integer_index"));
