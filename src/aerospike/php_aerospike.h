@@ -87,6 +87,7 @@ PHP_METHOD(Aerospike, isConnected);
 PHP_METHOD(Aerospike, close);
 PHP_METHOD(Aerospike, getNodes);
 PHP_METHOD(Aerospike, info);
+PHP_METHOD(Aerospike, infoMany);
 
 /*
  * Error Handling APIs:
@@ -146,9 +147,6 @@ PHP_METHOD(Aerospike, deregister);
 PHP_METHOD(Aerospike, apply);
 PHP_METHOD(Aerospike, listRegistered);
 PHP_METHOD(Aerospike, getRegistered);
-
-PHP_METHOD(Aerospike, info);
-
 
 /*
  * TBD

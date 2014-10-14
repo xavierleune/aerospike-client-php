@@ -3,6 +3,7 @@
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"
+#include "aerospike/aerospike_info.h"
 
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
@@ -63,6 +64,7 @@ aerospike_info_specific_host(aerospike* as_object_p,
             DEBUG_PHP_EXT_DEBUG("Host parameters are not correct");
             goto exit;
         }
+
         address = Z_STRVAL_PP(host_name);
         port_no = Z_LVAL_PP(port);
     }
@@ -83,10 +85,90 @@ exit:
     return error_p->code;
 }
 
-/*extern as_status
-aerospke_info_request_multiple_nodes(aerospike* as_onbject_p,
-        as_error* error_p, char* request_str_p, zval* config_p,
-        zval* return_value_p)
-{
+/*
+ *******************************************************************************************************
+ * Callback for as_scan_foreach and as_query_foreach functions.
+ * It processes the as_val and translates it into an equivalent zval array.
+ * It then calls the user registered callback passing the zval array as an
+ * argument.
+ *       
+ * @param p_val             The current as_val to be passed on to the
+ *                          user callback as an argument.
+ * @param udata             The userland_callback instance filled
+ *                          with return_value and error.
+ *
+ * @return true if callback is successful; else false.
+ *******************************************************************************************************
+ */
 
-}*/
+extern bool
+aerospike_info_callback(const as_error* err, const as_node* node,
+        char* request, char* response, void* udata) 
+{
+    TSRMLS_FETCH();
+    foreach_callback_info_udata* udata_ptr = (foreach_callback_info_udata*)udata;
+
+    if (node) {
+        if (0 != add_assoc_stringl(udata_ptr->udata_p, node->name, response, strlen(response), 1)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get node info");
+            goto exit;
+        }
+    } else {
+        return false;
+    }
+exit:
+    return true;
+}
+
+/*
+ *******************************************************************************************************
+ * Send an info request to multiple cluster nodes.
+ *
+ * @param as_object_p               The C client's aerospike object.
+ * @param error_p                   The C client's as_error to be set to the
+ *                                  encountered error.
+ * @param request_str_p             request string
+ * @config_p                        Config filter array.
+ * @return_value_p                  An array of response strings keyed by the
+ *                                  cluster node ID.
+ * @param options_p                 Options array with read timeout.
+ *
+ *******************************************************************************************************
+ */
+extern as_status
+aerospke_info_request_multiple_nodes(aerospike* as_object_p,
+        as_error* error_p, char* request_str_p, zval* config_p,
+        zval* return_value_p, zval* options_p TSRMLS_DC)
+{
+    as_status                   status = AEROSPIKE_OK;
+    foreach_callback_info_udata info_callback_udata;
+    as_policy_info              info_policy;
+
+    if ((!request_str_p)/* || (!config_p)*/) {
+            DEBUG_PHP_EXT_DEBUG(error_p->message);
+            status = AEROSPIKE_ERR;
+            goto exit;
+    }
+
+    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
+            options_p, error_p TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    info_callback_udata.udata_p = return_value_p;
+    info_callback_udata.error_p = error_p;
+    //info_callback_udata.error_p = config_p;
+
+    if ( AEROSPIKE_OK != aerospike_info_foreach(as_object_p, error_p, &info_policy,
+            request_str_p, (aerospike_info_foreach_callback) aerospike_info_callback, &info_callback_udata)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get info of multiple hosts");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+exit:
+    return status;
+}

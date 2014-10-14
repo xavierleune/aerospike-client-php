@@ -2,6 +2,7 @@
 #define __AEROSPIKE_COMMON_H__
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_hashmap.h>
+#include "aerospike/as_node.h"
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
@@ -157,6 +158,20 @@ typedef struct foreach_callback_udata_t {
 
 /*
  *******************************************************************************************************
+ * Struct for user data to be passed to aerospike foreach callbacks.
+ * (For example, to as_rec_foreach, as_list_foreach, as_map_foreach).
+ * It contains the actual udata and as_error object.
+ *******************************************************************************************************
+ */
+typedef struct foreach_callback_info_udata_t {
+    zval        *udata_p;
+    as_error    *error_p;
+    zval        *config_p;
+    Aerospike_object *obj;
+} foreach_callback_info_udata;
+
+/*
+ *******************************************************************************************************
  * PHP Userland Logger callback
  *******************************************************************************************************
  */
@@ -204,6 +219,9 @@ extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
 extern bool
 aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p);
+extern bool
+aerospike_info_callback(const as_error* err, const as_node* node, char* request,
+        char* response, void* udata);
 
 /*
  * Need to re-direct the same to log function that we have written
@@ -504,4 +522,9 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
 extern as_status
 aerospike_info_specific_host(aerospike* as_object_p, as_error* error_p,
         char* request, zval* response_p, zval* host, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospke_info_request_multiple_nodes(aerospike* as_object_p,
+        as_error* error_p, char* request_str_p, zval* config_p,
+        zval* return_value_p, zval* options_p);
 #endif

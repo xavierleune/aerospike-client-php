@@ -2755,7 +2755,8 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, zval *pk_p, zval *return_value, as_key *record_key_p, zval *options_p TSRMLS_DC)
+aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p, long set_p_length, 
+        zval *pk_p, zval *return_value, as_key *record_key_p, zval *options_p TSRMLS_DC)
 {
     as_status       status = AEROSPIKE_OK;
 
