@@ -496,10 +496,12 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* return_value_p, zval* options_p TSRMLS_DC);
 
-
-
+/*
+ ******************************************************************************************************
+ * Extern declarations of query functions.
+ ******************************************************************************************************
+ */
 extern as_status
 aerospike_info_specific_host(aerospike* as_object_p, as_error* error_p,
-        char* request, char* response, zval* host, zval* options_p);
-
+        char* request, zval* response_p, zval* host, zval* options_p);
 #endif

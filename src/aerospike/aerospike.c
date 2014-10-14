@@ -825,9 +825,8 @@ PHP_METHOD(Aerospike, info)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     char*                  request = NULL;
-    char*                  response = NULL;
+    zval*                  response_p = NULL;
     long                   request_len = 0;
-    long                   response_len = 0;
     zval*                  host = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -846,8 +845,8 @@ PHP_METHOD(Aerospike, info)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|aa",
-                &request, &request_len, &response, &response_len,
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|zz",
+                &request, &request_len, &response_p,
                 &host, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for Info function");
@@ -862,13 +861,11 @@ PHP_METHOD(Aerospike, info)
         goto exit;
     }
 
-    //efree(response);
-    //ZVAL_EMPTY_STRING(response);
-
-    response = NULL;
+    zval_dtor(response_p);
+    ZVAL_STRING(response_p, "", 0);
 
     if (AEROSPIKE_OK != (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
-                    request, response, host, options_p))) {
+                    request, response_p, host, options_p))) {
         DEBUG_PHP_EXT_ERROR("Info function returned an error");
         goto exit;
     }
