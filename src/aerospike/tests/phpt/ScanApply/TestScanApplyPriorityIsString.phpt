@@ -11,5 +11,5 @@ aerospike_phpt_skipif("ScanApply", "testScanApplyPriorityIsString");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanApply", "testScanApplyPriorityIsString");
 --EXPECT--
-ERR
+ERR_CLIENT
 

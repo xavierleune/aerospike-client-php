@@ -11,5 +11,5 @@ aerospike_phpt_skipif("ScanApply", "testScanApplyPercentIsString");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsString");
 --EXPECT--
-ERR
+ERR_CLIENT
 
