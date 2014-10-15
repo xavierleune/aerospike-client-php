@@ -15,9 +15,9 @@ Non-existent bins being read will have a NULL value.
 
 ## Parameters
 
-**key** the key identifying the record. An array with keys 'ns','set','key'.
+**key** the key identifying the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**operations** an associative array of one or more per-bin operations conforming
+**operations** an array of one or more per-bin operations conforming
 to the following structure:
 ```
 Write Operation:
@@ -63,6 +63,7 @@ array(
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 

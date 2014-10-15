@@ -19,13 +19,14 @@ otherwise it will be NULL.
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key under which the record can be found. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**metadata** filled by an associative array of metadata.
+**metadata** filled by an array of metadata.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_POLICY_KEY**
 
 ## Return Values
 

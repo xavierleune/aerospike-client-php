@@ -18,7 +18,8 @@ enum Aerospike_constants {
     OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
     OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
     OPT_SCAN_NOBINS,          /* boolean value, default: false */
-    OPT_POLICY_KEY            /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
+    OPT_POLICY_KEY,           /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
+    OPT_POLICY_GEN
 };
 
 /*
@@ -64,6 +65,7 @@ enum Aerospike_constants {
 #define AS_SCAN_PRIORITY 0x00100000
 #define AS_SCAN_STATUS 0x01000000
 #define AS_POLICY_KEY_DIGEST 0x10000000
+#define AS_POLICY_KEY_GEN 0100000000
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant values. (POLICY_* or SERIALIZER_*)
@@ -91,7 +93,11 @@ enum Aerospike_values {
     SCAN_STATUS_ABORTED,                            /* The scan was aborted due to failure or the user */
     SCAN_STATUS_COMPLETED,                          /* The scan completed successfully  */
     POLICY_KEY_DIGEST = AS_POLICY_KEY_DIGEST,       /* hashes (ns,set,key) data into a unique record ID (default) */
-    POLICY_KEY_SEND                                 /* also send, store, and get the actual (ns,set,key) with each record */
+    POLICY_KEY_SEND,                                /* also send, store, and get the actual (ns,set,key) with each record */
+    POLICY_GEN_IGNORE      = AS_POLICY_GEN_IGNORE,  /* Write a record, regardless of generation */
+    POLICY_GEN_EQ,                                  /* Write a record, ONLY if generations are equal */
+    POLICY_GEN_GT,                                  /* Write a record, ONLY if local generation is greater-than remote generation */
+    POLICY_GEN_DUP                                  /* Write a record creating a duplicate, ONLY if the generation collides (?) */
 };
 
 #define MAX_CONSTANT_STR_SIZE 512
@@ -119,12 +125,13 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_WRITE_TIMEOUT                 ,   "OPT_WRITE_TIMEOUT"                 },
     { OPT_POLICY_RETRY                  ,   "OPT_POLICY_RETRY"                  },
     { OPT_POLICY_EXISTS                 ,   "OPT_POLICY_EXISTS"                 },
-    { OPT_POLICY_KEY 			,   "OPT_POLICY_KEY" 			},
+    { OPT_POLICY_KEY 			        ,   "OPT_POLICY_KEY" 			        },
     { OPT_SERIALIZER                    ,   "OPT_SERIALIZER"                    },
-    { OPT_SCAN_PRIORITY 		,   "OPT_SCAN_PRIORITY" 		},
-    { OPT_SCAN_PERCENTAGE 		,   "OPT_SCAN_PERCENTAGE" 		},
-    { OPT_SCAN_CONCURRENTLY 		,   "OPT_SCAN_CONCURRENTLY" 		},
-    { OPT_SCAN_NOBINS 			,   "OPT_SCAN_NOBINS" 			},
+    { OPT_SCAN_PRIORITY 		        ,   "OPT_SCAN_PRIORITY" 		        },
+    { OPT_SCAN_PERCENTAGE 		        ,   "OPT_SCAN_PERCENTAGE" 		        },
+    { OPT_SCAN_CONCURRENTLY 		    ,   "OPT_SCAN_CONCURRENTLY" 		    },
+    { OPT_SCAN_NOBINS 			        ,   "OPT_SCAN_NOBINS" 			        },
+    { OPT_POLICY_GEN                    ,   "OPT_POLICY_GEN"                    },
     { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
     { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
     { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
@@ -137,16 +144,20 @@ AerospikeConstants aerospike_constants[] = {
     { SERIALIZER_JSON                   ,   "SERIALIZER_JSON"                   },
     { SERIALIZER_USER                   ,   "SERIALIZER_USER"                   },
     { UDF_TYPE_LUA                      ,   "UDF_TYPE_LUA"                      },
-    { SCAN_PRIORITY_AUTO 		,   "SCAN_PRIORITY_AUTO" 		},
-    { SCAN_PRIORITY_LOW 		,   "SCAN_PRORITY_LOW" 			},
-    { SCAN_PRIORITY_MEDIUM 		,   "SCAN_PRIORITY_MEDIUM" 		},
-    { SCAN_PRIORITY_HIGH 		,   "SCAN_PRIORITY_HIGH" 		},
-    { SCAN_STATUS_UNDEF 		,   "SCAN_STATUS_UNDEF" 		},
-    { SCAN_STATUS_INPROGRESS 		,   "SCAN_STATUS_INPROGRESS" 		},
-    { SCAN_STATUS_ABORTED 		,   "SCAN_STATUS_ABORTED" 		},
-    { SCAN_STATUS_COMPLETED 		,   "SCAN_STATUS_COMPLETED" 		},
-    { POLICY_KEY_DIGEST 		,   "POLICY_KEY_DIGEST" 		},
-    { POLICY_KEY_SEND 			,   "POLICY_KEY_SEND" 			}
+    { SCAN_PRIORITY_AUTO 		        ,   "SCAN_PRIORITY_AUTO" 		        },
+    { SCAN_PRIORITY_LOW 		        ,   "SCAN_PRORITY_LOW" 			        },
+    { SCAN_PRIORITY_MEDIUM 		        ,   "SCAN_PRIORITY_MEDIUM" 		        },
+    { SCAN_PRIORITY_HIGH 		        ,   "SCAN_PRIORITY_HIGH" 		        },
+    { SCAN_STATUS_UNDEF 		        ,   "SCAN_STATUS_UNDEF" 		        },
+    { SCAN_STATUS_INPROGRESS 		    ,   "SCAN_STATUS_INPROGRESS" 		    },
+    { SCAN_STATUS_ABORTED 		        ,   "SCAN_STATUS_ABORTED" 		        },
+    { SCAN_STATUS_COMPLETED 		    ,   "SCAN_STATUS_COMPLETED" 		    },
+    { POLICY_KEY_DIGEST 		        ,   "POLICY_KEY_DIGEST" 		        },
+    { POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
+    { POLICY_GEN_IGNORE                 ,   "POLICY_GEN_IGNORE"                 },
+    { POLICY_GEN_EQ                     ,   "POLICY_GEN_EQ"                     },
+    { POLICY_GEN_GT                     ,   "POLICY_GEN_GT"                     },
+    { POLICY_GEN_DUP                    ,   "POLICY_GEN_DUP"                    }
 };
 /*
  *******************************************************************************************************

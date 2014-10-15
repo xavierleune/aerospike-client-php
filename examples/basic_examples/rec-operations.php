@@ -100,8 +100,67 @@ if ($needs_force) {
     if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 }
 
+echo colorize("Inserting a new record into test.users at PK=2 ≻", 'black', true);
+$start = __LINE__;
+$needs_force = false;
+$put_record = array("bin1"=>10);
+$key = $db->initKey("test", "users", 2);
+$res = $db->put($key, $put_record, NULL);
+
+if ($res == Aerospike::OK) {
+    echo success();
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
+    echo fail("There already is a record at PK={$key['key']} in the set test.users");
+    $needs_force = true;
+} else {
+    echo standard_fail($db);
+    $needs_force = true;
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Inserting a new record into test.users at PK=2 and generation policy ≻", 'black', true);
+$start = __LINE__;
+$needs_force = false;
+$key = $db->initKey("test", "users", 2);
+$exists_status = $db->exists($key, $metadata);
+if ($exists_status != AEROSPIKE::OK) {
+    $db->close();
+    return($exists_status);
+}
+$gen_value = $metadata["generation"] + 10;
+$put_record = array("bin1"=>10);
+$res = $db->put($key, $put_record, NULL, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT,$gen_value)));
+if ($res == Aerospike::OK) {
+    echo success();
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
+    echo fail("There already is a record at PK={$key['key']} in the set test.users");
+    $needs_force = true;
+} else {
+    echo standard_fail($db);
+    $needs_force = true;
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Inserting a new record into test.users at PK=3 and digest policy ≻", 'black', true);
+$start = __LINE__;
+$needs_force = false;
+$key = $db->initKey("test", "demo", base64_decode("jhj56888"), 1);
+$res = $db->put($key, array("k1"=>10, "k2"=>20), NULL, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+
+if ($res == Aerospike::OK) {
+    echo success();
+} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
+    echo fail("There already is a record at PK={$key['key']} in the set test.users");
+    $needs_force = true;
+} else {
+    echo standard_fail($db);
+    $needs_force = true;
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 echo colorize("Getting the record ≻", 'black', true);
 $start = __LINE__;
+$key = $db->initKey("test", "users", 1);
 $res = $db->get($key, $record);
 if ($res == Aerospike::OK) {
     echo success();
@@ -115,6 +174,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Retrieving record metadata ≻", 'black', true);
 $start = __LINE__;
+$key = $db->initKey("test", "users", 1);
 $res = $db->exists($key, $metadata);
 if ($res == Aerospike::OK) {
     echo success();
@@ -126,6 +186,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Updating the record using Aerospike::POLICY_EXISTS_UPDATE ≻", 'black', true);
 $start = __LINE__;
+$key = $db->initKey("test", "users", 1);
 $put_vals = array(
     "eyesight" => "bad",
     "age" => 160,
@@ -143,6 +204,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Getting the record ≻", 'black', true);
 $start = __LINE__;
+$key = $db->initKey("test", "users", 1);
 $res = $db->get($key, $record);
 if ($res == Aerospike::OK) {
     echo success();
@@ -156,6 +218,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Retrieving record metadata ≻", 'black', true);
 $start = __LINE__;
+$key = $db->initKey("test", "users", 1);
 $res = $db->exists($key, $metadata);
 if ($res == Aerospike::OK) {
     echo success();
@@ -190,6 +253,12 @@ if (isset($args['c']) || isset($args['clean'])) {
     echo colorize("Removing the record ≻ ", 'black', true);
     $start = __LINE__;
     $res = $db->remove($key);
+    if ($res == Aerospike::OK) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
+    $key = $db->initKey("test", "users", 2);
     if ($res == Aerospike::OK) {
         echo success();
     } else {

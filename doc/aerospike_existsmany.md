@@ -16,12 +16,13 @@ and non-existent records will return as NULL.
 
 ## Parameters
 
-**keys** an array of initialized keys, each an associative array with keys 'ns','set','key'.
+**keys** an array of initialized keys, each an array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**metadata** filled by an associative array of metadata.
+**metadata** filled by an array of metadata.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
+- **Aerospike::OPT_POLICY_KEY**
 
 ## Return Values
 
