@@ -169,7 +169,7 @@ config()
         code "aerospike.udf.lua_system_path=/opt/aerospike/client-php/sys-lua"
         if [ -d /opt/aerospike/client-php/usr-lua ]; then
             if [ -d ./tests/lua ]; then
-                cp ./tests/lua/* /opt/aerospike/client-php/usr-lua/
+                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
             fi
             code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
         fi
@@ -177,7 +177,7 @@ config()
         code "aerospike.udf.lua_system_path=/usr/local/aerospike/client-php/sys-lua"
         if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
             if [ -d ./tests/lua ]; then
-                cp ./tests/lua/* /usr/local/aerospike/client-php/usr-lua/
+                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
             fi
             code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
         fi
