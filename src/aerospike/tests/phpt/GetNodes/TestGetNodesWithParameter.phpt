@@ -1,5 +1,5 @@
 --TEST--
-GetNodes - Negative test with arguments
+GetNodes - Positive test with policy
 
 --SKIPIF--
 <?php
@@ -11,4 +11,4 @@ aerospike_phpt_skipif("GetNodes", "testGetNodesWithParameter");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("GetNodes", "testGetNodesWithParameter");
 --EXPECT--
-ERR_PARAM
+OK

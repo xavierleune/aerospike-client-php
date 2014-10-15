@@ -8,6 +8,12 @@
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
 
+#define MAX_HOST_COUNT 128
+#define INFO_REQUEST_RESPONSE_DELIMITER "\t"
+#define INFO_RESPONSE_END "\n"
+#define HOST_DELIMITER ";"
+#define IP_PORT_DELIMITER ":"
+
 /*
  *******************************************************************************************************
  * Wrapper function to perform an aerospike_info_host within the C client.
@@ -44,15 +50,17 @@ aerospike_info_specific_host(aerospike* as_object_p,
     }
     
     if (host) {
-        if (FAILURE == zend_hash_find(Z_ARRVAL_P(host), PHP_AS_KEY_DEFINE_FOR_ADDR,
+        if (FAILURE == zend_hash_find(Z_ARRVAL_P(host),
+                    PHP_AS_KEY_DEFINE_FOR_ADDR,
                 PHP_AS_KEY_DEFINE_FOR_ADDR_LEN + 1, (void**)&host_name)) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Unable to find addr");
             DEBUG_PHP_EXT_DEBUG("Unable to find addr");
             goto exit;
         }
-        if (FAILURE == zend_hash_find(Z_ARRVAL_P(host), PHP_AS_KEY_DEFINE_FOR_PORT,
-               PHP_AS_KEY_DEFINE_FOR_PORT_LEN + 1,  (void**)&port)) {
+        if (FAILURE == zend_hash_find(Z_ARRVAL_P(host),
+                    PHP_AS_KEY_DEFINE_FOR_PORT,
+                    PHP_AS_KEY_DEFINE_FOR_PORT_LEN + 1,  (void**)&port)) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Unable to find port");
             DEBUG_PHP_EXT_DEBUG("Unable to find port");
@@ -70,7 +78,8 @@ aerospike_info_specific_host(aerospike* as_object_p,
     }
 
     if (AEROSPIKE_OK != aerospike_info_host(as_object_p, error_p, &info_policy,
-                (const char *) address, (uint16_t) port_no, request_str_p, &response_p)) {
+                (const char *) address, (uint16_t) port_no, request_str_p,
+                &response_p)) {
             DEBUG_PHP_EXT_DEBUG(error_p->message);
             goto exit;
     }
@@ -82,6 +91,178 @@ aerospike_info_specific_host(aerospike* as_object_p,
     }
 
 exit:
+    return error_p->code;
+}
+
+/*
+ *******************************************************************************************************
+ * Helper function to get all nodes within the cluster.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param return_p              The return zval to be populated with the
+ *                              node ip:port pairs by this method.
+ * @param host                  The optional host array containing a single addr and port.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ *
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_info_get_cluster_nodes(aerospike* as_object_p,
+        as_error* error_p, zval* return_p, zval* host, zval* options_p TSRMLS_DC)
+{
+    as_policy_info              info_policy;
+    zval*                       response_services_p = NULL;
+    zval*                       response_service_p = NULL;
+    char*                       tok = NULL;
+    char*                       saved = NULL;
+    zval*                       current_host_p[MAX_HOST_COUNT];
+    uint32_t                    host_index = 0;
+    bool                        iter_first = true;
+    bool                        break_flag = false;
+
+
+    MAKE_STD_ZVAL(response_services_p);
+    MAKE_STD_ZVAL(response_service_p);
+    
+    if (AEROSPIKE_OK !=
+            aerospike_info_specific_host(as_object_p, error_p,
+                    "services", response_services_p, host, options_p TSRMLS_CC)) {
+        DEBUG_PHP_EXT_ERROR("getNodes: services call returned an error");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            aerospike_info_specific_host(as_object_p, error_p,
+                    "service", response_service_p, host, options_p TSRMLS_CC)) {
+        DEBUG_PHP_EXT_ERROR("getNodes: service call returned an error");
+        goto exit;
+    }
+
+    for (host_index = 0; host_index < MAX_HOST_COUNT; host_index++) {
+        current_host_p[host_index] = NULL;
+    }
+
+    host_index = 0;
+
+    MAKE_STD_ZVAL(current_host_p[host_index]);
+    array_init(current_host_p[host_index]);
+
+    tok = strtok_r(Z_STRVAL_P(response_service_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+            "Unable to get addr in service");
+        DEBUG_PHP_EXT_DEBUG("Unable to get addr in service");
+        goto exit;
+    }
+
+    tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+            "Unable to get addr in service");
+        DEBUG_PHP_EXT_DEBUG("Unable to get addr in service");
+        goto exit;
+    }
+
+    if (0 != add_assoc_stringl(current_host_p[host_index], "addr", tok, strlen(tok), 1)) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+            "Unable to get addr");
+        DEBUG_PHP_EXT_DEBUG("Unable to get addr");
+        goto exit;
+    }
+
+    tok = strtok_r(NULL, INFO_RESPONSE_END, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+            "Unable to get port in service");
+        DEBUG_PHP_EXT_DEBUG("Unable to get port in service");
+        goto exit;
+    }
+
+    if (0 != add_assoc_stringl(current_host_p[host_index], "port", tok, strlen(tok), 1)) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Unable to get port");
+        DEBUG_PHP_EXT_DEBUG("Unable to get port");
+        goto exit;
+    }
+
+    if (0 != add_next_index_zval(return_p, current_host_p[host_index])) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Unable to get addr-port");
+        DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
+        goto exit;
+    }
+
+    host_index++;
+    tok = strtok_r(Z_STRVAL_P(response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
+
+    while (tok != NULL) {
+        tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
+        if (tok == NULL) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to get addr");
+            DEBUG_PHP_EXT_DEBUG("Unable to get addr");
+            goto exit;
+        }
+
+        MAKE_STD_ZVAL(current_host_p[host_index]);
+        array_init(current_host_p[host_index]);
+
+        if (0 != add_assoc_stringl(current_host_p[host_index], "addr", tok, strlen(tok), 1)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to get addr");
+            DEBUG_PHP_EXT_DEBUG("Unable to get addr");
+            goto exit;
+        }
+
+        tok = strtok_r(NULL, HOST_DELIMITER, &saved);
+        if (tok == NULL) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to get port");
+            DEBUG_PHP_EXT_DEBUG("Unable to get port");
+            goto exit;
+        }
+
+        if (strstr(tok, INFO_RESPONSE_END)) {
+            tok = strtok_r(tok, INFO_RESPONSE_END, &saved);
+            break_flag = true;
+        }
+
+        if (0 != add_assoc_stringl(current_host_p[host_index], "port", tok, strlen(tok), 1)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to get port");
+            DEBUG_PHP_EXT_DEBUG("Unable to get port");
+            goto exit;
+        }
+
+        if (0 != add_next_index_zval(return_p, current_host_p[host_index])) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to get addr-port");
+            DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
+            goto exit;
+        }
+        host_index++;
+
+        if (break_flag == true) {
+            goto exit;
+        }
+    }
+
+exit:
+    if (response_services_p) {
+        zval_ptr_dtor(&response_services_p);
+    }
+    if (response_service_p) {
+        zval_ptr_dtor(&response_service_p);
+    }
+    if (error_p->code != AEROSPIKE_OK) {
+        for (host_index = 0; host_index < MAX_HOST_COUNT; host_index++) {
+            if (current_host_p[host_index]) {
+                zval_ptr_dtor(&current_host_p[host_index]);
+            }
+        }
+    }
     return error_p->code;
 }
 
@@ -136,18 +317,18 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospke_info_request_multiple_nodes(aerospike* as_object_p,
+aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         as_error* error_p, char* request_str_p, zval* config_p,
         zval* return_value_p, zval* options_p TSRMLS_DC)
 {
-    as_status                   status = AEROSPIKE_OK;
     foreach_callback_info_udata info_callback_udata;
     as_policy_info              info_policy;
 
     if ((!request_str_p)/* || (!config_p)*/) {
-            DEBUG_PHP_EXT_DEBUG(error_p->message);
-            status = AEROSPIKE_ERR;
-            goto exit;
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Request string is empty");
+        DEBUG_PHP_EXT_DEBUG("Request string is empty");
+        goto exit;
     }
 
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
@@ -155,7 +336,6 @@ aerospke_info_request_multiple_nodes(aerospike* as_object_p,
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
@@ -165,10 +345,9 @@ aerospke_info_request_multiple_nodes(aerospike* as_object_p,
 
     if ( AEROSPIKE_OK != aerospike_info_foreach(as_object_p, error_p, &info_policy,
             request_str_p, (aerospike_info_foreach_callback) aerospike_info_callback, &info_callback_udata)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to get info of multiple hosts");
-        status = AEROSPIKE_ERR;
+        DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
 exit:
-    return status;
+    return error_p->code;
 }

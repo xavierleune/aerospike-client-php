@@ -799,19 +799,49 @@ exit:
  *******************************************************************************************************
  * PHP Method:  Aerospike::getNodes()
  *******************************************************************************************************
- * Return an array of objects for the nodes in the Aerospike cluster.
+ * Get the addresses of the cluster nodes
  * Method prototype for PHP userland:
- * public int Aerospike::getNodes ( array $metadata [, array $options ] )
+ * public array Aerospike::getNodes ( void )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, getNodes)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    /*** TO BE IMPLEMENTED ***/
+    if (!aerospike_obj_p) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "getNodes: connection not established");
+        DEBUG_PHP_EXT_ERROR("getNodes: connection not established");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    array_init(return_value);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_get_cluster_nodes(aerospike_obj_p->as_ref_p->as_p,
+                                                       &error, return_value,
+                                                       NULL, NULL TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("getNodes function returned an error");
+        goto exit;
+    }
+
+exit:
+    if (AEROSPIKE_OK != status) {
+        zval_dtor(return_value);
+        RETURN_NULL();
+    }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
 }
 
 /*
@@ -884,8 +914,8 @@ exit:
  * PHP Method:  Aerospike::infoMany()
  *******************************************************************************************************
  * Aerospike::info - send an info request to multiple cluster nodes.
- *
- * public array Aerospike::infoMany ( string $request [, array $config ] )
+ * Method prototype for PHP userland:
+ * public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
  * @param request           A formatted string representing a command and
  *                          control operation.
  * @param config            An array holding the cluster node connection
@@ -910,33 +940,34 @@ PHP_METHOD(Aerospike, infoMany)
     }
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "InfoMany: connection not established");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "InfoMany: connection not established");
         DEBUG_PHP_EXT_ERROR("InfoMany: connection not established");
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa",
                 &request_p, &request_len, &config_p, &options_p) == FAILURE) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for InfoMany function");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse php parameters for InfoMany function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for InfoMany function.");
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    if (!request_p || (config_p && PHP_TYPE_ISNOTARR(config_p))  || ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))){
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for InfoMany function not proper");
+    if (!request_p || (config_p && PHP_TYPE_ISNOTARR(config_p))
+            || ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))){
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for InfoMany function not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for InfoMany function not proper.");
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
     array_init(return_value);
 
-    if (AEROSPIKE_OK != (status = aerospke_info_request_multiple_nodes(aerospike_obj_p->as_ref_p->as_p,
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_request_multiple_nodes(aerospike_obj_p->as_ref_p->as_p,
                     &error, request_p, config_p, return_value, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("InfoMany function returned an error");
-        status = AEROSPIKE_ERR;
         goto exit;
     }
 
@@ -945,7 +976,10 @@ exit:
         zval_dtor(return_value);
         RETURN_NULL();
     }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
 }
+
 /*
  *******************************************************************************************************
  * PHP Method:  Aerospike::add()
