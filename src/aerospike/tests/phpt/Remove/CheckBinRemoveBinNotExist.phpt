@@ -11,4 +11,4 @@ aerospike_phpt_skipif("Remove", "testBinRemoveBinNotExist");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Remove", "testBinRemoveBinNotExist");
 --EXPECT--
-ERR_CLIENT
+ERR
