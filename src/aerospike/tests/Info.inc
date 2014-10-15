@@ -1,19 +1,9 @@
 <?php
 class Info extends AerospikeTestCommon
 {
-    /*
-     * TODO: Remove these constants and map with actual Aerospike class
-     * constants.
-     */
-    static $status_ok = 2000;
-    static $status_err = 2001;
-    static $status_get_record_fail = 2002;
-
     protected function setUp(&$db, &$host) {
-          $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
-        //  $host = array("addr"=>"localhost", "port"=>3000);
-           $config = array("hosts"=>array($host));
-         //  $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
+        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
+        $config = array("hosts"=>array($host));
         $db = new Aerospike($config);
     }
 
@@ -446,6 +436,38 @@ class Info extends AerospikeTestCommon
         if ($db->isConnected()) {
             try {
                 $status = $db->info('abcd', $response, $host);
+                if($status == Aerospike::OK) {
+                    if($response==NULL) {
+                        return Aerospike::OK;
+                    }
+                }
+            } catch (ErrorException $e) {
+                return($db->errorno());
+            }
+        } else {
+            return($db->errorno());
+        }
+    }
+    /**
+     * @test
+     * Basic Info negative with empty command
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * Error
+     *
+     * @remark
+     *
+     *
+     * @test_plans{1.1}
+     */
+    function testInfoNegativeForEmptyCommand($db, $host)
+    {
+        if ($db->isConnected()) {
+            try {
+                $status = $db->info('', $response, $host);
                 if($status == Aerospike::OK) {
                     if($response==NULL) {
                         return Aerospike::OK;
