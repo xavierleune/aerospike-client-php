@@ -489,7 +489,12 @@ PHP_METHOD(Aerospike, __construct)
     strcpy(config.lua.user_path, ini_value = LUA_USER_PATH_PHP_INI);
 
     /* check for hosts, user and pass within config*/
-    if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p), NULL, &config))) {
+    transform_zval_config_into transform_zval_config_into_as_config;
+    transform_zval_config_into_as_config.transform_result.as_config_p = &config;
+    transform_zval_config_into_as_config.transform_result_type = TRANSFORM_INTO_AS_CONFIG;
+
+    if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
+                    NULL, &transform_zval_config_into_as_config/*&config*/))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find host parameter");
         DEBUG_PHP_EXT_ERROR("Unable to find host parameter");
@@ -838,6 +843,7 @@ PHP_METHOD(Aerospike, getNodes)
 exit:
     if (AEROSPIKE_OK != status) {
         zval_dtor(return_value);
+        INIT_ZVAL(*return_value);
         RETURN_NULL();
     }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -916,10 +922,6 @@ exit:
  * Aerospike::info - send an info request to multiple cluster nodes.
  * Method prototype for PHP userland:
  * public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
- * @param request           A formatted string representing a command and
- *                          control operation.
- * @param config            An array holding the cluster node connection
- *                          information cluster and manage its connections to them.
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, infoMany)
@@ -972,12 +974,13 @@ PHP_METHOD(Aerospike, infoMany)
     }
 
 exit:
-    if (AEROSPIKE_OK != status) {
-        zval_dtor(return_value);
-        RETURN_NULL();
-    }
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    if (AEROSPIKE_OK != status) {
+        zval_dtor(return_value);
+        INIT_ZVAL(*return_value);
+        RETURN_NULL();
+    }
 }
 
 /*
@@ -1585,6 +1588,8 @@ PHP_METHOD(Aerospike, initKey)
 
     if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, return_value, NULL)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
+        zval_dtor(return_value);
+        INIT_ZVAL(*return_value);
         RETURN_NULL();
     }
 }
@@ -1778,6 +1783,7 @@ PHP_METHOD(Aerospike, predicateEquals)
         case IS_STRING:
             if (strlen(Z_STRVAL_P(val_p)) == 0) {
                 zval_dtor(return_value);
+                INIT_ZVAL(*return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
@@ -1785,6 +1791,7 @@ PHP_METHOD(Aerospike, predicateEquals)
             break;
         default:
             zval_dtor(return_value);
+            INIT_ZVAL(*return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
             RETURN_NULL();
     }

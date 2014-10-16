@@ -11,4 +11,4 @@ aerospike_phpt_skipif("InfoMany", "testInfoManyNegativeIncorrectConfigStructure"
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("InfoMany", "testInfoManyNegativeIncorrectConfigStructure");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

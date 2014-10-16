@@ -11,4 +11,4 @@ aerospike_phpt_skipif("InfoMany", "testInfoManyNegativeIncorrectPort");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("InfoMany", "testInfoManyNegativeIncorrectPort");
 --EXPECT--
-ERR_CLIENT
+OK

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("InfoMany", "testInfoManyNegativeIncorrectHostName");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("InfoMany", "testInfoManyNegativeIncorrectHostName");
 --EXPECT--
-ERR_CLIENT
+OK

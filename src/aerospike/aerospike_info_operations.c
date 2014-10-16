@@ -4,6 +4,7 @@
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"
 #include "aerospike/aerospike_info.h"
+#include <arpa/inet.h>
 
 #include "aerospike_common.h"
 #include "aerospike_policy.h"
@@ -268,15 +269,67 @@ exit:
 
 /*
  *******************************************************************************************************
- * Callback for as_scan_foreach and as_query_foreach functions.
+ * Helper function to convert struct sockaddr address to a string, IPv4 and IPv6.
+ * Currently unused. Can use if as_address supports IPv6.
+ *
+ * @param sa                  The sockaddr address to be converted into a string.
+ *******************************************************************************************************
+ */
+static char *get_ip_str(const struct sockaddr *sa)
+{
+    int         maxlen = INET6_ADDRSTRLEN;
+    char*       s = NULL;
+
+    if (!sa) {
+        strncpy(s, "Invalid sockaddr_in", maxlen);
+        return NULL;
+    }
+
+    switch(sa->sa_family) {
+        case AF_INET:
+            if (NULL == (s = (char *) malloc(INET_ADDRSTRLEN))) {
+                return NULL;        
+            }
+            inet_ntop(AF_INET, &(((struct sockaddr_in *)sa)->sin_addr),
+                    s, INET_ADDRSTRLEN);
+            break;
+
+        case AF_INET6:
+            if (NULL == (s = (char *) malloc(INET6_ADDRSTRLEN))) {
+                return NULL;
+            }
+            inet_ntop(AF_INET6, &(((struct sockaddr_in6 *)sa)->sin6_addr),
+                    s, INET6_ADDRSTRLEN);
+            break;
+
+        default:
+            if (NULL == (s = (char *) malloc(maxlen))) {
+                return NULL;
+            }
+            strncpy(s, "Unknown AF", maxlen);
+            return NULL;
+    }
+
+    return s;
+}
+
+/*
+ *******************************************************************************************************
+ * Callback for as_info_foreach.
  * It processes the as_val and translates it into an equivalent zval array.
  * It then calls the user registered callback passing the zval array as an
  * argument.
  *       
- * @param p_val             The current as_val to be passed on to the
- *                          user callback as an argument.
- * @param udata             The userland_callback instance filled
- *                          with return_value and error.
+ * @param err               The as_error object sent by C client to this
+ *                          callback.
+ * @param node              The current as_node object for which the callback is
+ *                          fired by C client.
+ * @param request           The info request string.
+ * @param response          The info response string for current node.
+ * @param udata             The callback udata containing the host_lookup array
+ *                          and the return zval to be populated with an entry
+ *                          for current node's info response with the node's ID
+ *                          as the key.
  *
  * @return true if callback is successful; else false.
  *******************************************************************************************************
@@ -287,12 +340,33 @@ aerospike_info_callback(const as_error* err, const as_node* node,
         char* request, char* response, void* udata) 
 {
     TSRMLS_FETCH();
-    foreach_callback_info_udata* udata_ptr = (foreach_callback_info_udata*)udata;
+    foreach_callback_info_udata*        udata_ptr = (foreach_callback_info_udata *) udata;
+    struct sockaddr_in*                 addr = NULL;
 
-    if (node) {
-        if (0 != add_assoc_stringl(udata_ptr->udata_p, node->name, response, strlen(response), 1)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get node info");
-            goto exit;
+    if (node && response) {
+
+        if (udata_ptr->host_lookup_p) {
+            addr = as_node_get_address((as_node *)node);
+            char ip_port[IP_PORT_MAX_LEN];
+            snprintf(ip_port, IP_PORT_MAX_LEN, "%s:%d", inet_ntop(addr->sin_family,
+                        &(addr->sin_addr), ip_port, INET_ADDRSTRLEN),
+                    ntohs(addr->sin_port));
+
+            zval **tmp;
+            if (SUCCESS == zend_hash_find(Z_ARRVAL_P(udata_ptr->host_lookup_p), ip_port,
+                    strlen(ip_port), (void**)&tmp)) {
+                if (0 != add_assoc_stringl(udata_ptr->udata_p, node->name,
+                            response, strlen(response), 1)) {
+                    DEBUG_PHP_EXT_DEBUG("Unable to get node info");
+                    goto exit;
+                }
+            }
+        } else {
+            if (0 != add_assoc_stringl(udata_ptr->udata_p, node->name,
+                        response, strlen(response), 1)) {
+                DEBUG_PHP_EXT_DEBUG("Unable to get node info");
+                goto exit;
+            }    
         }
     } else {
         return false;
@@ -321,10 +395,11 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         as_error* error_p, char* request_str_p, zval* config_p,
         zval* return_value_p, zval* options_p TSRMLS_DC)
 {
-    foreach_callback_info_udata info_callback_udata;
-    as_policy_info              info_policy;
+    foreach_callback_info_udata     info_callback_udata;
+    as_policy_info                  info_policy;
+    zval*                           host_lookup_p = NULL;
 
-    if ((!request_str_p)/* || (!config_p)*/) {
+    if ((!request_str_p)) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Request string is empty");
         DEBUG_PHP_EXT_DEBUG("Request string is empty");
@@ -339,15 +414,36 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         goto exit;
     }
 
-    info_callback_udata.udata_p = return_value_p;
-    info_callback_udata.error_p = error_p;
-    //info_callback_udata.error_p = config_p;
+    if (config_p) {
+        MAKE_STD_ZVAL(host_lookup_p);
+        array_init(host_lookup_p);
 
-    if ( AEROSPIKE_OK != aerospike_info_foreach(as_object_p, error_p, &info_policy,
-            request_str_p, (aerospike_info_foreach_callback) aerospike_info_callback, &info_callback_udata)) {
+        transform_zval_config_into transform_zval_config_into_zval;
+        transform_zval_config_into_zval.transform_result.host_lookup_p = host_lookup_p;
+        transform_zval_config_into_zval.transform_result_type = TRANSFORM_INTO_ZVAL;
+
+        if (AEROSPIKE_OK !=
+                (error_p->code = aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
+                                                                          NULL,
+                                                                          &transform_zval_config_into_zval))) {
+            DEBUG_PHP_EXT_DEBUG("Unable to create host lookup");
+            goto exit;
+        }
+    }
+
+    info_callback_udata.udata_p = return_value_p;
+    info_callback_udata.host_lookup_p = host_lookup_p;
+
+    if (AEROSPIKE_OK != aerospike_info_foreach(as_object_p, error_p,
+                &info_policy, request_str_p,
+                (aerospike_info_foreach_callback) aerospike_info_callback,
+                &info_callback_udata)) {
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
 exit:
+    if (config_p && host_lookup_p) {
+        zval_ptr_dtor(&host_lookup_p);
+    }
     return error_p->code;
 }
