@@ -202,18 +202,9 @@ class Aerospike
     public int dropIndex ( string $ns, string $name )
 
     // info methods
-    public int getNodes ( array &$metadata [, array $config [, array $options ]]] )
-    public int getBins( array &$metadata [, array $config [, string $ns [, array $options ]]] )
-    public int getNamespaces( array &$namespaces [, array $options ] )
-    public int getNamespaceStatistics( array &$statistics [, array $config [,string $ns [, array $options ]]] )
-    public int getSetStatistics( array &$statistics [, array $config [, string $ns [, string $set [, array $options ]]]] )
-    public int getNodeStatistics( array &$statistics [, array $config [, array $options ]] )
-    public int getNamespaceConfig( array &$ns_config [, array $config [, string $ns [, array $options ]]])
-    public int getNodeConfig( array &$node_config [, array $config [, array $options ]] )
-    public int getThroughput( array &$throughput [, array $config [, string $histogram=<all> [, int $back=<minimum to get last slice> [, int $duration=0 [, int $slice=0 [, array $options ]]]]]] )
-    public int getLatency( array &$latency [, array $config [, string $histogram=<all> [, int $back=<minimum to get last slice> [, int $duration=0 [, int $slice=0 [, array $options ]]]]]] )
-    public int getNodeInfo( array &$info [, array $config [, array $options ]] )
-
+    public int Aerospike::info ( string $request, string &$response [, array $host [, array options ] ] )
+    public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
+    public array Aerospike::getNodes ( void )
 }
 ```
 

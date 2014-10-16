@@ -6,7 +6,7 @@ Aerospike::info - send an info request to multiple cluster nodes.
 ## Description
 
 ```
-public array Aerospike::infoMany ( string $request [, array $config ] )
+public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
 
 ```
 
@@ -30,6 +30,9 @@ cluster and manage its connections to them.
   - *port*
 - *user*
 - *pass*
+
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 

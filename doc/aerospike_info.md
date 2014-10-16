@@ -6,7 +6,7 @@ Aerospike::info - send an info request to a single cluster node
 ## Description
 
 ```
-public int Aerospike::info ( string $request, string &$response [, array $host ] )
+public int Aerospike::info ( string $request, string &$response [, array $host [, array options ] ] )
 
 ```
 
@@ -28,6 +28,9 @@ cluster and manage its connections to them.
 
 - *addr* hostname or IP of the node
 - *port*
+
+**[options](aerospike.md)** including
+- **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
 
