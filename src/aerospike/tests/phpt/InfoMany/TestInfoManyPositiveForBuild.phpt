@@ -1,14 +1,14 @@
 --TEST--
-PUT with generation policy POLICY_GEN_DUP and no generation value. 
+InfoMany - Positive check for build
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Put", "testPutGenPolicyDUPPositive");
+aerospike_phpt_skipif("InfoMany", "testInfoManyPositiveForBuild");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Put", "testPutGenPolicyDUPPositive");
+aerospike_phpt_runtest("InfoMany", "testInfoManyPositiveForBuild");
 --EXPECT--
 OK

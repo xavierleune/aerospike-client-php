@@ -270,7 +270,8 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, isConnected, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, close, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, info, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, info, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, infoMany, NULL, ZEND_ACC_PUBLIC)
     /*
      ********************************************************************
      * Error Handling APIs:
@@ -336,6 +337,7 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, apply, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, listRegistered, arginfo_first_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getRegistered, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+
 #if 0 // TBD
 
     // Large Data Type (LDT) APIs:
@@ -495,7 +497,12 @@ PHP_METHOD(Aerospike, __construct)
     strcpy(config.lua.user_path, ini_value = LUA_USER_PATH_PHP_INI);
 
     /* check for hosts, user and pass within config*/
-    if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p), NULL, &config))) {
+    transform_zval_config_into transform_zval_config_into_as_config;
+    transform_zval_config_into_as_config.transform_result.as_config_p = &config;
+    transform_zval_config_into_as_config.transform_result_type = TRANSFORM_INTO_AS_CONFIG;
+
+    if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
+                    NULL, &transform_zval_config_into_as_config/*&config*/))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find host parameter");
         DEBUG_PHP_EXT_ERROR("Unable to find host parameter");
@@ -805,36 +812,183 @@ exit:
  *******************************************************************************************************
  * PHP Method:  Aerospike::getNodes()
  *******************************************************************************************************
- * Return an array of objects for the nodes in the Aerospike cluster.
+ * Get the addresses of the cluster nodes
  * Method prototype for PHP userland:
- * public int Aerospike::getNodes ( array $metadata [, array $options ] )
+ * public array Aerospike::getNodes ( void )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, getNodes)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    /*** TO BE IMPLEMENTED ***/
+    if (!aerospike_obj_p) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "getNodes: connection not established");
+        DEBUG_PHP_EXT_ERROR("getNodes: connection not established");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    array_init(return_value);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_get_cluster_nodes(aerospike_obj_p->as_ref_p->as_p,
+                                                       &error, return_value,
+                                                       NULL, NULL TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("getNodes function returned an error");
+        goto exit;
+    }
+
+exit:
+    if (AEROSPIKE_OK != status) {
+        zval_dtor(return_value);
+        INIT_ZVAL(*return_value);
+        RETURN_NULL();
+    }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
 }
 
 /*
  *******************************************************************************************************
  * PHP Method:  Aerospike::info()
  *******************************************************************************************************
- * Send an Info. request to an Aerospike cluster.
+ * Send an Info request to an Aerospike cluster.
+ * Method prototype for PHP userland:
+ * public int Aerospike::info ( string $request, string &$response [, array $host [, array options ]] )
  *******************************************************************************************************
  */
 PHP_METHOD(Aerospike, info)
 {
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    char*                  request = NULL;
+    zval*                  response_p = NULL;
+    long                   request_len = 0;
+    zval*                  host = NULL;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    /*** TO BE IMPLEMENTED ***/
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
 
-    RETURN_TRUE;
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Info: connection not established");
+        DEBUG_PHP_EXT_ERROR("Info: connection not established");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|zz",
+                &request, &request_len, &response_p,
+                &host, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for Info function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for Info function.");
+        goto exit;
+    }
+
+    if (!request || (host && PHP_TYPE_ISNOTARR(host)) || ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for Info function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for Info function not proper.");
+        goto exit;
+    }
+
+    zval_dtor(response_p);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
+                    request, response_p, host, options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("Info function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::infoMany()
+ *******************************************************************************************************
+ * Aerospike::info - send an info request to multiple cluster nodes.
+ * Method prototype for PHP userland:
+ * public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, infoMany)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    char*                  request_p = NULL;
+    long                   request_len = 0;
+    zval*                  config_p = NULL;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "InfoMany: connection not established");
+        DEBUG_PHP_EXT_ERROR("InfoMany: connection not established");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa",
+                &request_p, &request_len, &config_p, &options_p) == FAILURE) {
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse php parameters for InfoMany function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for InfoMany function.");
+        goto exit;
+    }
+
+    if (!request_p || (config_p && PHP_TYPE_ISNOTARR(config_p))
+            || ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))){
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for InfoMany function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for InfoMany function not proper.");
+        goto exit;
+    }
+
+    array_init(return_value);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_request_multiple_nodes(aerospike_obj_p->as_ref_p->as_p,
+                    &error, request_p, config_p, return_value, options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("InfoMany function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    if (AEROSPIKE_OK != status) {
+        zval_dtor(return_value);
+        INIT_ZVAL(*return_value);
+        RETURN_NULL();
+    }
 }
 
 /*
@@ -1454,6 +1608,8 @@ PHP_METHOD(Aerospike, initKey)
 
     if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, is_digest, return_value, NULL)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
+        zval_dtor(return_value);
+        INIT_ZVAL(*return_value);
         RETURN_NULL();
     }
 }
@@ -1647,6 +1803,7 @@ PHP_METHOD(Aerospike, predicateEquals)
         case IS_STRING:
             if (strlen(Z_STRVAL_P(val_p)) == 0) {
                 zval_dtor(return_value);
+                INIT_ZVAL(*return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
@@ -1654,6 +1811,7 @@ PHP_METHOD(Aerospike, predicateEquals)
             break;
         default:
             zval_dtor(return_value);
+            INIT_ZVAL(*return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
             RETURN_NULL();
     }

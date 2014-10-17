@@ -602,21 +602,21 @@ set_policy_ex(as_config *as_config_p,
                     zend_hash_index_find(Z_ARRVAL_P(*options_value), 0, (void **) &gen_policy_pp);
 
                     if((Z_TYPE_PP(gen_policy_pp) != IS_LONG) &&
-                            ((Z_LVAL_PP(gen_policy_pp) & AS_POLICY_GEN_IGNORE) !=
-                             AS_POLICY_GEN_IGNORE)) {
+                            ((Z_LVAL_PP(gen_policy_pp) & AS_POLICY_KEY_GEN) !=
+                             AS_POLICY_KEY_GEN)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_GEN_IGNORE + 1;
+                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
                         options_passed_for_write |= SET_BIT_OPT_POLICY_GEN;
                     } else if (operate_policy_p) {
-                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_GEN_IGNORE + 1;
+                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
                         options_passed_for_operate |= SET_BIT_OPT_POLICY_GEN;
                     } else if (remove_policy_p) {
-                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_GEN_IGNORE + 1;
+                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
                         options_passed_for_remove |= SET_BIT_OPT_POLICY_GEN;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");

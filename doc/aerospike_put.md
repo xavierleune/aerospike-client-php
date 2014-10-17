@@ -56,8 +56,8 @@ if (!$db->isConnected()) {
 $key = $db->initKey("test", "users", 1234);
 $bins = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
-$res = $db->put($key, $bins);
-if ($res == Aerospike::OK) {
+$status = $db->put($key, $bins);
+if ($status == Aerospike::OK) {
     echo "Record written.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -66,8 +66,8 @@ if ($res == Aerospike::OK) {
 // Updating the record
 $bins = array("name" => "You There", "age" => 33);
 // will update the name bin, and create a new 'age' bin
-$res = $db->put($key, $bins);
-if ($res == Aerospike::OK) {
+$status = $db->put($key, $bins);
+if ($status == Aerospike::OK) {
     echo "Record updated.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -90,11 +90,11 @@ Record updated.
 
 // This time we expect an error due to the record already existing (assuming we
 // already ran Example #1)
-$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
+$status = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
 
-if ($res == Aerospike::OK) {
+if ($status == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
+} elseif ($status == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

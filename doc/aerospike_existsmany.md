@@ -46,8 +46,8 @@ $key1 = $db->initKey("test", "users", 1234);
 $key2 = $db->initKey("test", "users", 1235); // this key does noot exist
 $key2 = $db->initKey("test", "users", 1236);
 $keys = array($key1, $key2, $key3);
-$res = $db->existsMany($keys, $metadata);
-if ($res == Aerospike::OK) {
+$status = $db->existsMany($keys, $metadata);
+if ($status == Aerospike::OK) {
     var_dump($metadata);
 } else {
     echo "[{$db->errorno()}] ".$db->error();

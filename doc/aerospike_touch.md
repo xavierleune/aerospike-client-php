@@ -43,10 +43,10 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->touch($key, 120);
-if ($res == Aerospike::OK) {
+$status = $db->touch($key, 120);
+if ($status == Aerospike::OK) {
     echo "Added 120 seconds to the record's expiration.\n"
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

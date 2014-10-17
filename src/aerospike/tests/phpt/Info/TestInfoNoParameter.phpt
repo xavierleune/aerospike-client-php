@@ -1,15 +1,14 @@
 --TEST--
-createIndex - correct arguments for string index
+Info - Check for no arguments
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Index", "testCreateIndexStringBinPositive");
+aerospike_phpt_skipif("Info", "testInfoNoParameter");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Index", "testCreateIndexStringBinPositive");
+aerospike_phpt_runtest("Info", "testInfoNoParameter");
 --EXPECT--
-OK
-
+ERR_PARAM

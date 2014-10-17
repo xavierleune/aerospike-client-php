@@ -65,7 +65,7 @@ enum Aerospike_constants {
 #define AS_SCAN_PRIORITY 0x00100000
 #define AS_SCAN_STATUS 0x01000000
 #define AS_POLICY_KEY_DIGEST 0x10000000
-#define AS_POLICY_KEY_GEN 0100000000
+#define AS_POLICY_KEY_GEN 0x100000000
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant values. (POLICY_* or SERIALIZER_*)
@@ -92,12 +92,11 @@ enum Aerospike_values {
     SCAN_STATUS_INPROGRESS,                         /* The scan is currently running*/
     SCAN_STATUS_ABORTED,                            /* The scan was aborted due to failure or the user */
     SCAN_STATUS_COMPLETED,                          /* The scan completed successfully  */
-    POLICY_KEY_DIGEST = AS_POLICY_KEY_DIGEST,       /* hashes (ns,set,key) data into a unique record ID (default) */
+    POLICY_KEY_DIGEST      = AS_POLICY_KEY_DIGEST,  /* hashes (ns,set,key) data into a unique record ID (default) */
     POLICY_KEY_SEND,                                /* also send, store, and get the actual (ns,set,key) with each record */
-    POLICY_GEN_IGNORE      = AS_POLICY_GEN_IGNORE,  /* Write a record, regardless of generation */
+    POLICY_GEN_IGNORE      = AS_POLICY_KEY_GEN,     /* Write a record, regardless of generation */
     POLICY_GEN_EQ,                                  /* Write a record, ONLY if generations are equal */
-    POLICY_GEN_GT,                                  /* Write a record, ONLY if local generation is greater-than remote generation */
-    POLICY_GEN_DUP                                  /* Write a record creating a duplicate, ONLY if the generation collides (?) */
+    POLICY_GEN_GT                                   /* Write a record, ONLY if local generation is greater-than remote generation */
 };
 
 #define MAX_CONSTANT_STR_SIZE 512
@@ -107,7 +106,7 @@ enum Aerospike_values {
  *******************************************************************************************************
  */
 typedef struct Aerospike_Constants {
-    int     constantno;
+    long    constantno;
     char    constant_str[MAX_CONSTANT_STR_SIZE];
 } AerospikeConstants;
 
@@ -156,8 +155,7 @@ AerospikeConstants aerospike_constants[] = {
     { POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
     { POLICY_GEN_IGNORE                 ,   "POLICY_GEN_IGNORE"                 },
     { POLICY_GEN_EQ                     ,   "POLICY_GEN_EQ"                     },
-    { POLICY_GEN_GT                     ,   "POLICY_GEN_GT"                     },
-    { POLICY_GEN_DUP                    ,   "POLICY_GEN_DUP"                    }
+    { POLICY_GEN_GT                     ,   "POLICY_GEN_GT"                     }
 };
 /*
  *******************************************************************************************************

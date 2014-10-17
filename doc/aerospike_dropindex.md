@@ -39,10 +39,10 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->dropIndex("test", "user_email_idx");
-if ($res == Aerospike::OK) {
+$status = $db->dropIndex("test", "user_email_idx");
+if ($status == Aerospike::OK) {
     echo "Index user_email_idx was dropped from namespace 'test'\n";
-else if ($res == Aerospike::ERR_INDEX_NOT_FOUND) {
+else if ($status == Aerospike::ERR_INDEX_NOT_FOUND) {
     echo "No such index exists.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

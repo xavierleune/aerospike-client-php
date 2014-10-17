@@ -80,10 +80,10 @@ if (!$db->isConnected()) {
 // Adds offset to the value in bin 'a', multiplies the value in bin 'b' by offset and
 // Updates value in bin 'c' with the sum of updated values in bins 'a' and 'b'.
 
-$res = $db->scanApply("test", "users", "my_udf", "mytransform", array(20), $scan_id);
-if ($res == Aerospike::OK) {
+$status = $db->scanApply("test", "users", "my_udf", "mytransform", array(20), $scan_id);
+if ($status == Aerospike::OK) {
     var_dump("scan ID is $scan_id");
-} else if ($res == Aerospike::ERR_SCAN) {
+} else if ($status == Aerospike::ERR_SCAN) {
     echo "An error occured while initiating the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();
 } else {
     echo "An error occured while running the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();

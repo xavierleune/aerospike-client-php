@@ -1,15 +1,14 @@
 --TEST--
-createIndex - correct arguments for integer index
+InfoMany - Negative with incorrect host name
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("Index", "testCreateIndexIntegerBinPositive");
+aerospike_phpt_skipif("InfoMany", "testInfoManyNegativeIncorrectHostName");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Index", "testCreateIndexIntegerBinPositive");
+aerospike_phpt_runtest("InfoMany", "testInfoManyNegativeIncorrectHostName");
 --EXPECT--
 OK
-

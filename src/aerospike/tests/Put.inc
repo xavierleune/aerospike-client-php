@@ -2615,69 +2615,6 @@ class Put extends AerospikeTestCommon
  }
 /**
   * @test  
-  * PUT with generation policy POLICY_GEN_DUP and generation value.  
-  *
-  * @pre
-  * Connect using aerospike object to the specified node
-  *
-  * @post
-  * newly initialized Aerospike objects
-  *
-  * @remark
-  * Variants: OO (testPutGenPolicyDUPWithGenValPositive)
-  *
-  * @test_plans{1.1}
-  */
- function testPutGenPolicyDUPWithGenValPositive($dummydb, $dummykey) 
- {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         $db->close();
-         return ($db->errorno());
-     }
-
-     $key = $db->initKey("test", "demo", "key_gen_dup_with_gen_val");
-     $put_status = $db->put($key, array("bin1"=>50));
-     if ($put_status != AEROSPIKE::OK) {
-          return ($db->errorno());
-     }
-     $exists_status = $db->exists($key, $metadata);
-     if ($exists_status != AEROSPIKE::OK) {
-         $db->close();
-         return($exists_status);
-     }
-     $gen_value = $metadata["generation"] + 1;
-     $put_record =  array("bin1"=>100);
-     $put_status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_DUP,
-         $gen_value)));
-     if ($put_status != AEROSPIKE::OK) {
-         $db->close();
-         return($put_status);
-     }
-     $status = $db->get($key, $get_record);
-     if ($status != AEROSPIKE::OK) {
-         return($status);
-     }
-     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
-         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return AEROSPIKE::ERR;
-             }
-         }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     $db->close();
-     return ($status);
- }
-
-/**
-  * @test  
   * PUT with generation policy POLICY_GEN_IGNORE and no generation value.  
   *
   * @pre
@@ -2798,61 +2735,6 @@ class Put extends AerospikeTestCommon
  }
 /**
   * @test  
-  * PUT with generation policy POLICY_GEN_DUP and no generation value.  
-  *
-  * @pre
-  * Connect using aerospike object to the specified node
-  *
-  * @post
-  * newly initialized Aerospike objects
-  *
-  * @remark
-  * Variants: OO (testPutGenPolicyDUPPositive)
-  *
-  * @test_plans{1.1}
-  */
- function testPutGenPolicyDUPPositive($dummydb, $dummykey) 
- {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         $db->close();
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "key_gen_dup");
-     $put_record = array("bin1"=>5);
-     $put_status = $db->put($key, $put_record);
-     if ($put_status != AEROSPIKE::OK) {
-          return ($db->errorno());
-     }
-     $put_status = $db->put($key, array("bin1"=>10), NULL,
-         array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_DUP)));
-     if ($put_status != AEROSPIKE::OK) {
-         $db->close();
-         return($put_status);
-     }
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
-     }
-     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
-         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
-         strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return AEROSPIKE::ERR;
-             }
-         }
-
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     $db->close();
-     return ($status);
- }
-/**
-  * @test  
   * PUT with initkey digest and option is POLICY_KEY_DIGEST.  
   *
   * @pre
@@ -2905,7 +2787,7 @@ class Put extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- /*function testPutInitKeyWithDigestAndOptionKeySendPositive($dummydb, $dummykey) {
+ function testPutInitKeyWithDigestAndOptionKeySendPositive($dummydb, $dummykey) {
      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
      $db = new Aerospike($config);
      if(!$db->isConnected())
@@ -2913,6 +2795,7 @@ class Put extends AerospikeTestCommon
          $db->close();
          return ($db->errorno());
      }
+     return (Aerospike::ERR);
      $key = $db->initKey("test", "demo", base64_decode("policy_key_send"), true);
      $put_status = $db->put($key, array("bin1"=>10), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
@@ -2924,7 +2807,7 @@ class Put extends AerospikeTestCommon
          Aerospike::POLICY_RETRY_NONE));
      $db->close();
      return ($status);
- }*/
+ }
 /**
   * @test  
   * PUT Map of floats, Float as a key.  

@@ -40,10 +40,10 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
-if ($res == Aerospike::OK) {
+$status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
+if ($status == Aerospike::OK) {
     echo "Record removed.\n";
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

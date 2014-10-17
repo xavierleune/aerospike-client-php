@@ -44,8 +44,8 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->prepend($key, 'name', '*');
-if ($res == Aerospike::OK) {
+$status = $db->prepend($key, 'name', '*');
+if ($status == Aerospike::OK) {
     echo "Starred the user.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

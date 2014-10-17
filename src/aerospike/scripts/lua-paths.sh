@@ -18,7 +18,7 @@
 LUA_SYSPATH_PREFIX=$1
 AEROSPIKE_C_CLIENT=$2
 if [ ! $LUA_SYSPATH_PREFIX ] || [ ! $AEROSPIKE_C_CLIENT ]; then
-    printf "Usage:\nlua-paths.sh /opt/appcelerator 3.0.80\n"
+    printf "Usage:\nlua-paths.sh /opt/appcelerator 3.0.84\n"
     exit 1
 fi
 

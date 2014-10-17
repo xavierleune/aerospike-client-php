@@ -47,8 +47,8 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->increment($key, 'pto', -4);
-if ($res == Aerospike::OK) {
+$status = $db->increment($key, 'pto', -4);
+if ($status == Aerospike::OK) {
     echo "Decremented four vacation days from the user's PTO balance.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

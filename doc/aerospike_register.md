@@ -44,8 +44,8 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->register('/path/to/my_udf.lua', 'my_udf');
-if ($res == Aerospike::OK) {
+$status = $db->register('/path/to/my_udf.lua', 'my_udf');
+if ($status == Aerospike::OK) {
     echo "UDF module at $path is registered as my_udf on the Aerospike DB.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

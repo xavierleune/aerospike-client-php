@@ -51,8 +51,8 @@ $key1 = $db->initKey("test", "users", 1234);
 $key2 = $db->initKey("test", "users", 1235); // this key does noot exist
 $key2 = $db->initKey("test", "users", 1236);
 $keys = array($key1, $key2, $key3);
-$res = $db->getMany($keys, $records);
-if ($res == Aerospike::OK) {
+$status = $db->getMany($keys, $records);
+if ($status == Aerospike::OK) {
     var_dump($records);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -98,8 +98,8 @@ array(3) {
 // Getting a filtered record
 $filter = array("email", "manager");
 unset($record);
-$res = $db->getMany($keys, $records, $filter);
-if ($res == Aerospike::OK) {
+$status = $db->getMany($keys, $records, $filter);
+if ($status == Aerospike::OK) {
     var_dump($record);
 } else {
     echo "[{$db->errorno()}] ".$db->error();

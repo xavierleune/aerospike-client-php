@@ -79,14 +79,14 @@ if (!$db->isConnected()) {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => "1234");
-$res = $db->apply($key, 'my_udf', 'startswith', array('email', 'hey@'), $returned);
-if ($res == Aerospike::OK) {
+$status = $db->apply($key, 'my_udf', 'startswith', array('email', 'hey@'), $returned);
+if ($status == Aerospike::OK) {
     if ($returned) {
         echo "The email of the user with key {$key['key']} starts with 'hey@'.\n";
     } else {
         echo "The email of the user with key {$key['key']} does not start with 'hey@'.\n";
     }
-} elseif ($res == Aerospike::ERR_UDF_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_UDF_NOT_FOUND) {
     echo "The UDF module my_udf.lua was not registered with the Aerospike DB.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

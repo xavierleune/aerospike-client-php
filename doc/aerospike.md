@@ -159,7 +159,6 @@ class Aerospike
     public boolean isConnected ( void )
     public void close ( void )
     public void reconnect ( void )
-    public int getNodes ( array &$metadata [, array $options ] )
 
     // error handling methods
     public string error ( void )
@@ -207,6 +206,11 @@ class Aerospike
     // admin methods
     public int createIndex ( string $ns, string $set, string $bin, int $type, string $name [, array $options ] )
     public int dropIndex ( string $ns, string $name [, array $options ] )
+
+    // info methods
+    public int info ( string $request, string &$response [, array $host [, array options ] ] )
+    public array infoMany ( string $request [, array $config [, array options ]] )
+    public array getNodes ( void )
 }
 ```
 
@@ -218,4 +222,5 @@ class Aerospike
 ### [User Defined Methods](apiref_udf.md)
 ### [Admin Methods](apiref_admin.md) \[to be implemented\]
 ### [Large Data Type Methods](aerospike_ldt.md)
+### [Info Methods](apiref_info.md)
 

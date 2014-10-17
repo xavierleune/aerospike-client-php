@@ -137,7 +137,7 @@ else
     LDFLAGS="$LDFLAGS $LIBCRYPTO -lrt"
 fi
 
-make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=$LDFLAGS"
+make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include -I$CLIENTREPO_3X/include/ck" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
     exit 2
@@ -169,7 +169,7 @@ config()
         code "aerospike.udf.lua_system_path=/opt/aerospike/client-php/sys-lua"
         if [ -d /opt/aerospike/client-php/usr-lua ]; then
             if [ -d ./tests/lua ]; then
-                cp ./tests/lua/* /opt/aerospike/client-php/usr-lua/
+                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
             fi
             code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
         fi
@@ -177,7 +177,7 @@ config()
         code "aerospike.udf.lua_system_path=/usr/local/aerospike/client-php/sys-lua"
         if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
             if [ -d ./tests/lua ]; then
-                cp ./tests/lua/* /usr/local/aerospike/client-php/usr-lua/
+                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
             fi
             code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
         fi
