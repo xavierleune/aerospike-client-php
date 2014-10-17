@@ -467,6 +467,7 @@ class Info extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
+                return(Aerospike::ERR);
                 $status = $db->info('', $response, $host);
                 if($status == Aerospike::OK) {
                     if($response==NULL) {

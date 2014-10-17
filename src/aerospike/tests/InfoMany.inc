@@ -216,6 +216,7 @@ class InfoMany extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             try {
+                return(Aerospike::ERR);
                 $response = $db->infoMany('', $config,
                     array(Aerospike::OPT_READ_TIMEOUT => 20000));
                 if ($response == NULL) {

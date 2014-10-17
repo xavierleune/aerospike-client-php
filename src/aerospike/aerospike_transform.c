@@ -2396,7 +2396,7 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
                     Z_STRVAL_PP(value_pp));
         } else {
             strncpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
-                    Z_STRVAL_PP(value_pp), strlen(Z_STRVAL_PP(value_pp)));
+                    Z_STRVAL_PP(value_pp), strlen(Z_STRVAL_PP(value_pp)) + 1);
         }
     } else if (PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT,
@@ -2404,7 +2404,8 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
         if (set_as_config) {
             AS_CONFIG_ITER_MAP_SET_PORT(addrport_transform_iter_map_p, Z_LVAL_PP(value_pp));
         } else {
-            snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p,
+            snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p +
+                    strlen(addrport_transform_iter_map_p->transform_result.ip_port_p),
                     IP_PORT_MAX_LEN, ":%d", Z_LVAL_PP(value_pp));
         }
     } else if (PHP_IS_STRING(key_data_type_u32) &&
@@ -2418,7 +2419,8 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
         if (set_as_config) {
             AS_CONFIG_ITER_MAP_SET_PORT(addrport_transform_iter_map_p, port);
         } else {
-            snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p,
+            snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p +
+                    strlen(addrport_transform_iter_map_p->transform_result.ip_port_p),
                     IP_PORT_MAX_LEN, ":%s", Z_STRVAL_PP(value_pp));
         }
     } else {
@@ -2454,10 +2456,10 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
     zend_rsrc_list_entry new_le;
     as_status                               status = AEROSPIKE_OK;
     zval**                                  addrport_data_pp = NULL;
-    char*                                   ip_port = malloc(IP_PORT_MAX_LEN);
+    char                                    ip_port[IP_PORT_MAX_LEN];
     addrport_transform_iter_map_t           addrport_transform_iter_map_p;
     bool                                    set_as_config = false;
-
+    
     if (PHP_IS_NOT_ARRAY(key_data_type_u32) || (!data_p) || (!retdata_pp)) {
         status = AEROSPIKE_ERR;
         goto exit;
@@ -2514,7 +2516,6 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
     ((config_transform_iter_map_t *) data_p)->iter_count_u32++;
 
 exit:
-    free(ip_port);
     return status;
 }
 
@@ -3155,11 +3156,11 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
 exit:
     if (AEROSPIKE_OK != status) {
         if (key_container_p) {
-            zval_dtor(key_container_p);
+            zval_ptr_dtor(&key_container_p);
         }
 
         if (metadata_container_p) {
-            zval_dtor(metadata_container_p);
+            zval_ptr_dtor(&metadata_container_p);
         }
     }
 
@@ -3236,7 +3237,8 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         status = AEROSPIKE_ERR;
         goto exit;
     }
-    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p)) {
+
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p))    {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
         status = AEROSPIKE_ERR;
         goto exit;

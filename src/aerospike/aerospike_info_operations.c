@@ -118,11 +118,11 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
     zval*                       response_service_p = NULL;
     char*                       tok = NULL;
     char*                       saved = NULL;
-    zval*                       current_host_p[MAX_HOST_COUNT];
+    zval*                       current_host_p[MAX_HOST_COUNT] = {0};
     uint32_t                    host_index = 0;
+    uint32_t                    host_index_iter = 0;
     bool                        iter_first = true;
     bool                        break_flag = false;
-
 
     MAKE_STD_ZVAL(response_services_p);
     MAKE_STD_ZVAL(response_service_p);
@@ -141,14 +141,17 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
         goto exit;
     }
 
-    for (host_index = 0; host_index < MAX_HOST_COUNT; host_index++) {
-        current_host_p[host_index] = NULL;
-    }
-
     host_index = 0;
 
     MAKE_STD_ZVAL(current_host_p[host_index]);
     array_init(current_host_p[host_index]);
+
+    if (0 != add_next_index_zval(return_p, current_host_p[host_index])) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Unable to get addr-port");
+        DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
+        goto exit;
+    }
 
     tok = strtok_r(Z_STRVAL_P(response_service_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
     if (tok == NULL) {
@@ -188,27 +191,23 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
         goto exit;
     }
 
-    if (0 != add_next_index_zval(return_p, current_host_p[host_index])) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                "Unable to get addr-port");
-        DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
-        goto exit;
-    }
-
     host_index++;
     tok = strtok_r(Z_STRVAL_P(response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
 
     while (tok != NULL) {
         tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
         if (tok == NULL) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                    "Unable to get addr");
-            DEBUG_PHP_EXT_DEBUG("Unable to get addr");
             goto exit;
         }
 
         MAKE_STD_ZVAL(current_host_p[host_index]);
         array_init(current_host_p[host_index]);
+        if (0 != add_next_index_zval(return_p, current_host_p[host_index])) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to get addr-port");
+            DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
+            goto exit;
+        }
 
         if (0 != add_assoc_stringl(current_host_p[host_index], "addr", tok, strlen(tok), 1)) {
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
@@ -237,12 +236,6 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
             goto exit;
         }
 
-        if (0 != add_next_index_zval(return_p, current_host_p[host_index])) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                    "Unable to get addr-port");
-            DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
-            goto exit;
-        }
         host_index++;
 
         if (break_flag == true) {
@@ -256,13 +249,6 @@ exit:
     }
     if (response_service_p) {
         zval_ptr_dtor(&response_service_p);
-    }
-    if (error_p->code != AEROSPIKE_OK) {
-        for (host_index = 0; host_index < MAX_HOST_COUNT; host_index++) {
-            if (current_host_p[host_index]) {
-                zval_ptr_dtor(&current_host_p[host_index]);
-            }
-        }
     }
     return error_p->code;
 }
@@ -343,8 +329,11 @@ aerospike_info_callback(const as_error* err, const as_node* node,
     foreach_callback_info_udata*        udata_ptr = (foreach_callback_info_udata *) udata;
     struct sockaddr_in*                 addr = NULL;
 
-    if (node && response) {
+    if (!response) {
+        goto exit;
+    }
 
+    if (node && response) {
         if (udata_ptr->host_lookup_p) {
             addr = as_node_get_address((as_node *)node);
             char ip_port[IP_PORT_MAX_LEN];

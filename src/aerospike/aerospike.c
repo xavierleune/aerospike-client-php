@@ -849,13 +849,13 @@ PHP_METHOD(Aerospike, getNodes)
     }
 
 exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     if (AEROSPIKE_OK != status) {
         zval_dtor(return_value);
         INIT_ZVAL(*return_value);
         RETURN_NULL();
     }
-    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
 }
 
 /*
