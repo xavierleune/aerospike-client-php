@@ -89,8 +89,8 @@ $operations = array(
   array("op" => Aerospike::OPERATOR_READ, "bin" => "age"),
   array("op" => Aerospike::OPERATOR_TOUCH)
 );
-$res = $db->operate($key, $operations, $returned);
-if ($res == Aerospike::OK) {
+$status = $db->operate($key, $operations, $returned);
+if ($status == Aerospike::OK) {
     var_dump($returned);
 } else {
     echo "[{$db->errorno()}] ".$db->error();

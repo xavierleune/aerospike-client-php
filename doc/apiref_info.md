@@ -13,6 +13,6 @@ public int Aerospike::info ( string $request, string &$response [, array $host ]
 
 ### [Aerospike::infoMany](aerospike_infomany.md)
 ```
-public array Aerospike::info ( string $request [, array $config ] )
+public array Aerospike::infoMany ( string $request [, array $config ] )
 ```
 

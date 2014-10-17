@@ -46,10 +46,10 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->exists($key, $metadata);
-if ($res == Aerospike::OK) {
+$status = $db->exists($key, $metadata);
+if ($status == Aerospike::OK) {
     var_dump($metadata);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

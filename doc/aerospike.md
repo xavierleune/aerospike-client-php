@@ -202,9 +202,9 @@ class Aerospike
     public int dropIndex ( string $ns, string $name )
 
     // info methods
-    public int Aerospike::info ( string $request, string &$response [, array $host [, array options ] ] )
-    public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
-    public array Aerospike::getNodes ( void )
+    public int info ( string $request, string &$response [, array $host [, array options ] ] )
+    public array infoMany ( string $request [, array $config [, array options ]] )
+    public array getNodes ( void )
 }
 ```
 

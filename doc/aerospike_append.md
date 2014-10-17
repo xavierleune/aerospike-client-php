@@ -43,8 +43,8 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->append($key, 'name', ' Ph.D.');
-if ($res == Aerospike::OK) {
+$status = $db->append($key, 'name', ' Ph.D.');
+if ($status == Aerospike::OK) {
     echo "Added the Ph.D. suffix to the user.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

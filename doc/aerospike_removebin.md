@@ -42,10 +42,10 @@ if (!$db->isConnected()) {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
-$res = $db->removeBin($key, array("age"));
-if ($res == Aerospike::OK) {
+$status = $db->removeBin($key, array("age"));
+if ($status == Aerospike::OK) {
     echo "Removed bin 'age' from the record.\n";
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "The database has no record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

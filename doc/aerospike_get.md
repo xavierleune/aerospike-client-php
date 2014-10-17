@@ -59,10 +59,10 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->get($key, $record);
-if ($res == Aerospike::OK) {
+$status = $db->get($key, $record);
+if ($status == Aerospike::OK) {
     var_dump($record);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -115,8 +115,8 @@ array(3) {
 // Getting a filtered record
 $filter = array("email", "manager");
 unset($record);
-$res = $db->get($key, $record, $filter);
-if ($res == Aerospike::OK) {
+$status = $db->get($key, $record, $filter);
+if ($status == Aerospike::OK) {
     var_dump($record);
 } else {
     echo "[{$db->errorno()}] ".$db->error();

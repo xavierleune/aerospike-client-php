@@ -43,8 +43,8 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->getNodes($node_metadata);
-if ($res == Aerospike::OK) {
+$status = $db->getNodes($node_metadata);
+if ($status == Aerospike::OK) {
     var_dump($node_metadata);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
