@@ -11,4 +11,4 @@ aerospike_phpt_skipif("InfoMany", "testInfoManyNegativeIncorrectCommand");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("InfoMany", "testInfoManyNegativeIncorrectCommand");
 --EXPECT--
-ERR_QUERY_ABORTED
+OK
