@@ -2453,7 +2453,6 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
                                              int8_t* key_p, u_int32_t key_len_u32,
                                              void* data_p, zval** retdata_pp)
 {
-    zend_rsrc_list_entry new_le;
     as_status                               status = AEROSPIKE_OK;
     zval**                                  addrport_data_pp = NULL;
     char                                    ip_port[IP_PORT_MAX_LEN];
@@ -2496,17 +2495,10 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
     
     if (!set_as_config) {
         zval **tmp;
-        new_le.ptr = ip_port;
-        if (SUCCESS == zend_hash_find(Z_ARRVAL_P((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p),
+        if (FAILURE == zend_hash_find((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
                     ip_port, strlen(ip_port), (void**)&tmp)) {
-            if (0 != zend_hash_update(Z_ARRVAL_P((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p),
-                        ip_port, strlen(ip_port), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL)) {
-                status = AEROSPIKE_ERR;
-                goto exit;
-            } 
-        } else {
-            if (0 != zend_hash_add(Z_ARRVAL_P((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p),
-                        ip_port, strlen(ip_port), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL)) {
+            if (0 != zend_hash_add((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
+                        ip_port, strlen(ip_port), (void *) ip_port, strlen(ip_port), NULL)) {
                 status = AEROSPIKE_ERR;
                 goto exit;
             }

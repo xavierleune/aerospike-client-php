@@ -172,7 +172,7 @@ typedef struct foreach_callback_udata_t {
  */
 typedef struct foreach_callback_info_udata_t {
     zval        *udata_p;
-    zval        *host_lookup_p;
+    HashTable   *host_lookup_p;
 } foreach_callback_info_udata;
 
 /*
@@ -217,7 +217,7 @@ typedef struct _userland_callback {
     Aerospike_object *obj;
 } userland_callback;
 
-/* 
+/*
  *******************************************************************************************************
  * Decision Structure for as_config/zval to be populated by
  * aerospike_transform_check_and_set_config method.
@@ -228,7 +228,7 @@ enum config_transform_result_type {
     TRANSFORM_INTO_ZVAL         = 1
 };
 
-/* 
+/*
  *******************************************************************************************************
  * Union for transform result iterator.
  * Holds either as_config or a zval.
@@ -236,10 +236,10 @@ enum config_transform_result_type {
  */
 typedef union _transform_result {
     as_config* as_config_p;
-    zval*      host_lookup_p;
+    HashTable* host_lookup_p;
 } transform_result_t;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure for PHP config array to transformed value and its type.
  * Possible transformed values are as_config or zval.

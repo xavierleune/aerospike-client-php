@@ -853,7 +853,6 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     if (AEROSPIKE_OK != status) {
         zval_dtor(return_value);
-        INIT_ZVAL(*return_value);
         RETURN_NULL();
     }
 }
@@ -986,7 +985,6 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     if (AEROSPIKE_OK != status) {
         zval_dtor(return_value);
-        INIT_ZVAL(*return_value);
         RETURN_NULL();
     }
 }
@@ -1608,8 +1606,7 @@ PHP_METHOD(Aerospike, initKey)
 
     if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, is_digest, return_value, NULL)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
-        zval_dtor(return_value);
-        INIT_ZVAL(*return_value);
+        zval_dtor(return_value); 
         RETURN_NULL();
     }
 }
@@ -1803,7 +1800,6 @@ PHP_METHOD(Aerospike, predicateEquals)
         case IS_STRING:
             if (strlen(Z_STRVAL_P(val_p)) == 0) {
                 zval_dtor(return_value);
-                INIT_ZVAL(*return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
@@ -1811,7 +1807,6 @@ PHP_METHOD(Aerospike, predicateEquals)
             break;
         default:
             zval_dtor(return_value);
-            INIT_ZVAL(*return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
             RETURN_NULL();
     }

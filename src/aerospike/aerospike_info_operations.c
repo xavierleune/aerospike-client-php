@@ -342,7 +342,7 @@ aerospike_info_callback(const as_error* err, const as_node* node,
                     ntohs(addr->sin_port));
 
             zval **tmp;
-            if (SUCCESS == zend_hash_find(Z_ARRVAL_P(udata_ptr->host_lookup_p), ip_port,
+            if (SUCCESS == zend_hash_find(udata_ptr->host_lookup_p, ip_port,
                     strlen(ip_port), (void**)&tmp)) {
                 if (0 != add_assoc_stringl(udata_ptr->udata_p, node->name,
                             response, strlen(response), 1)) {
@@ -362,6 +362,13 @@ aerospike_info_callback(const as_error* err, const as_node* node,
     }
 exit:
     return true;
+}
+
+static void my_hashtable_dtor(void *p) {
+    /*
+     * Custom dtor for hashtable
+     */
+    return;
 }
 
 /*
@@ -386,7 +393,7 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
 {
     foreach_callback_info_udata     info_callback_udata;
     as_policy_info                  info_policy;
-    zval*                           host_lookup_p = NULL;
+    HashTable*                      host_lookup_p = NULL;
 
     if ((!request_str_p)) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
@@ -404,17 +411,22 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
     }
 
     if (config_p) {
-        MAKE_STD_ZVAL(host_lookup_p);
-        array_init(host_lookup_p);
+        if (NULL == (host_lookup_p = emalloc(sizeof(HashTable)))) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Unable to allocate memory for host lookup");
+            DEBUG_PHP_EXT_DEBUG("Unable to allocate memory for host lookup");
+            goto exit;
+        }
+        zend_hash_init(host_lookup_p, MAX_HOST_COUNT, NULL, &my_hashtable_dtor, 0);
 
         transform_zval_config_into transform_zval_config_into_zval;
         transform_zval_config_into_zval.transform_result.host_lookup_p = host_lookup_p;
         transform_zval_config_into_zval.transform_result_type = TRANSFORM_INTO_ZVAL;
 
         if (AEROSPIKE_OK !=
-                (error_p->code = aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
-                                                                          NULL,
-                                                                          &transform_zval_config_into_zval))) {
+                (error_p->code =
+                 aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
+                     NULL, &transform_zval_config_into_zval))) {
             DEBUG_PHP_EXT_DEBUG("Unable to create host lookup");
             goto exit;
         }
@@ -430,9 +442,12 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         DEBUG_PHP_EXT_DEBUG(error_p->message);
         goto exit;
     }
+
 exit:
-    if (config_p && host_lookup_p) {
-        zval_ptr_dtor(&host_lookup_p);
+    if (host_lookup_p) {
+        zend_hash_clean(host_lookup_p);
+        zend_hash_destroy(host_lookup_p);
+        efree(host_lookup_p);
     }
     return error_p->code;
 }
