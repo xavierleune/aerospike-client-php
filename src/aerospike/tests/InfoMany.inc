@@ -155,7 +155,7 @@ class InfoMany extends AerospikeTestCommon
             try {
                 $response = $db->infoMany('bins/test', $config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
                 if ($response == NULL)
-                    return ($db->errorno); 
+                    return ($db->errorno());
                 else
                     return (Aerospike::OK);
             } catch (ErrorException $e) {

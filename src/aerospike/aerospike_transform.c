@@ -2139,8 +2139,8 @@ do {                                                                            
 } while(0)    
 
 #define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val)  map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port = val
-#define AS_CONFIG_SET_USER(as_config_p, val)     strcpy(as_config_p->user, val)
-#define AS_CONFIG_SET_PASSWORD(as_config_p, val) strcpy(as_config_p->password, val)
+#define AS_CONFIG_SET_USER(as_config_p, val)     strncpy(as_config_p->user, val, strlen(val))
+#define AS_CONFIG_SET_PASSWORD(as_config_p, val) strncpy(as_config_p->password, val, strlen(val))
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port)
 
@@ -2394,7 +2394,8 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
             AS_CONFIG_ITER_MAP_SET_ADDR(addrport_transform_iter_map_p,
                     Z_STRVAL_PP(value_pp));
         } else {
-            strcpy(addrport_transform_iter_map_p->transform_result.ip_port_p, Z_STRVAL_PP(value_pp));
+            strncpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
+                    Z_STRVAL_PP(value_pp), strlen(Z_STRVAL_PP(value_pp)));
         }
     } else if (PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT,
@@ -2402,10 +2403,8 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
         if (set_as_config) {
             AS_CONFIG_ITER_MAP_SET_PORT(addrport_transform_iter_map_p, Z_LVAL_PP(value_pp));
         } else {
-            strcat(addrport_transform_iter_map_p->transform_result.ip_port_p, ":");
-            char port_temp[INET_PORT];
-            sprintf(port_temp, "%d", Z_LVAL_PP(value_pp));
-            strcat(addrport_transform_iter_map_p->transform_result.ip_port_p, port_temp);
+            snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p,
+                    IP_PORT_MAX_LEN, ":%d", Z_LVAL_PP(value_pp));
         }
     } else if (PHP_IS_STRING(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT,
@@ -2418,8 +2417,8 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
         if (set_as_config) {
             AS_CONFIG_ITER_MAP_SET_PORT(addrport_transform_iter_map_p, port);
         } else {
-            strcat(addrport_transform_iter_map_p->transform_result.ip_port_p, ":");
-            strcat(addrport_transform_iter_map_p->transform_result.ip_port_p, Z_STRVAL_PP(value_pp));
+            snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p,
+                    IP_PORT_MAX_LEN, ":%s", Z_STRVAL_PP(value_pp));
         }
     } else {
         status = AEROSPIKE_ERR_PARAM;
@@ -2451,7 +2450,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
                                              int8_t* key_p, u_int32_t key_len_u32,
                                              void* data_p, zval** retdata_pp)
 {
-    zend_rsrc_list_entry *le, new_le;
+    zend_rsrc_list_entry new_le;
     as_status                               status = AEROSPIKE_OK;
     zval**                                  addrport_data_pp = NULL;
     char*                                   ip_port = malloc(IP_PORT_MAX_LEN);

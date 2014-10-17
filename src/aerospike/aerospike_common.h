@@ -97,7 +97,8 @@
 #define INET_ADDRSTRLEN 16
 #define INET6_ADDRSTRLEN 46
 #define INET_PORT 5
-#define IP_PORT_MAX_LEN INET6_ADDRSTRLEN + INET_PORT + 1
+#define IP_PORT_SEPARATOR_LEN 1
+#define IP_PORT_MAX_LEN INET6_ADDRSTRLEN + INET_PORT + IP_PORT_SEPARATOR_LEN
 /*
  *******************************************************************************************************
  * Static pool maintained to avoid runtime mallocs.
