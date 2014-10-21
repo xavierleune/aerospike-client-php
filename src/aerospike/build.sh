@@ -168,18 +168,20 @@ config()
     if [ -f /opt/aerospike/client-php/sys-lua/aerospike.lua ]; then
         code "aerospike.udf.lua_system_path=/opt/aerospike/client-php/sys-lua"
         if [ -d /opt/aerospike/client-php/usr-lua ]; then
-            if [ -d ./tests/lua ]; then
-                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
-            fi
             code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
+            if [ ! -f /opt/aerospike/client-php/usr-lua/test_transform.lua ]; then
+                echo "Failed to copy the Lua user files.  Please run:"
+                code "sudo cp tests/lua/*.lua /opt/aerospike/client-php/usr-lua/"
+            fi
         fi
     elif [ -f /usr/local/aerospike/client-php/sys-lua/aerospike.lua ]; then
         code "aerospike.udf.lua_system_path=/usr/local/aerospike/client-php/sys-lua"
         if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
-            if [ -d ./tests/lua ]; then
-                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
-            fi
             code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
+            if [ ! -f /usr/local/aerospike/client-php/usr-lua/test_transform.lua ]; then
+                echo "Failed to copy the Lua user files.  Please run:"
+                code "sudo cp tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/"
+            fi
         fi
     fi
     headline "Verify the Extension"
