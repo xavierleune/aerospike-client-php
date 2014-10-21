@@ -578,7 +578,7 @@ aerospike_info_specific_host(aerospike* as_object_p, as_error* error_p,
 extern as_status
 aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         as_error* error_p, char* request_str_p, zval* config_p,
-        zval* return_value_p, zval* options_p);
+        zval* return_value_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_info_get_cluster_nodes(aerospike* as_object_p,

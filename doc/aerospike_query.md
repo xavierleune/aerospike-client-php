@@ -49,6 +49,28 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## Examples
 
+### Buffer the records returned from the query
+
+```php
+<?php
+
+$result = array();
+$where = Aerospike::predicateBetween("age", 30, 39);
+$status = $db->query("test", "users", $where, function ($record) use (&$results) {
+    $result[] = $record['bins'];
+});
+if ($status !== Aerospike::OK) {
+    echo "An error occured while querying[{$db->errorno()}] {$db->error()}\n";
+} else {
+    echo "The query returned ".count($result)." records\n";
+}
+
+?>
+```
+
+
+### Using the external scope
+
 ```php
 <?php
 
@@ -62,7 +84,7 @@ if (!$db->isConnected()) {
 $total = 0;
 $in_thirties = 0;
 $where = Aerospike::predicateBetween("age", 30, 39);
-$status = $db->query("test", "users", $where, function ($record) {
+$status = $db->query("test", "users", $where, function ($record) use (&$total, &$in_thirties) {
     echo "{$record['bins']['email']} age {$record['bins']['age']}\n";
     $total += (int) $record['bins']['age'];
     $in_thirties++;

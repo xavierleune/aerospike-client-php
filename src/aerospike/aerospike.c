@@ -120,11 +120,9 @@ static void tmp(void *p) {
 static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     DEBUG_PHP_EXT_DEBUG("In ctor");
-   // pthread_mutex_init(&AEROSPIKE_G(aerospike_mutex), NULL);
     pthread_rwlock_init(&AEROSPIKE_G(aerospike_mutex), NULL);
     if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
         AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
-        DEBUG_PHP_EXT_DEBUG("Pointer is at: (%.4x)",AEROSPIKE_G(persistent_list_g));
         zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &tmp, 1);
         AEROSPIKE_G(persistent_ref_count) = 1;
     } else {
@@ -3137,7 +3135,7 @@ PHP_METHOD(Aerospike, setLogHandler)
         RETURN_FALSE;
     }
 
-    if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, &aerospike_helper_log_callback)) {
+    if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, (as_log_callback)&aerospike_helper_log_callback)) {
         is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         PHP_EXT_RESET_AS_ERR_IN_CLASS();
@@ -3275,7 +3273,7 @@ PHP_MINIT_FUNCTION(aerospike)
 
     Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
 #ifdef ZTS
-    ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, aerospike_globals_dtor);
+    ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
 #else
     ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
 #endif
