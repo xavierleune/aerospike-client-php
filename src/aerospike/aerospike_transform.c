@@ -2278,7 +2278,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
                                     void* data_p, zval** value_pp)
 {
     as_status      status = AEROSPIKE_OK;
-
+    TSRMLS_FETCH();
     if (PHP_IS_ARRAY(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS,
             PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
