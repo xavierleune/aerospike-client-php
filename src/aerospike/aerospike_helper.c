@@ -192,13 +192,9 @@ do {                                                                           \
     new_le.type = val_persist;                                                 \
     if (new_flag) {                                                            \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
-                persistent_list, persistent_list->pListHead,                   \
-                persistent_list->nNumOfElements);                              \
         zend_hash_add(persistent_list, alias, alias_len,                       \
                 (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);         \
-                persistent_list, persistent_list->pListHead,                   \
-                persistent_list->nNumOfElements);                              \
-          pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
         goto exit;                                                             \
     } else {                                                                   \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
