@@ -41,6 +41,8 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## Examples
 
+### Get 20 records from a scan
+
 ```php
 <?php
 
@@ -53,14 +55,15 @@ if (!$db->isConnected()) {
 
 $options = array(Aerospike::OPT_SCAN_PRIORITY => Aerospike::SCAN_PRIORITY_MEDIUM);
 $processed = 0;
-$status = $db->scan("test", "users", function ($record) {
+$status = $db->scan("test", "users", function ($record) use (&$processed) {
     if (!is_null($record['bins']['email'])) echo $record['bins']['email']."\n";
     if ($processed++ > 19) return false; // halt the stream by returning a false
 }, array("email"), $options);
-if ($status == Aerospike::ERR_SCAN) {
-    echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";
-} else if ($status == Aerospike::ERR_SCAN_ABORTED) {
+// check the status of the last operation
+if ($status == Aerospike::ERR_SCAN_ABORTED) {
     echo "I think a sample of $processed records is enough\n";
+} else if ($status !== Aerospike::OK) {
+    echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";
 }
 
 ?>
@@ -73,6 +76,24 @@ foo@example.com
 :
 bar@example.com
 I think a sample of 20 records is enough
+```
+
+### Buffer all the records returned from the scan
+
+```php
+<?php
+
+$result = array();
+$status = $db->scan("test", "users", function ($record) use (&$results) {
+    $result[] = $record['bins'];
+});
+if ($status !== Aerospike::OK) {
+    echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";
+} else {
+    echo "The scan returned ".count($result)." records\n";
+}
+
+?>
 ```
 
 ## See Also

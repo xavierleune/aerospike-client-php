@@ -36,7 +36,7 @@ if (!$db->isConnected()) {
 $total = 0;
 $in_thirties = 0;
 $where = Aerospike::predicateBetween("age", 30, 39);
-$status = $db->query("test", "users", $where, function ($record) {
+$status = $db->query("test", "users", $where, function ($record) use (&$in_thirties, &$total) {
     echo "{$record['bins']['email']} age {$record['bins']['age']}\n";
     $total += (int) $record['bins']['age'];
     $in_thirties++;
