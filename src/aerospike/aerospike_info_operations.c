@@ -81,7 +81,7 @@ aerospike_info_specific_host(aerospike* as_object_p,
     if (AEROSPIKE_OK != aerospike_info_host(as_object_p, error_p, &info_policy,
                 (const char *) address, (uint16_t) port_no, request_str_p,
                 &response_p)) {
-            DEBUG_PHP_EXT_DEBUG(error_p->message);
+            DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;
     }
 
@@ -439,7 +439,7 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
                 &info_policy, request_str_p,
                 (aerospike_info_foreach_callback) aerospike_info_callback,
                 &info_callback_udata)) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 

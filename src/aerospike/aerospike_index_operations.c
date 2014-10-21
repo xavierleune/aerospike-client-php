@@ -52,7 +52,7 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
                     (status = aerospike_index_string_create(as_object_p, error_p,
                                                              &info_policy, ns_p,
                                                              set_p, bin_p, name_p))) {
-                DEBUG_PHP_EXT_DEBUG(error_p->message);
+                DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
                 goto exit;
             }
             break;
@@ -62,7 +62,7 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
                     (status = aerospike_index_integer_create(as_object_p, error_p,
                                                             &info_policy, ns_p,
                                                             set_p, bin_p, name_p))) {
-                DEBUG_PHP_EXT_DEBUG(error_p->message);
+                DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
                 goto exit;
             }
             break;
@@ -118,7 +118,7 @@ aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
     if (AEROSPIKE_OK !=
             (status = aerospike_index_remove(as_object_p, error_p,
                                              &info_policy, ns_p, name_p))) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 
