@@ -23,11 +23,11 @@ class ScanInfo extends AerospikeTestCommon
         $db->put($key,array("first_name"=>"bhushan", "age"=>22));
 	    $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
-        $register_status = $db->register("tests/lua/my_udf.lua", "my_udf.lua");
+        $register_status = $db->register("tests/lua/test_transform.lua", "test_transform.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $status = $db->scanApply("test", "demo", "my_udf", "mytransform", array(20), $scan_id);
+        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
         ScanInfo::$myscan_id = $scan_id;
         if ($status != Aerospike::OK) {
             return($db->errorno());
@@ -47,7 +47,7 @@ class ScanInfo extends AerospikeTestCommon
              $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                  =>Aerospike::POLICY_RETRY_NONE));
         }
-        $deregister_status = $db->deregister("my_udf.lua");
+        $deregister_status = $db->deregister("test_transform.lua");
         if ($deregister_status != Aerospike::OK) {
         return($db->errorno());
         }

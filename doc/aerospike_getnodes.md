@@ -1,5 +1,5 @@
 
-# Aerospike::getNodes \[to be implemented\]
+# Aerospike::getNodes
 
 Aerospike::getNodes - get the addresses of the cluster nodes
 

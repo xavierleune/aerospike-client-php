@@ -26,11 +26,6 @@ public void Aerospike::close ( void )
 public void Aerospike::reconnect ( void )
 ```
 
-### [Aerospike::getNodes](aerospike_getnodes.md) \[to be implemented\]
-```
-public int Aerospike::getNodes ( array &$metadata [, array $options ] )
-```
-
 ## Example
 
 ```php
@@ -41,13 +36,6 @@ $db = new Aerospike($config, false);
 if (!$db->isConnected()) {
    echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
    exit(1);
-}
-
-$status = $db->getNodes($node_metadata);
-if ($status == Aerospike::OK) {
-    var_dump($node_metadata);
-} else {
-    echo "[{$db->errorno()}] ".$db->error();
 }
 
 $db->close();
