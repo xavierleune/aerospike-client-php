@@ -57,7 +57,8 @@ batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
                     }
                     break;
                 case AS_INTEGER:
-                    if (0 != add_assoc_zval(udata_ptr->udata_p, (const char*)results[i].key->value.integer.value, record_metadata_p)) {
+                    if (FAILURE == add_index_zval(udata_ptr->udata_p, results[i].key->value.integer.value,
+                            record_metadata_p)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
                         status = AEROSPIKE_ERR;
                         goto exit;
@@ -118,9 +119,12 @@ aerospike_existsMany(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    /*
-     * Set policy info
-     */
+    set_policy_batch(&batch_policy, options_p, error_p TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
 
     as_batch_inita(&batch, zend_hash_num_elements(keys_array));
     is_batch_init = true;
