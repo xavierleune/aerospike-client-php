@@ -327,6 +327,12 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, apply, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, listRegistered, arginfo_first_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getRegistered, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    /*
+     ********************************************************************
+     * Batch Operations:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, existsMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
 #if 0 // TBD
 
     // Secondary Index APIs:
@@ -844,6 +850,76 @@ PHP_METHOD(Aerospike, add)
 
     RETURN_TRUE;
 }
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::existsMany()
+ *******************************************************************************************************
+ * Appends a string to the string value in a bin.
+ * Method prototype for PHP userland:
+ * public int Aerospike::existsMany ( array $keys, array &$metadata
+ * [, array $options] )
+ *
+ * @param $keys             An array of initialized keys, Each An array
+ *                          with keys ['ns', 'set', 'key'] or
+ *                          ['ns', 'set', 'digest'] 
+ * @param metadata          Filled by an array of metadata
+ * @param options           Optional parameter.           
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, existsMany)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    zval*                   keys_p = NULL;
+    zval*                   metadata_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "existsMany : connection not established"); 
+        DEBUG_PHP_EXT_ERROR("existsMany : connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &keys_p, &metadata_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for existsMany");
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for existsMany");
+        goto exit;
+    }
+
+    if ((PHP_TYPE_ISNOTARR(keys_p)) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for existsMany function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for existsMany function not proper");
+        goto exit;
+    }
+
+    zval_dtor(metadata_p);
+    array_init(metadata_p);
+
+    if (AEROSPIKE_OK != (status = aerospike_existsMany(aerospike_obj_p->as_ref_p->as_p,
+                    &error, keys_p, metadata_p, options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("existsMany() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
 
 /*
  *******************************************************************************************************

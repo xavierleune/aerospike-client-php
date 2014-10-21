@@ -495,4 +495,12 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* return_value_p, zval* options_p TSRMLS_DC);
+/*
+ ******************************************************************************************************
+ * Extern declarations of Batch operations.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_existsMany(aerospike* as_object_p, as_error* as_error_p,
+        zval* keys_p, zval* metadata_p, zval* options_p TSRMLS_DC);
 #endif
