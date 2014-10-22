@@ -14,7 +14,7 @@ public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key for the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
 **bins** the name of the bins to be removed from the record.
 
@@ -22,6 +22,7 @@ public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 
@@ -42,10 +43,10 @@ if (!$db->isConnected()) {
 }
 
 $key = array("ns" => "test", "set" => "users", "key" => 1234);
-$res = $db->removeBin($key, array("age"));
-if ($res == Aerospike::OK) {
+$status = $db->removeBin($key, array("age"));
+if ($status == Aerospike::OK) {
     echo "Removed bin 'age' from the record.\n";
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "The database has no record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

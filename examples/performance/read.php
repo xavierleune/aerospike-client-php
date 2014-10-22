@@ -20,14 +20,12 @@ function parse_args() {
     $shortopts  = "";
     $shortopts .= "h::";  /* Optional host */
     $shortopts .= "p::";  /* Optional port */
-    $shortopts .= "w::";  /* Optionally write every Nth operation */
-    $shortopts .= "n::";  /* Optionally number of read-write operations */
+    $shortopts .= "n::";  /* Optionally number of read operations */
 
     $longopts  = array(
         "host::",         /* Optional host */
         "port::",         /* Optional port */
-        "write-every::",    /* Optionally write every Nth operation */
-        "num-ops::",        /* Optionally number of read-write operations */
+        "num-ops::",        /* Optionally number of read operations */
         "help",           /* Usage */
     );
     $options = getopt($shortopts, $longopts);
@@ -36,15 +34,14 @@ function parse_args() {
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo "php put-get.php [-hHOST] [-pPORT] [-wWRITE EVERY Nth RECORD] [-nRECORDS]\n";
+    echo "php read.php [-hHOST] [-pPORT] [-nRECORDS]\n";
     echo " or\n";
-    echo "php put-get.php [--host=HOST] [--port=PORT] [--write-every=WRITE EVERY Nth RECORD] [--num-ops=RECORDS]\n";
+    echo "php read.php [--host=HOST] [--port=PORT] [--num-ops=RECORDS]\n";
     exit(1);
 }
 $addr = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
 $port = (isset($args["p"])) ? (integer) $args["p"] : ((isset($args["port"])) ? (string) $args["port"] : 3000);
 $total_ops = (isset($args["n"])) ? (integer) $args["n"] : ((isset($args["num-ops"])) ? (string) $args["num-ops"] : 100000);
-$write_every = (isset($args["w"])) ? (integer) $args["w"] : ((isset($args["write-every"])) ? (string) $args["write-every"] : 10);
 
 echo colorize("Connecting to the host ≻", 'black', true);
 $config = array("hosts" => array(array("addr" => $addr, "port" => $port)));
@@ -55,63 +52,31 @@ if (!$db->isConnected()) {
 }
 echo success();
 
-echo colorize("Clear out the record that may exist at test.performance with PK=1 ≻", 'black', true);
-$key = $db->initKey("test", "performance", 1);
-$res = $db->remove($key);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-
-$write_fails = 0;
-$writes = 1;
+echo colorize("Assuming that write.php was run before to create $total_ops records in test.write_perf\n", 'black', true);
+$key = $db->initKey("test", "write_perf", 0);
 $reads = 0;
 $read_fails = 0;
-$kv = array("v" => 1);
-echo colorize("Initialize the record used for the serial put/get performance test ≻", 'black', true);
 $begin = microtime(true);
-$res = $db->put($key, $kv);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo fail("Could not initialize the test bin [{$db->errorno()}]: {$db->error()}");
-    exit(2);
-}
 
-echo colorize("Run the put/get performance test ≻", 'black', true);
-for ($num_ops = 1; $num_ops < $total_ops; $num_ops++) {
-    if (($num_ops % $write_every) == 0) {
-        $kv['v']++;
-        $res = $db->put($key, $kv);
-        $writes++;
-        if ($res != Aerospike::OK) {
-            $write_fails++;
-            // roll back the test value
-            $kv['v']--;
-        }
-    } else {
-        $res = $db->get($key, $r);
-        $reads++;
-        if ($res != Aerospike::OK) {
-            $read_fails++;
-        } elseif ($r['bins']['v'] != $kv['v']) {
-            $read_fails++;
-        }
+echo colorize("Read $total_ops records ≻", 'black', true);
+for ($num_ops = 0; $num_ops < $total_ops; $num_ops++) {
+    $key['key']++;
+    $res = $db->get($key, $record);
+    $reads++;
+    if ($res != Aerospike::OK) {
+        $read_fails++;
     }
 }
 $end = microtime(true);
-if (($read_fails == 0) && ($write_fails == 0)) {
+if ($read_fails == 0) {
     echo success();
 } else {
     echo standard_fail($db);
 }
 
-echo colorize("$num_ops serial operations, $reads reads, $writes writes (every $write_every records)\n", 'green', true);
+echo colorize("$reads sequential reads\n", 'green', true);
 $color = ($read_fails > 0) ? 'red' : 'green';
 echo colorize("Failed reads: $read_fails\n", $color, true);
-$color = ($write_fails > 0) ? 'red' : 'green';
-echo colorize("Failed writes: $write_fails\n", $color, true);
 $delta = $end - $begin;
 $tps = ($num_ops / $delta);
 echo colorize("Total time: {$delta}s TPS:$tps\n", 'purple', true);

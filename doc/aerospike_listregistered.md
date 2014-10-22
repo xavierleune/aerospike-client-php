@@ -47,8 +47,8 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->listRegistered($modules);
-if ($res == Aerospike::OK) {
+$status = $db->listRegistered($modules);
+if ($status == Aerospike::OK) {
     var_dump($modules);
 } else {
     echo "[{$db->errorno()}] ".$db->error();

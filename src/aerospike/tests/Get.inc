@@ -3048,6 +3048,60 @@ class Get extends AerospikeTestCommon
          Aerospike::POLICY_RETRY_NONE));
      return ($status);
  }
+ /*
+  * This testcase will be uncommented, When aerospike csdk fault resolved.
+  */
+/**
+  * @test  
+  * Get a record from DB, initkey is done with digest and while put
+    POLICY_KEY_DIGEST is passed and for get POLICY_KEY_SEND is passed in options. 
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testGetPolicyKeySendAndPutKeyDigestNegative)
+  *
+  * @test_plans{1.1}
+  */
+ /*function testGetPolicyKeySendAndPutKeyDigestNegative($dummydb, $dummykey) {
+     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+     $db = new Aerospike($config);
+     if(!$db->isConnected())
+     {
+         return ($db->errorno());
+     }
+     $key = $db->initKey("test", "demo", base64_decode( "initkey_digest"), true);
+     $put_record = array("bin1"=>45);
+     $status = $db->put($key, $put_record,
+         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+
+     if ($status != AEROSPIKE::OK) {
+         return($db->errorno());
+     }
+
+     $status = $db->get($key, $get_record, array("bin1"),
+         array(Aerospike::OPT_READ_TIMEOUT=>2000,
+         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($status != AEROSPIKE::OK) {
+         return($status);
+     }
+     if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
+         strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+         strcmp($get_record["key"]["key"], $key["key"]) == 0) {
+             $comp_res = array_diff_assoc_recursive($put_record,
+                 $get_record["bins"]);
+             if(!empty($comp_res)) {
+                 return self::$status_get_record_fail;
+             }
+         }
+     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
+         Aerospike::POLICY_RETRY_NONE));
+     return ($status);
+ }*/
 /**
   * @test  
   * PUT Map of objects, Object as a key.  

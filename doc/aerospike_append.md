@@ -13,7 +13,7 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 
 ## Parameters
 
-**key** the key under which the bin can be found. An associative array with keys 'ns','set','key'.
+**key** the key under which the record can be found. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
 **bin** the name of the bin in which we have a numeric value.
 
@@ -23,6 +23,7 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 
@@ -43,8 +44,8 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->append($key, 'name', ' Ph.D.');
-if ($res == Aerospike::OK) {
+$status = $db->append($key, 'name', ' Ph.D.');
+if ($status == Aerospike::OK) {
     echo "Added the Ph.D. suffix to the user.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

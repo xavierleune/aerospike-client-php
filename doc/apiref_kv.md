@@ -93,10 +93,10 @@ if (!$db->isConnected()) {
 $key = $db->initKey("test", "users", 1234);
 $bins = array("email" => "hey@example.com", "name" => "Hey There");
 // attempt to 'CREATE' a new record at the specified key
-$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
-if ($res == Aerospike::OK) {
+$status = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
+if ($status == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
+} elseif ($status == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -104,15 +104,15 @@ if ($res == Aerospike::OK) {
 
 // check for the existance of the given key in the database, then fetch it
 if ($db->exists($key, $foo) == Aerospike::OK) {
-    $res = $db->get($key, $record);
-    if ($res == Aerospike::OK) {
+    $status = $db->get($key, $record);
+    if ($status == Aerospike::OK) {
         var_dump($record);
     }
 }
 
 // filtering for specific keys
-$res = $db->get($key, $record, array("email"), Aerospike::POLICY_RETRY_ONCE);
-if ($res == Aerospike::OK) {
+$status = $db->get($key, $record, array("email"), Aerospike::POLICY_RETRY_ONCE);
+if ($status == Aerospike::OK) {
     echo "The email for this user is ". $record['bins']['email']. "\n";
     echo "The name bin should be filtered out: ".var_export(is_null($record['bins']['name']), true). "\n";
 }

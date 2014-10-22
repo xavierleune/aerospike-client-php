@@ -6,7 +6,7 @@ Aerospike::createIndex - creates a secondary index on a bin
 ## Description
 
 ```
-public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name )
+public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name [, array $options ] )
 ```
 
 **Aerospike::createIndex()** will create a secondary index of a given *type* on
@@ -23,6 +23,9 @@ a namespace, *set* and *bin* with a specified *name*.
 **type** one of *Aerospike::INDEX_TYPE_\**
 
 **name** the name of the index
+
+**options** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
 
 ## Return Values
 
@@ -42,10 +45,10 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->createIndex("test", "user", "email", Aerospike::INDEX_TYPE_STRING, "user_email_idx");
-if ($res == Aerospike::OK) {
+$status = $db->createIndex("test", "user", "email", Aerospike::INDEX_TYPE_STRING, "user_email_idx");
+if ($status == Aerospike::OK) {
     echo "Index user_email_idx created on test.user.email\n";
-else if ($res == Aerospike::ERR_INDEX_FOUND) {
+else if ($status == Aerospike::ERR_INDEX_FOUND) {
     echo "This index has already been created.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

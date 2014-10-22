@@ -17,6 +17,7 @@
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
 #define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
+#define GEN_POLICY_PHP_INI INI_STR("aerospike.key_gen") ? (uint32_t) atoi(INI_STR("aerospike.key_gen")) : 0
 
 /*
  *******************************************************************************************************
@@ -47,6 +48,7 @@
  */
 #define SET_BIT_OPT_TIMEOUT 0x00000001
 #define SET_BIT_OPT_POLICY_KEY 0x00000010
+#define SET_BIT_OPT_POLICY_GEN 0x00000100
 
 /*
  *******************************************************************************************************
@@ -118,7 +120,8 @@ check_and_set_default_policies(as_config *as_config_p,
                                as_policy_scan *scan_policy_p,
                                as_policy_query *query_policy_p,
                                uint32_t *serializer_policy_p,
-                               uint8_t *options_passed_for_write_p,
+                               //uint8_t *options_passed_for_write_p,
+                               uint16_t *options_passed_for_write_p,
                                uint8_t *options_passed_for_read_p,
                                uint8_t *options_passed_for_operate_p,
                                uint8_t *options_passed_for_remove_p)
@@ -157,6 +160,12 @@ check_and_set_default_policies(as_config *as_config_p,
                         && KEY_POLICY_PHP_INI) {
                 write_policy_p->key = KEY_POLICY_PHP_INI;
             }
+            if ((((NULL != options_passed_for_write_p) &&
+                            ((*options_passed_for_write_p & SET_BIT_OPT_POLICY_GEN) == 0x0))
+                         || (options_passed_for_write_p == NULL))
+                         && GEN_POLICY_PHP_INI) {
+                 write_policy_p->gen = GEN_POLICY_PHP_INI;
+            }
         }
         if (operate_policy_p) {
             if (((NULL != options_passed_for_operate_p) &&
@@ -170,6 +179,12 @@ check_and_set_default_policies(as_config *as_config_p,
                         && KEY_POLICY_PHP_INI) {
                 operate_policy_p->key = KEY_POLICY_PHP_INI;
             }
+            if ((((NULL != options_passed_for_operate_p) &&
+                            ((*options_passed_for_operate_p & SET_BIT_OPT_POLICY_GEN) == 0x0))
+                         || (options_passed_for_operate_p == NULL))
+                         && GEN_POLICY_PHP_INI) {
+                 operate_policy_p->gen = GEN_POLICY_PHP_INI;
+            }
         }
         if (remove_policy_p) {
             if (((NULL != options_passed_for_remove_p) &&
@@ -182,6 +197,12 @@ check_and_set_default_policies(as_config *as_config_p,
                         || (options_passed_for_remove_p == NULL))
                         && KEY_POLICY_PHP_INI) {
                 remove_policy_p->key = KEY_POLICY_PHP_INI;
+            }
+            if ((((NULL != options_passed_for_remove_p) &&
+                            ((*options_passed_for_remove_p & SET_BIT_OPT_POLICY_GEN) == 0x0))
+                         || (options_passed_for_remove_p == NULL))
+                         && GEN_POLICY_PHP_INI) {
+                 remove_policy_p->gen = GEN_POLICY_PHP_INI;
             }
         }
         if (info_policy_p) {
@@ -203,6 +224,49 @@ check_and_set_default_policies(as_config *as_config_p,
         *serializer_policy_p = ini_value;
     }
 }
+
+/*
+ *******************************************************************************************************
+ * Function for setting the relevant aerospike policies by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param options_p             The optional parameters.
+ * @param generation_value_p    The generation value to be set into put record.
+ * @param error_p               The as_error to be populated by the function
+ *  *                           with the encountered error if any.
+ */
+extern void
+get_generation_value(zval* options_p, int* generation_value_p, as_error *error_p TSRMLS_DC)
+{
+    zval**                  gen_policy_pp = NULL;
+    zval**                  gen_value_pp = NULL;
+
+    if (options_p) {
+        if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
+            //error_p->code = AEROSPIKE_ERR;
+            goto exit;
+        }
+        if (Z_TYPE_PP(gen_policy_pp) != IS_ARRAY) {
+            error_p->code = AEROSPIKE_ERR;
+            goto exit;
+        }
+        zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
+
+        if (gen_value_pp && (Z_TYPE_PP(gen_value_pp) != IS_LONG)) {
+            error_p->code = AEROSPIKE_ERR;
+            goto exit;
+        }
+
+        if (gen_value_pp) {
+            *generation_value_p = Z_LVAL_PP(gen_value_pp);
+        }
+    } 
+
+exit:
+    return;
+}
+
+
 
 /*
  *******************************************************************************************************
@@ -308,10 +372,11 @@ set_policy_ex(as_config *as_config_p,
         uint32_t            scan_priority = SCAN_PRIORITY_AUTO;
         bool                scan_concurrent = false;
         bool                scan_nobins = false;
-        uint8_t             options_passed_for_write = 0x0;
+        uint16_t            options_passed_for_write = 0x0;
         uint8_t             options_passed_for_read = 0x0;
         uint8_t             options_passed_for_operate = 0x0;
         uint8_t             options_passed_for_remove = 0x0;
+        zval**              gen_policy_pp = NULL;
 
         foreach_hashtable(options_array, options_pointer, options_value) {
             uint options_key_len;
@@ -530,6 +595,33 @@ set_policy_ex(as_config *as_config_p,
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
+                        goto exit;
+                    }
+                    break;
+                case OPT_POLICY_GEN:
+                    zend_hash_index_find(Z_ARRVAL_P(*options_value), 0, (void **) &gen_policy_pp);
+
+                    if((Z_TYPE_PP(gen_policy_pp) != IS_LONG) &&
+                            ((Z_LVAL_PP(gen_policy_pp) & AS_POLICY_KEY_GEN) !=
+                             AS_POLICY_KEY_GEN)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_GEN");
+                        goto exit;
+                    }
+                    if (write_policy_p) {
+                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        options_passed_for_write |= SET_BIT_OPT_POLICY_GEN;
+                    } else if (operate_policy_p) {
+                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        options_passed_for_operate |= SET_BIT_OPT_POLICY_GEN;
+                    } else if (remove_policy_p) {
+                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        options_passed_for_remove |= SET_BIT_OPT_POLICY_GEN;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         goto exit;
                     }
                     break;

@@ -36,15 +36,15 @@ if (!$db->isConnected()) {
 $total = 0;
 $in_thirties = 0;
 $where = Aerospike::predicateBetween("age", 30, 39);
-$res = $db->query("test", "users", $where, function ($record) {
+$status = $db->query("test", "users", $where, function ($record) use (&$in_thirties, &$total) {
     echo "{$record['bins']['email']} age {$record['bins']['age']}\n";
     $total += (int) $record['bins']['age'];
     $in_thirties++;
     if ($in_thirties >= 10) return false; // stop the stream at the tenth record
 }, array("email", "age"));
-if ($res == Aerospike::ERR_QUERY) {
+if ($status == Aerospike::ERR_QUERY) {
     echo "An error occured while querying[{$db->errorno()}] ".$db->error();
-else if ($res == Aerospike::ERR_QUERY_ABORTED) {
+else if ($status == Aerospike::ERR_QUERY_ABORTED) {
     echo "Stopped the result stream after {$in_thirties} results\n";
 } else {
     echo "The average age of employees in their thirties is ".round($total / $in_thirties)."\n";

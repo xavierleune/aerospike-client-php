@@ -202,13 +202,13 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
                         &query_policy, &query,
                         aerospike_helper_record_stream_callback,
                         user_func_p))) {
-            DEBUG_PHP_EXT_DEBUG(error_p->message);
+            DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;
         }
     } else if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p, error_p,
                     NULL, &query, aerospike_helper_record_stream_callback,
                     user_func_p))) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 exit:
@@ -335,13 +335,13 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
                         &query_policy, &query,
                         aerospike_helper_aggregate_callback,
                         &aggregate_result_callback_udata))) {
-            DEBUG_PHP_EXT_DEBUG(error_p->message);
+            DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;
         }
     } else if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p, error_p,
                     &query_policy, &query, aerospike_helper_aggregate_callback,
                     &aggregate_result_callback_udata))) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 
