@@ -27,20 +27,17 @@ LUA_USRPATH=${LUA_SYSPATH_PREFIX}/client-php/${AEROSPIKE_C_CLIENT}/usr/udf/lua
 
 mkdir -p ${LUA_SYSPATH}
 if [ $? -gt 0 ] ; then
-    exit 1
+    exit 2
 fi
-chmod -R 0755 ${LUA_SYSPATH}
+chmod 0755 ${LUA_SYSPATH}
 rm -f ${LUA_SYSPATH_PREFIX}/client-php/sys-lua
 ln -s ${LUA_SYSPATH} ${LUA_SYSPATH_PREFIX}/client-php/sys-lua
 
 mkdir -p ${LUA_USRPATH}
 if [ $? -gt 0 ] ; then
-    exit 1
+    exit 3
 fi
-chmod -R 0755 ${LUA_USRPATH}
+chmod 0777 ${LUA_USRPATH}
 rm -f ${LUA_SYSPATH_PREFIX}/client-php/usr-lua
 ln -s ${LUA_USRPATH} ${LUA_SYSPATH_PREFIX}/client-php/usr-lua
 
-if [ -d ./tests/lua ]; then
-    cp ./tests/lua/*.lua ${LUA_SYSPATH_PREFIX}/client-php/usr-lua/
-fi

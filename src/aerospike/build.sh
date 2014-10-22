@@ -170,8 +170,11 @@ config()
         if [ -d /opt/aerospike/client-php/usr-lua ]; then
             code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
             if [ ! -f /opt/aerospike/client-php/usr-lua/test_transform.lua ]; then
-                echo "Failed to copy the Lua user files.  Please run:"
-                code "sudo cp tests/lua/*.lua /opt/aerospike/client-php/usr-lua/"
+                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
+                if [ $? -gt 0 ] ; then
+                    echo "Failed to copy the Lua user files.  Please run:"
+                    code "sudo cp tests/lua/*.lua /opt/aerospike/client-php/usr-lua/"
+                fi
             fi
         fi
     elif [ -f /usr/local/aerospike/client-php/sys-lua/aerospike.lua ]; then
@@ -179,8 +182,11 @@ config()
         if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
             code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
             if [ ! -f /usr/local/aerospike/client-php/usr-lua/test_transform.lua ]; then
-                echo "Failed to copy the Lua user files.  Please run:"
-                code "sudo cp tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/"
+                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
+                if [ $? -gt 0 ] ; then
+                    echo "Failed to copy the Lua user files.  Please run:"
+                    code "sudo cp tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/"
+                fi
             fi
         fi
     fi

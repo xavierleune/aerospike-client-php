@@ -297,7 +297,6 @@ if [ $DOWNLOAD ] && [ $DOWNLOAD == 1 ]; then
       printf "warning: \n"
     else
       download
-      
     fi
 
     ##############################################################################
@@ -338,11 +337,8 @@ if [ $DOWNLOAD ] && [ $DOWNLOAD == 1 ]; then
 
     # let's return to parent directory
     cd ${CWD}
-
   fi
-
   PREFIX=${PKG_PATH}
-
 fi
 
 ################################################################################
