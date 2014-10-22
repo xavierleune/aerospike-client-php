@@ -1,6 +1,6 @@
 #include "php.h"
 //#include "aerospike/as_log.h"
-#include "aerospike/as_key.h"
+//#include "aerospike/as_key.h"
 #include "aerospike/as_config.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_status.h"
@@ -153,7 +153,7 @@ exit:
 
 static void
 populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
-        zval *inner_container_p, as_error *error_p, bool null_flag)
+        zval *inner_container_p, as_error *error_p, bool null_flag TSRMLS_DC)
 {
     switch (((as_val*)(key_p->valuep))->type) {
         case AS_STRING:
@@ -232,7 +232,7 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
         }
 
         populate_result_for_get_exists_many((as_key *) results[i].key,
-                udata_ptr->udata_p, record_p, udata_ptr->error_p, null_flag);
+                udata_ptr->udata_p, record_p, udata_ptr->error_p, null_flag TSRMLS_CC);
         if (AEROSPIKE_OK != udata_ptr->error_p->code) {
             DEBUG_PHP_EXT_DEBUG("%s", udata_ptr->error_p->message);
             goto cleanup;
