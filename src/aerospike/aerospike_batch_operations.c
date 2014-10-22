@@ -1,5 +1,5 @@
 #include "php.h"
-#include "aerospike/as_log.h"
+//#include "aerospike/as_log.h"
 #include "aerospike/as_key.h"
 #include "aerospike/as_config.h"
 #include "aerospike/as_error.h"
