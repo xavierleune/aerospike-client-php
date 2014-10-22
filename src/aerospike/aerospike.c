@@ -333,6 +333,7 @@ ZEND_GET_MODULE(aerospike)
      ********************************************************************
      */
     PHP_ME(Aerospike, existsMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, getMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
 #if 0 // TBD
 
     // Secondary Index APIs:
@@ -920,6 +921,63 @@ exit:
     RETURN_LONG(status);
 }
 
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::getMany()
+ *******************************************************************************************************
+ * Aerospike::getMany - gets a batch of record from the Aerospike database
+ * Method prototype for PHP userland:
+ * public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options ]] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, getMany)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    zval*                   keys_p = NULL;
+    zval*                   records_p = NULL;
+    zval*                   filter_bins_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "getMany : connection not established"); 
+        DEBUG_PHP_EXT_ERROR("getMany : connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|aa", &keys_p,
+                &records_p, &filter_bins_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for getMany");
+        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for getMany");
+        goto exit;
+    }
+
+    zval_dtor(records_p);
+    array_init(records_p);
+
+    if (AEROSPIKE_OK != (status = aerospike_batch_operations_get_many(aerospike_obj_p->as_ref_p->as_p,
+                    &error, keys_p, records_p, filter_bins_p, options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("existsMany() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
 
 /*
  *******************************************************************************************************
