@@ -13,12 +13,13 @@ public int Aerospike::remove ( array $key [, array $options ] )
 
 ## Parameters
 
-**key** the key for the record. An associative array with keys 'ns','set','key'.
+**key** the key for the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_POLICY_RETRY**
+- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 
@@ -39,10 +40,10 @@ if (!$db->isConnected()) {
 }
 
 $key = $db->initKey("test", "users", 1234);
-$res = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
-if ($res == Aerospike::OK) {
+$status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
+if ($status == Aerospike::OK) {
     echo "Record removed.\n";
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
+} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

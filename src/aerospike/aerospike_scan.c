@@ -172,7 +172,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
 
     if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p,
             error_p, &scan_policy, scan_p, &scan_id))) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 
@@ -222,7 +222,7 @@ aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
 
     if (AEROSPIKE_OK != (aerospike_scan_info(as_object_p, error_p,
                     &info_policy, scan_id, &scan_info))) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 

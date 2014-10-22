@@ -51,6 +51,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     char *lua_system_path;
     char *lua_user_path;
     int key_policy;
+    int key_gen;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     int persistent_ref_count;
@@ -87,6 +88,7 @@ PHP_METHOD(Aerospike, isConnected);
 PHP_METHOD(Aerospike, close);
 PHP_METHOD(Aerospike, getNodes);
 PHP_METHOD(Aerospike, info);
+PHP_METHOD(Aerospike, infoMany);
 
 /*
  * Error Handling APIs:
@@ -126,6 +128,13 @@ PHP_METHOD(Aerospike, setLogLevel);
 PHP_METHOD(Aerospike, setLogHandler);
 
 /*
+ * Secondary Index APIs:
+ */
+
+PHP_METHOD(Aerospike, createIndex);
+PHP_METHOD(Aerospike, dropIndex);
+
+/*
  * Query and Scan APIs:
  */
 
@@ -154,7 +163,6 @@ PHP_METHOD(Aerospike, existsMany);
 
 /*
  * TBD
- * Secondary Index APIs:
  * Large Data Type (LDT) APIs:
  * Shared Memory APIs:
  */

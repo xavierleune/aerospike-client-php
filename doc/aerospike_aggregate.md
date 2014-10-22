@@ -116,8 +116,8 @@ if (!$db->isConnected()) {
 // assuming test.users has a bin first_name, show the first name distribution
 // for users in their twenties
 $where = Aerospike::predicateBetween("age", 20, 29);
-$res = $db->aggregate("test", "users", $where, "stream_udf", "group_count", array("first_name"), $names);
-if ($res == Aerospike::OK) {
+$status = $db->aggregate("test", "users", $where, "stream_udf", "group_count", array("first_name"), $names);
+if ($status == Aerospike::OK) {
     var_dump($names);
 } else {
     echo "An error occured while running the AGGREGATE [{$db->errorno()}] ".$db->error();

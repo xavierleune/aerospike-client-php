@@ -137,7 +137,7 @@ else
     LDFLAGS="$LDFLAGS $LIBCRYPTO -lrt"
 fi
 
-make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include" "EXTRA_LDFLAGS=$LDFLAGS"
+make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include -I$CLIENTREPO_3X/include/ck" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
     exit 2
@@ -168,18 +168,26 @@ config()
     if [ -f /opt/aerospike/client-php/sys-lua/aerospike.lua ]; then
         code "aerospike.udf.lua_system_path=/opt/aerospike/client-php/sys-lua"
         if [ -d /opt/aerospike/client-php/usr-lua ]; then
-            if [ -d ./tests/lua ]; then
-                cp ./tests/lua/* /opt/aerospike/client-php/usr-lua/
-            fi
             code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
+            if [ ! -f /opt/aerospike/client-php/usr-lua/test_transform.lua ]; then
+                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
+                if [ $? -gt 0 ] ; then
+                    echo "Failed to copy the Lua user files.  Please run:"
+                    code "sudo cp tests/lua/*.lua /opt/aerospike/client-php/usr-lua/"
+                fi
+            fi
         fi
     elif [ -f /usr/local/aerospike/client-php/sys-lua/aerospike.lua ]; then
         code "aerospike.udf.lua_system_path=/usr/local/aerospike/client-php/sys-lua"
         if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
-            if [ -d ./tests/lua ]; then
-                cp ./tests/lua/* /usr/local/aerospike/client-php/usr-lua/
-            fi
             code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
+            if [ ! -f /usr/local/aerospike/client-php/usr-lua/test_transform.lua ]; then
+                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
+                if [ $? -gt 0 ] ; then
+                    echo "Failed to copy the Lua user files.  Please run:"
+                    code "sudo cp tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/"
+                fi
+            fi
         fi
     fi
     headline "Verify the Extension"

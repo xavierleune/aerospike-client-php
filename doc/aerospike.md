@@ -11,48 +11,54 @@ The main Aerospike class
 class Aerospike
 {
     // The key policy can be determined by setting OPT_POLICY_KEY to one of
-    const POLICY_KEY_DIGEST = 1; hashes (ns,set,key) data into a unique record ID (default)
-    const POLICY_KEY_SEND = 2; also send, store, and get the actual (ns,set,key) with each record
+    const POLICY_KEY_DIGEST; // hashes (ns,set,key) data into a unique record ID (default)
+    const POLICY_KEY_SEND;   // also send, store, and get the actual (ns,set,key) with each record
+
+    // The generation policy can be set using OPT_POLICY_GEN to one of
+    const POLICY_GEN_IGNORE; // Write a record, regardless of generation
+    const POLICY_GEN_EQ;     // Write a record, ONLY if given value is equal to the current record generation
+    const POLICY_GEN_GT;     // Write a record, ONLY if given value is greater-than the current record generation
 
     // The retry policy can be determined by setting OPT_POLICY_RETRY to one of
-    const POLICY_RETRY_NONE = 1; // do not retry an operation (default)
-    const POLICY_RETRY_ONCE = 2; // allow for a single retry on an operation
+    const POLICY_RETRY_NONE; // do not retry an operation (default)
+    const POLICY_RETRY_ONCE; // allow for a single retry on an operation
 
     // By default writes will try to create or replace records and bins
     // behaving similar to an array in PHP. Setting
     // OPT_POLICY_EXISTS with one of these values will overwrite this.
     // POLICY_EXISTS_IGNORE (aka CREATE_OR_UPDATE) is the default value
-    const POLICY_EXISTS_IGNORE = 1; // interleave bins of a record if it exists
-    const POLICY_EXISTS_CREATE = 2; // create a record ONLY if it DOES NOT exist
-    const POLICY_EXISTS_UPDATE = 3; // update a record ONLY if it exists
-    const POLICY_EXISTS_REPLACE = 4; // replace a record ONLY if it exists
-    const POLICY_EXISTS_CREATE_OR_REPLACE = 5; // overwrite the bins if record exists
+    const POLICY_EXISTS_IGNORE;            // interleave bins of a record if it exists
+    const POLICY_EXISTS_CREATE;            // create a record ONLY if it DOES NOT exist
+    const POLICY_EXISTS_UPDATE;            // update a record ONLY if it exists
+    const POLICY_EXISTS_REPLACE;           // replace a record ONLY if it exists
+    const POLICY_EXISTS_CREATE_OR_REPLACE; // overwrite the bins if record exists
 
     // Determines a handler for writing values of unsupported type into bins
     // Set OPT_SERIALIZER to one of the following:
-    const SERIALIZER_NONE = 0;
-    const SERIALIZER_PHP  = 1; // default handler
-    const SERIALIZER_JSON = 2;
-    const SERIALIZER_USER = 3;
+    const SERIALIZER_NONE;
+    const SERIALIZER_PHP; // default handler
+    const SERIALIZER_JSON;
+    const SERIALIZER_USER;
 
     // OPT_SCAN_PRIORITY can be set to one of the following:
-    const SCAN_PRIORITY_AUTO = 0; //The cluster will auto adjust the scan priority
-    const SCAN_PRIORITY_LOW = 1; //Low priority scan.
-    const SCAN_PRIORITY_MEDIUM = 2; //Medium priority scan.
-    const SCAN_PRIORITY_HIGH = 3; //High priority scan.
+    const SCAN_PRIORITY_AUTO;   //The cluster will auto adjust the scan priority
+    const SCAN_PRIORITY_LOW;    //Low priority scan.
+    const SCAN_PRIORITY_MEDIUM; //Medium priority scan.
+    const SCAN_PRIORITY_HIGH;   //High priority scan.
 
     // Options can be assigned values that modify default behavior
-    const OPT_CONNECT_TIMEOUT = 1; // value in milliseconds, default: 1000
-    const OPT_READ_TIMEOUT = 2; // value in milliseconds, default: 1000
-    const OPT_WRITE_TIMEOUT = 3; // value in milliseconds, default: 1000
-    const OPT_POLICY_RETRY = 4; // set to a Aerospike::POLICY_RETRY_* value
-    const OPT_POLICY_EXISTS = 5; // set to a Aerospike::POLICY_EXISTS_* value
-    const OPT_SERIALIZER = 6; // set the unsupported type handler
-    const OPT_SCAN_PRIORITY = 7; // set to a Aerospike::SCAN_PRIORITY_* value
-    const OPT_SCAN_PERCENTAGE = 8; // integer value 1-100, default: 100
-    const OPT_SCAN_CONCURRENTLY = 9; // boolean value, default: false
-    const OPT_SCAN_NOBINS = 10; // boolean value, default: false
-    const OPT_POLICY_KEY = 11; // records store the digest unique ID, optionally also its (ns,set,key) inputs
+    const OPT_CONNECT_TIMEOUT; // value in milliseconds, default: 1000
+    const OPT_READ_TIMEOUT;    // value in milliseconds, default: 1000
+    const OPT_WRITE_TIMEOUT; // value in milliseconds, default: 1000
+    const OPT_POLICY_RETRY; // set to a Aerospike::POLICY_RETRY_* value
+    const OPT_POLICY_EXISTS; // set to a Aerospike::POLICY_EXISTS_* value
+    const OPT_SERIALIZER; // set the unsupported type handler
+    const OPT_SCAN_PRIORITY; // set to a Aerospike::SCAN_PRIORITY_* value
+    const OPT_SCAN_PERCENTAGE; // integer value 1-100, default: 100
+    const OPT_SCAN_CONCURRENTLY; // boolean value, default: false
+    const OPT_SCAN_NOBINS; // boolean value, default: false
+    const OPT_POLICY_KEY; // records store the digest unique ID, optionally also its (ns,set,key) inputs
+    const OPT_POLICY_GEN; // set to array( Aerospike::POLICY_GEN_* [, $gen_value ] )
 
     // Aerospike Status Codes:
     //
@@ -65,86 +71,86 @@ class Aerospike
     //
     // Client status codes:
     //
-    const OK                      =    0; // Generic success
-    const ERR                     =  100; // Generic error
-    const ERR_CLIENT              =  200; // Generic client error
-    const ERR_PARAM               =  201; // Invalid client parameter
-    const ERR_CLUSTER             =  300; // Cluster discovery and connection error
-    const ERR_TIMEOUT             =  400; // Client-side timeout error
-    const ERR_THROTTLED           =  401; // Client-side request throttling
+    const OK                     ; // Success status
+    const ERR                    ; // Generic error
+    const ERR_CLIENT             ; // Generic client error
+    const ERR_PARAM              ; // Invalid client parameter
+    const ERR_CLUSTER            ; // Cluster discovery and connection error
+    const ERR_TIMEOUT            ; // Client-side timeout error
+    const ERR_THROTTLED          ; // Client-side request throttling (Deprecated, use ERR_CLIENT)
 
     //
     // Server status codes:
     //
-    const ERR_SERVER              =  500; // Generic server error
-    const ERR_REQUEST_INVALID     =  501; // Invalid request protocol or protocol field
-    const ERR_SERVER_FULL         =  503; // Node running out of memory/storage
-    const ERR_CLUSTER_CHANGE      =  504; // Cluster state changed during the request
-    const ERR_UNSUPPORTED_FEATURE =  505;
-    const ERR_DEVICE_OVERLOAD     =  506; // Node storage lagging write load
-    // Record specific:
-    const ERR_RECORD              =  600; // Generic record error
-    const ERR_RECORD_BUSY         =  601; // Hot key: too many concurrent requests for the record
-    const ERR_RECORD_NOT_FOUND    =  602;
-    const ERR_RECORD_EXISTS       =  603;
-    const ERR_RECORD_GENERATION   =  604; // Write policy regarding generation violated
-    const ERR_RECORD_TOO_BIG      =  605; // Record written cannot fit in storage write block
-    const ERR_BIN_TYPE            =  606; // Bin modification failed due to value type
-    const ERR_RECORD_KEY_MISMATCH =  607;
+    const ERR_SERVER             ; // Generic server error
+    const ERR_REQUEST_INVALID    ; // Invalid request protocol or protocol field
+    const ERR_SERVER_FULL        ; // Node running out of memory/storage
+    const ERR_CLUSTER_CHANGE     ; // Cluster state changed during the request
+    const ERR_UNSUPPORTED_FEATURE;
+    const ERR_DEVICE_OVERLOAD    ; // Node storage lagging write load
+    // Record specific
+    const ERR_RECORD             ; // Generic record error (Deprecated)
+    const ERR_RECORD_BUSY        ; // Hot key: too many concurrent requests for the record
+    const ERR_RECORD_NOT_FOUND   ;
+    const ERR_RECORD_EXISTS      ;
+    const ERR_RECORD_GENERATION  ; // Write policy regarding generation violated
+    const ERR_RECORD_TOO_BIG     ; // Record written cannot fit in storage write block
+    const ERR_BIN_TYPE           ; // Bin modification failed due to value type
+    const ERR_RECORD_KEY_MISMATCH;
     // Scan operations:
-    const ERR_SCAN                = 1000; // Generic scan error
-    const ERR_SCAN_ABORTED        = 1001; // Scan aborted by the user
+    const ERR_SCAN               ; // Generic scan error (Deprecated, use ERR)
+    const ERR_SCAN_ABORTED       ; // Scan aborted by the user
     // Query operations:
-    const ERR_QUERY               = 1100; // Generic query error
-    const ERR_QUERY_ABORTED       = 1101; // Query aborted by the user
-    const ERR_QUERY_QUEUE_FULL    = 1102;
+    const ERR_QUERY              ; // Generic query error
+    const ERR_QUERY_ABORTED      ; // Query aborted by the user
+    const ERR_QUERY_QUEUE_FULL   ;
     // Index operations:
-    const ERR_INDEX               = 1200; // Generic secondary index error
-    const ERR_INDEX_OOM           = 1201; // Index out of memory
-    const ERR_INDEX_NOT_FOUND     = 1202;
-    const ERR_INDEX_FOUND         = 1203;
-    const ERR_INDEX_NOT_READABLE  = 1204;
-    const ERR_INDEX_NAME_MAXLEN   = 1205;
-    const ERR_INDEX_MAXCOUNT      = 1206; // Max number of indexes reached
+    const ERR_INDEX              ; // Generic secondary index error
+    const ERR_INDEX_OOM          ; // Index out of memory
+    const ERR_INDEX_NOT_FOUND    ;
+    const ERR_INDEX_FOUND        ;
+    const ERR_INDEX_NOT_READABLE ;
+    const ERR_INDEX_NAME_MAXLEN  ;
+    const ERR_INDEX_MAXCOUNT     ; // Max number of indexes reached
     // UDF operations:
-    const ERR_UDF                 = 1300; // Generic UDF error
-    const ERR_UDF_NOT_FOUND       = 1301; // UDF does not exist
-    const ERR_UDF_FILE_NOT_FOUND  = 1301; // Source file for the module not found
-    const ERR_LUA_FILE_NOT_FOUND  = 1301; // Source file for the module not found
+    const ERR_UDF                ; // Generic UDF error
+    const ERR_UDF_NOT_FOUND      ; // UDF does not exist
+    const ERR_UDF_FILE_NOT_FOUND ; // Source file for the module not found
+    const ERR_LUA_FILE_NOT_FOUND ; // Source file for the module not found
 
     // Status values returned by scanInfo()
-    const SCAN_STATUS_UNDEF = 0; // The scan status is undefined.
-    const SCAN_STATUS_INPROGRESS = 1; // The scan is currently running.
-    const SCAN_STATUS_ABORTED = 2; // The scan was aborted due to failure or the user.
-    const SCAN_STATUS_COMPLETED = 3; // The scan completed successfully.
+    const SCAN_STATUS_UNDEF;      // Scan status is undefined.
+    const SCAN_STATUS_INPROGRESS; // Scan is currently running.
+    const SCAN_STATUS_ABORTED;    // Scan was aborted due to failure or the user.
+    const SCAN_STATUS_COMPLETED;  // Scan completed successfully.
 
     // Logger
-    const LOG_LEVEL_OFF   = 6;
-    const LOG_LEVEL_ERROR = 5;
-    const LOG_LEVEL_WARN  = 4;
-    const LOG_LEVEL_INFO  = 3;
-    const LOG_LEVEL_DEBUG = 2;
-    const LOG_LEVEL_TRACE = 1;
+    const LOG_LEVEL_OFF  ;
+    const LOG_LEVEL_ERROR;
+    const LOG_LEVEL_WARN ;
+    const LOG_LEVEL_INFO ;
+    const LOG_LEVEL_DEBUG;
+    const LOG_LEVEL_TRACE;
 
     // Query Predicate Operators
-    const OP_EQ = '=';
-    const OP_BETWEEN = 'BETWEEN';
+    const string OP_EQ = '=';
+    const string OP_BETWEEN = 'BETWEEN';
 
     // Multi-operation operators map to the C client
     //  src/include/aerospike/as_operations.h
-    const OPERATOR_WRITE   = 0;
-    const OPERATOR_READ    = 1;
-    const OPERATOR_INCR    = 2;
-    const OPERATOR_PREPEND = 4;
-    const OPERATOR_APPEND  = 5;
-    const OPERATOR_TOUCH   = 8;
+    const OPERATOR_WRITE;
+    const OPERATOR_READ;
+    const OPERATOR_INCR;
+    const OPERATOR_PREPEND;
+    const OPERATOR_APPEND;
+    const OPERATOR_TOUCH;
 
     // UDF types
-    const UDF_TYPE_LUA     = 1;
+    const UDF_TYPE_LUA;
 
     // bin types
-    const INDEX_TYPE_STRING  = 1;
-    const INDEX_TYPE_INTEGER = 2;
+    const INDEX_TYPE_STRING;
+    const INDEX_TYPE_INTEGER;
 
 
     // lifecycle and connection methods
@@ -153,7 +159,6 @@ class Aerospike
     public boolean isConnected ( void )
     public void close ( void )
     public void reconnect ( void )
-    public int getNodes ( array &$metadata [, array $options ] )
 
     // error handling methods
     public string error ( void )
@@ -199,8 +204,13 @@ class Aerospike
     public array predicateBetween ( string $bin, int $min, int $max )
 
     // admin methods
-    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name )
-    public int dropIndex ( string $ns, string $name )
+    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name [, array $options ] )
+    public int dropIndex ( string $ns, string $name [, array $options ] )
+
+    // info methods
+    public int info ( string $request, string &$response [, array $host [, array options ] ] )
+    public array infoMany ( string $request [, array $config [, array options ]] )
+    public array getNodes ( void )
 }
 ```
 
@@ -210,6 +220,7 @@ class Aerospike
 ### [Key-Value Methods](apiref_kv.md)
 ### [Query and Scan Methods](apiref_streams.md)
 ### [User Defined Methods](apiref_udf.md)
-### [Admin Methods](apiref_admin.md) \[to be implemented\]
+### [Admin Methods](apiref_admin.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
+### [Info Methods](apiref_info.md)
 

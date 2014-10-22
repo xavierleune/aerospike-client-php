@@ -93,7 +93,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     if (AEROSPIKE_OK != aerospike_udf_put(aerospike_obj_p->as_ref_p->as_p,
                 error_p, &info_policy, module_p, language - AS_UDF_TYPE,
                       udf_content_p)) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 exit:
@@ -141,7 +141,7 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
 
     if (AEROSPIKE_OK != aerospike_udf_remove(aerospike_obj_p->as_ref_p->as_p,
                 error_p, NULL, module_p)) {
-        DEBUG_PHP_EXT_ERROR(error_p->message);
+        DEBUG_PHP_EXT_ERROR("%s", error_p->message);
         goto exit;
     }
 exit:
@@ -199,7 +199,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
                     error_p, &write_policy, as_key_p, module_p, function_p,
                     args_list_p, &udf_result_p))) {
-        DEBUG_PHP_EXT_DEBUG(error_p->message);
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 
@@ -270,7 +270,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
     init_udf_files = 1;
     if (AEROSPIKE_OK != aerospike_udf_list(aerospike_obj_p->as_ref_p->as_p,
                 error_p, &info_policy, &udf_files)) {
-        DEBUG_PHP_EXT_ERROR(error_p->message);
+        DEBUG_PHP_EXT_ERROR("%s", error_p->message);
         goto exit;
     }
 
@@ -343,7 +343,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
     if (AEROSPIKE_OK != aerospike_udf_get(aerospike_obj_p->as_ref_p->as_p,
                 error_p, &info_policy, module_p, (language - AS_UDF_TYPE),
                 &udf_file)) {
-        DEBUG_PHP_EXT_ERROR(error_p->message);
+        DEBUG_PHP_EXT_ERROR("%s", error_p->message);
         goto exit;
     }
 

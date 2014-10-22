@@ -1,8 +1,11 @@
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
-#include <aerospike/as_arraylist.h>
-#include <aerospike/as_hashmap.h>
-/* 
+#include "aerospike/as_arraylist.h"
+#include "aerospike/as_hashmap.h"
+#include "aerospike/as_key.h"
+#include "aerospike/as_node.h"
+
+/*
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
@@ -93,6 +96,11 @@
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
 
+#define INET_ADDRSTRLEN 16
+#define INET6_ADDRSTRLEN 46
+#define INET_PORT 5
+#define IP_PORT_SEPARATOR_LEN 1
+#define IP_PORT_MAX_LEN INET6_ADDRSTRLEN + INET_PORT + IP_PORT_SEPARATOR_LEN
 /*
  *******************************************************************************************************
  * Static pool maintained to avoid runtime mallocs.
@@ -157,6 +165,18 @@ typedef struct foreach_callback_udata_t {
 
 /*
  *******************************************************************************************************
+ * Struct for user data to be passed to aerospike foreach callbacks.
+ * (For example, to as_rec_foreach, as_list_foreach, as_map_foreach).
+ * It contains the actual udata and as_error object.
+ *******************************************************************************************************
+ */
+typedef struct foreach_callback_info_udata_t {
+    zval        *udata_p;
+    HashTable   *host_lookup_p;
+} foreach_callback_info_udata;
+
+/*
+ *******************************************************************************************************
  * PHP Userland Logger callback
  *******************************************************************************************************
  */
@@ -197,6 +217,39 @@ typedef struct _userland_callback {
     Aerospike_object *obj;
 } userland_callback;
 
+/*
+ *******************************************************************************************************
+ * Decision Structure for as_config/zval to be populated by
+ * aerospike_transform_check_and_set_config method.
+ *******************************************************************************************************
+ */
+enum config_transform_result_type {
+    TRANSFORM_INTO_AS_CONFIG    = 0,
+    TRANSFORM_INTO_ZVAL         = 1
+};
+
+/*
+ *******************************************************************************************************
+ * Union for transform result iterator.
+ * Holds either as_config or a zval.
+ *******************************************************************************************************
+ */
+typedef union _transform_result {
+    as_config* as_config_p;
+    HashTable* host_lookup_p;
+} transform_result_t;
+
+/*
+ *******************************************************************************************************
+ * Structure for PHP config array to transformed value and its type.
+ * Possible transformed values are as_config or zval.
+ *******************************************************************************************************
+ */
+typedef struct _transform_zval_config_into {
+    enum config_transform_result_type       transform_result_type;
+    transform_result_t                      transform_result;
+} transform_zval_config_into;
+
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
@@ -204,6 +257,9 @@ extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata);
 extern bool
 aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p);
+extern bool
+aerospike_info_callback(const as_error* err, const as_node* node, char* request,
+        char* response, void* udata);
 
 /*
  * Need to re-direct the same to log function that we have written
@@ -353,7 +409,7 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
 
 extern as_status
 aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
-        as_config* config_p);
+        void* config_p);
 
 extern as_status
 aerospike_transform_key_data_put(aerospike* as_object_p,
@@ -495,6 +551,39 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* return_value_p, zval* options_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of index functions.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
+        char* ns_p, char* set_p, char* bin_p, uint32_t type,
+        char *name_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
+        char* ns_p, char *name_p, zval* options_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of info functions.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_info_specific_host(aerospike* as_object_p, as_error* error_p,
+        char* request, zval* response_p, zval* host, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_info_request_multiple_nodes(aerospike* as_object_p,
+        as_error* error_p, char* request_str_p, zval* config_p,
+        zval* return_value_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_info_get_cluster_nodes(aerospike* as_object_p,
+        as_error* error_p, zval* return_p, zval* host, zval* options_p TSRMLS_DC);
+
 /*
  ******************************************************************************************************
  * Extern declarations of Batch operations.

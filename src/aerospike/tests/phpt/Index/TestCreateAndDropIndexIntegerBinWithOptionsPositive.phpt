@@ -1,0 +1,15 @@
+--TEST--
+createIndex and dropIndex - correct arguments for integer index with options
+
+--SKIPIF--
+<?php
+include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
+aerospike_phpt_skipif("Index", "testCreateAndDropIndexIntegerBinWithOptionsPositive");
+
+--FILE--
+<?php
+include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
+aerospike_phpt_runtest("Index", "testCreateAndDropIndexIntegerBinWithOptionsPositive");
+--EXPECT--
+OK
+
