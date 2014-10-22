@@ -4,8 +4,10 @@
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_key.h"
 #include "aerospike/as_node.h"
+#include "aerospike/as_operations.h"
+#include "aerospike/as_record.h"
 
-/*
+/* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
@@ -444,7 +446,21 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_object_p,
                                    as_error *error_p,
                                    zval* options_p);
 extern as_status
-aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
+aerospike_record_operations_ops(aerospike* as_object_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                int8_t* bin_name_p,
+                                int8_t* str,
+                                u_int64_t offset,
+                                u_int64_t initial_value,
+                                u_int64_t time_to_live,
+                                u_int64_t operation,
+                                as_operations* ops,
+                                as_record* get_rec);
+
+extern as_status
+aerospike_record_operations_general(Aerospike_object* aerospike_object_p,
                                 as_key* as_key_p,
                                 zval* options_p,
                                 as_error* error_p,
@@ -454,6 +470,14 @@ aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
                                 u_int64_t initial_value,
                                 u_int64_t time_to_live,
                                 u_int64_t operation);
+
+extern as_status aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                zval* returned_p,
+                                HashTable* operations_array_p);
+
 extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,
                                        as_key* as_key_p,

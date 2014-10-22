@@ -176,6 +176,18 @@ static PHP_GINIT_FUNCTION(aerospike)
 
     /*
      ********************************************************************
+     * Using "arginfo_third_by_ref" in zend_arg_info argument of a
+     * zend_function_entry accepts third argument of the
+     * corresponding functions by reference and rest by value.
+     ********************************************************************
+     */
+    ZEND_BEGIN_ARG_INFO(arginfo_third_by_ref, 0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(0)
+    ZEND_ARG_PASS_INFO(1)
+    ZEND_END_ARG_INFO()
+    /*
+     ********************************************************************
      * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
      * zend_function_entry accepts fifth argument of the
      * corresponding functions by reference and rest by value.
@@ -290,7 +302,7 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, getMetadata, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, increment, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, initKey, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, operate, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, operate, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, remove, NULL, ZEND_ACC_PUBLIC)
@@ -1140,6 +1152,90 @@ exit:
 
 /*
  *******************************************************************************************************
+ * PHP Method:  Aerospike::operate()
+ *******************************************************************************************************
+ * Perform multiple operations on a record
+ * Method prototype for PHP userland:
+ * public int Aerospike::operate ( array $key, array $operations [,array &$returned [,array $options ]] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, operate)
+{
+    as_status              status = AEROSPIKE_OK;
+    zval*                  key_record_p = NULL;
+    zval*                  operations_p = NULL;
+    zval*                  returned_p = NULL;
+    zval*                  options_p = NULL;
+    as_error               error;
+    as_key                 as_key_for_get_record;
+    int16_t                initializeKey = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "operate: connection not established"); 
+        DEBUG_PHP_EXT_ERROR("operate: connection not established");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|aa",
+                &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operate function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for operate function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+            PHP_TYPE_ISNOTARR(operations_p) || ((returned_p) && (PHP_TYPE_ISNOTARR(returned_p))) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for operate function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for operate function not proper");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_get_record,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for operate function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for operate function");
+        goto exit;
+    }
+
+    if(returned_p) {
+        zval_dtor(returned_p);
+        array_init(returned_p);
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_operate(aerospike_obj_p,
+                    &as_key_for_get_record,
+                    options_p,
+                    &error,
+                    returned_p,
+                    Z_ARRVAL_P(operations_p)))) {
+        DEBUG_PHP_EXT_ERROR("Operate function returned an error");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_get_record);
+    }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/*
+ *******************************************************************************************************
  * PHP Method:  Aerospike::append()
  *******************************************************************************************************
  * Appends a string to the string value in a bin.
@@ -1202,7 +1298,8 @@ PHP_METHOD(Aerospike, append)
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for append function");
         goto exit;
     }
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_general(aerospike_obj_p,
                     &as_key_for_get_record,
                     options_p,
                     &error,
@@ -1416,25 +1513,6 @@ PHP_METHOD(Aerospike, getHeader)
 
 /*
  *******************************************************************************************************
- * PHP Method:  Aerospike::operate()
- *******************************************************************************************************
- * Perform multiple operations on a single record.
- * Method prototype for PHP userland:
- * public int Aerospike::operate ( array $key, array $operations [, array &$returned ] )
- *******************************************************************************************************
- */
-PHP_METHOD(Aerospike, operate)
-{
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
-    /*** TO BE IMPLEMENTED ***/
-
-    RETURN_TRUE;
-}
-
-/*
- *******************************************************************************************************
  * PHP Method:  Aerospike::prepend()
  *******************************************************************************************************
  * Prepends a string to the string value in a bin.
@@ -1498,7 +1576,7 @@ PHP_METHOD(Aerospike, prepend)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_general(aerospike_obj_p,
                     &as_key_for_get_record,
                     options_p,
                     &error,
@@ -1586,7 +1664,7 @@ PHP_METHOD(Aerospike, increment)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_general(aerospike_obj_p,
                     &as_key_for_get_record,
                     options_p,
                     &error,
@@ -1669,7 +1747,7 @@ PHP_METHOD(Aerospike, touch)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p,
+    if (AEROSPIKE_OK != (status = aerospike_record_operations_general(aerospike_obj_p,
                     &as_key_for_get_record,
                     options_p,
                     &error,

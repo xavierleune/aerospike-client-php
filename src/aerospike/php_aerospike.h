@@ -160,6 +160,7 @@ PHP_METHOD(Aerospike, getRegistered);
  * Batch Operations APIs:
  */
 PHP_METHOD(Aerospike, existsMany);
+PHP_METHOD(Aerospike, operate);
 
 /*
  * TBD
