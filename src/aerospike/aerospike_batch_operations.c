@@ -151,6 +151,29 @@ exit:
     return status;
 }
 
+static as_status
+process_filer_bins(HashTable *bins_array_p, char **select_p)
+{
+    as_status           status = AEROSPIKE_OK;
+    HashPosition        pointer; 
+    zval                **bin_names;
+    int                 count = 0;
+
+    foreach_hashtable (bins_array_p, pointer, bin_names) {
+        switch (Z_TYPE_PP(bin_names)) {
+            case IS_STRING:
+                select_p[count++] = Z_STRVAL_PP(bin_names);
+                break;
+            default:
+                status = AEROSPIKE_ERR;
+                DEBUG_PHP_EXT_DEBUG("Invalid type of bin");
+                goto exit;
+        }
+    }
+exit:
+    return status;
+}
+
 static void
 populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
         zval *inner_container_p, as_error *error_p, bool null_flag TSRMLS_DC)
@@ -207,10 +230,10 @@ bool
 batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
 {
     TSRMLS_FETCH();
-    foreach_callback_udata*     udata_ptr = (foreach_callback_udata *) udata;
-    uint32_t                    i = 0;
-    foreach_callback_udata      foreach_record_callback_udata;
-    bool                        null_flag = false;
+    foreach_callback_udata*       udata_ptr = (foreach_callback_udata *) udata;
+    uint32_t                      i = 0;
+    foreach_callback_udata        foreach_record_callback_udata;
+    bool                          null_flag = false;
 
     for (i = 0; i < n; i++) {
         zval *record_p = NULL;
@@ -269,15 +292,15 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
             continue;
         }
 
-        cleanup:
-            foreach_record_callback_udata.udata_p = NULL;
-            if (get_record_p) {
-                zval_ptr_dtor(&get_record_p);
-            }
-            if (record_p) {
-                zval_ptr_dtor(&record_p);
-            }
-            goto exit;
+cleanup:
+        foreach_record_callback_udata.udata_p = NULL;
+        if (get_record_p) {
+            zval_ptr_dtor(&get_record_p);
+        }
+        if (record_p) {
+            zval_ptr_dtor(&record_p);
+        }
+        goto exit;
     }
 
 exit:
@@ -307,15 +330,22 @@ extern as_status
 aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
         zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_batch             batch_policy;
-    as_batch                    batch;
-    HashTable*                  keys_ht_p = Z_ARRVAL_P(keys_p);
-    HashPosition                key_pointer;
-    zval**                      key_entry;
-    int16_t                     initializeKey = 0;
-    int                         i = 0;
-    bool                        is_batch_init = false;
-    foreach_callback_udata      batch_get_callback_udata;
+    as_policy_batch                     batch_policy;
+    as_batch                            batch;
+    HashTable*                          keys_ht_p = Z_ARRVAL_P(keys_p);
+    HashPosition                        key_pointer;
+    zval**                              key_entry;
+    int16_t                             initializeKey = 0;
+    int                                 i = 0;
+    bool                                is_batch_init = false;
+    foreach_callback_udata              batch_get_callback_udata;
+    int                                 filter_bins_count = 0;
+
+/*    if (filter_bins_p) {
+        filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
+    }
+
+    char*                       select_p[filter_bins_count];*/
 
     if (!(as_object_p) || !(keys_p) || !(records_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate batch get");
@@ -323,9 +353,15 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    /*
-     * Set policy info
-     */
+    set_policy_batch(&batch_policy, options_p, error_p TSRMLS_CC);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    /*if (filter_bins_p) {
+        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p);
+    }*/
 
     as_batch_inita(&batch, zend_hash_num_elements(keys_ht_p));
     is_batch_init = true;
@@ -337,9 +373,10 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
     }
 
     batch_get_callback_udata.udata_p = records_p;
+    //batch_get_callback_udata.select_p = select_p;
     batch_get_callback_udata.error_p = error_p;
 
-    if (AEROSPIKE_OK != aerospike_batch_get(as_object_p, error_p, NULL,
+    if (AEROSPIKE_OK != aerospike_batch_get(as_object_p, error_p, &batch_policy,
                 &batch, (aerospike_batch_read_callback) batch_get_cb,
                 &batch_get_callback_udata)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get batch records");
