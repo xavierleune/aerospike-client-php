@@ -3042,7 +3042,8 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
         goto exit;
     }
 
-    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST, hex_str_p, strlen(hex_str_p), 1)) {
+    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST,
+                (as_key_digest(record_key_p))->value, AS_DIGEST_VALUE_SIZE, 1)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
         status = AEROSPIKE_ERR;
         goto exit;
