@@ -54,19 +54,20 @@ if (!$db->isConnected()) {
 echo success();
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Ensuring that records are put at test.users with PKs=2345-2349 ≻", 'black', true);
+echo colorize("Ensuring that records are put at test.characters with PKs=4-10 ≻", 'black', true);
 $start = __LINE__;
-$emails = array("peter.john@hal-inst.org",
-    "freudian.circuits@hal-inst.org",
-    "steve.circuits@hal-inst.org",
-    "wolverine.john@hal-inst.org",
-    "amelia.johnson@hal-inst.org");
-$ages = array(26, 30, 35, 39, 45);
-for ($i = 2345, $j = 0; $i < 2350; $i++, $j++) {
-    $key = $db->initKey("test", "users", $i);
-    $put_vals = array("email" => $emails[$j], "age" => $ages[$j]);
-    $res = $db->put($key, $put_vals);
-    if ($res == Aerospike::OK) {
+$characters = array("freudian.circuits@hal-inst.org" => 162,
+    "philip.j.fry@planet-express.com" => 40,
+    "tarunga.leela@planet-express.com" => 39,
+    "amy.wong@planet-express.com" => 34,
+    "hubert.j.farnsworth@planet-express.com" => 173,
+    "bender.bending.rodriguez@planet-express.com" => 1055);
+$i = 4;
+foreach ($characters as $email => $age) {
+    $key = $db->initKey("test", "characters", $i++);
+    $put_vals = array("email" => $email, "age" => $age);
+    $status = $db->put($key, $put_vals);
+    if ($status == Aerospike::OK) {
         echo success();
     } else {
         echo standard_fail($db);
@@ -75,34 +76,29 @@ for ($i = 2345, $j = 0; $i < 2350; $i++, $j++) {
 
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Ensuring that a secondary index is created on 'age' in test.users ≻", 'black', true);
+echo colorize("Creating a secondary index on the 'age' bin of test.characters ≻", 'black', true);
 $start = __LINE__;
-$res = $db->createIndex("test", "users", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
-if ($res == Aerospike::OK) {
+$status = $db->createIndex("test", "characters", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
+if ($status == Aerospike::OK) {
     echo success();
 } else {
     echo standard_fail($db);
 }
-
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-sleep(2);
-echo colorize("Querying records with ages between 30 and 39≻", 'black', true);
+sleep(1);
+echo colorize("Querying records with ages between 0 and 99≻", 'black', true);
 $start = __LINE__;
 $total = 0;
-$in_thirties = 0;
-$where = $db->predicateBetween("age", 30, 39);
-$status = $db->query("test", "users", $where, function ($record) {
-    global $total, $in_thirties;
-    if (array_key_exists('email', $record) && !is_null($record['bins']['email'])) {
-            echo "\nFound record with email-id: " . $record['bins']['email'] . "and age: " . $record['bins']['age'];
-    }
+$not_centenarian = 0;
+$where = $db->predicateBetween("age", 0, 99);
+$status = $db->query("test", "characters", $where, function ($record) use (&$total, &$not_centenarian) {
     $total += (int) $record['bins']['age'];
-    $in_thirties++;
+    $not_centenarian++;
 }, array("email", "age"));
-if ($status == Aerospike::OK && $total) {
-    echo "\nThe average age of employees in their thirties is ".round($total / $in_thirties)."\n";
+if ($status == Aerospike::OK) {
     echo success();
+    echo "\nThe average age of employees who aren't centenarians is ".round($total / $not_centenarian)."\n";
 } else {
     echo standard_fail($db);
 }
@@ -111,12 +107,11 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 if (isset($args['a']) || isset($args['clean'])) {
     $start = __LINE__;
     echo colorize("Removing the records ≻", 'black', true);
-    $res = true;
-    for ($i = 2345; $i < 2350; $i++) {
-        $key = $db->initKey("test", "users", $i);
-        $res &= ((Aerospike::OK == $db->remove($key)) ? true : false);
+    for ($i = 4; $i < 10; $i++) {
+        $key = $db->initKey("test", "characters", $i);
+        $db->remove($key);
     }
-    if ($res) {
+    if ($status == Aerospike::OK) {
         echo success();
     } else {
         echo standard_fail($db);
@@ -125,8 +120,8 @@ if (isset($args['a']) || isset($args['clean'])) {
 
     $start = __LINE__;
     echo colorize("Dropping the index ≻", 'black', true);
-    $res = $db->dropIndex("test", "age_index");
-    if ($res == Aerospike::OK) {
+    $status = $db->dropIndex("test", "age_index");
+    if ($status == Aerospike::OK) {
         echo success();
     } else {
         echo standard_fail($db);
