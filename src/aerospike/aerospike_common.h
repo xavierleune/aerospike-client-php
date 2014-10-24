@@ -457,7 +457,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 u_int64_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
-                                as_record* get_rec);
+                                as_record* get_rec TSRMLS_DC);
 
 extern as_status
 aerospike_record_operations_general(Aerospike_object* aerospike_object_p,

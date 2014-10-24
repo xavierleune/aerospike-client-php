@@ -113,7 +113,7 @@ aerospike_record_initialization(aerospike* as_object_p,
                                 zval* options_p,
                                 as_error* error_p,
                                 as_policy_operate* operate_policy,
-                                uint32_t* serializer_policy)
+                                uint32_t* serializer_policy TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
 
@@ -153,13 +153,14 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
     as_policy_operate   operate_policy;
     uint32_t            serializer_policy;
 
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, 1);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
                                                       options_p, error_p,
                                                       &operate_policy,
-                                                      &serializer_policy))) {
+                                                      &serializer_policy TSRMLS_CC))) {
             DEBUG_PHP_EXT_ERROR("Initialization returned error");
             goto exit;
     }
@@ -170,7 +171,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
                                                       bin_name_p, str,
                                                       offset, initial_value,
                                                       time_to_live, operation,
-                                                      &ops, get_rec))) {
+                                                      &ops, get_rec TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
     }
@@ -213,13 +214,14 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     uint32_t                    serializer_policy;
     foreach_callback_udata      foreach_record_callback_udata;
 
+    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, zend_hash_num_elements(operations_array_p));
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
                                                       options_p, error_p,
                                                       &operate_policy,
-                                                      &serializer_policy))) {
+                                                      &serializer_policy TSRMLS_CC))) {
             DEBUG_PHP_EXT_ERROR("Initialization returned error");
             goto exit;
     }
@@ -265,7 +267,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
                             as_key_p, options_p, error_p, bin_name_p, str,
-                            offset, 0, 0, op, &ops, get_rec))) {
+                            offset, 0, 0, op, &ops, get_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
             }
@@ -333,13 +335,12 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 u_int64_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
-                                as_record* get_rec)
+                                as_record* get_rec TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     as_val*             value_p = NULL;
     const char          *select[] = {bin_name_p, NULL};
 
-    TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
     switch(operation) {
         case AS_OPERATOR_APPEND:
