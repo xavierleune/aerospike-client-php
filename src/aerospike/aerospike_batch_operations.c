@@ -1,7 +1,4 @@
 #include "php.h"
-//#include "aerospike/as_log.h"
-//#include "aerospike/as_key.h"
-#include "aerospike/as_config.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_status.h"
 #include "aerospike/aerospike.h"
@@ -152,7 +149,7 @@ exit:
 }
 
 static as_status
-process_filer_bins(HashTable *bins_array_p, char **select_p)
+process_filer_bins(HashTable *bins_array_p, char **select_p TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     HashPosition        pointer; 
@@ -360,7 +357,7 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
     }
 
     /*if (filter_bins_p) {
-        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p);
+        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
     }*/
 
     as_batch_inita(&batch, zend_hash_num_elements(keys_ht_p));
