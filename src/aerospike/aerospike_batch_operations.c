@@ -29,11 +29,14 @@ batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
     uint32_t                    i = 0;
     zval*                       record_metadata_p = NULL;
 
-    MAKE_STD_ZVAL(record_metadata_p);
-    array_init(record_metadata_p);
+    if (n == 0) {
+        goto exit;
+    }
 
     for (i = 0; i < n; i++) {
         if (results[i].result == AEROSPIKE_OK) {
+            MAKE_STD_ZVAL(record_metadata_p);
+            array_init(record_metadata_p);
             if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
                         results[i].record.gen)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
@@ -68,10 +71,24 @@ batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
                     break;
             }
         }  else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
-            if (0 != add_assoc_null(udata_ptr->udata_p, results[i].key->value.string.value)) {
-                DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-                status = AEROSPIKE_ERR;
-                goto exit;
+            switch (((as_val*)(results[i].key->valuep))->type) {
+                case AS_STRING:
+                    if (0 != add_assoc_null(udata_ptr->udata_p, results[i].key->value.string.value)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    }
+                    break;
+                case AS_INTEGER:
+                    if (0 != add_index_null(udata_ptr->udata_p, results[i].key->value.integer.value)) {
+                        printf("add_index_null\n");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    }
+                    break;
+                default:
+                    break;
             }
         } else {
             return false;
@@ -79,8 +96,10 @@ batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
     }
 
 exit:
-    if (status != AEROSPIKE_OK) {
-        return false;
+    if (n == 0)
+        return true;
+    if (status != AEROSPIKE_OK && record_metadata_p) {
+        zval_ptr_dtor(&record_metadata_p);
     }
     return true;
 }
@@ -138,7 +157,7 @@ aerospike_existsMany(aerospike* as_object_p, as_error* error_p,
     metadata_callback.error_p = error_p;
 
     if (AEROSPIKE_OK != (status = aerospike_batch_exists(as_object_p, error_p,
-                    NULL, &batch, batch_read_cb, &metadata_callback))) {
+                    batch_policy, &batch, batch_read_cb, &metadata_callback))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of batch records");
         goto exit;
     }

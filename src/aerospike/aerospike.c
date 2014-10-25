@@ -890,7 +890,7 @@ PHP_METHOD(Aerospike, existsMany)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &keys_p, &metadata_p, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a", &keys_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for existsMany");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for existsMany");
@@ -1108,7 +1108,7 @@ PHP_METHOD(Aerospike, exists)
         DEBUG_PHP_EXT_ERROR("exists: connection not established");
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, /*&metadata_p*/&return_value, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for exists");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for exists");
