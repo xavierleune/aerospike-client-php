@@ -155,7 +155,7 @@ aerospike_existsMany(aerospike* as_object_p, as_error* error_p,
     metadata_callback.error_p = error_p;
 
     if (AEROSPIKE_OK != (status = aerospike_batch_exists(as_object_p, error_p,
-                    batch_policy, &batch, batch_read_cb, &metadata_callback))) {
+                    &batch_policy, &batch, batch_read_cb, &metadata_callback))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of batch records");
         goto exit;
     }

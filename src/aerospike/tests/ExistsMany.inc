@@ -77,12 +77,12 @@ class ExistsMany extends AerospikeTestCommon
      */
     function testExistsManyEmptyKeyArrayNegative($db, $key) {
         if ($db->isConnected()) {
-            $key = $db->initKey("test", "demo", "existsMany1");
-            $db->put($key,array("binA"=>10));
-            $key = $db->initKey("test", "demo", "existsMany2");
-            $db->put($key,array("binB"=>20));
-            $key = $db->initKey("test", "demo", "existsMany3");
-            $db->put($key,array("binC"=>30));
+            $key1 = $db->initKey("test", "demo", "existsMany1");
+            $db->put($key1, array("binA"=>10));
+            $key2 = $db->initKey("test", "demo", "existsMany2");
+            $db->put($key2, array("binB"=>20));
+            $key3 = $db->initKey("test", "demo", "existsMany3");
+            $db->put($key3, array("binC"=>30));
 
             $key_array = array();
             $status = $db->existsMany($key_array, $metadata);
