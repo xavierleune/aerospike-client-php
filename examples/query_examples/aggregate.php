@@ -115,6 +115,18 @@ if ($register_status != Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Ensuring that a secondary index is created on 'age' in test.users ≻", 'black', true);
+$start = __LINE__;
+$res = $db->createIndex("test", "users", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
+if ($res == Aerospike::OK) {
+    echo success();
+} else {
+    echo standard_fail($db);
+}
+
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+sleep(2);
 echo colorize("Performing aggregate on records ≻", 'black', true);
 $start = __LINE__;
 $where = $db->predicateBetween("age", 20, 29);
@@ -141,6 +153,16 @@ if (isset($args['c']) || isset($args['clean'])) {
     $res = $db->remove($key);
     $key = $db->initKey("test", "users", 4567);
     $res = $db->remove($key);
+    if ($res == Aerospike::OK) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
+    if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+    $start = __LINE__;
+    echo colorize("Dropping the index ≻", 'black', true);
+    $res = $db->dropIndex("test", "age_index");
     if ($res == Aerospike::OK) {
         echo success();
     } else {

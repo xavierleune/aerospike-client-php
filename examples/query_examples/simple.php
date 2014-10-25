@@ -75,6 +75,18 @@ for ($i = 2345, $j = 0; $i < 2350; $i++, $j++) {
 
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Ensuring that a secondary index is created on 'age' in test.users ≻", 'black', true);
+$start = __LINE__;
+$res = $db->createIndex("test", "users", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
+if ($res == Aerospike::OK) {
+    echo success();
+} else {
+    echo standard_fail($db);
+}
+
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+sleep(2);
 echo colorize("Querying records with ages between 30 and 39≻", 'black', true);
 $start = __LINE__;
 $total = 0;
@@ -82,11 +94,11 @@ $in_thirties = 0;
 $where = $db->predicateBetween("age", 30, 39);
 $status = $db->query("test", "users", $where, function ($record) {
     global $total, $in_thirties;
-    if (array_key_exists('email', $record) && !is_null($record['email'])) {
-            echo "\nFound record with email-id: " . $record['email'] . "and age: " . $record['age'];
-        }
-        $total += (int) $record['age'];
-        $in_thirties++;
+    if (array_key_exists('email', $record) && !is_null($record['bins']['email'])) {
+            echo "\nFound record with email-id: " . $record['bins']['email'] . "and age: " . $record['bins']['age'];
+    }
+    $total += (int) $record['bins']['age'];
+    $in_thirties++;
 }, array("email", "age"));
 if ($status == Aerospike::OK && $total) {
     echo "\nThe average age of employees in their thirties is ".round($total / $in_thirties)."\n";
@@ -105,6 +117,16 @@ if (isset($args['a']) || isset($args['clean'])) {
         $res &= ((Aerospike::OK == $db->remove($key)) ? true : false);
     }
     if ($res) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
+    if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+    $start = __LINE__;
+    echo colorize("Dropping the index ≻", 'black', true);
+    $res = $db->dropIndex("test", "age_index");
+    if ($res == Aerospike::OK) {
         echo success();
     } else {
         echo standard_fail($db);

@@ -51,8 +51,8 @@ if (!$db->isConnected()) {
 
 $poll = true;
 while($poll) {
-    $res = $db->scanInfo(1, $info);
-    if ($res == Aerospike::OK) {
+    $status = $db->scanInfo(1, $info);
+    if ($status == Aerospike::OK) {
         var_dump($info);
         if ($info["status"] == Aerospike::SCAN_STATUS_COMPLETED) {
             echo "Background scan is complete!";

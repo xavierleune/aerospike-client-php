@@ -14,12 +14,12 @@ described as an array of bin-name => value pairs.
 The *ttl* parameter can be used to control the expiration of the record.
 
 By default the **Aerospike::put()** method behaves in a set-and-replace mode similar to
-associative array keys and values. This behavior can be modified using the
+array keys and values. This behavior can be modified using the
 *options* parameter.
 
 ## Parameters
 
-**key** the key under which to store the record. An array with keys 'ns','set','key'.
+**key** the key under which to store the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
 **bins** the array of bin names and values to write.
 
@@ -31,6 +31,7 @@ associative array keys and values. This behavior can be modified using the
 - **Aerospike::OPT_POLICY_EXISTS**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_SERIALIZER**.
+- **Aerospike::OPT_POLICY_GEN**
 
 ## Return Values
 
@@ -55,8 +56,8 @@ if (!$db->isConnected()) {
 $key = $db->initKey("test", "users", 1234);
 $bins = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
-$res = $db->put($key, $bins);
-if ($res == Aerospike::OK) {
+$status = $db->put($key, $bins);
+if ($status == Aerospike::OK) {
     echo "Record written.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -65,8 +66,8 @@ if ($res == Aerospike::OK) {
 // Updating the record
 $bins = array("name" => "You There", "age" => 33);
 // will update the name bin, and create a new 'age' bin
-$res = $db->put($key, $bins);
-if ($res == Aerospike::OK) {
+$status = $db->put($key, $bins);
+if ($status == Aerospike::OK) {
     echo "Record updated.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -89,12 +90,40 @@ Record updated.
 
 // This time we expect an error due to the record already existing (assuming we
 // already ran Example #1)
-$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
+$status = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
+
+if ($status == Aerospike::OK) {
+    echo "Record written.\n";
+} elseif ($status == Aerospike::ERR_RECORD_EXISTS) {
+    echo "The Aerospike server already has a record with the given key.\n";
+} else {
+    echo "[{$db->errorno()}] ".$db->error();
+}
+?>
+```
+
+We expect to see:
+
+```
+The Aerospike server already has a record with the given key.
+```
+
+
+### Example #3 Fail if the record has been written recently
+
+```php
+<?php
+
+// Get the record metadata and note its generation
+$db->exists($key, $metadata);
+$gen = $metadata['generation'];
+$gen_policy = array(Aerospike::POLICY_GEN_EQ, $gen);
+$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_GEN => $gen_policy));
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
-} elseif ($res == Aerospike::ERR_RECORD_EXISTS) {
-    echo "The Aerospike server already has a record with the given key.\n";
+} elseif ($res == Aerospike::ERR_RECORD_GENERATION) {
+    echo "The record has been written since we last read it.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();
 }

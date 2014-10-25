@@ -104,7 +104,7 @@ The *aerospike* module should now be available to the PHP CLI:
 ## License
 
 The Aerospike PHP Client is made availabled under the terms of
-the Apache License, Version 2, as stated in the file `LICENSE`.
+the Apache License, Version 2, as stated in the file [LICENSE](./LICENSE).
 
 Individual files may be made available under their own specific license,
 all compatible with Apache License, Version 2. Please see individual files for

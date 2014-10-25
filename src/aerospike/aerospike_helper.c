@@ -117,7 +117,7 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
  */
 extern int parseLogParameters(as_log* as_log_p)
 {
-    if (as_log_set_callback(as_log_p, &aerospike_helper_log_callback)) {
+    if (as_log_set_callback(as_log_p, (as_log_callback)&aerospike_helper_log_callback)) {
 	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         return 1;
@@ -169,8 +169,8 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
  */
 #define ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT()                              \
 do {                                                                          \
-    if (NULL != (as_object_p->as_ref_p = pemalloc(1,                          \
-                    sizeof(aerospike_ref)))) {                                \
+    if (NULL != (as_object_p->as_ref_p = pemalloc(sizeof(aerospike_ref), 1))) \
+    {                                                                         \
         as_object_p->as_ref_p->as_p = NULL;                                   \
         as_object_p->as_ref_p->ref_as_p = 0;                                  \
     }                                                                         \
@@ -192,15 +192,9 @@ do {                                                                           \
     new_le.type = val_persist;                                                 \
     if (new_flag) {                                                            \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
-        DEBUG_PHP_EXT_DEBUG("Before:(%.4x) Head:(%.4x) Count in list are %d.", \
-                persistent_list, persistent_list->pListHead,                   \
-                persistent_list->nNumOfElements);                              \
         zend_hash_add(persistent_list, alias, alias_len,                       \
                 (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);         \
-        DEBUG_PHP_EXT_DEBUG("After:(%.4x) Head:(%.4x) Count in list are %d",   \
-                persistent_list, persistent_list->pListHead,                   \
-                persistent_list->nNumOfElements);                              \
-          pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
         goto exit;                                                             \
     } else {                                                                   \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \

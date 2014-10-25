@@ -37,8 +37,8 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->deregister('my_udf');
-if ($res == Aerospike::OK) {
+$status = $db->deregister('my_udf');
+if ($status == Aerospike::OK) {
     echo "UDF module my_udf was removed from the Aerospike DB.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

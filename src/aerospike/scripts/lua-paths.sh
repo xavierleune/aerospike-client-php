@@ -18,7 +18,7 @@
 LUA_SYSPATH_PREFIX=$1
 AEROSPIKE_C_CLIENT=$2
 if [ ! $LUA_SYSPATH_PREFIX ] || [ ! $AEROSPIKE_C_CLIENT ]; then
-    printf "Usage:\nlua-paths.sh /opt/appcelerator 3.0.80\n"
+    printf "Usage:\nlua-paths.sh /opt/aerospike 3.0.84\n"
     exit 1
 fi
 
@@ -27,17 +27,17 @@ LUA_USRPATH=${LUA_SYSPATH_PREFIX}/client-php/${AEROSPIKE_C_CLIENT}/usr/udf/lua
 
 mkdir -p ${LUA_SYSPATH}
 if [ $? -gt 0 ] ; then
-    exit 1
+    exit 2
 fi
-chmod -R 0755 ${LUA_SYSPATH}
+chmod 0755 ${LUA_SYSPATH}
 rm -f ${LUA_SYSPATH_PREFIX}/client-php/sys-lua
 ln -s ${LUA_SYSPATH} ${LUA_SYSPATH_PREFIX}/client-php/sys-lua
 
 mkdir -p ${LUA_USRPATH}
 if [ $? -gt 0 ] ; then
-    exit 1
+    exit 3
 fi
-chmod -R 0755 ${LUA_USRPATH}
+chmod 0777 ${LUA_USRPATH}
 rm -f ${LUA_SYSPATH_PREFIX}/client-php/usr-lua
 ln -s ${LUA_USRPATH} ${LUA_SYSPATH_PREFIX}/client-php/usr-lua
 

@@ -22,7 +22,7 @@ class Udf extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $udf_register_status =
-            $db->register(self::$lua_user_path . "/bin_transform.lua", "module.lua");
+            $db->register(self::$lua_user_path . "/test_record_udf.lua", "module.lua");
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
         }
@@ -65,7 +65,7 @@ class Udf extends AerospikeTestCommon
         if (!$db->isConnected()) {
             return ($db->errorno());
         }
-        $udf_register_status = $db->register(self::$lua_user_path . "/bin_transform.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
+        $udf_register_status = $db->register(self::$lua_user_path . "/test_record_udf.lua", "module.lua", Aerospike::UDF_TYPE_LUA,
             array(Aerospike::OPT_WRITE_TIMEOUT => 5000));
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
@@ -732,8 +732,8 @@ class Udf extends AerospikeTestCommon
                 return($db->errorno());
             }
         }
-        $handle = fopen("tests/lua/bin_transform.lua","r");
-        $mycode = fread($handle,filesize("tests/lua/bin_transform.lua"));
+        $handle = fopen("tests/lua/test_record_udf.lua","r");
+        $mycode = fread($handle,filesize("tests/lua/test_record_udf.lua"));
         $result = strcmp($code, $mycode);
         if(!$result) {
             return Aerospike::OK;

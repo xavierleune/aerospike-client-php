@@ -6,7 +6,7 @@ Aerospike::dropIndex - drops a secondary index
 ## Description
 
 ```
-public int Aerospike::dropIndex ( string $ns, string $name )
+public int Aerospike::dropIndex ( string $ns, string $name [, array $options ] )
 ```
 
 **Aerospike::dropIndex()** will drop a secondary index from
@@ -17,6 +17,9 @@ a namespace with a specified index *name*.
 **ns** the namespace
 
 **name** the name of the index
+
+**options** including
+- **Aerospike::OPT_WRITE_TIMEOUT**
 
 ## Return Values
 
@@ -36,10 +39,10 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->dropIndex("test", "user_email_idx");
-if ($res == Aerospike::OK) {
+$status = $db->dropIndex("test", "user_email_idx");
+if ($status == Aerospike::OK) {
     echo "Index user_email_idx was dropped from namespace 'test'\n";
-else if ($res == Aerospike::ERR_INDEX_NOT_FOUND) {
+else if ($status == Aerospike::ERR_INDEX_NOT_FOUND) {
     echo "No such index exists.\n";
 } else {
     echo "[{$db->errorno()}] ".$db->error();

@@ -10,20 +10,21 @@ public int Aerospike::getMany ( array $keys, array &$records [, array $filter [,
 ```
 
 **Aerospike::getMany()** will read a batch of *records* from a list of given *keys*
-Each of the *records* is filled with an associative array of bins and values.
+Each of the *records* is filled with an array of bins and values.
 Non-existent bins will appear in the *record* with a NULL value. Non-existent
 records will return as NULL.
-The bins returned can be filtered by passing an associative array of the bins needed.
+The bins returned can be filtered by passing an array of the bins needed.
 
 ## Parameters
 
-**keys** an array of initialized keys, each an associative array with keys 'ns','set','key'.
+**keys** an array of initialized keys, each an array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**record** filled by an associative array of bins and values.
+**record** filled by an array of bins and values.
 
 **filter** an array of bin names
 
 **[options](aerospike.md)** including
+- **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values
@@ -50,8 +51,8 @@ $key1 = $db->initKey("test", "users", 1234);
 $key2 = $db->initKey("test", "users", 1235); // this key does noot exist
 $key2 = $db->initKey("test", "users", 1236);
 $keys = array($key1, $key2, $key3);
-$res = $db->getMany($keys, $records);
-if ($res == Aerospike::OK) {
+$status = $db->getMany($keys, $records);
+if ($status == Aerospike::OK) {
     var_dump($records);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
@@ -97,8 +98,8 @@ array(3) {
 // Getting a filtered record
 $filter = array("email", "manager");
 unset($record);
-$res = $db->getMany($keys, $records, $filter);
-if ($res == Aerospike::OK) {
+$status = $db->getMany($keys, $records, $filter);
+if ($status == Aerospike::OK) {
     var_dump($record);
 } else {
     echo "[{$db->errorno()}] ".$db->error();
