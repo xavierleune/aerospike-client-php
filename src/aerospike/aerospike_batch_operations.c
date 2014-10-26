@@ -19,17 +19,13 @@
  ******************************************************************************************************
  */
 bool
-batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
+batch_exists_cb(const as_batch_read* results, uint32_t n, void* udata)
 {
     TSRMLS_FETCH();
     as_status                   status = AEROSPIKE_OK;
     foreach_callback_udata*     udata_ptr = (foreach_callback_udata*)udata;
     uint32_t                    i = 0;
     zval*                       record_metadata_p = NULL;
-
-    if (n == 0) {
-        goto exit;
-    }
 
     for (i = 0; i < n; i++) {
         if (results[i].result == AEROSPIKE_OK) {
@@ -49,44 +45,61 @@ batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
                 goto exit;
             }
 
-            switch (((as_val*)(results[i].key->valuep))->type) {
-                case AS_STRING:
-                    if (0 != add_assoc_zval(udata_ptr->udata_p, results[i].key->value.string.value, record_metadata_p)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-                        status = AEROSPIKE_ERR;
-                        goto exit;
-                    }
-                    break;
-                case AS_INTEGER:
-                    if (FAILURE == add_index_zval(udata_ptr->udata_p, results[i].key->value.integer.value,
+            if (!(as_val*)(results[i].key->valuep)) {
+                if (0 != add_assoc_zval(udata_ptr->udata_p, results[i].key->digest.value,
                             record_metadata_p)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-                        status = AEROSPIKE_ERR;
-                        goto exit;
-                    }
-                    break;
-                default:
-                    break;
+                    DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+            } else {
+                switch (((as_val*)(results[i].key->valuep))->type) {
+                    case AS_STRING:
+                        if (0 != add_assoc_zval(udata_ptr->udata_p, results[i].key->value.string.value,
+                                    record_metadata_p)) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                            status = AEROSPIKE_ERR;
+                            goto exit;
+                        }
+                        break;
+                    case AS_INTEGER:
+                        if (FAILURE == add_index_zval(udata_ptr->udata_p, results[i].key->value.integer.value,
+                                    record_metadata_p)) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                            status = AEROSPIKE_ERR;
+                            goto exit;
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }  else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
-            switch (((as_val*)(results[i].key->valuep))->type) {
-                case AS_STRING:
-                    if (0 != add_assoc_null(udata_ptr->udata_p, results[i].key->value.string.value)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-                        status = AEROSPIKE_ERR;
-                        goto exit;
-                    }
-                    break;
-                case AS_INTEGER:
-                    if (0 != add_index_null(udata_ptr->udata_p, results[i].key->value.integer.value)) {
-                        printf("add_index_null\n");
-                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-                        status = AEROSPIKE_ERR;
-                        goto exit;
-                    }
-                    break;
-                default:
-                    break;
+            if (!(as_val*)(results[i].key->valuep)) {
+                if (0 != add_assoc_null(udata_ptr->udata_p, results[i].key->digest.value)) {
+                    DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+            } else {
+                switch (((as_val*)(results[i].key->valuep))->type) {
+                    case AS_STRING:
+                        if (0 != add_assoc_null(udata_ptr->udata_p, results[i].key->value.string.value)) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                            status = AEROSPIKE_ERR;
+                            goto exit;
+                        }
+                        break;
+                    case AS_INTEGER:
+                        if (0 != add_index_null(udata_ptr->udata_p, results[i].key->value.integer.value)) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                            status = AEROSPIKE_ERR;
+                            goto exit;
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         } else {
             return false;
@@ -94,8 +107,6 @@ batch_read_cb(const as_batch_read* results, uint32_t n, void* udata)
     }
 
 exit:
-    if (n == 0)
-        return true;
     if (status != AEROSPIKE_OK && record_metadata_p) {
         zval_ptr_dtor(&record_metadata_p);
     }
@@ -155,7 +166,7 @@ aerospike_existsMany(aerospike* as_object_p, as_error* error_p,
     metadata_callback.error_p = error_p;
 
     if (AEROSPIKE_OK != (status = aerospike_batch_exists(as_object_p, error_p,
-                    &batch_policy, &batch, batch_read_cb, &metadata_callback))) {
+                    &batch_policy, &batch, batch_exists_cb, &metadata_callback))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of batch records");
         goto exit;
     }

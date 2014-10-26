@@ -244,4 +244,41 @@ class ExistsMany extends AerospikeTestCommon
         }
         return $status;
     }
+    /**
+     * @test
+     * Basic existsMany, initKey with digest.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testExistsManyInitKeyWithDigest)
+     *
+     * @test_plans{1.1}
+     */
+    function testExistsManyInitKeyWithDigest($db, $key) {
+        if ($db->isConnected()) {
+            $key1 = $db->initKey("test", "demo", "existsMany1", true);
+            $db->put($key1, array("binA"=>10));
+            $key2 = $db->initKey("test", "demo", "existsMany2", true);
+            $db->put($key2, array("binB"=>20));
+            $key3 = $db->initKey("test", "demo", "existsMany3", true);
+
+            $keys = array($key1, $key2, $key3);
+            $status = $db->existsMany($keys, $metadata,
+                array(Aerospike::OPT_READ_TIMEOUT=>3000));
+            if ($status != AEROSPIKE::OK) {
+                return ($db->errorno());
+            }
+            if (empty($metadata)) {
+                return Aerospike::ERR;
+            }
+        } else {
+            return($db->errorno());
+        }
+        return $status;
+    }
 }
