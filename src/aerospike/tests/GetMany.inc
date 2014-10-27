@@ -74,8 +74,9 @@ class GetMany extends AerospikeTestCommon
                 if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
                     (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
                     (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
-                    if (!empty(array_diff_assoc_recursive($my_put_records[$i],
-                        $value["bins"]))) {
+                    $result = array_diff_assoc_recursive($my_put_records[$i],
+                                                $value["bins"]);
+                    if (!empty($result)) {
                         return Aerospike::ERR_CLIENT;
                     }
                     $i++;
@@ -129,8 +130,9 @@ class GetMany extends AerospikeTestCommon
                 if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
                     (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
                     (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
-                    if (!empty(array_diff_assoc_recursive($my_put_records[$i],
-                        $value["bins"]))) {
+                    $result = (array_diff_assoc_recursive($my_put_records[$i],
+                                                $value["bins"]);
+                    if (!empty($result)) {
                         return Aerospike::ERR_CLIENT;
                     }
                     $i++;
@@ -279,8 +281,9 @@ class GetMany extends AerospikeTestCommon
                if ((!strcmp($this->keys[$i]["key"], $records_key)) &&
                    (!strcmp($this->keys[$i]["ns"], $value["key"]["ns"])) &&
                    (!strcmp($this->keys[$i]["set"], $value["key"]["set"]))) {
-                   if (!empty(array_diff_assoc_recursive($this->put_records[$i],
-                       $value["bins"]))) {
+                   $result = array_diff_assoc_recursive($this->put_records[$i],
+                                              $value["bins"]);
+                   if (!empty($result)) {
                        return Aerospike::ERR_CLIENT;
                    }
                    $i++;
@@ -324,8 +327,9 @@ class GetMany extends AerospikeTestCommon
                 if ((!strcmp($this->keys[$i]["key"], $records_key)) &&
                     (!strcmp($this->keys[$i]["ns"], $value["key"]["ns"])) &&
                     (!strcmp($this->keys[$i]["set"], $value["key"]["set"]))) {
-                    if (!empty(array_diff_assoc_recursive($this->put_records[$i],
-                        $value["bins"]))) {
+                    $result = array_diff_assoc_recursive($this->put_records[$i],
+                                                $value["bins"]);
+                    if (!empty($result)) {
                         return Aerospike::ERR_CLIENT;
                     }
                     $i++;
