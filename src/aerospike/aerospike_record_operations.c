@@ -496,6 +496,8 @@ aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
              ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                "input parameters (type) for exist/getMetdata function not proper.");
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("input parameters (type) for exist/getMetdata function not proper.");
         goto exit;
@@ -512,6 +514,8 @@ aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
     if (AEROSPIKE_OK != (status =
                 aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
                     &as_key_for_put_record, &initializeKey))) {
+        PHP_EXT_SET_AS_ERR(error_p, status,
+                "unable to iterate through exists/getMetadata key params");
         DEBUG_PHP_EXT_ERROR("unable to iterate through exists/getMetadata key params");
         goto exit;
     }

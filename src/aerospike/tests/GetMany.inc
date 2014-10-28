@@ -92,6 +92,66 @@ class GetMany extends AerospikeTestCommon
 
     /**
      * @test
+     * Basic getMany operation with all arguments without options and filter bins with digest in initKey().
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testGetManyPositiveWithDigest($db, $key) {
+        if ($db->isConnected()) {
+            $key4 = $db->initKey("test", "demo", "getMany4", true);
+            $put_record = array("binD"=>50);
+            $db->put($key4, $put_record);
+
+            $my_keys = $this->keys + array($key4);
+            $my_put_records = $this->put_records;
+            $my_put_records[3] = NULL;
+            $status = $db->getMany($my_keys, $records);
+            if ($status != Aerospike::OK) {
+                return $db->errorno();
+            }
+            if (empty($records)) {
+                return Aerospike::ERR_CLIENT;
+            }
+
+            $i = 0;
+            foreach ($records as $records_key=>$value) {
+                if ($i == 3) {
+                    if ($value["key"]["digest"] != "getMany4") {
+                        return Aerospike::ERR_CLIENT;
+                    } else {
+                        return Aerospike::OK;
+                    }
+                }
+                if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
+                    (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
+                    (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
+                    $result = array_diff_assoc_recursive($my_put_records[$i],
+                                                $value["bins"]);
+                    if (!empty($result)) {
+                        return Aerospike::ERR_CLIENT;
+                    }
+                    $i++;
+                } else {
+                    return Aerospike::ERR_CLIENT;
+                }
+            }
+            return $status;
+        } else {
+            return $db->errorno();
+        }
+    }
+
+    /**
+     * @test
      * Basic getMany operation with all arguments with options without filter bins.
      *
      * @pre

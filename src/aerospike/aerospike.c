@@ -1080,8 +1080,10 @@ PHP_METHOD(Aerospike, existsMany)
     zval_dtor(metadata_p);
     array_init(metadata_p);
 
-    if (AEROSPIKE_OK != (status = aerospike_existsMany(aerospike_obj_p->as_ref_p->as_p,
-                    &error, keys_p, metadata_p, options_p TSRMLS_CC))) {
+    if (AEROSPIKE_OK !=
+            (status = aerospike_batch_operations_exists_many(aerospike_obj_p->as_ref_p->as_p,
+                                                             &error, keys_p, metadata_p,
+                                                             options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("existsMany() function returned an error");
         goto exit;
     }

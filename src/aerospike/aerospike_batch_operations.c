@@ -63,6 +63,7 @@ populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
         }
     }
 }
+
 /*
  ******************************************************************************************************
  * This callback will be called with the results of aerospike_batch_get() and aerospike_batch_exists().
@@ -149,7 +150,7 @@ exit:
  ******************************************************************************************************
  */
 extern as_status
-aerospike_existsMany(aerospike* as_object_p, as_error* error_p,
+aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p,
         zval* keys_p, zval* metadata_p, zval* options_p TSRMLS_DC)
 {
     as_status                   status = AEROSPIKE_OK;
@@ -189,7 +190,8 @@ aerospike_existsMany(aerospike* as_object_p, as_error* error_p,
     is_batch_init = true;
 
     foreach_hashtable(keys_array, key_pointer, key_entry) {
-        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry), as_batch_keyat(&batch, i), &initializeKey);
+        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+                as_batch_keyat(&batch, i), &initializeKey);
         i++;
     }
 
@@ -349,7 +351,7 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
 {
     as_policy_batch                     batch_policy;
     as_batch                            batch;
-    HashTable*                          keys_ht_p = Z_ARRVAL_P(keys_p);
+    HashTable*                          keys_ht_p = NULL;
     HashPosition                        key_pointer;
     zval**                              key_entry;
     int16_t                             initializeKey = 0;
@@ -380,7 +382,18 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
         process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
     }*/
 
+    if (Z_TYPE_P(keys_p) == IS_ARRAY) {
+        keys_ht_p = Z_ARRVAL_P(keys_p);
+    } else {
+        DEBUG_PHP_EXT_DEBUG("Invalid type for keys");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid type for keys");
+    }
+
     if (zend_hash_num_elements(keys_ht_p) == 0) {
+        /*
+         * No need to set error here. This condition can be eliminated after C
+         * SDK adds check for size.
+         */
         goto exit;
     }
 
