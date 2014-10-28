@@ -285,7 +285,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
         if (get_rec) {
             foreach_record_callback_udata.udata_p = returned_p;
             foreach_record_callback_udata.error_p = error_p;
-            foreach_record_callback_udata.obj = as_object_p;
+            foreach_record_callback_udata.obj = aerospike_obj_p;
             if (!as_record_foreach(get_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
                         &foreach_record_callback_udata)) {
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
