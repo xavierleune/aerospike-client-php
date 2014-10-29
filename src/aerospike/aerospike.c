@@ -1191,7 +1191,7 @@ PHP_METHOD(Aerospike, operate)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|aa",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|za",
                 &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operate function");
@@ -1200,7 +1200,7 @@ PHP_METHOD(Aerospike, operate)
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-            PHP_TYPE_ISNOTARR(operations_p) || ((returned_p) && (PHP_TYPE_ISNOTARR(returned_p))) ||
+            PHP_TYPE_ISNOTARR(operations_p) ||
             ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for operate function not proper");
