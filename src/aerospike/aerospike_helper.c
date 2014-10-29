@@ -26,7 +26,7 @@ uint32_t              is_callback_registered;
  *******************************************************************************************************
  */
 #ifndef __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__
-as_log_level php_log_level_set = AS_LOG_LEVEL_OFF;
+as_log_level php_log_level_set = PHP_EXT_AS_LOG_LEVEL_OFF;
 #else
 as_log_level php_log_level_set = __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__;
 #endif
@@ -115,16 +115,16 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
  * @return 1 if log set succeeds. Otherwise 0.
  *******************************************************************************************************
  */
-extern int parseLogParameters(as_log* as_log_p)
+/*extern int parseLogParameters(as_log* as_log_p)
 {
-    if (as_log_set_callback(as_log_p, (as_log_callback)&aerospike_helper_log_callback)) {
+    if (as_log_set_callback((as_log_callback)&aerospike_helper_log_callback)) {
 	is_callback_registered = 1;
         Z_ADDREF_P(func_call_info.function_name);
         return 1;
     } else {
         return 0;;
     }
-}
+}*/
 
 /*
  *******************************************************************************************************

@@ -7,6 +7,13 @@
 #include "aerospike/as_operations.h"
 #include "aerospike/as_record.h"
 
+/*
+ *******************************************************************************************************
+ * MACRO TO SET PHP LOGGING OFF.
+ *******************************************************************************************************
+ */
+#define PHP_EXT_AS_LOG_LEVEL_OFF -1
+
 /* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
@@ -284,7 +291,7 @@ extern as_log_level   php_log_level_set;
 #ifdef __DEBUG_PHP__
 #define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, php_log_level, args...)                                \
 do {                                                                                                  \
-    if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                                                     \
+    if (!(PHP_EXT_AS_LOG_LEVEL_OFF == php_log_level_set))                                             \
         if (php_log_level_set >= log_level) {                                                         \
             php_error_docref(NULL TSRMLS_CC, php_log_level, args);                                    \
             aerospike_helper_log_callback((log_level | 0x08), __func__ TSRMLS_CC,                     \

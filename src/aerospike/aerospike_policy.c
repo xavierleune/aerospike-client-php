@@ -594,16 +594,16 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        write_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_write |= SET_BIT_OPT_POLICY_KEY;
                     } else if (read_policy_p) {
-                        read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_read |= SET_BIT_OPT_POLICY_KEY;
                     } else if (operate_policy_p) {
-                        operate_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        operate_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_operate |= SET_BIT_OPT_POLICY_KEY;
                     } else if (remove_policy_p) {
-                        remove_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        remove_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_remove |= SET_BIT_OPT_POLICY_KEY;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
@@ -624,13 +624,13 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN;
                         options_passed_for_write |= SET_BIT_OPT_POLICY_GEN;
                     } else if (operate_policy_p) {
-                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN;
                         options_passed_for_operate |= SET_BIT_OPT_POLICY_GEN;
                     } else if (remove_policy_p) {
-                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN;
                         options_passed_for_remove |= SET_BIT_OPT_POLICY_GEN;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");

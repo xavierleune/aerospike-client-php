@@ -84,8 +84,8 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.serializer", "4097", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_policy", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_gen", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -3296,12 +3296,7 @@ PHP_METHOD(Aerospike, setLogLevel)
         goto exit;
     }
 
-    if (!as_log_set_level(&aerospike_obj_p->as_ref_p->as_p->log, log_level)) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to set log level");
-        DEBUG_PHP_EXT_ERROR("Unable to set log level");
-        goto exit;
-    }
+    as_log_set_level(log_level);
 
 exit:
     if (status != AEROSPIKE_OK) {
@@ -3354,16 +3349,11 @@ PHP_METHOD(Aerospike, setLogHandler)
         RETURN_FALSE;
     }
 
-    if (as_log_set_callback(&aerospike_obj_p->as_ref_p->as_p->log, (as_log_callback)&aerospike_helper_log_callback)) {
-        is_callback_registered = 1;
-        Z_ADDREF_P(func_call_info.function_name);
-        PHP_EXT_RESET_AS_ERR_IN_CLASS();
-        RETURN_TRUE;
-    } else {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to set LogHandler");
-        DEBUG_PHP_EXT_ERROR("Unable to set LogHandler");
-        RETURN_FALSE;
-    }
+    as_log_set_callback((as_log_callback)&aerospike_helper_log_callback);
+    is_callback_registered = 1;
+    Z_ADDREF_P(func_call_info.function_name);
+    PHP_EXT_RESET_AS_ERR_IN_CLASS();
+    RETURN_TRUE;
 }
 
 /*
