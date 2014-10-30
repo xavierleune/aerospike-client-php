@@ -33,6 +33,7 @@
 
 #include "php.h"
 #include "php_aerospike.h"
+#include "ext/standard/info.h"
 
 #include "aerospike/aerospike.h"
 #include "aerospike/aerospike_key.h"
@@ -88,6 +89,8 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.key_gen", "1", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
+
+ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
 static void tmp(void *p) {
     TSRMLS_FETCH();
@@ -408,7 +411,8 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
  */
 zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 {
-    zend_object_value retval;
+    //zend_object_value retval;
+    zend_object_value retval = {0};
     Aerospike_object *intern_obj_p;
 
     if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
@@ -423,10 +427,11 @@ zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
         retval.handle = zend_objects_store_put(intern_obj_p, Aerospike_object_dtor, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
         retval.handlers = &Aerospike_handlers;
         intern_obj_p->as_ref_p = NULL;
-        return (retval);
+        //return (retval);
     } else {
         DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
     }
+    return (retval);
 }
 
 /*
@@ -1602,7 +1607,8 @@ PHP_METHOD(Aerospike, initKey)
 
     array_init(return_value);
 
-    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p, is_digest, return_value, NULL)) {
+    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p,
+                is_digest, return_value, NULL, NULL TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
         zval_dtor(return_value); 
         RETURN_NULL();

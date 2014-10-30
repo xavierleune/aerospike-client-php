@@ -58,6 +58,8 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     pthread_rwlock_t aerospike_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
+ZEND_EXTERN_MODULE_GLOBALS(aerospike);
+
 #ifdef ZTS
 #define AEROSPIKE_G(v) (((zend_aerospike_globals*)(*((void ***)tsrm_ls))[(aerospike_globals_id)-1])->v)
 zend_aerospike_globals *globals;
@@ -65,7 +67,6 @@ zend_aerospike_globals *globals;
 #define AEROSPIKE_G(v) (aerospike_globals.v)
 #endif
 
-ZEND_DECLARE_MODULE_GLOBALS(aerospike);
 
 PHP_MINIT_FUNCTION(aerospike);
 PHP_MSHUTDOWN_FUNCTION(aerospike);

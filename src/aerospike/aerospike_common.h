@@ -3,6 +3,7 @@
 #include "aerospike/as_arraylist.h"
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_key.h"
+#include "aerospike/as_record.h"
 #include "aerospike/as_node.h"
 
 /*
@@ -427,6 +428,13 @@ aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
                                zval* get_record_p,
                                zval* bins_p TSRMLS_DC);
 
+extern as_status
+aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
+        long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
+        as_key *record_key_p, zval *options_p TSRMLS_DC);
+
+extern void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
+        uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
 /*
  *******************************************************************************************************
  * Extern declarations of record operation functions.
@@ -448,8 +456,8 @@ aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
                                 as_key* as_key_p,
                                 zval* options_p,
                                 as_error* error_p,
-                                int8_t* bin_name_p,
-                                int8_t* str,
+                                char* bin_name_p,
+                                char* str,
                                 u_int64_t offset,
                                 u_int64_t initial_value,
                                 u_int64_t time_to_live,
@@ -468,6 +476,14 @@ aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
                               zval* options_p,
                               as_error *error_p);
 
+extern as_status
+aerospike_get_key_meta_bins_of_record(as_record* get_record_p,
+        as_key* record_key_p, zval* outer_container_p,
+        zval* options_p TSRMLS_DC);
+
+extern void
+get_generation_value(zval* options_p, int* generation_value_p,
+        as_error *error_p TSRMLS_DC);
 /*
  *******************************************************************************************************
  * Extern declarations of helper functions.
@@ -583,4 +599,16 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
 extern as_status
 aerospike_info_get_cluster_nodes(aerospike* as_object_p,
         as_error* error_p, zval* return_p, zval* host, zval* options_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of policy functions.
+ ******************************************************************************************************
+ */
+extern void
+set_policy(as_policy_read *read_policy_p, as_policy_write *write_policy_p,
+        as_policy_operate *operate_policy_p, as_policy_remove *remove_policy_p,
+        as_policy_info *info_policy_p, as_policy_scan *scan_policy_p,
+        as_policy_query *query_policy_p, uint32_t *serializer_policy_p,
+        zval *options_p, as_error *error_p TSRMLS_DC);
 #endif

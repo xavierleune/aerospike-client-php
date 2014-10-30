@@ -128,7 +128,8 @@ check_and_set_default_policies(as_config *as_config_p,
 {
     uint32_t ini_value = 0;
 
-    if (ini_value = READ_TIMEOUT_PHP_INI) {
+    ini_value = READ_TIMEOUT_PHP_INI;
+    if (ini_value) {
         if (read_policy_p) {
             if (((NULL != options_passed_for_read_p) &&
                         ((*options_passed_for_read_p & SET_BIT_OPT_TIMEOUT) == 0x0))
@@ -146,8 +147,9 @@ check_and_set_default_policies(as_config *as_config_p,
             info_policy_p->timeout = ini_value;
         }
     }
-
-    if (ini_value = WRITE_TIMEOUT_PHP_INI) {
+    
+    ini_value = WRITE_TIMEOUT_PHP_INI;
+    if (ini_value) {
         if (write_policy_p) {
             if (((NULL != options_passed_for_write_p) &&
                         ((*options_passed_for_write_p & SET_BIT_OPT_TIMEOUT) == 0x0))
@@ -216,11 +218,15 @@ check_and_set_default_policies(as_config *as_config_p,
         }
     }
 
-    if ((ini_value = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
+    ini_value = CONNECT_TIMEOUT_PHP_INI;
+
+    if (ini_value && as_config_p) {
         as_config_p->conn_timeout_ms = ini_value;
     }
 
-    if ((ini_value = SERIALIZER_PHP_INI) && serializer_policy_p) {
+    ini_value = SERIALIZER_PHP_INI;
+
+    if (ini_value && serializer_policy_p) {
         *serializer_policy_p = ini_value;
     }
 }
@@ -354,7 +360,7 @@ set_policy_ex(as_config *as_config_p,
          * case: query, aggregate
          */
         as_policy_query_init(query_policy_p);
-    }
+    } 
 
     if (options_p == NULL) {
         check_and_set_default_policies(as_config_p, read_policy_p,
@@ -368,7 +374,7 @@ set_policy_ex(as_config *as_config_p,
         int8_t*             options_key;
         int16_t             connect_flag = 0;
         int16_t             serializer_flag = 0;
-        uint32_t            scan_percentage = 0;
+        int	            scan_percentage = 0;
         uint32_t            scan_priority = SCAN_PRIORITY_AUTO;
         bool                scan_concurrent = false;
         bool                scan_nobins = false;
@@ -531,7 +537,7 @@ set_policy_ex(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_SCAN_PERCENTAGE");
                         goto exit;
                     }
-                    scan_percentage = (uint32_t) Z_LVAL_PP(options_value); 
+                    scan_percentage = Z_LVAL_PP(options_value); 
                     if (scan_percentage < 0 || scan_percentage > 100) {
                         DEBUG_PHP_EXT_DEBUG("Invalid value for scan percent");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Invalid value for scan percent");
