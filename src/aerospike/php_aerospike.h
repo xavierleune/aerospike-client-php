@@ -157,6 +157,12 @@ PHP_METHOD(Aerospike, listRegistered);
 PHP_METHOD(Aerospike, getRegistered);
 
 /*
+ * Batch Operations APIs:
+ */
+PHP_METHOD(Aerospike, existsMany);
+PHP_METHOD(Aerospike, operate);
+
+/*
  * TBD
  * Large Data Type (LDT) APIs:
  * Shared Memory APIs:
