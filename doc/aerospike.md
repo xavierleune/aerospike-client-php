@@ -211,6 +211,17 @@ class Aerospike
     public int info ( string $request, string &$response [, array $host [, array options ] ] )
     public array infoMany ( string $request [, array $config [, array options ]] )
     public array getNodes ( void )
+
+    // security methods
+    public int createUser ( string $user, string $password, array $roles [, array $options ] )
+    public int dropUser ( string $user [, array $options ] )
+    public int setPassword ( string $user, string $password [, array $options ] )
+    public int changePassword ( string $user, string $password [, array $options ] )
+    public int grantRoles ( string $user, array $roles [, array $options ] )
+    public int revokeRoles ( string $user, array $roles [, array $options ] )
+    public int replaceRoles ( string $user, array $roles [, array $options ] )
+    public int queryUser ( string $user, array &$roles [, array $options ] )
+    public int queryUsers ( array &$roles [, array $options ] )
 }
 ```
 
@@ -223,4 +234,5 @@ class Aerospike
 ### [Admin Methods](apiref_admin.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
 ### [Info Methods](apiref_info.md)
+### [Security Methods](apiref_security.md)
 
