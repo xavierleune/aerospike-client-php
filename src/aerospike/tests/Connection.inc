@@ -8,7 +8,7 @@ require_once 'Common.inc';
 class Connection extends AerospikeTestCommon
 {
     static $status_ok = 0;
-    static $status_err = 201;
+    static $status_err = -2;
 
     /**
      * @test

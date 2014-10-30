@@ -2581,22 +2581,33 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace
         goto exit;
     }
 
-    if (!is_digest) {
-        switch(key_type) {
-            case IS_LONG:
+    switch (key_type) {
+        case IS_LONG:
+            if (!is_digest) {
                 as_key_init_int64(as_key_p, namespace_p, set_p, (int64_t) Z_LVAL_PP(key_pp));
-                break;
-            case IS_STRING:
+            } else {
+                as_digest_value digest = {0};
+                snprintf(digest, AS_DIGEST_VALUE_SIZE, "%d", Z_LVAL_PP(key_pp));
+                as_key_init_digest(as_key_p, namespace_p, set_p, digest);
+            }
+            break;
+        case IS_STRING:
+            if (!is_digest) {
                 as_key_init_str(as_key_p, namespace_p, set_p, (int8_t *) Z_STRVAL_PP(key_pp));
-                break;
-            default:
-                status = AEROSPIKE_ERR;
-                break;
-        }
-    } else {
-        as_digest_value digest = {0};
-        strncpy(digest, Z_STRVAL_PP(key_pp), strlen(Z_STRVAL_PP(key_pp)));
-        as_key_init_digest(as_key_p, namespace_p, set_p, digest);
+            } else {
+                if (strlen(Z_STRVAL_PP(key_pp))) {
+                    as_digest_value digest = {0};
+                    strncpy(digest, Z_STRVAL_PP(key_pp), strlen(Z_STRVAL_PP(key_pp)));
+                    as_key_init_digest(as_key_p, namespace_p, set_p, digest);
+                } else {
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+            }
+            break;
+        default:
+            status = AEROSPIKE_ERR;
+            break;
     }
 
 exit:
@@ -2916,28 +2927,36 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         goto exit;
     }
     if (pk_p) {
-        if(!is_digest) {
-            switch(Z_TYPE_P(pk_p)) {
-                case IS_LONG:
+        switch(Z_TYPE_P(pk_p)) {
+            case IS_LONG:
+                if (!is_digest) {
                     add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_LVAL_P(pk_p));
-                    break;
-                case IS_STRING:
-                    if (strlen(Z_STRVAL_P(pk_p)) == 0) {
-                        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-                        status = AEROSPIKE_ERR;
-                        goto exit;
-                    }
-                    add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_STRVAL_P(pk_p), 1);
-                    break;
-                default:
+                } else {
+                    add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_LVAL_P(pk_p));
+                }
+                break;
+            case IS_STRING:
+                if (strlen(Z_STRVAL_P(pk_p)) == 0) {
                     DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
                     status = AEROSPIKE_ERR;
                     goto exit;
-            }
-        } else {
-            add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_STRVAL_P(pk_p), 1);
+                }
+                if (!is_digest) {
+                    add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_STRVAL_P(pk_p), 1);
+                } else {
+                    add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_STRVAL_P(pk_p), 1);
+                }
+                break;
+            default:
+                DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+                status = AEROSPIKE_ERR;
+                goto exit;
         }
     } else {
+        /*
+         * pk_p == NULL in case of get().
+         */
+
         zval **key_policy_pp = NULL;
 
         if (!record_key_p) {

@@ -120,7 +120,7 @@ check_and_set_default_policies(as_config *as_config_p,
                                as_policy_scan *scan_policy_p,
                                as_policy_query *query_policy_p,
                                uint32_t *serializer_policy_p,
-                               //uint8_t *options_passed_for_write_p,
+                               as_policy_batch *batch_policy_p,
                                uint16_t *options_passed_for_write_p,
                                uint8_t *options_passed_for_read_p,
                                uint8_t *options_passed_for_operate_p,
@@ -144,6 +144,9 @@ check_and_set_default_policies(as_config *as_config_p,
         }
         if (info_policy_p) {
             info_policy_p->timeout = ini_value;
+        }
+        if (batch_policy_p) {
+            batch_policy_p->timeout = ini_value;
         }
     }
 
@@ -287,6 +290,8 @@ exit:
  * @param query_policy_p        The as_policy_query to be passed in case of
  *                              as_query_for_each.
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
+ * @param batch_policy_p        The as_policy_batch to be passed in case of getMany
+ *                              and existsMany.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
@@ -304,12 +309,14 @@ set_policy_ex(as_config *as_config_p,
               as_policy_query *query_policy_p,
               uint32_t *serializer_policy_p,
               as_scan* as_scan_p,
+              as_policy_batch *batch_policy_p,
               zval *options_p,
               as_error *error_p TSRMLS_DC)
 {
     if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
-        (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)) {
+        (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)
+        && (!batch_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy");
         goto exit;
@@ -354,13 +361,18 @@ set_policy_ex(as_config *as_config_p,
          * case: query, aggregate
          */
         as_policy_query_init(query_policy_p);
+    } else if (batch_policy_p) {
+        /*
+         * case: getMany, existsMany
+         */
+        as_policy_batch_init(batch_policy_p);
     }
 
     if (options_p == NULL) {
         check_and_set_default_policies(as_config_p, read_policy_p,
                        write_policy_p, operate_policy_p, remove_policy_p,
                        info_policy_p, scan_policy_p, query_policy_p,
-                       serializer_policy_p, NULL, NULL, NULL, NULL);
+                       serializer_policy_p, batch_policy_p, NULL, NULL, NULL, NULL);
     } else {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -416,6 +428,8 @@ set_policy_ex(as_config *as_config_p,
                         scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if (query_policy_p) {
                         query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (batch_policy_p) {
+                        batch_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -580,16 +594,16 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        write_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_write |= SET_BIT_OPT_POLICY_KEY;
                     } else if (read_policy_p) {
-                        read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        read_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_read |= SET_BIT_OPT_POLICY_KEY;
                     } else if (operate_policy_p) {
-                        operate_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        operate_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_operate |= SET_BIT_OPT_POLICY_KEY;
                     } else if (remove_policy_p) {
-                        remove_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST + 1;
+                        remove_policy_p->key = Z_LVAL_PP(options_value) - AS_POLICY_KEY_DIGEST;
                         options_passed_for_remove |= SET_BIT_OPT_POLICY_KEY;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
@@ -610,13 +624,13 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN;
                         options_passed_for_write |= SET_BIT_OPT_POLICY_GEN;
                     } else if (operate_policy_p) {
-                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN;
                         options_passed_for_operate |= SET_BIT_OPT_POLICY_GEN;
                     } else if (remove_policy_p) {
-                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN + 1;
+                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp) - AS_POLICY_KEY_GEN;
                         options_passed_for_remove |= SET_BIT_OPT_POLICY_GEN;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
@@ -635,32 +649,32 @@ set_policy_ex(as_config *as_config_p,
         if (write_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
                     NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL, NULL,
-                    &options_passed_for_write, NULL, NULL, NULL);
+                    NULL, &options_passed_for_write, NULL, NULL, NULL);
             connect_flag = 1;
         }
         if (read_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
                     read_policy_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, &options_passed_for_read, NULL, NULL);
+                    NULL, NULL, &options_passed_for_read, NULL, NULL);
             connect_flag = 1;
         }
         if (operate_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, operate_policy_p,
                     NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, &options_passed_for_operate, NULL);
+                    NULL, NULL, NULL, &options_passed_for_operate, NULL);
         }
         if (remove_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, NULL,
                     remove_policy_p, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, &options_passed_for_remove);
+                    NULL, NULL, NULL, NULL, &options_passed_for_remove);
         }
         if (!connect_flag && as_config_p) {
             check_and_set_default_policies(as_config_p, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         }
         if (!serializer_flag && serializer_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, serializer_policy_p, NULL, NULL, NULL, NULL);
+                    NULL, NULL, serializer_policy_p, NULL, NULL, NULL, NULL, NULL);
         }
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -707,7 +721,7 @@ set_policy(as_policy_read *read_policy_p,
 {
     set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p,
             remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
-            serializer_policy_p, NULL, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 extern void
@@ -718,7 +732,16 @@ set_policy_scan(as_policy_scan *scan_policy_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, scan_policy_p, NULL,
-            serializer_policy_p, as_scan_p, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, as_scan_p, NULL, options_p, error_p TSRMLS_CC);
+}
+
+extern void
+set_policy_batch(as_policy_batch *batch_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, batch_policy_p, options_p, error_p TSRMLS_CC);
 }
 /*
  *******************************************************************************************************
@@ -745,7 +768,7 @@ set_general_policies(as_config *as_config_p,
     }
 
     set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write,
-                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 exit:
     return;
 }
