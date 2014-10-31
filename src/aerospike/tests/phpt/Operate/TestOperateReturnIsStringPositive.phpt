@@ -1,14 +1,14 @@
 --TEST--
-ScanApply - Percent is string
+Operate - Operate with return value as string
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("ScanApply", "testScanApplyPercentIsString");
+aerospike_phpt_skipif("Operate", "testOperateReturnIsStringPositive");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsString");
+aerospike_phpt_runtest("Operate", "testOperateReturnIsStringPositive");
 --EXPECT--
-ERR_CLIENT
+OK
