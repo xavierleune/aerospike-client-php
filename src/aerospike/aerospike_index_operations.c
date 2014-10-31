@@ -4,6 +4,7 @@
 #include "aerospike/as_error.h"
 #include "aerospike_common.h"
 #include "aerospike_general_constants.h"
+#include "aerospike/aerospike_index.h"
 
 /*
  *******************************************************************************************************

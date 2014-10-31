@@ -103,6 +103,9 @@ exit:
  * @param query_policy_p                The as_policy_query to be passed in case of
  *                                      as_query_for_each.
  * @param serializer_policy_p           The serialization policy to be passed in case of put.
+ * @param batch_policy_p                The batch policy to be passed in case of existsMany() and
+ *                                      getMany().
+ * @param apply_policy_p                The apply policy to be passed in case of udf_apply.
  * @param options_passed_for_write_p    The actual options if any passed by user in case of put.
  * @param options_passed_for_read_p     The actual options if any passed by user in case of get.
  * @param options_passed_for_operate_p  The actual options if any passed by user in case of operate.
@@ -121,6 +124,7 @@ check_and_set_default_policies(as_config *as_config_p,
                                as_policy_query *query_policy_p,
                                uint32_t *serializer_policy_p,
                                as_policy_batch *batch_policy_p,
+                               as_policy_apply *apply_policy_p,
                                uint16_t *options_passed_for_write_p,
                                uint8_t *options_passed_for_read_p,
                                uint8_t *options_passed_for_operate_p,
@@ -128,7 +132,8 @@ check_and_set_default_policies(as_config *as_config_p,
 {
     uint32_t ini_value = 0;
 
-    if (ini_value = READ_TIMEOUT_PHP_INI) {
+    ini_value = READ_TIMEOUT_PHP_INI;
+    if (ini_value) {
         if (read_policy_p) {
             if (((NULL != options_passed_for_read_p) &&
                         ((*options_passed_for_read_p & SET_BIT_OPT_TIMEOUT) == 0x0))
@@ -149,8 +154,9 @@ check_and_set_default_policies(as_config *as_config_p,
             batch_policy_p->timeout = ini_value;
         }
     }
-
-    if (ini_value = WRITE_TIMEOUT_PHP_INI) {
+    
+    ini_value = WRITE_TIMEOUT_PHP_INI;
+    if (ini_value) {
         if (write_policy_p) {
             if (((NULL != options_passed_for_write_p) &&
                         ((*options_passed_for_write_p & SET_BIT_OPT_TIMEOUT) == 0x0))
@@ -217,13 +223,20 @@ check_and_set_default_policies(as_config *as_config_p,
         if (query_policy_p) {
             query_policy_p->timeout = ini_value;
         }
+        if (apply_policy_p) {
+            apply_policy_p->timeout = ini_value;
+        }
     }
 
-    if ((ini_value = CONNECT_TIMEOUT_PHP_INI) && as_config_p) {
+    ini_value = CONNECT_TIMEOUT_PHP_INI;
+
+    if (ini_value && as_config_p) {
         as_config_p->conn_timeout_ms = ini_value;
     }
 
-    if ((ini_value = SERIALIZER_PHP_INI) && serializer_policy_p) {
+    ini_value = SERIALIZER_PHP_INI;
+
+    if (ini_value && serializer_policy_p) {
         *serializer_policy_p = ini_value;
     }
 }
@@ -310,13 +323,14 @@ set_policy_ex(as_config *as_config_p,
               uint32_t *serializer_policy_p,
               as_scan* as_scan_p,
               as_policy_batch *batch_policy_p,
+              as_policy_apply *apply_policy_p,
               zval *options_p,
               as_error *error_p TSRMLS_DC)
 {
     if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
         (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)
-        && (!batch_policy_p)) {
+        && (!batch_policy_p) && (!apply_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set policy");
         goto exit;
@@ -366,13 +380,19 @@ set_policy_ex(as_config *as_config_p,
          * case: getMany, existsMany
          */
         as_policy_batch_init(batch_policy_p);
+    } else if(apply_policy_p) {
+        /*
+         * case : apply udf
+         */
+        as_policy_apply_init(apply_policy_p);
     }
 
     if (options_p == NULL) {
         check_and_set_default_policies(as_config_p, read_policy_p,
                        write_policy_p, operate_policy_p, remove_policy_p,
                        info_policy_p, scan_policy_p, query_policy_p,
-                       serializer_policy_p, batch_policy_p, NULL, NULL, NULL, NULL);
+                       serializer_policy_p, batch_policy_p, apply_policy_p,
+                       NULL, NULL, NULL, NULL);
     } else {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -380,7 +400,7 @@ set_policy_ex(as_config *as_config_p,
         int8_t*             options_key;
         int16_t             connect_flag = 0;
         int16_t             serializer_flag = 0;
-        uint32_t            scan_percentage = 0;
+        int	            scan_percentage = 0;
         uint32_t            scan_priority = SCAN_PRIORITY_AUTO;
         bool                scan_concurrent = false;
         bool                scan_nobins = false;
@@ -459,6 +479,8 @@ set_policy_ex(as_config *as_config_p,
                         scan_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if(query_policy_p) {
                         query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (apply_policy_p) {
+                        apply_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -545,7 +567,7 @@ set_policy_ex(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_SCAN_PERCENTAGE");
                         goto exit;
                     }
-                    scan_percentage = (uint32_t) Z_LVAL_PP(options_value); 
+                    scan_percentage = Z_LVAL_PP(options_value); 
                     if (scan_percentage < 0 || scan_percentage > 100) {
                         DEBUG_PHP_EXT_DEBUG("Invalid value for scan percent");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Invalid value for scan percent");
@@ -649,32 +671,32 @@ set_policy_ex(as_config *as_config_p,
         if (write_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
                     NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, &options_passed_for_write, NULL, NULL, NULL);
+                    NULL, NULL, &options_passed_for_write, NULL, NULL, NULL);
             connect_flag = 1;
         }
         if (read_policy_p) {
             check_and_set_default_policies((connect_flag ? NULL : as_config_p),
                     read_policy_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, &options_passed_for_read, NULL, NULL);
+                    NULL, NULL, NULL, &options_passed_for_read, NULL, NULL);
             connect_flag = 1;
         }
         if (operate_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, operate_policy_p,
                     NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, &options_passed_for_operate, NULL);
+                    NULL, NULL, NULL, NULL, &options_passed_for_operate, NULL);
         }
         if (remove_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, NULL,
                     remove_policy_p, NULL, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL, &options_passed_for_remove);
+                    NULL, NULL, NULL, NULL, NULL, &options_passed_for_remove);
         }
         if (!connect_flag && as_config_p) {
             check_and_set_default_policies(as_config_p, NULL, NULL, NULL,
-                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
         }
         if (!serializer_flag && serializer_policy_p) {
             check_and_set_default_policies(NULL, NULL, NULL, NULL, NULL, NULL,
-                    NULL, NULL, serializer_policy_p, NULL, NULL, NULL, NULL, NULL);
+                    NULL, NULL, serializer_policy_p, NULL, NULL, NULL, NULL, NULL, NULL);
         }
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -721,7 +743,7 @@ set_policy(as_policy_read *read_policy_p,
 {
     set_policy_ex(NULL, read_policy_p, write_policy_p, operate_policy_p,
             remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
-            serializer_policy_p, NULL, NULL, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 extern void
@@ -732,7 +754,7 @@ set_policy_scan(as_policy_scan *scan_policy_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, scan_policy_p, NULL,
-            serializer_policy_p, as_scan_p, NULL, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, as_scan_p, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 extern void
@@ -741,7 +763,16 @@ set_policy_batch(as_policy_batch *batch_policy_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            NULL, NULL, batch_policy_p, options_p, error_p TSRMLS_CC);
+            NULL, NULL, batch_policy_p, NULL, options_p, error_p TSRMLS_CC);
+}
+
+extern void
+set_policy_udf_apply(as_policy_apply *apply_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, apply_policy_p, options_p, error_p TSRMLS_CC);
 }
 /*
  *******************************************************************************************************
@@ -768,7 +799,7 @@ set_general_policies(as_config *as_config_p,
     }
 
     set_policy_ex(as_config_p, &as_config_p->policies.read, &as_config_p->policies.write,
-                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 exit:
     return;
 }

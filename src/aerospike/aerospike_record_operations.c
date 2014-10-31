@@ -9,6 +9,98 @@
 
 /*
  *******************************************************************************************************
+ * Wrapper function to perform an aerospike_key_oeprate within the C client.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param as_key_p              The C client's as_key that identifies the record.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param bin_name_p            The bin name to perform operation upon.
+ * @param str                   The string to be appended in case of operation: append.
+ * @param offset                The offset to be incremented by in case of operation: increment.
+ * @param initial_value         The initial value to be set if record is absent
+ *                              in case of operation: increment.
+ * @param time_to_live          The ttl for the record in case of operation: touch.
+ * @param operation             The operation type.
+ *
+ *******************************************************************************************************
+ */
+static as_status
+aerospike_record_operations_ops(aerospike* as_object_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                char* bin_name_p,
+                                char* str,
+                                u_int64_t offset,
+                                u_int64_t initial_value,
+                                u_int64_t time_to_live,
+                                u_int64_t operation,
+                                as_operations* ops,
+                                as_record* get_rec TSRMLS_DC)
+{
+    as_status           status = AEROSPIKE_OK;
+    as_val*             value_p = NULL;
+    const char          *select[] = {bin_name_p, NULL};
+
+
+    switch(operation) {
+        case AS_OPERATOR_APPEND:
+            as_operations_add_append_str(ops, bin_name_p, str);
+            break;
+        case AS_OPERATOR_PREPEND:
+            as_operations_add_prepend_str(ops, bin_name_p, str);
+            break;
+        case AS_OPERATOR_INCR:
+            if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p,
+                            error_p, NULL, as_key_p, select, &get_rec))) {
+                goto exit;
+            } else {
+                if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
+                   if (AS_NIL == value_p->type) {
+                       if (!as_operations_add_write_int64(ops, bin_name_p,
+                                   initial_value)) {
+                           status = AEROSPIKE_ERR;
+                           goto exit;
+                       }
+                   } else {
+                       as_operations_add_incr(ops, bin_name_p, offset);
+                   }
+                } else {
+                    status = AEROSPIKE_ERR;
+                    goto exit;
+                }
+            }
+            break;
+        case AS_OPERATOR_TOUCH:
+            ops->ttl = time_to_live;
+            as_operations_add_touch(ops);
+            break;
+
+        case AS_OPERATOR_READ:
+            as_operations_add_read(ops, bin_name_p);
+            break;
+
+        case AS_OPERATOR_WRITE:
+            if (str) {
+                as_operations_add_write_str(ops, bin_name_p, str);
+            } else {
+                as_operations_add_write_int64(ops, bin_name_p, offset);
+            }
+            break;
+
+        default:
+            status = AEROSPIKE_ERR;
+            goto exit;
+    }
+
+exit:
+     return status;
+}
+
+/*
+ *******************************************************************************************************
  * Wrapper function to perform an aerospike_key_exists within the C client.
  *
  * @param as_object_p           The C client's aerospike object.
@@ -139,8 +231,8 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
                                 as_key* as_key_p,
                                 zval* options_p,
                                 as_error* error_p,
-                                int8_t* bin_name_p,
-                                int8_t* str,
+                                char* bin_name_p,
+                                char* str,
                                 u_int64_t offset,
                                 u_int64_t initial_value,
                                 u_int64_t time_to_live,
@@ -237,7 +329,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             foreach_hashtable(each_operation_array_p, each_pointer, each_operation) {
                 uint options_key_len;
                 ulong options_index;
-                int8_t* options_key;
+                char* options_key;
                 if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key, 
                         &options_key_len, &options_index, 0, &each_pointer)
                                 != HASH_KEY_IS_STRING) {
@@ -301,98 +393,6 @@ exit:
          as_record_destroy(get_rec);
      }
      as_operations_destroy(&ops);
-     return status;
-}
-
-/*
- *******************************************************************************************************
- * Wrapper function to perform an aerospike_key_oeprate within the C client.
- *
- * @param as_object_p           The C client's aerospike object.
- * @param as_key_p              The C client's as_key that identifies the record.
- * @param options_p             The user's optional policy options to be used if set, else defaults.
- * @param error_p               The as_error to be populated by the function
- *                              with the encountered error if any.
- * @param bin_name_p            The bin name to perform operation upon.
- * @param str                   The string to be appended in case of operation: append.
- * @param offset                The offset to be incremented by in case of operation: increment.
- * @param initial_value         The initial value to be set if record is absent
- *                              in case of operation: increment.
- * @param time_to_live          The ttl for the record in case of operation: touch.
- * @param operation             The operation type.
- *
- *******************************************************************************************************
- */
-extern as_status
-aerospike_record_operations_ops(aerospike* as_object_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                int8_t* bin_name_p,
-                                int8_t* str,
-                                u_int64_t offset,
-                                u_int64_t initial_value,
-                                u_int64_t time_to_live,
-                                u_int64_t operation,
-                                as_operations* ops,
-                                as_record* get_rec TSRMLS_DC)
-{
-    as_status           status = AEROSPIKE_OK;
-    as_val*             value_p = NULL;
-    const char          *select[] = {bin_name_p, NULL};
-
-
-    switch(operation) {
-        case AS_OPERATOR_APPEND:
-            as_operations_add_append_str(ops, bin_name_p, str);
-            break;
-        case AS_OPERATOR_PREPEND:
-            as_operations_add_prepend_str(ops, bin_name_p, str);
-            break;
-        case AS_OPERATOR_INCR:
-            if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p,
-                            error_p, NULL, as_key_p, select, &get_rec))) {
-                goto exit;
-            } else {
-                if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
-                   if (AS_NIL == value_p->type) {
-                       if (!as_operations_add_write_int64(ops, bin_name_p,
-                                   initial_value)) {
-                           status = AEROSPIKE_ERR;
-                           goto exit;
-                       }
-                   } else {
-                       as_operations_add_incr(ops, bin_name_p, offset);
-                   }
-                } else {
-                    status = AEROSPIKE_ERR;
-                    goto exit;
-                }
-            }
-            break;
-        case AS_OPERATOR_TOUCH:
-            ops->ttl = time_to_live;
-            as_operations_add_touch(ops);
-            break;
-
-        case AS_OPERATOR_READ:
-            as_operations_add_read(ops, bin_name_p);
-            break;
-
-        case AS_OPERATOR_WRITE:
-            if (str) {
-                as_operations_add_write_str(ops, bin_name_p, str);
-            } else {
-                as_operations_add_write_int64(ops, bin_name_p, offset);
-            }
-            break;
-
-        default:
-            status = AEROSPIKE_ERR;
-            goto exit;
-    }
-
-exit:
      return status;
 }
 
