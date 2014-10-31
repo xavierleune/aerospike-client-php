@@ -8,6 +8,7 @@
 #include "aerospike_common.h"
 #include "aerospike/as_udf.h"
 #include "aerospike/as_query.h"
+#include "aerospike/aerospike_query.h"
 #include "aerospike_policy.h"
 
 /*
@@ -280,7 +281,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)), 0);
         args_list_p = &args_list;
         AS_LIST_PUT(NULL, args_pp, &args_list, &udf_pool,
-                serializer_policy, error_p);
+                serializer_policy, error_p TSRMLS_CC);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
             goto exit;

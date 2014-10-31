@@ -131,7 +131,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 {
     zval**      params[1];
     zval*       bytes_string = NULL;
-    int8_t*     bytes_val_p = bytes->value;
+    char*       bytes_val_p = (char*)bytes->value;
 
     ALLOC_INIT_ZVAL(bytes_string);
 
@@ -154,7 +154,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
         if (serialize_flag) {
             COPY_PZVAL_TO_ZVAL(*bytes_string,
                     *user_callback_info->retval_ptr_ptr);
-            set_as_bytes(bytes, Z_STRVAL_P(bytes_string),
+            set_as_bytes(bytes, (uint8_t*)Z_STRVAL_P(bytes_string),
                          bytes_string->value.str.len, AS_BYTES_BLOB, error_p TSRMLS_CC);
         } else {
             COPY_PZVAL_TO_ZVAL(**value, *user_callback_info->retval_ptr_ptr);
@@ -213,7 +213,7 @@ static void serialize_based_on_serializer_policy(int32_t serializer_policy,
                             "Unable to serialize using standard php serializer");
                     goto exit;
                 } else if (buf.c) {
-                    set_as_bytes(bytes, buf.c, buf.len, AS_BYTES_PHP, error_p TSRMLS_CC);
+                    set_as_bytes(bytes, (uint8_t*)buf.c, buf.len, AS_BYTES_PHP, error_p TSRMLS_CC);
                     if (AEROSPIKE_OK != (error_p->code)) {
                         smart_str_free(&buf);
                         goto exit;
@@ -291,7 +291,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
         goto exit;
     }
 
-    bytes_val_p = bytes->value;
+    bytes_val_p = (int8_t*) bytes->value;
 
     ALLOC_INIT_ZVAL(*retval);
 
@@ -301,8 +301,8 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
                 PHP_VAR_UNSERIALIZE_INIT(var_hash);
                 if (1 != php_var_unserialize(retval,
                             (const unsigned char **) &(bytes_val_p),
-                                    (char *) bytes_val_p + bytes->size,
-                                            &var_hash TSRMLS_CC)) {
+                            (const unsigned char*) ((char *) bytes_val_p + bytes->size),
+                            &var_hash TSRMLS_CC)) {
                     DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes using standard php unserializer");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                             "Unable to unserialize bytes using standard php unserializer");
@@ -1328,7 +1328,7 @@ exit:
 static void AS_DEFAULT_SET_ASSOC_LIST(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
-    if (!(as_record_set_list((as_record *)outer_store, (int8_t*)bin_name,
+    if (!(as_record_set_list((as_record *)outer_store, (const char *)bin_name,
                     (as_list *) inner_store))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to a list");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -1356,7 +1356,7 @@ exit:
 static void AS_DEFAULT_SET_ASSOC_MAP(void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
-    if (!(as_record_set_map((as_record *)outer_store, (int8_t*)bin_name,
+    if (!(as_record_set_map((as_record *)outer_store, (const char *)bin_name,
                     (as_map *) inner_store))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to a map");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -1565,7 +1565,7 @@ static void AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array,
         void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_nil((as_record *)(array),
-                    (int8_t *) Z_LVAL_PP((zval**) key)))) {
+                    (const char *) Z_LVAL_PP((zval**) key)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to nil");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Unable to set record to nil");
@@ -1603,7 +1603,7 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value,
         goto exit;
     }
 
-    if (!(as_record_set_bytes((as_record *)array, (int8_t *)key, bytes))) {
+    if (!(as_record_set_bytes((as_record *)array, (const char *)key, bytes))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to bytes");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Unable to set record to bytes");
@@ -1632,7 +1632,7 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array,
         void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    if (!(as_record_set_int64((as_record *)array, (int8_t *)key,
+    if (!(as_record_set_int64((as_record *)array, (const char*)key,
                     (int64_t) Z_LVAL_PP((zval**) value)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to an int");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -1662,7 +1662,7 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array,
         void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    if (!(as_record_set_str((as_record *)array, (int8_t *)key,
+    if (!(as_record_set_str((as_record *)array, (const char*)key,
                     (char *) Z_STRVAL_PP((zval**) value)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to a string");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -1922,7 +1922,7 @@ exit:
  *
  *******************************************************************************************************
  */
-void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
+extern void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
         uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(error_p, static_pool,
@@ -2228,7 +2228,7 @@ aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp,
     foreach_hashtable(ht_p, hashPosition_p, keyData_pp) {
         int8_t*     key_value_p = NULL;
         u_int32_t   key_len_u32 = 0;
-        u_int64_t   index_u64 = 0;
+        ulong       index_u64 = 0;
         u_int32_t   key_type_u32 = zend_hash_get_current_key_ex(ht_p, 
                                                                 (char **)&key_value_p,
                                                                 &key_len_u32,
@@ -2368,7 +2368,7 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
                                                 void* data_p, zval** value_pp)
 {
     as_status                           status = AEROSPIKE_OK;
-    uint32_t                            port = -1;
+    int                                 port = -1;
     addrport_transform_iter_map_t*      addrport_transform_iter_map_p = (addrport_transform_iter_map_t *)(data_p);
     bool                                set_as_config = false;
 
@@ -2572,7 +2572,7 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace_p, int8_t* set_p, zval** key_pp, int is_digest)
+aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, const char* namespace_p, const char* set_p, zval** key_pp, int is_digest)
 {
     as_status      status = AEROSPIKE_OK;
 
@@ -2587,17 +2587,17 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, int8_t* namespace
                 as_key_init_int64(as_key_p, namespace_p, set_p, (int64_t) Z_LVAL_PP(key_pp));
             } else {
                 as_digest_value digest = {0};
-                snprintf(digest, AS_DIGEST_VALUE_SIZE, "%d", Z_LVAL_PP(key_pp));
+                snprintf((char *) digest, AS_DIGEST_VALUE_SIZE, "%d", Z_LVAL_PP(key_pp));
                 as_key_init_digest(as_key_p, namespace_p, set_p, digest);
             }
             break;
         case IS_STRING:
             if (!is_digest) {
-                as_key_init_str(as_key_p, namespace_p, set_p, (int8_t *) Z_STRVAL_PP(key_pp));
+                as_key_init_str(as_key_p, namespace_p, set_p, Z_STRVAL_PP(key_pp));
             } else {
                 if (strlen(Z_STRVAL_PP(key_pp))) {
                     as_digest_value digest = {0};
-                    strncpy(digest, Z_STRVAL_PP(key_pp), strlen(Z_STRVAL_PP(key_pp)));
+                    strncpy((char *) digest, Z_STRVAL_PP(key_pp), strlen(Z_STRVAL_PP(key_pp)));
                     as_key_init_digest(as_key_p, namespace_p, set_p, digest);
                 } else {
                     status = AEROSPIKE_ERR;
@@ -2645,10 +2645,10 @@ aerospike_transform_putkey_callback(HashTable* ht_p,
 
     if (PHP_IS_STRING(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_NS, PHP_AS_KEY_DEFINE_FOR_NS_LEN, key_p, key_len_u32 - 1)) {
-        as_put_key_data_map_p->namespace_p = Z_STRVAL_PP(retdata_pp);
+        as_put_key_data_map_p->namespace_p = (int8_t*) Z_STRVAL_PP(retdata_pp);
     } else if(PHP_IS_STRING(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_SET, PHP_AS_KEY_DEFINE_FOR_SET_LEN, key_p, key_len_u32 - 1)) {
-        as_put_key_data_map_p->set_p = Z_STRVAL_PP(retdata_pp);
+        as_put_key_data_map_p->set_p = (int8_t*) Z_STRVAL_PP(retdata_pp);
     } else if(/*PHP_IS_STRING(key_data_type_u32) &&  -- need to check on the type*/
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_KEY, PHP_AS_KEY_DEFINE_FOR_KEY_LEN, key_p, key_len_u32 - 1)) {
         as_put_key_data_map_p->key_pp = retdata_pp;
@@ -2706,8 +2706,8 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
 
     if(AEROSPIKE_OK != (status = aerospike_add_key_params(as_key_p,
                                                           Z_TYPE_P(key_record_p),
-                                                          put_key_data_map.namespace_p,
-                                                          put_key_data_map.set_p,
+                                                          (const char*) put_key_data_map.namespace_p,
+                                                          (const char*) put_key_data_map.set_p,
                                                           put_key_data_map.key_pp/*&key_record_p*/,
                                                           put_key_data_map.is_digest))) {
         goto exit;
@@ -2803,7 +2803,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    get_generation_value(options_p, &gen_value, error_p);
+    get_generation_value(options_p, &gen_value, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set generation value");
         goto exit;
@@ -3037,7 +3037,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
 {
     as_status                  status = AEROSPIKE_OK;
     php_unserialize_data_t     var_hash;
-    int8_t*                    hex_str_p = NULL;
+    //int8_t*                    hex_str_p = NULL;
 
     if (!get_record_p || !record_key_p || !key_container_p) {
         status = AEROSPIKE_ERR;
@@ -3055,23 +3055,24 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
     /* 
      * Returns allocated memory, need to free
      */
-    if (NULL == (hex_str_p = bin2hex(((as_key_digest(record_key_p))->value), AS_DIGEST_VALUE_SIZE))) {
+    /*if (NULL == (hex_str_p = bin2hex(((as_key_digest(record_key_p))->value), AS_DIGEST_VALUE_SIZE))) {
         DEBUG_PHP_EXT_DEBUG("Unable to allocate memory for digest");
         status = AEROSPIKE_ERR;
         goto exit;
-    }
+    }*/
 
     if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST,
-                (as_key_digest(record_key_p))->value, AS_DIGEST_VALUE_SIZE, 1)) {
+                ((char *)(as_key_digest(record_key_p))->value),
+                AS_DIGEST_VALUE_SIZE, 1)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
         status = AEROSPIKE_ERR;
         goto exit;
     }
 
 exit:
-    if (hex_str_p) {
+    /*if (hex_str_p) {
         free(hex_str_p);
-    }
+    }*/
 
     return status;
 }

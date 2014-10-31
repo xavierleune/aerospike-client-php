@@ -1,12 +1,13 @@
 #include "php.h"
 #include "aerospike/as_log.h"
-#include "aerospike/as_key.h"
+#include "aerospike/aerospike_key.h"
 #include "aerospike/as_config.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_status.h"
 #include "aerospike/aerospike.h"
 #include "aerospike_common.h"
 #include "aerospike/as_udf.h"
+#include "aerospike/aerospike_udf.h"
 #include "aerospike_policy.h"
 
 /*
@@ -179,11 +180,11 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     as_val*                     udf_result_p = NULL;
     foreach_callback_udata      udf_result_callback_udata;
     uint32_t                    serializer_policy = -1;
-    as_policy_write             write_policy;
+    as_policy_apply             apply_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy(NULL, &write_policy, NULL, NULL, NULL, NULL,
-            NULL, &serializer_policy, options_p, error_p TSRMLS_CC);
+    set_policy_udf_apply(&apply_policy, options_p, error_p TSRMLS_CC);
+
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -197,8 +198,8 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     }
 
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
-                    error_p, &write_policy, as_key_p, module_p, function_p,
-                    args_list_p, &udf_result_p))) {
+                    error_p, &apply_policy, as_key_p, module_p, function_p,
+                    (as_list *) args_list_p, &udf_result_p))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
@@ -347,7 +348,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    ZVAL_STRINGL(udf_code_p, udf_file.content.bytes, udf_file.content.size, 1);
+    ZVAL_STRINGL(udf_code_p, (char*) udf_file.content.bytes, udf_file.content.size, 1);
 exit:
     if (init_udf_file) {
         as_udf_file_destroy(&udf_file);
