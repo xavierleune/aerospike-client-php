@@ -143,7 +143,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
         AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool,
-                serializer_policy, error_p);
+                serializer_policy, error_p TSRMLS_CC);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
             goto exit;
