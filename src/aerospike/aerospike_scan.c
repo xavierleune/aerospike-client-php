@@ -8,6 +8,7 @@
 #include "aerospike_common.h"
 #include "aerospike/as_udf.h"
 #include "aerospike/as_scan.h"
+#include "aerospike/aerospike_scan.h"
 #include "aerospike_policy.h"
 
 #define PROGRESS_PCT "progress_pct"

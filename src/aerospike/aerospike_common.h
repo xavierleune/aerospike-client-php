@@ -5,8 +5,17 @@
 #include "aerospike/as_key.h"
 #include "aerospike/as_record.h"
 #include "aerospike/as_node.h"
+#include "aerospike/as_operations.h"
+#include "aerospike/as_record.h"
 
 /*
+ *******************************************************************************************************
+ * MACRO TO SET PHP LOGGING OFF.
+ *******************************************************************************************************
+ */
+#define PHP_EXT_AS_LOG_LEVEL_OFF -1
+
+/* 
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
@@ -283,7 +292,7 @@ extern as_log_level   php_log_level_set;
 #ifdef __DEBUG_PHP__
 #define DEBUG_PHP_EXT_COMPARE_LEVEL(log_level, php_log_level, args...)                                \
 do {                                                                                                  \
-    if (!(AS_LOG_LEVEL_OFF == php_log_level_set))                                                     \
+    if (!(((as_log_level) PHP_EXT_AS_LOG_LEVEL_OFF) == php_log_level_set))                            \
         if (php_log_level_set >= log_level) {                                                         \
             php_error_docref(NULL TSRMLS_CC, php_log_level, args);                                    \
             aerospike_helper_log_callback((log_level | 0x08), __func__ TSRMLS_CC,                     \
@@ -452,7 +461,7 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_object_p,
                                    as_error *error_p,
                                    zval* options_p);
 extern as_status
-aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
+aerospike_record_operations_general(Aerospike_object* aerospike_object_p,
                                 as_key* as_key_p,
                                 zval* options_p,
                                 as_error* error_p,
@@ -462,6 +471,14 @@ aerospike_record_operations_ops(Aerospike_object* aerospike_object_p,
                                 u_int64_t initial_value,
                                 u_int64_t time_to_live,
                                 u_int64_t operation);
+
+extern as_status aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                zval* returned_p,
+                                HashTable* operations_array_p);
+
 extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,
                                        as_key* as_key_p,
@@ -602,6 +619,20 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 
 /*
  ******************************************************************************************************
+ * Extern declarations of Batch operations.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_batch_operations_exists_many(aerospike* as_object_p,
+        as_error* as_error_p,zval* keys_p, zval* metadata_p,
+        zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* as_error_p,
+        zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
  * Extern declarations of policy functions.
  ******************************************************************************************************
  */
@@ -611,4 +642,5 @@ set_policy(as_policy_read *read_policy_p, as_policy_write *write_policy_p,
         as_policy_info *info_policy_p, as_policy_scan *scan_policy_p,
         as_policy_query *query_policy_p, uint32_t *serializer_policy_p,
         zval *options_p, as_error *error_p TSRMLS_DC);
+
 #endif

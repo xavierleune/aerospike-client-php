@@ -1,14 +1,15 @@
 --TEST--
-ScanApply - Percent is string
+GetMany - with empty key array.
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("ScanApply", "testScanApplyPercentIsString");
+aerospike_phpt_skipif("GetMany","testGetManyEmptyKeyArrayNegative");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsString");
+aerospike_phpt_runtest("GetMany", "testGetManyEmptyKeyArrayNegative");
 --EXPECT--
-ERR_CLIENT
+OK
+

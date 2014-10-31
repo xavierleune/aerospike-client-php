@@ -15,6 +15,19 @@ enum Aerospike_index_constants {
 
 /*
  *******************************************************************************************************
+ * Enum for PHP client's operate constant values.
+ *******************************************************************************************************
+ */
+enum Aerospike_operate_constants {
+    OPERATOR_WRITE   = 0,
+    OPERATOR_READ    = 1,
+    OPERATOR_INCR    = 2,
+    OPERATOR_PREPEND = 4,
+    OPERATOR_APPEND  = 5,
+    OPERATOR_TOUCH   = 8,
+};
+/*
+ *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike General Long constants.
  *******************************************************************************************************
  */
@@ -39,8 +52,14 @@ typedef struct Aerospike_General_String_Constants {
  *******************************************************************************************************
  */
 static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
-    { INDEX_TYPE_STRING,   "INDEX_TYPE_STRING"  },
-    { INDEX_TYPE_INTEGER,   "INDEX_TYPE_INTEGER" }
+    { INDEX_TYPE_STRING,    "INDEX_TYPE_STRING"  },
+    { INDEX_TYPE_INTEGER,   "INDEX_TYPE_INTEGER" },
+    { OPERATOR_WRITE,       "OPERATOR_WRITE" },
+    { OPERATOR_READ,        "OPERATOR_READ" },
+    { OPERATOR_INCR,        "OPERATOR_INCR" },
+    { OPERATOR_PREPEND,     "OPERATOR_PREPEND" },
+    { OPERATOR_APPEND,      "OPERATOR_APPEND" },
+    { OPERATOR_TOUCH,       "OPERATOR_TOUCH" }
 };
 
 /*
@@ -60,7 +79,8 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
  *******************************************************************************************************
  * MACRO to expose general long constants in Aerospike class.
  *
- * @param Aerospike_ce          The zend class entry for Aerospike class.
+ * @param Aerospike_ce          The zend class ent
+ * ry for Aerospike class.
  *******************************************************************************************************
  */
 #define EXPOSE_GENERAL_CONSTANTS_LONG_ZEND(Aerospike_ce)                                        \

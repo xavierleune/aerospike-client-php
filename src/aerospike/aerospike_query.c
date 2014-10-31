@@ -8,6 +8,7 @@
 #include "aerospike_common.h"
 #include "aerospike/as_udf.h"
 #include "aerospike/as_query.h"
+#include "aerospike/aerospike_query.h"
 #include "aerospike_policy.h"
 
 /*

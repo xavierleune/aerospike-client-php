@@ -16,7 +16,7 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=3.0.84
+export AEROSPIKE_C_CLIENT=3.0.86
 if [ ! -d $CLIENTREPO_3X ]; then
     echo "Downloading Aerospike C Client SDK..."
 else
@@ -27,7 +27,7 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 
-LOGLEVEL="AS_LOG_LEVEL_OFF"
+LOGLEVEL="PHP_EXT_AS_LOG_LEVEL_OFF"
 
 parse_args () {
     while [[ $# > 1 ]]
@@ -54,7 +54,7 @@ parse_args () {
                         LOGLEVEL="AS_LOG_LEVEL_ERROR"
                         ;;
                     OFF|off)
-                        LOGLEVEL="AS_LOG_LEVEL_OFF"
+                        LOGLEVEL="PHP_EXT_AS_LOG_LEVEL_OFF"
                         ;;
                     *)
                         echo "Usage:"
@@ -71,7 +71,7 @@ parse_args () {
                 ;;
             --default)
                 echo "Using default Loglevel."
-                LOGLEVEL="AS_LOG_LEVEL_OFF"
+                LOGLEVEL="PHP_EXT_AS_LOG_LEVEL_OFF"
                 shift
                 ;;
             *)
