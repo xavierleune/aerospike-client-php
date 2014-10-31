@@ -147,77 +147,29 @@ if ($status == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Performing multiple operations:\n", 'black', true);
+echo colorize("  Adding a bin 'Occupation'\n", 'black', true);
+echo colorize("  Incrementing the 'patients_cured' bin by (int) 4\n", 'black', true);
+echo colorize("  Read bins 'Occupation' and 'patients_cured' ≻", 'black', true);
+$start = __LINE__;
+$operations = array(
+    array("op" => Aerospike::OPERATOR_WRITE, "bin" => "Occupation", "val" => "Doctor of Freudian Circuit Analysis"),
+    array("op" => Aerospike::OPERATOR_INCR, "bin" => "patients_cured", "val" => 4),
+    array("op" => Aerospike::OPERATOR_READ, "bin" => "Occupation"),
+    array("op" => Aerospike::OPERATOR_READ, "bin" => "patients_cured"));
+$res = $db->operate($key, $operations, $returned);
+if ($res == Aerospike::OK) {
+    echo success();
+    var_dump($returned);
+} else {
+    echo standard_fail($db);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 echo colorize("Removing the 'patients_cured' bin ≻", 'black', true);
 $start = __LINE__;
 $status = $db->removeBin($key, array('patients_cured'));
 if ($status == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Getting the full record ≻", 'black', true);
-$start = __LINE__;
-$status = $db->get($key, $record);
-if ($status == Aerospike::OK) {
-    echo success();
-    var_dump($record);
-} elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo fail("Could not find a user with PK={$key['key']} in the set test.characters");
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-if (isset($args['c']) || isset($args['clean'])) {
-    $start = __LINE__;
-    echo colorize("Removing the record ≻", 'black', true);
-    $status = $db->remove($key);
-    if ($status == Aerospike::OK) {
-        echo success();
-    } else {
-        echo standard_fail($db);
-    }
-    if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-}
-
-echo colorize("Ensuring that another record is put at test.users with PK=2345 ≻", 'black', true);
-$start = __LINE__;
-$key = $db->initKey("test", "users", 2345);
-$put_vals = array("email" => "steve.circuits@hal-inst.org", "name" => "Steve", "patients_cured" => 100);
-$res = $db->put($key, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Getting the full record ≻", 'black', true);
-$start = __LINE__;
-$res = $db->get($key, $record);
-if ($res == Aerospike::OK) {
-    echo success();
-    var_dump($record);
-} elseif ($res == Aerospike::ERR_RECORD_NOT_FOUND) {
-    echo fail("Could not find a user with PK={$key['key']} in the set test.users");
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Performing multiple operations:\nprepending string value 'Doctor ' value to the 'name' bin and\nincrementing the 'patients_cured' bin by (int) 1 and Reading back the bin 'name' ≻≻", 'black', true);
-$start = __LINE__;
-$operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "name", "val" => "Doctor "),
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "patients_cured", "val" => 1),
-                array("op" => Aerospike::OPERATOR_READ, "bin" => "name")
-            );
-$res = $db->operate($key, $operations, $returned);
-if ($res == Aerospike::OK) {
-    echo "\nRead bin 'name':\n";
-    var_dump($returned);
     echo success();
 } else {
     echo standard_fail($db);

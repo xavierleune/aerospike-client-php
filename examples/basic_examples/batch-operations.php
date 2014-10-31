@@ -55,55 +55,22 @@ if (!$db->isConnected()) {
 echo success();
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Ensuring that a record is put at test.users with PK=1234 ≻", 'black', true);
+echo colorize("Adding characters with PK=1-4 ≻", 'black', true);
 $start = __LINE__;
-$key1 = $db->initKey("test", "users", 1234);
-$put_vals = array("email" => "freudian.circuits@hal-inst.org", "name" => "Perceptron");
-$res = $db->put($key1, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
+$characters = array(
+    1 => "Philip J. Fry",
+    2 => "Tarunga Leela",
+    3 => "Bender Bending Rodriguez",
+    4 => "Professor Hubert J. Farnsworth");
+foreach ($characters as $id => $character) {
+    $new_key = "key{$id}";
+    var_dump($new_key);
+    $$new_key = $db->initKey("test", "characters", $id);
+    $db->put($$new_key, array("name" => $character));
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Ensuring that a record is put at test.users with PK=2345 ≻", 'black', true);
-$start = __LINE__;
-$key2 = $db->initKey("test", "users", 2345);
-$put_vals = array("first_name" => "John", "age" => 25, "school" => "State University of Newyork");
-$res = $db->put($key2, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Ensuring that a record is put at test.users with PK=3456 ≻", 'black', true);
-$start = __LINE__;
-$key3 = $db->initKey("test", "users", 3456);
-$put_vals = array("first_name" => "Alex", "age" => 26, "school" => "State University of Newyork");
-$res = $db->put($key3, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Ensuring that a record is put at test.users with PK=4567 ≻", 'black', true);
-$start = __LINE__;
-$key4 = $db->initKey("test", "users", 4567);
-$put_vals = array("first_name" => "Jimmy", "age" => 23, "school" => "State University of California");
-$res = $db->put($key4, $put_vals);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Ensuring if the inserted records exit ≻", 'black', true);
+echo colorize("Getting the record metadata of keys 1-4 ≻", 'black', true);
 $start = __LINE__;
 $keys = array($key1, $key2, $key3, $key4);
 $res = $db->existsMany($keys, $metadata);
@@ -115,7 +82,7 @@ if ($res == AEROSPIKE::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Getting back the inserted records ≻", 'black', true);
+echo colorize("Getting the inserted records ≻", 'black', true);
 $start = __LINE__;
 $res = $db->getMany($keys, $records);
 if ($res == AEROSPIKE::OK) {

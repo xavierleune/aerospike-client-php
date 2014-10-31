@@ -17,8 +17,7 @@ The Aerospike PHP client API is described in the following sections:
 ## Implementation Status
 So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
 *Handling and Logging Methods*, *Query and Scan Methods*, *User Defined Methods*
-, *Admin Methods*, *Info Methods* and parts of *Key-Value Methods* have been
-implemented.
+, *Admin Methods*, *Info Methods* and *Key-Value Methods* have been implemented.
 
 The *Large Data Type Methods* are implemented as a PHP library.
 
