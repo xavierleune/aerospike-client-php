@@ -2803,7 +2803,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    get_generation_value(options_p, &gen_value, error_p);
+    get_generation_value(options_p, &gen_value, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set generation value");
         goto exit;
