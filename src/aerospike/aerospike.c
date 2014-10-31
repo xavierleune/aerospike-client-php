@@ -3659,7 +3659,7 @@ PHP_METHOD(Aerospike, replaceRoles)
                                                                 &error, user_p,
                                                                 Z_ARRVAL_P(roles_p),
                                                                 options_p TSRMLS_CC))) {
-        DEBUG_PHP_EXT_ERROR("revokeRoles() function returned an error");
+        DEBUG_PHP_EXT_ERROR("replaceRoles() function returned an error");
         goto exit;
     }
 
