@@ -164,6 +164,18 @@ PHP_METHOD(Aerospike, existsMany);
 PHP_METHOD(Aerospike, operate);
 
 /*
+ * Security APIs:
+ */
+PHP_METHOD(Aerospike, createUser);
+PHP_METHOD(Aerospike, dropUser);
+PHP_METHOD(Aerospike, changePassword);
+PHP_METHOD(Aerospike, grantRoles);
+PHP_METHOD(Aerospike, revokeRoles);
+PHP_METHOD(Aerospike, replaceRoles);
+PHP_METHOD(Aerospike, queryUser);
+PHP_METHOD(Aerospike, queryUsers);
+
+/*
  * TBD
  * Large Data Type (LDT) APIs:
  * Shared Memory APIs:

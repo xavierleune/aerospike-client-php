@@ -8,6 +8,7 @@
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_arraylist.h"
 #include "aerospike/as_bytes.h"
+#include "aerospike/as_password.h"
 
 #include "aerospike_common.h"
 #include "aerospike_transform.h"
@@ -2140,8 +2141,6 @@ do {                                                                            
 } while(0)    
 
 #define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val)  map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port = val
-#define AS_CONFIG_SET_USER(as_config_p, val)     strncpy(as_config_p->user, val, strlen(val))
-#define AS_CONFIG_SET_PASSWORD(as_config_p, val) strncpy(as_config_p->password, val, strlen(val))
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port)
 
@@ -2164,10 +2163,8 @@ aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
         status = AEROSPIKE_ERR;
         goto exit;
     }
-    /*
-     * TODO: Uncomment below line to set the user_p in config_p
-     */
-    /*AS_CONFIG_SET_USER(config_p, user_p);*/
+
+    strncpy(config_p->user, user_p, strlen(user_p));
 
 exit:
     return status;
@@ -2192,10 +2189,11 @@ aerospike_transform_set_password_in_config(char *password_p, as_config *config_p
         status = AEROSPIKE_ERR;
         goto exit;
     }
-    /*
-     * TODO: Uncomment below line to set the password_p in config_p
-     */
-    /*AS_CONFIG_SET_PASSWORD(config_p, password_p);*/
+
+    if (!as_password_get_constant_hash(password_p, config_p->password)) {
+        status = AEROSPIKE_ERR;
+        goto exit;
+    }
 
 exit:
     return status;
@@ -2432,7 +2430,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for checking expected keys (addr and port) in each host within the array of hosts
  * in the input config array for Aerospike::construct().
@@ -2558,7 +2556,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Checks and sets the as_key using the input ns, set and key value.
  *
@@ -2614,7 +2612,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for checking and setting the as_key for the record to be read/written from/to Aerospike.
  *
@@ -2665,7 +2663,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Check and set the as_key for the record to be read/written from/to Aerospike.
  *
@@ -2719,7 +2717,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Iterate over the input PHP record array and translate it to corresponding C
  * client's as_record by transforming the datatypes from PHP to C client's
@@ -2758,7 +2756,7 @@ exit:
     return;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Creates and puts the as_record into Aerospike db by using appropriate write policy.
  *
@@ -2832,7 +2830,7 @@ exit:
     return error_p->code;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Read specified filter bins for the record specified by get_rec_key_p.
  *
@@ -2885,7 +2883,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Creates php key(ns, set, pk) 
  *
@@ -3021,7 +3019,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
     return (char *)result;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record key and key digest. 
  *
@@ -3077,7 +3075,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record metadata(ttl, generation)
  *
@@ -3113,7 +3111,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record key, metadata and bins of a record.
  *

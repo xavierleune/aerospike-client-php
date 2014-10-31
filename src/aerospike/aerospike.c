@@ -359,6 +359,20 @@ ZEND_GET_MODULE(aerospike)
     PHP_ME(Aerospike, existsMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
 
+    /*
+     ********************************************************************
+     * Security Operations:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, createUser, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, dropUser, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, changePassword, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, grantRoles, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, revokeRoles, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, replaceRoles, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, queryUser, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, queryUsers, arginfo_first_by_ref, ZEND_ACC_PUBLIC)
+
 #if 0 // TBD
 
     // Large Data Type (LDT) APIs:
@@ -3243,6 +3257,536 @@ PHP_METHOD(Aerospike, dropIndex)
                                                  &error, ns_p, name_p,
                                                  options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("dropIndex() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ *  Security APIs:
+ *******************************************************************************************************
+ */
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::createUser()
+ *******************************************************************************************************
+ * Creates a new user in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int Aerospike::createUser ( string $user, string $password, array $roles [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, createUser)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    char*                   password_p = NULL;
+    int                     password_p_length = 0;
+    zval*                   roles_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "createUser: Connection not established");
+        DEBUG_PHP_EXT_ERROR("createUser: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa|a",
+                &user_p, &user_p_length, &password_p, &password_p_length,
+                &roles_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for createUser()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for createUser()");
+        goto exit;
+    }
+
+    if (user_p_length == 0 || password_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::createUser() expects parameters 1-2 and 5 to be non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::createUser() expects parameters 1-2 and 5 to be non-empty strings");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_create_user(aerospike_obj_p->as_ref_p->as_p,
+                                                                &error, user_p, password_p,
+                                                                Z_ARRVAL_P(roles_p), options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("createUser() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::dropUser()
+ *******************************************************************************************************
+ * Drops an existing user in a security-enabled Aerospike database.
+ * Method prototype for PHP userland:
+ * public int Aerospike::dropUser ( string $user [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, dropUser)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "dropUser: Connection not established");
+        DEBUG_PHP_EXT_ERROR("dropUser: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a",
+                &user_p, &user_p_length, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for dropUser()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for dropUser()");
+        goto exit;
+    }
+
+    if (user_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::dropUser() expects parameter 1 to be non-empty string");
+        DEBUG_PHP_EXT_ERROR("Aerospike::dropUser() expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_drop_user(aerospike_obj_p->as_ref_p->as_p,
+                                                              &error, user_p,
+                                                              options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("dropUser() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::changePassword()
+ *******************************************************************************************************
+ * Changes the password of an existing user in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int changePassword ( string $user, string $password [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, changePassword)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    char*                   password_p = NULL;
+    int                     password_p_length = 0;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "changePassword: Connection not established");
+        DEBUG_PHP_EXT_ERROR("changePassword: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
+                &user_p, &user_p_length, &password_p, &password_p_length,
+                &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for changePassword()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for changePassword()");
+        goto exit;
+    }
+
+    if (user_p_length == 0 || password_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::changePassword() expects parameters 1-2 to be non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::changePassword() expects parameters 1-2 to be non-empty strings");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_change_password(aerospike_obj_p->as_ref_p->as_p,
+                                                                    &error, user_p, password_p,
+                                                                    options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("changePassword() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::grantRoles()
+ *******************************************************************************************************
+ * Add roles to user's list of roles in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int grantRoles ( string $user, array $roles [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, grantRoles)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    zval*                   roles_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "grantRoles: Connection not established");
+        DEBUG_PHP_EXT_ERROR("grantRoles: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
+                &user_p, &user_p_length, &roles_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for grantRoles()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for grantRoles()");
+        goto exit;
+    }
+
+    if (user_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::grantRoles() expects parameter 1 to be non-empty string");
+        DEBUG_PHP_EXT_ERROR("Aerospike::grantRoles() expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_grant_roles(aerospike_obj_p->as_ref_p->as_p,
+                                                                &error, user_p,
+                                                                Z_ARRVAL_P(roles_p),
+                                                                options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("grantRoles() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::revokeRoles()
+ *******************************************************************************************************
+ * Remove roles from user's list of roles in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int revokeRoles ( string $user, array $roles [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, revokeRoles)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    zval*                   roles_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "revokeRoles: Connection not established");
+        DEBUG_PHP_EXT_ERROR("revokeRoles: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
+                &user_p, &user_p_length, &roles_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for revokeRoles()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for revokeRoles()");
+        goto exit;
+    }
+
+    if (user_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::revokeRoles() expects parameter 1 to be non-empty string");
+        DEBUG_PHP_EXT_ERROR("Aerospike::revokeRoles() expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_revoke_roles(aerospike_obj_p->as_ref_p->as_p,
+                                                                &error, user_p,
+                                                                Z_ARRVAL_P(roles_p),
+                                                                options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("revokeRoles() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::replaceRoles()
+ *******************************************************************************************************
+ * Replace user's list of roles with a new list of roles in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int replaceRoles ( string $user, array $roles [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, replaceRoles)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    zval*                   roles_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "replaceRoles: Connection not established");
+        DEBUG_PHP_EXT_ERROR("replaceRoles: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
+                &user_p, &user_p_length, &roles_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for replaceRoles()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for replaceRoles()");
+        goto exit;
+    }
+
+    if (user_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::replaceRoles() expects parameter 1 to be non-empty string");
+        DEBUG_PHP_EXT_ERROR("Aerospike::replaceRoles() expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_replace_roles(aerospike_obj_p->as_ref_p->as_p,
+                                                                &error, user_p,
+                                                                Z_ARRVAL_P(roles_p),
+                                                                options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("revokeRoles() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::queryUser()
+ *******************************************************************************************************
+ * Retrieve roles for a given user in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int queryUser ( string $user, array &$roles [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, queryUser)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    zval*                   roles_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "queryUser: Connection not established");
+        DEBUG_PHP_EXT_ERROR("queryUser: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|a",
+                &user_p, &user_p_length, &roles_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for queryUser()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for queryUser()");
+        goto exit;
+    }
+
+    if (user_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::queryUser() expects parameter 1 to be non-empty string");
+        DEBUG_PHP_EXT_ERROR("Aerospike::queryUser() expects parameter 1 to be non-empty string");
+        goto exit;
+    }
+
+    zval_dtor(roles_p);
+    array_init(roles_p);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_query_user(aerospike_obj_p->as_ref_p->as_p,
+                                                                &error, user_p,
+                                                                roles_p,
+                                                                options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("queryUser() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::queryUsers()
+ *******************************************************************************************************
+ * Retrieve all users and their roles in a security-enabled Aerospike database.
+ * Method prototype for PHP userland:
+ * public int queryUsers ( array &$roles [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, queryUsers)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    zval*                   roles_p = NULL;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "queryUsers: Connection not established");
+        DEBUG_PHP_EXT_ERROR("queryUsers: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
+                &roles_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for queryUsers()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for queryUsers()");
+        goto exit;
+    }
+
+    zval_dtor(roles_p);
+    array_init(roles_p);
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_query_users(aerospike_obj_p->as_ref_p->as_p,
+                                                                &error, roles_p,
+                                                                options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("queryUsers() function returned an error");
         goto exit;
     }
 
