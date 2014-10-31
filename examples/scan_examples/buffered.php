@@ -1,4 +1,3 @@
-
 <?php
 ################################################################################
 # Copyright 2013-2014 Aerospike, Inc.
@@ -55,39 +54,52 @@ if (!$db->isConnected()) {
 echo success();
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Using info() to get a list of bins in the test namespace ≻", 'black', true);
+echo colorize("Ensuring that a series of record is put at test.users ≻", 'black', true);
 $start = __LINE__;
-$status = $db->info("bins/test", $response);
+for ($i = 123; $i <= 133; $i++) {
+    $key = $db->initKey("test", "users", $i);
+    $put_vals = array("email" => "me.{$i}@example.com", "name" => "User {$i}");
+    $status = $db->put($key, $put_vals);
+}
+if ($status == Aerospike::OK) {
+    echo success();
+} else {
+    echo standard_fail($db);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Buffering records from a scan ≻", 'black', true);
+$start = __LINE__;
+$processed = 0;
+$result = array();
+$status = $db->scan("test", "users", function ($record) use (&$result, &$processed) {
+    $result[] = $record['bins'];
+    $processed++;
+    if ($processed >= 5) {
+        return false; // limit stream processing to 5 records
+    }
+});
 if ($status != AEROSPIKE::OK) {
     echo standard_fail($db);
 } else {
     echo success();
-    var_dump($response);
+    var_dump($result);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Using infoMany() to get the build of each Aerospike cluster node ≻", 'black', true);
-$start = __LINE__;
-$response = $db->infoMany('build');
-if ($response == NULL) {
-    echo $db->errorno();
-    echo standard_fail($db);
-} else {
-    echo success();
-    var_dump($response);
+if (isset($args['a']) || isset($args['clean'])) {
+    $start = __LINE__;
+    echo colorize("Removing the records ≻", 'black', true);
+    for ($i = 123; $i <= 133; $i++) {
+        $key = $db->initKey("test", "users", $i);
+        $status = $db->remove($key);
+    }
+    if ($status == Aerospike::OK) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
+    if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 }
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
-echo colorize("Using getNodes() to fetch the address of all the cluster nodes ≻", 'black', true);
-$start = __LINE__;
-$nodes = $db->getNodes();
-if ($nodes == NULL) {
-    echo standard_fail($db);
-} else {
-    echo success();
-    var_dump($nodes);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
 $db->close();
 ?>

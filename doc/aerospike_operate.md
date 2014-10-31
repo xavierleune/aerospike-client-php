@@ -1,5 +1,5 @@
 
-# Aerospike::operate \[to be implemented\]
+# Aerospike::operate
 
 Aerospike::operate - multiple operations on a single record
 

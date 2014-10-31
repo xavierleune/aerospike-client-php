@@ -61,7 +61,7 @@ function display_code($path, $after, $till) {
         // check if the file has already been pygmentized
         $cache_path = '/tmp/.'.basename($path);
         if (file_exists($path) && file_exists($cache_path) &&
-            (filemtime($path) > filemtime($cache_path))) {
+            (filemtime($path) <= filemtime($cache_path))) {
             $path = $cache_path;
         } else {
             exec("pygmentize -fterminal256 -lphp -o$cache_path $path 2>&1", $o, $r);

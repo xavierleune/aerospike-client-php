@@ -1,20 +1,38 @@
-# Aerospike PHP Client Basic Examples
+# Basic Examples
 
-The examples will connect to the Aerospike server and work against the *test*
-namespace.
+### Record Operations
+`rec-operations.php` gives an example of record level operations such as get(),
+remove(), touch(), exists(), and put() with various policy options set
+(Aerospike::OPT\_POLICY\_GEN, Aerospike::OPT\_POLICY\_EXISTS). An example of
+identifying a record using its digest (the server's hash of the key) is given.
 
-## Common Flags
+```bash
+php rec-operations.php --host=192.168.119.3 -a -c
+```
 
- - **-h** or **--host=** set the host IP address.
- - **-p** or **--port=** set the host port.
- - **-a** or **--annotate** display the code used for each section of the
-   examples.  If the [Pygments](http://pygments.org/docs/cmdline/) binary **pygmantize** is found, it will be used to
-   provide syntax highlighting.
- - **-c** or **--clean** will remove the data inserted by the example script.
+### Bin Operations
+`bin-operations.php` gives an example of modifying a record with bin operations
+such as prepend(), append(), increment(), and removeBin(). It also contains an
+example of multi-ops, which allows for multiple bin operations to be executed at
+once on a record.
 
-## Examples
+```bash
+php bin-operations.php --host=192.168.119.3 -a -c
+```
 
-    $ php rec-operations.php --host=192.168.119.3 -a -c
-    $ php bin-operations.php --host=192.168.119.3 -a -c
-    $ php udf-operations.php --host=192.168.119.3 -a -c
+### Applying a Record UDF
+`udf-operations.php` shows the effect of applying two different record UDFs to a
+record's bin.
 
+```bash
+php udf-operations.php --host=192.168.119.3 -a -c
+```
+
+### Batch Operations
+`batch-operations.php` gives an example of the multi-key batch operations
+getMany() and existsMany() that retrieve multiple records or their metadata
+based on an array of keys.
+
+```bash
+php batch-operations.php --host=192.168.119.3 -a -c
+```
