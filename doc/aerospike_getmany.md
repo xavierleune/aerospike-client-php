@@ -1,5 +1,5 @@
 
-# Aerospike::getMany  \[to be implemented\]
+# Aerospike::getMany
 
 Aerospike::getMany - gets a batch of record from the Aerospike database
 
@@ -48,7 +48,7 @@ if (!$db->isConnected()) {
 }
 
 $key1 = $db->initKey("test", "users", 1234);
-$key2 = $db->initKey("test", "users", 1235); // this key does noot exist
+$key2 = $db->initKey("test", "users", 1235); // this key does not exist
 $key2 = $db->initKey("test", "users", 1236);
 $keys = array($key1, $key2, $key3);
 $status = $db->getMany($keys, $records);

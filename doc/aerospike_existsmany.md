@@ -1,5 +1,5 @@
 
-# Aerospike::existsMany \[to be implemented\]
+# Aerospike::existsMany
 
 Aerospike::existsMany - check if a batch of records exist in the Aerospike database
 
@@ -43,7 +43,7 @@ if (!$db->isConnected()) {
 }
 
 $key1 = $db->initKey("test", "users", 1234);
-$key2 = $db->initKey("test", "users", 1235); // this key does noot exist
+$key2 = $db->initKey("test", "users", 1235); // this key does not exist
 $key2 = $db->initKey("test", "users", 1236);
 $keys = array($key1, $key2, $key3);
 $status = $db->existsMany($keys, $metadata);
