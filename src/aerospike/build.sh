@@ -99,14 +99,23 @@ phpize
 OS=`uname`
 INCLUDE_LUA_5_1=/usr/include/lua5.1
 if [ -d $INCLUDE_LUA_5_1 ] ; then
-  LUA_SUFFIX=5.1
+    LUA_SUFFIX=5.1
 fi
 
 CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
-
 if [ $OS = "Darwin" ] ; then
-    LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -llua$LUA_SUFFIX -lcrypto"
+    ec=`ls /usr/local/lib/liblua.a`
+    if [ $? -eq 0 ] ; then
+        LIBLUA="-L/usr/local/lib -llua"
+        ec=`ls /usr/local/include/lua.h || ls /usr/local/include/lualib.h`
+        if [ $? -eq 0 ] ; then
+            INCLUDE_LUA_5_1=/usr/local/include
+        fi
+    else
+        LIBLUA="-llua"
+    fi
+    LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -lcrypto $LIBLUA"
 else
     LDFLAGS="-Wl,-Bstatic -L$CLIENTREPO_3X/lib -laerospike -Wl,-Bdynamic -llua$LUA_SUFFIX"
     # Find and link to libcrypto (provided by OpenSSL)
@@ -137,7 +146,7 @@ else
     LDFLAGS="$LDFLAGS $LIBCRYPTO -lrt"
 fi
 
-make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include -I$CLIENTREPO_3X/include/ck" "EXTRA_LDFLAGS=$LDFLAGS"
+make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include -I$CLIENTREPO_3X/include/ck -I$INCLUDE_LUA_5_1" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
     exit 2
