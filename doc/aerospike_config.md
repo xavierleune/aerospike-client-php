@@ -13,6 +13,11 @@ The following configuration options in php.ini
 | aerospike.serializer | php |
 | aerospike.lua_system_path | /opt/aerospike/client-php/sys-lua |
 | aerospike.lua_user_path | /opt/aerospike/client-php/usr-lua |
+| aerospike.use_shm | false |
+| aerospike.shm_key | 0xA5000000 |
+| aerospike.shm_max_nodes | 16 |
+| aerospike.shm_max_namespaces | 8 |
+| aerospike.shm_takeover_threshold_sec | 30 |
 
 Here is a description of the configuration directives:
 
@@ -39,6 +44,21 @@ Here is a description of the configuration directives:
 
 **aerospike.udf.lua_user_path string**
     Path to the user-defined Lua function modules
+
+**aerospike.use_shm boolean**
+    Indicates if shared memory should be used for cluster tending. One of { true, false }
+
+**aerospike.shm_key string**
+    Shared memory identifier.
+
+**aerospike.shm_max_nodes integer**
+    Shared memory maximum number of server nodes allowed.
+
+**aerospike.shm_max_namespaces integer**
+    Shared memory maximum number of namespaces allowed.
+
+**aerospike.shm_takeover_threshold_sec integer**
+    Take over shared memory cluster tending if the cluster hasn't been tended by this threshold in seconds.
 
 ## See Also
 
