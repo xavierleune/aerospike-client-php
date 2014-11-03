@@ -16,7 +16,7 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=3.0.86
+export AEROSPIKE_C_CLIENT=3.0.87
 if [ ! -d $CLIENTREPO_3X ]; then
     echo "Downloading Aerospike C Client SDK..."
 else
