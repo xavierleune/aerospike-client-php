@@ -42,8 +42,7 @@ aerospike_info_specific_host(aerospike* as_object_p,
     long                        port_no = as_object_p->config.hosts[0].port;
     char*                       response_p = NULL;
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
-            options_p, error_p TSRMLS_CC);
+    set_policy_info(&info_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -402,8 +401,7 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
-            options_p, error_p TSRMLS_CC);
+    set_policy_info(&info_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");

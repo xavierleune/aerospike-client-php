@@ -114,16 +114,12 @@ aerospike_security_operations_create_user(aerospike* as_object_p, as_error *erro
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
@@ -133,7 +129,7 @@ aerospike_security_operations_create_user(aerospike* as_object_p, as_error *erro
     }
 
     if (AEROSPIKE_OK != (error_p->code = aerospike_create_user(as_object_p,
-                    /*&admin_policy*/NULL, user_p, password_p,
+                    &admin_policy, user_p, password_p,
                     (const char **) roles_array_p, roles_count))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to create user");
         DEBUG_PHP_EXT_DEBUG("Unable to create user");
@@ -168,19 +164,15 @@ aerospike_security_operations_drop_user(aerospike* as_object_p,
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK != (error_p->code = aerospike_drop_user(as_object_p,
-                    /*&admin_policy*/NULL, user_p))) {
+                    &admin_policy, user_p))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to drop user");
         DEBUG_PHP_EXT_DEBUG("Unable to drop user");
         goto exit;
@@ -216,19 +208,15 @@ aerospike_security_operations_change_password(aerospike* as_object_p,
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK != (error_p->code = aerospike_set_password(as_object_p,
-                    /*&admin_policy*/NULL, user_p, password_p))) {
+                    &admin_policy, user_p, password_p))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to change password");
         DEBUG_PHP_EXT_DEBUG("Unable to change password");
         goto exit;
@@ -265,16 +253,12 @@ aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *erro
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
@@ -284,7 +268,7 @@ aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *erro
     }
 
     if (AEROSPIKE_OK != (error_p->code = aerospike_grant_roles(as_object_p,
-                    /*&admin_policy*/NULL, user_p, (const char **) roles_array_p,
+                    &admin_policy, user_p, (const char **) roles_array_p,
                     roles_count))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to grant roles");
         DEBUG_PHP_EXT_DEBUG("Unable to grant roles");
@@ -322,16 +306,12 @@ aerospike_security_operations_revoke_roles(aerospike* as_object_p, as_error *err
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
@@ -341,7 +321,7 @@ aerospike_security_operations_revoke_roles(aerospike* as_object_p, as_error *err
     }
 
     if (AEROSPIKE_OK != (error_p->code = aerospike_revoke_roles(as_object_p,
-                    /*&admin_policy*/NULL, user_p, (const char **) roles_array_p,
+                    &admin_policy, user_p, (const char **) roles_array_p,
                     roles_count))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to revoke roles");
         DEBUG_PHP_EXT_DEBUG("Unable to revoke roles");
@@ -379,16 +359,12 @@ aerospike_security_operations_replace_roles(aerospike* as_object_p, as_error *er
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
@@ -398,7 +374,7 @@ aerospike_security_operations_replace_roles(aerospike* as_object_p, as_error *er
     }
 
     if (AEROSPIKE_OK != (error_p->code = aerospike_replace_roles(as_object_p,
-                    /*&admin_policy*/NULL, user_p, (const char **) roles_array_p,
+                    &admin_policy, user_p, (const char **) roles_array_p,
                     roles_count))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to replace roles");
         DEBUG_PHP_EXT_DEBUG("Unable to replace roles");
@@ -435,19 +411,15 @@ aerospike_security_operations_query_user(aerospike* as_object_p, as_error *error
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK != (error_p->code = aerospike_query_user(as_object_p,
-                    /*&admin_policy*/NULL, user_p, &user_roles_p))) {
+                    &admin_policy, user_p, &user_roles_p))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query user");
         DEBUG_PHP_EXT_DEBUG("Unable to query user");
         goto exit;
@@ -495,19 +467,15 @@ aerospike_security_operations_query_users(aerospike* as_object_p, as_error *erro
         goto exit;
     }
 
-    /*
-     * TODO: Add admin policy
-     */
-    
-    /*set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
-    }*/
+    }
     
     if (AEROSPIKE_OK != (error_p->code = aerospike_query_users(as_object_p,
-                    /*&admin_policy*/NULL, &all_roles_pp, &user_count))) {
+                    &admin_policy, &all_roles_pp, &user_count))) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query users");
         DEBUG_PHP_EXT_DEBUG("Unable to query users");
         goto exit;

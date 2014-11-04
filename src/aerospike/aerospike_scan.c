@@ -214,8 +214,7 @@ aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
     as_scan_info                scan_info;
     as_policy_info              info_policy;
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
-            options_p, error_p TSRMLS_CC);
+    set_policy_info(&info_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

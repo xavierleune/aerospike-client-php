@@ -7,6 +7,7 @@
 #include "aerospike/as_node.h"
 #include "aerospike/as_operations.h"
 #include "aerospike/as_record.h"
+#include "aerospike/as_scan.h"
 
 /*
  *******************************************************************************************************
@@ -637,11 +638,45 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* as_error_p
  ******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p, as_policy_write *write_policy_p,
-        as_policy_operate *operate_policy_p, as_policy_remove *remove_policy_p,
-        as_policy_info *info_policy_p, as_policy_scan *scan_policy_p,
-        as_policy_query *query_policy_p, uint32_t *serializer_policy_p,
+set_policy_read(as_policy_read *read_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_write(as_policy_write *write_policy_p, uint32_t *serializer_policy_p,
         zval *options_p, as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_operate(as_policy_operate *operate_policy_p,
+        uint32_t *serializer_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_remove(as_policy_remove *remove_policy_p,
+        zval *options_p, as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_info(as_policy_info *info_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_query(as_policy_query *query_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_scan(as_policy_scan *scan_policy_p, uint32_t *serializer_policy_p,
+        as_scan *as_scan_p, zval *options_p, as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_batch(as_policy_batch *batch_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_udf_apply(as_policy_apply *apply_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_admin(as_policy_admin *admin_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************

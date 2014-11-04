@@ -153,19 +153,19 @@ class Aerospike
     const INDEX_TYPE_INTEGER;
 
     // security
-    const SECURITY_NOT_SUPPORTED;
-    const SECURITY_NOT_ENABLED;
-    const SECURITY_SCHEME_NOT_SUPPORTED;
-    const INVALID_USER;
-    const USER_ALREADY_EXISTS;
-    const INVALID_PASSWORD;
-    const EXPIRED_PASSWORD;
-    const FORBIDDEN_PASSWORD;
-    const INVALID_CREDENTIAL;
-    const INVALID_ROLE;
-    const INVALID_PRIVILEGE;
-    const NOT_AUTHENTICATED;
-    const ROLE_VIOLATION;
+    const ERR_SECURITY_NOT_SUPPORTED;
+    const ERR_SECURITY_NOT_ENABLED;
+    const ERR_SECURITY_SCHEME_NOT_SUPPORTED;
+    const ERR_INVALID_USER;
+    const ERR_USER_ALREADY_EXISTS;
+    const ERR_INVALID_PASSWORD;
+    const ERR_EXPIRED_PASSWORD;
+    const ERR_FORBIDDEN_PASSWORD;
+    const ERR_INVALID_CREDENTIAL;
+    const ERR_INVALID_ROLE;
+    const ERR_INVALID_PRIVILEGE;
+    const ERR_NOT_AUTHENTICATED;
+    const ERR_ROLE_VIOLATION;
 
     // lifecycle and connection methods
     public int __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )

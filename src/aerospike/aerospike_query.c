@@ -168,8 +168,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, NULL, NULL, &query_policy, NULL,
-            options_p, error_p TSRMLS_CC);
+    set_policy_query(&query_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -269,8 +268,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    set_policy(NULL, NULL, NULL, NULL, NULL, NULL, &query_policy,
-            &serializer_policy, options_p, error_p TSRMLS_CC);
+    set_policy_query(&query_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
