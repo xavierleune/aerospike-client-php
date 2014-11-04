@@ -22,7 +22,7 @@
  */
 static as_status
 aerospike_security_operations_convert_roles_from_zval(HashTable *roles_ht_p,
-        char **roles_array_p, int *roles_count, as_error *error_p)
+        char **roles_array_p, int *roles_count, as_error *error_p TSRMLS_DC)
 {
     HashPosition                roles_position;
     zval**                      roles_entry = NULL;
@@ -60,7 +60,7 @@ exit:
  */
 static as_status
 aerospike_security_operations_convert_roles_to_zval(zval *roles_p,
-        as_user_roles *user_roles_p, as_error *error_p)
+        as_user_roles *user_roles_p, as_error *error_p TSRMLS_DC)
 {
     int                         roles_index = 0;
 
@@ -123,7 +123,7 @@ aerospike_security_operations_create_user(aerospike* as_object_p, as_error *erro
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p)) {
+                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
         DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
         goto exit;
     }
@@ -262,7 +262,7 @@ aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *erro
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p)) {
+                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
         DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
         goto exit;
     }
@@ -315,7 +315,7 @@ aerospike_security_operations_revoke_roles(aerospike* as_object_p, as_error *err
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p)) {
+                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
         DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
         goto exit;
     }
@@ -368,7 +368,7 @@ aerospike_security_operations_replace_roles(aerospike* as_object_p, as_error *er
     
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p)) {
+                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
         DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
         goto exit;
     }
@@ -427,7 +427,7 @@ aerospike_security_operations_query_user(aerospike* as_object_p, as_error *error
 
     if (AEROSPIKE_OK !=
             aerospike_security_operations_convert_roles_to_zval(roles_p,
-                user_roles_p, error_p)) {
+                user_roles_p, error_p TSRMLS_CC)) {
         DEBUG_PHP_EXT_DEBUG("Unable to parse as_user_roles");
         goto exit;
     }
@@ -488,7 +488,7 @@ aerospike_security_operations_query_users(aerospike* as_object_p, as_error *erro
 
         if (AEROSPIKE_OK !=
                 aerospike_security_operations_convert_roles_to_zval(user_p,
-                    all_roles_pp[user_index], error_p)) {
+                    all_roles_pp[user_index], error_p TSRMLS_CC)) {
             zval_ptr_dtor(&user_p);
             DEBUG_PHP_EXT_DEBUG("Unable to parse as_user_roles");
             goto exit;
