@@ -500,3 +500,15 @@ aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p)
 exit:
     return true;
 }
+
+extern void
+aerospike_helper_check_and_configure_shm(as_config *config_p) {
+    if (SHM_USE_PHP_INI) {
+        config_p->use_shm = true;
+        config_p->shm_max_nodes = (uint32_t) SHM_MAX_NODES_PHP_INI;
+        config_p->shm_max_namespaces = (uint32_t) SHM_MAX_NAMESPACES_PHP_INI;
+        config_p->shm_takeover_threshold_sec = (uint32_t) SHM_TAKEOVER_THRESHOLD_SEC_PHP_INI;
+    } else {
+        config_p->use_shm = false;
+    }
+}
