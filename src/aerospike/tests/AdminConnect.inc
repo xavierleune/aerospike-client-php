@@ -10,7 +10,7 @@ class AdminConnect extends AerospikeTestCommon
 
     protected function tearDown(&$db, &$config) {
        /* $db->dropUser("createuser-example");
-        $db->close();*/
+       $db->close();*/
     }
 
     function testConnectPositive($db, $config) {
@@ -21,7 +21,7 @@ class AdminConnect extends AerospikeTestCommon
             $db->close();
             return Aerospike::OK;
         } else 
-        return Aerospike::ERR;
+            return Aerospike::ERR;
     }
 
     function testConnectSecurityNotSupported($db, $config) {
@@ -53,7 +53,17 @@ class AdminConnect extends AerospikeTestCommon
         if ($db->isConnected()) {
             return Aerospike::OK;
         } else 
-        return $db->errorno();
+            return $db->errorno();
+    }
+
+    function testConnectNoUsernamePassword($db, $config) {
+        $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
+        $config = array("hosts"=>array($host));
+        $db = new Aerospike($config);
+        if ($db->isConnected()) {
+            return Aerospike::OK;
+        } else 
+            return $db->errorno();
     }
 }
 ?>
