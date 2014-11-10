@@ -1,20 +1,19 @@
 <?php
-class ChangePassword extends AerospikeTestCommon
+class DropUser extends AerospikeTestCommon
 {
     protected function setUp(&$db, &$config) {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
         $db = new Aerospike($config);
-        $res = $db->createUser("example", "example@123", array("read"));
     }
 
     protected function tearDown(&$db, &$config) {
-        $res = $db->dropUser("example");
+        $db->dropUser("examplephp");
         $db->close();
     }
     /**
      * @test
-     * Basic Change Password without parameter
+     * Basic DropUser without parameter
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -27,11 +26,11 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNoParameter($db)
+    function testDropUserNoParameter($db)
     {
         if ($db->isConnected()) {
             try {
-                return($db->changePassword());
+                return($db->dropUser());
             } catch(ErrorException $e) {
                 return($db->errorno());
             }
@@ -42,7 +41,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password positive
+     * Basic DropUser with user NULL
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -55,15 +54,11 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordPositive($db)
+    function testDropUserUserIsNull($db)
     {
+        $user = NULL;
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123");
-	        if ($res == Aerospike::OK) {
-    		    return Aerospike::OK;
-            } else {
-    		    return $db->error();
-	        }
+            return ($db->dropUser($user));
         }
         else {
             return($db->errorno());
@@ -71,7 +66,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password correct timeout
+     * Basic DropUser positive
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -84,15 +79,20 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordCorrectTimeout($db)
+    function testDropUserUserPositive($db)
     {
+        $user = "examplephp";
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            $db->createUser($user, "example123", array("read"));
+            sleep(2);
+            $db->dropUser($user);
+            sleep(2);
+            $db->queryUser($user, $roles);
+            if(empty($roles))
+                return Aerospike::OK;
+            else
+                return Aerospike::ERR;
+            return($db->errorno());
         }
         else {
             return($db->errorno());
@@ -100,7 +100,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password incorrect timeout
+     * Basic DropUser with non-existent user
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -113,15 +113,15 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordIncorrectTimeout($db)
+    function testDropUserNonExistentUser($db)
     {
+        $user = "abcdefgh";
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 0.2));
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            try {
+                return($db->dropUser($user));
+            } catch(ErrorException $e) {
+                return($db->errorno());
+            }
         }
         else {
             return($db->errorno());
@@ -129,7 +129,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password non-existent user
+     * Basic DropUser positive with policy
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -142,44 +142,20 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNonExistentUser($db)
+    function testDropUserUserPositiveWithPolicy($db)
     {
+        $user = "examplephp";
         if ($db->isConnected()) {
-	        $res = $db->changePassword("abcdefgh", "john@123");
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
-	    }
-        else {
+            $db->createUser($user, "example123", array("read"));
+            sleep(2);
+            $db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+            sleep(2);
+            $db->queryUser($user, $roles);
+            if(empty($roles))
+                return Aerospike::OK;
+            else
+                return Aerospike::ERR;
             return($db->errorno());
-        }
-    }
-    /**
-     * @test
-     * Basic Change Password user as NULL
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * Error
-     *
-     * @remark
-     *
-     *
-     * @test_plans{1.1}
-     */
-    function testChangePasswordNullUser($db)
-    {
-        if ($db->isConnected()) {
-	        $res = $db->changePassword(NULL, "example@123");
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
         }
         else {
             return($db->errorno());
@@ -187,7 +163,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password password as NULL
+     * Basic DropUser positive with policy
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -200,15 +176,13 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNullPassword($db)
+    function testDropUserUserPositiveWithIncorrectPolicy($db)
     {
+        $user = "examplephp";
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", NULL);
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            $db->createUser($user, "example123", array("read"));
+            sleep(2);
+            return ($db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
         }
         else {
             return($db->errorno());
@@ -216,7 +190,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password password is very long
+     * Basic DropUser negative with extra argument
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -229,22 +203,52 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordVeryLong($db)
+    function testDropUserUserExtraArgument($db)
     {
-	    $pass = "pass";
-	    for ($i=1; $i<100; $i++) {
-		    $pass = $pass + "pass";
-	    }
+        $user = "examplephp";
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", $pass);
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            $db->createUser($user, "example123", array("read"));
+            sleep(2);
+            try {
+                $db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 2000), "");
+            } catch (ErrorException $e) {
+                return $db->errorno();
+            }
+        }
+        else {
+            return($db->errorno());
+        }
+    }
+    /**
+     * @test
+     * Basic DropUser negative with policy null
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * Error
+     *
+     * @remark
+     *
+     *
+     * @test_plans{1.1}
+     */
+    function testDropUserPolicyNull($db)
+    {
+        $user = "examplephp";
+        if ($db->isConnected()) {
+            $db->createUser($user, "example123", array("read"));
+            sleep(2);
+            try {
+                $db->dropUser($user, NULL);
+            } catch(ErrorException $e) {
+                return $db->errorno();
+            }
         }
         else {
             return($db->errorno());
         }
     }
 }
+?>

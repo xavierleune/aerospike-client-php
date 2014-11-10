@@ -1,11 +1,11 @@
 <?php
-class ChangePassword extends AerospikeTestCommon
+class ReplaceRoles extends AerospikeTestCommon
 {
     protected function setUp(&$db, &$config) {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
         $db = new Aerospike($config);
-        $res = $db->createUser("example", "example@123", array("read"));
+        $res = $db->createUser("example", "example@123", array("read","read-write","sys-admin"));
     }
 
     protected function tearDown(&$db, &$config) {
@@ -14,7 +14,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password without parameter
+     * Basic ReplaceRoles without parameter
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -27,11 +27,11 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNoParameter($db)
+    function testReplaceRolesNoParameter($db)
     {
         if ($db->isConnected()) {
             try {
-                return($db->changePassword());
+                return($db->replaceRoles());
             } catch(ErrorException $e) {
                 return($db->errorno());
             }
@@ -42,7 +42,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password positive
+     * Basic ReplaceRoles positive
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -55,15 +55,18 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordPositive($db)
+    function testReplaceRolesPositive($db)
     {
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123");
-	        if ($res == Aerospike::OK) {
-    		    return Aerospike::OK;
-            } else {
-    		    return $db->error();
-	        }
+            $status = $db->replaceRoles("example", array("read", "read-write"));
+            sleep(4);
+            $status = $db->queryUser("example", $roles);
+            sleep(2);
+            $result = array_diff_assoc_recursive($roles, array("read","read-write"));
+            if(!$result) 
+                return Aerospike::ERR;
+            else
+                return Aerospike::OK;
         }
         else {
             return($db->errorno());
@@ -71,7 +74,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password correct timeout
+     * Basic ReplaceRoles positive with policy
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -84,15 +87,17 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordCorrectTimeout($db)
+    function testReplaceRolesPositivePolicy($db)
     {
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            $db->replaceRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000));
+            sleep(4);
+            $db->queryUser("example", $roles);
+            $result = array_diff_assoc_recursive($roles, array("read","read-write"));
+            if(!$result) 
+                return Aerospike::ERR;
+            else
+                return Aerospike::OK;
         }
         else {
             return($db->errorno());
@@ -100,7 +105,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password incorrect timeout
+     * Basic ReplaceeRoles positive with policy incorrect
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -113,15 +118,10 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordIncorrectTimeout($db)
+    function testReplaceRolesPolicyIncorrect($db)
     {
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 0.2));
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            return($db->replaceRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
         }
         else {
             return($db->errorno());
@@ -129,7 +129,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password non-existent user
+     * Basic ReplaceRoles with NULL username
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -142,44 +142,10 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNonExistentUser($db)
+    function testReplaceRolesUserIsNull($db)
     {
         if ($db->isConnected()) {
-	        $res = $db->changePassword("abcdefgh", "john@123");
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
-	    }
-        else {
-            return($db->errorno());
-        }
-    }
-    /**
-     * @test
-     * Basic Change Password user as NULL
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * Error
-     *
-     * @remark
-     *
-     *
-     * @test_plans{1.1}
-     */
-    function testChangePasswordNullUser($db)
-    {
-        if ($db->isConnected()) {
-	        $res = $db->changePassword(NULL, "example@123");
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            return($db->replaceRoles(NULL, array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -187,7 +153,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password password as NULL
+     * Basic ReplaceRoles non-existent user
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -200,15 +166,10 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNullPassword($db)
+    function testReplaceRolesNonExistentUser($db)
     {
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", NULL);
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            return($db->replaceRoles("abcdefgh", array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -216,7 +177,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password password is very long
+     * Basic ReplaceRoles empty roles
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -229,22 +190,38 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordVeryLong($db)
+    function testReplaceRolesEmptyRoles($db)
     {
-	    $pass = "pass";
-	    for ($i=1; $i<100; $i++) {
-		    $pass = $pass + "pass";
-	    }
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", $pass);
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            return($db->replaceRoles("example", array()));
+        }
+        else {
+            return($db->errorno());
+        }
+    }
+    /**
+     * @test
+     * Basic ReplaceRoles invalid role list
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * Error
+     *
+     * @remark
+     *
+     *
+     * @test_plans{1.1}
+     */
+    function testReplaceRolesInvalidRoleList($db)
+    {
+        if ($db->isConnected()) {
+            return($db->replaceRoles("example", array("viewer")));
         }
         else {
             return($db->errorno());
         }
     }
 }
+?>

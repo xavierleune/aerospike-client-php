@@ -1,14 +1,14 @@
 --TEST--
-QueryUser - query user has a string policy
+Create user - create user policy incorrect
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("CreateUser", "testCreateUserPolicyIncorrect");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("CreateUser", "testCreateUserPolicyIncorrect");
 --EXPECT--
 ERR_CLIENT

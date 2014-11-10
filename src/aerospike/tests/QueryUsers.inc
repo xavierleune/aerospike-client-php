@@ -1,5 +1,5 @@
 <?php
-class ChangePassword extends AerospikeTestCommon
+class QueryUsers extends AerospikeTestCommon
 {
     protected function setUp(&$db, &$config) {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
@@ -14,7 +14,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password without parameter
+     * Basic Query Users without parameter
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -27,11 +27,11 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNoParameter($db)
+    function testQueryUsersNoParameter($db)
     {
         if ($db->isConnected()) {
             try {
-                return($db->changePassword());
+                return($db->queryUsers());
             } catch(ErrorException $e) {
                 return($db->errorno());
             }
@@ -42,7 +42,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password positive
+     * Basic Query Users positive
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -55,15 +55,19 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordPositive($db)
+    function testQueryUsersPositive($db)
     {
+        $test = array("read");
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123");
-	        if ($res == Aerospike::OK) {
-    		    return Aerospike::OK;
+            sleep(2);
+            $db->queryUsers($roles);
+            $res = $roles['example'];
+            $result = array_diff_assoc_recursive($test, $res);
+            if(!empty($result)) {
+                return Aerospike::ERR;
             } else {
-    		    return $db->error();
-	        }
+                return Aerospike::OK;
+            }
         }
         else {
             return($db->errorno());
@@ -71,7 +75,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password correct timeout
+     * Basic Query Users positive with policy
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -84,15 +88,18 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordCorrectTimeout($db)
+    function testQueryUsersPositiveWithPolicy($db)
     {
+        sleep(2);
+        $test = array("read");
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
+            $db->queryUsers($roles, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+            $result = array_diff_assoc_recursive($test, $roles['example']);
+            if(!empty($result)) {
+                return Aerospike::ERR;
             } else {
-    		    return $db->errorno();
-	        }
+                return Aerospike::OK;
+            }
         }
         else {
             return($db->errorno());
@@ -100,7 +107,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password incorrect timeout
+     * Basic Query Users with incorrect policy
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -113,15 +120,18 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordIncorrectTimeout($db)
+    function testQueryUsersIncorrectPolicy($db)
     {
+        $test = array("read");
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 0.2));
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
+            $result = $db->queryUsers($roles, array(Aerospike::OPT_WRITE_TIMEOUT => 0.5));
+            return $result;
+            $result = array_diff_assoc_recursive($test, $roles);
+            if(!empty($result)) {
+                return Aerospike::ERR;
             } else {
-    		    return $db->errorno();
-	        }
+                return Aerospike::OK;
+            }
         }
         else {
             return($db->errorno());
@@ -129,7 +139,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password non-existent user
+     * Basic Query Users roles is null
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -142,44 +152,23 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNonExistentUser($db)
+    function testQueryUsersRolesIsNull($db)
     {
+        sleep(2);
+        $test = array("read");
+        $roles = NULL;
         if ($db->isConnected()) {
-	        $res = $db->changePassword("abcdefgh", "john@123");
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
+            $result = $db->queryUsers($roles);
+            if ($db->errorno() != 0) {
+                return $db->errorno();
             } else {
-    		    return $db->errorno();
-	        }
-	    }
-        else {
-            return($db->errorno());
-        }
-    }
-    /**
-     * @test
-     * Basic Change Password user as NULL
-     *
-     * @pre
-     * Connect using aerospike object to the specified node
-     *
-     * @post
-     * Error
-     *
-     * @remark
-     *
-     *
-     * @test_plans{1.1}
-     */
-    function testChangePasswordNullUser($db)
-    {
-        if ($db->isConnected()) {
-	        $res = $db->changePassword(NULL, "example@123");
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+                $result = array_diff_assoc_recursive($test, $roles['example']);
+                if(!empty($result)) {
+                    return Aerospike::ERR;
+                } else {
+                    return Aerospike::OK;
+                }
+            }
         }
         else {
             return($db->errorno());
@@ -187,7 +176,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password password as NULL
+     * Basic Query Users with policy as string
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -200,15 +189,15 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordNullPassword($db)
+    function testQueryUsersStringPolicy($db)
     {
+        $test = array("read");
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", NULL);
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            try {
+                return($db->queryUser("example", $roles, array("OPT_READ_TIMEOUT" => "incorrect")));	
+            } catch (ErrorExcpetion $e) {
+                return $db->errorno();
+            }
         }
         else {
             return($db->errorno());
@@ -216,7 +205,7 @@ class ChangePassword extends AerospikeTestCommon
     }
     /**
      * @test
-     * Basic Change Password password is very long
+     * Basic Query Users with extra parameter
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -229,19 +218,21 @@ class ChangePassword extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testChangePasswordVeryLong($db)
+    function testQueryUsersExtraParameter($db)
     {
-	    $pass = "pass";
-	    for ($i=1; $i<100; $i++) {
-		    $pass = $pass + "pass";
-	    }
+        $test = array("read");
         if ($db->isConnected()) {
-	        $res = $db->changePassword("example", $pass);
-	        if ($res == Aerospike::OK) {
-		        return Aerospike::OK;
-            } else {
-    		    return $db->errorno();
-	        }
+            try {
+                $db->queryUsers($roles, array("OPT_READ_TIMEOUT" => 1000), "");
+                $result = array_diff_assoc_recursive($test, $roles);
+                if(!empty($result)) {
+                    return Aerospike::ERR;
+                } else {
+                    return Aerospike::OK;
+                }
+            } catch(ErrorException $e) {
+                return $db->errorno();
+            }
         }
         else {
             return($db->errorno());

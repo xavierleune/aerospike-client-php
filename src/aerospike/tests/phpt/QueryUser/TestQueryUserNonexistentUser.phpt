@@ -11,4 +11,4 @@ aerospike_phpt_skipif("QueryUser", "testQueryUserNonexistentUser");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("QueryUser", "testQueryUserNonexistentUser");
 --EXPECT--
-INVALID_USER
+ERR_INVALID_USER

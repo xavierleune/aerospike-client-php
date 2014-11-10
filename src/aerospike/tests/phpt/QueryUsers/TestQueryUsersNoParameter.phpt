@@ -1,14 +1,15 @@
 --TEST--
-QueryUser - query user has a string policy
+QueryUsers - query users has no parameter
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("QueryUsers", "testQueryUsersNoParameter");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("QueryUsers", "testQueryUsersNoParameter");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM
+

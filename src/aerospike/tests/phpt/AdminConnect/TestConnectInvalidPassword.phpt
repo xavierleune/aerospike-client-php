@@ -1,14 +1,14 @@
 --TEST--
-QueryUser - query user has a string policy
+Admin connect - invalid password
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("AdminConnect", "testConnectInvalidPassword");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("AdminConnect", "testConnectInvalidPassword");
 --EXPECT--
-ERR_CLIENT
+ERR_INVALID_PASSWORD

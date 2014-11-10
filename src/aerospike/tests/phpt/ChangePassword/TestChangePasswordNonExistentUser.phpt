@@ -11,4 +11,4 @@ aerospike_phpt_skipif("ChangePassword", "testChangePasswordNonExistentUser");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ChangePassword", "testChangePasswordNonExistentUser");
 --EXPECT--
-INVALID_USER
+ERR_INVALID_USER

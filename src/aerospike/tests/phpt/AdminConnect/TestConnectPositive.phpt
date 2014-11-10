@@ -1,14 +1,14 @@
 --TEST--
-QueryUser - query user has a string policy
+Admin connect - admin connect positive
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("AdminConnect", "testConnectPositive");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("AdminConnect", "testConnectPositive");
 --EXPECT--
-ERR_CLIENT
+OK

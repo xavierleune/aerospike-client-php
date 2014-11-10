@@ -1,14 +1,14 @@
 --TEST--
-QueryUser - query user has a string policy
+Drop user - drop user extra parameter
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("DropUser", "testDropUserUserExtraArgument");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("DropUser", "testDropUserUserExtraArgument");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

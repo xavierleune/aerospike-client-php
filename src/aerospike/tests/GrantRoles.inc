@@ -2,7 +2,7 @@
 class GrantRoles extends AerospikeTestCommon
 {
     protected function setUp(&$db, &$config) {
-        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
+        $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
         $db = new Aerospike($config);
         $res = $db->createUser("example", "example@123", array("read"));
@@ -58,7 +58,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesPositive($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles("example", array("read", "read-write")));
+            return($db->grantRoles("example", array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -82,7 +82,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesPositivePolicy($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles("example", array("read", "read-write"), array("OPT_WRITE_TIMEOUT" => 1000)));
+            return($db->grantRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000)));
         }
         else {
             return($db->errorno());
@@ -106,7 +106,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesPolicyIncorrect($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles("example", array("read", "read-write"), array("OPT_WRITE_TIMEOUT" => 0.5)));
+            return($db->grantRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
         }
         else {
             return($db->errorno());
@@ -130,7 +130,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesUserIsNull($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles(NULL, array("read", "read-write")));
+            return($db->grantRoles(NULL, array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -154,7 +154,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesNonExistentUser($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles("john", array("read", "read-write")));
+            return($db->grantRoles("abcdefg", array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -178,7 +178,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesEmptyRoles($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles("example", array()));
+            return($db->grantRoles("example", array()));
         }
         else {
             return($db->errorno());
@@ -202,7 +202,7 @@ class GrantRoles extends AerospikeTestCommon
     function testGrantRolesInvalidRoleList($db)
     {
         if ($db->isConnected()) {
-                return($db->grantRoles("example", array("viewer")));
+            return($db->grantRoles("example", array("viewer")));
         }
         else {
             return($db->errorno());

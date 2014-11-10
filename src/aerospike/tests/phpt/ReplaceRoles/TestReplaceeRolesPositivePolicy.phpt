@@ -1,14 +1,15 @@
 --TEST--
-QueryUser - query user has a string policy
+ReplaceRoles - replace roles is positive with policy
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("ReplaceRoles", "testReplaceRolesPositivePolicy");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("ReplaceRoles", "testReplaceRolesPositivePolicy");
 --EXPECT--
-ERR_CLIENT
+OK
+

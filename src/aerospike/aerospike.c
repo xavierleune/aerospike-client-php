@@ -563,7 +563,7 @@ PHP_METHOD(Aerospike, __construct)
     /* Connect to the cluster */
     if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
             (AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error)))) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Unable to connect to server");
+        PHP_EXT_SET_AS_ERR(&error, error.code, "Unable to connect to server");
         DEBUG_PHP_EXT_WARNING("Unable to connect to server");
         goto exit;
     }

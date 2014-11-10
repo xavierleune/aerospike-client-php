@@ -11,4 +11,4 @@ aerospike_phpt_skipif("RevokeRoles", "testRevokeRolesPolicyIncorrect");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("RevokeRoles", "testRevokeRolesPolicyIncorrect");
 --EXPECT--
-ERR_PARAM
+ERR_CLIENT

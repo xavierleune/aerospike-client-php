@@ -1,14 +1,14 @@
 --TEST--
-QueryUser - query user has a string policy
+ReplaceRoles - replace roles with user null
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("ReplaceRoles", "testReplaceRolesUserIsNull");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("ReplaceRoles", "testReplaceRolesUserIsNull");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

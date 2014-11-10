@@ -2,7 +2,7 @@
 class RevokeRoles extends AerospikeTestCommon
 {
     protected function setUp(&$db, &$config) {
-        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
+        $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
         $db = new Aerospike($config);
         $res = $db->createUser("example", "example@123", array("read","read-write","sys-admin"));
@@ -58,16 +58,14 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesPositive($db)
     {
         if ($db->isConnected()) {
-             $status = $db->revokeRoles("example", array("read", "read-write"));
-	     sleep(2);
-	     $status = $db->queryUser("example", $roles);
-	     sleep(2);
-	     var_dump($roles);
-             $result = array_diff_assoc_recursive($roles, array("sys-admin"));
-	     if(!$result) 
-		return Aerospike::ERR;
-	     else
-		return Aerospike::OK;
+            $status = $db->revokeRoles("example", array("read", "read-write"));
+            sleep(2);
+            $status = $db->queryUser("example", $roles);
+            $result = array_diff_assoc_recursive($roles, array("sys-admin"));
+            if(!empty($result)) 
+                return Aerospike::ERR;
+            else
+                return Aerospike::OK;
         }
         else {
             return($db->errorno());
@@ -91,15 +89,14 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesPositivePolicy($db)
     {
         if ($db->isConnected()) {
-             $db->revokeRoles("example", array("read", "read-write"), array("OPT_WRITE_TIMEOUT" => 1000));
-	     sleep(2);
-             $db->queryUser("example", $roles);
-             var_dump($roles);
-             $result = array_diff_assoc_recursive($roles, array("sys-admin"));
-	     if(!$result) 
-		return Aerospike::ERR;
-	     else
-		return Aerospike::OK;
+            $db->revokeRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000));
+            sleep(2);
+            $db->queryUser("example", $roles);
+            $result = array_diff_assoc_recursive($roles, array("sys-admin"));
+            if(!empty($result)) 
+                return Aerospike::ERR;
+            else
+                return Aerospike::OK;
         }
         else {
             return($db->errorno());
@@ -123,7 +120,7 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesPolicyIncorrect($db)
     {
         if ($db->isConnected()) {
-            return($db->revokeRoles("example", array("read", "read-write"), array("OPT_WRITE_TIMEOUT" => 0.5)));
+            return($db->revokeRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
         }
         else {
             return($db->errorno());
@@ -147,7 +144,7 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesUserIsNull($db)
     {
         if ($db->isConnected()) {
-                return($db->revokeRoles(NULL, array("read", "read-write")));
+            return($db->revokeRoles(NULL, array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -171,7 +168,7 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesNonExistentUser($db)
     {
         if ($db->isConnected()) {
-                return($db->revokeRoles("john", array("read", "read-write")));
+            return($db->revokeRoles("abcdefgh", array("read", "read-write")));
         }
         else {
             return($db->errorno());
@@ -195,7 +192,7 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesEmptyRoles($db)
     {
         if ($db->isConnected()) {
-             return($db->revokeRoles("example", array()));
+            return($db->revokeRoles("example", array()));
         }
         else {
             return($db->errorno());
@@ -219,14 +216,14 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesAllRoles($db)
     {
         if ($db->isConnected()) {
-             $db->revokeRoles("example", array("read", "read-write", "sys-admin"));
-	     sleep(2);
-             $db->queryUser("example", $roles);
-             $result = array_diff_assoc_recursive($roles, array());
-	     if(!$result) 
-		return Aerospike::ERR;
-	     else
-		return Aerospike::OK;
+            $db->revokeRoles("example", array("read", "read-write", "sys-admin"));
+            sleep(2);
+            $db->queryUser("example", $roles);
+            $result = array_diff_assoc_recursive($roles, array());
+            if(empty($result)) 
+                return Aerospike::OK;
+            else
+                return Aerospike::ERR;
         }
         else {
             return($db->errorno());
@@ -250,17 +247,17 @@ class RevokeRoles extends AerospikeTestCommon
     function testRevokeRolesNonpossessedRoles($db)
     {
         if ($db->isConnected()) {
-             $res = $db->createUser("john", "john@123", array("read","read-write"));
-	     sleep(2);
-             $db->revokeRoles("john", array("sys-admin"));
-	     sleep(2);
-             $db->queryUser("john", $roles);
-             $result = array_diff_assoc_recursive($roles, array("read", "read-write"));
-	     if(!$result) 
-		return Aerospike::ERR;
-	     else
-		return Aerospike::OK;
-             $res = $db->dropUser("john");
+            $res = $db->createUser("john-nonpossessed", "john@123", array("read","read-write"));
+            sleep(2);
+            $db->revokeRoles("john-nonpossessed", array("sys-admin"));
+            sleep(2);
+            $db->queryUser("john-nonpossessed", $roles);
+            $result = array_diff_assoc_recursive($roles, array("read", "read-write"));
+            if(!empty($result)) 
+                return Aerospike::ERR;
+            else
+                return Aerospike::OK;
+            $res = $db->dropUser("john-nonpossessed");
         }
         else {
             return($db->errorno());
@@ -285,6 +282,33 @@ class RevokeRoles extends AerospikeTestCommon
     {
         if ($db->isConnected()) {
             return($db->revokeRoles("example", array("viewer")));
+        }
+        else {
+            return($db->errorno());
+        }
+    }
+    /**
+     * @test
+     * Basic RevokeRoles read role
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * Error
+     *
+     * @remark
+     *
+     *
+     * @test_plans{1.1}
+     */
+    function testRevokeRolesReadRole($db)
+    {
+        if ($db->isConnected()) {
+            $db->revokeRoles("example", array("read", "read-write"));
+            sleep(2);
+            $key = $db->initKey("test", "demo", 1);
+            return ($db->put($key, array("age" => 1)));
         }
         else {
             return($db->errorno());

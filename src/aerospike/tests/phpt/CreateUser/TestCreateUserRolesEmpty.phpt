@@ -1,14 +1,14 @@
 --TEST--
-QueryUser - query user has a string policy
+Create user - create user with roles as empty
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_skipif("CreateUser", "testCreateUserRolesEmpty");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("QueryUser", "testQueryUserStringPolicy");
+aerospike_phpt_runtest("CreateUser", "testCreateUserRolesEmpty");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM
