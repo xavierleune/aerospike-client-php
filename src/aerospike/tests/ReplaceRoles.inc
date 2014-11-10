@@ -63,7 +63,7 @@ class ReplaceRoles extends AerospikeTestCommon
             $status = $db->queryUser("example", $roles);
             sleep(2);
             $result = array_diff_assoc_recursive($roles, array("read","read-write"));
-            if(!$result) 
+            if(!empty($result)) 
                 return Aerospike::ERR;
             else
                 return Aerospike::OK;
@@ -94,7 +94,7 @@ class ReplaceRoles extends AerospikeTestCommon
             sleep(4);
             $db->queryUser("example", $roles);
             $result = array_diff_assoc_recursive($roles, array("read","read-write"));
-            if(!$result) 
+            if(!empty($result)) 
                 return Aerospike::ERR;
             else
                 return Aerospike::OK;
