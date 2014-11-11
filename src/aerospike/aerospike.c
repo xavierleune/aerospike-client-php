@@ -92,14 +92,14 @@ PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
-static void tmp(void *p) {
+static void aerospike_check_close_and_destroy(void *hashtable_element) {
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In destructor function");
-    aerospike_ref *as_ref_p = p;
+    aerospike_ref *as_ref_p = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
     as_error error;
     if (as_ref_p) {
-        if (as_ref_p->ref_as_p > 1) {
-            as_ref_p->ref_as_p--;
+        if (as_ref_p->ref_hosts_entry > 1) {
+            as_ref_p->ref_hosts_entry--;
         } else {
             if (as_ref_p->as_p) {
                 if (AEROSPIKE_OK != aerospike_close(as_ref_p->as_p, &error)) {
@@ -107,7 +107,7 @@ static void tmp(void *p) {
                 }
                 aerospike_destroy(as_ref_p->as_p);
             }
-            as_ref_p->ref_as_p = 0;
+            as_ref_p->ref_hosts_entry = 0;
             as_ref_p->as_p = NULL;
             if (as_ref_p) {
                 pefree(as_ref_p, 1);
@@ -126,7 +126,7 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
     pthread_rwlock_init(&AEROSPIKE_G(aerospike_mutex), NULL);
     if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
         AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
-        zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &tmp, 1);
+        zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &aerospike_check_close_and_destroy, 1);
         AEROSPIKE_G(persistent_ref_count) = 1;
     } else {
         AEROSPIKE_G(persistent_ref_count)++;
@@ -152,58 +152,56 @@ static PHP_GINIT_FUNCTION(aerospike)
 {
 }
 
+/*
+********************************************************************
+* Using "arginfo_first_by_ref" in zend_arg_info argument of a
+* zend_function_entry accepts first argument of the
+* corresponding functions by reference and rest by value.
+********************************************************************
+*/
+ZEND_BEGIN_ARG_INFO(arginfo_first_by_ref, 0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
 
+/*
+ ********************************************************************
+ * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts second argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
 
-    /*
-    ********************************************************************
-    * Using "arginfo_first_by_ref" in zend_arg_info argument of a
-    * zend_function_entry accepts first argument of the
-    * corresponding functions by reference and rest by value.
-    ********************************************************************
-    */
-    ZEND_BEGIN_ARG_INFO(arginfo_first_by_ref, 0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_END_ARG_INFO()
-
-    /*
-     ********************************************************************
-     * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
-     * zend_function_entry accepts second argument of the
-     * corresponding functions by reference and rest by value.
-     ********************************************************************
-     */
-    ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_END_ARG_INFO()
-
-    /*
-     ********************************************************************
-     * Using "arginfo_third_by_ref" in zend_arg_info argument of a
-     * zend_function_entry accepts third argument of the
-     * corresponding functions by reference and rest by value.
-     ********************************************************************
-     */
-    ZEND_BEGIN_ARG_INFO(arginfo_third_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_END_ARG_INFO()
-    /*
-     ********************************************************************
-     * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
-     * zend_function_entry accepts fifth argument of the
-     * corresponding functions by reference and rest by value.
-     ********************************************************************
-     */
-    ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_END_ARG_INFO()
+/*
+ ********************************************************************
+ * Using "arginfo_third_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts third argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_third_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
+/*
+ ********************************************************************
+ * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts fifth argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_ARG_PASS_INFO(0)
+ZEND_END_ARG_INFO()
 
 /*
  ********************************************************************
@@ -261,13 +259,13 @@ zend_module_entry aerospike_module_entry =
 ZEND_GET_MODULE(aerospike)
 #endif
 
-    /*
-     ********************************************************************
-     *  The function entries for the main Aerospike class.
-     ********************************************************************
-     */
-    static zend_function_entry Aerospike_class_functions[] =
-    {
+/*
+ ********************************************************************
+ *  The function entries for the main Aerospike class.
+ ********************************************************************
+ */
+static zend_function_entry Aerospike_class_functions[] =
+{
     /*
      ********************************************************************
      *  Client Object APIs:
@@ -366,7 +364,7 @@ ZEND_GET_MODULE(aerospike)
 
 #endif
 
-        { NULL, NULL, NULL }
+    { NULL, NULL, NULL }
 };
 
 /*
@@ -414,6 +412,7 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
     Aerospike_object *intern_obj_p = (Aerospike_object *) object;
 
     if (intern_obj_p) {
+        intern_obj_p->as_ref_p = NULL;
         zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
         efree(intern_obj_p);
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
@@ -633,7 +632,8 @@ PHP_METHOD(Aerospike, close)
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
-    if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p->as_p)) {
+    if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
+            !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -646,9 +646,13 @@ PHP_METHOD(Aerospike, close)
             DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
             PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         }
-        /* Now as connection is getting closed we need to set the connection flag to false */
-        aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
     } else {
+        if (AEROSPIKE_OK ==
+                aerospike_helper_close_php_connection(aerospike_obj_p,
+                    &error TSRMLS_CC)) {
+            DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
+            PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+        }
         PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
 

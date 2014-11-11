@@ -141,8 +141,24 @@ typedef struct list_map_static_pool {
  *******************************************************************************************************
  */
 typedef struct csdk_aerospike_obj {
+    /*
+     * as_p holds the reference of internal C SDK aerospike object
+     */
     aerospike *as_p;
+
+    /*
+     * ref_as_p indicates the no. of references for internal C
+     * SDK aerospike object being held by the various PHP userland Aerospike
+     * objects.
+     */
     int ref_as_p;
+
+    /*
+     * ref_hosts_entry indicates the no. of references for internal C
+     * SDK aerospike object being held by entries in aerospike global
+     * persistent_list hashtable.
+     */
+    int ref_hosts_entry;
 } aerospike_ref;
 
 /* 
