@@ -207,7 +207,7 @@ class InfoMany extends AerospikeTestCommon
      * @post
      * Info for bins of namespace
      *
-     * @remark
+     * @remark Adjust after client bug is fixed
      *
      *
      * @test_plans{1.1}
@@ -215,17 +215,11 @@ class InfoMany extends AerospikeTestCommon
     function testInfoManyNegativeEmptyCommand($db, $config)
     {
         if ($db->isConnected()) {
-            try {
-                return(Aerospike::ERR);
-                $response = $db->infoMany('', $config,
-                    array(Aerospike::OPT_READ_TIMEOUT => 20000));
-                if ($response == NULL) {
-                    return ($db->errorno());
-                } else {
-                    return (Aerospike::OK);
-                }
-            } catch (Exception $e) {
-                return($db->errorno());
+            $response = $db->infoMany('', $config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
+            if ($response == NULL) {
+                return ($db->errorno());
+            } else {
+                return (Aerospike::OK);
             }
         } else {
             return($db->errorno());

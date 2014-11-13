@@ -1,11 +1,6 @@
 --TEST--
 PredicateBetween - predicate between has boolean parameters
 
---SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("PredicateBetween", "testPredicateBetweenValueIsBool");
-
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
