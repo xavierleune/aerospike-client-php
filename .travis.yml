@@ -14,7 +14,7 @@ script:
 - cd src/aerospike
 - ./build.sh
 - ../../.travis/load-extension.sh
-- make test TESTS=tests/phpt
+- make test TESTS=tests/phpt TEST_PHP_ARGS="--show-diff"
 after_failure:
 - cat configure.in
 - cat Makefile
