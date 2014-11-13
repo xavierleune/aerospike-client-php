@@ -45,7 +45,7 @@ Here is a description of the configuration directives:
     Path to the user-defined Lua function modules
 
 **aerospike.shm.use boolean**
-    Indicates if shared memory should be used for cluster tending. One of { true, false }
+    Indicates if shared memory should be used for cluster tending. Recommended for multi-process cases such as FPM. One of { true, false }
 
 **aerospike.shm.max_nodes integer**
     Shared memory maximum number of server nodes allowed. Leave a cushion so new nodes can be added without needing a client restart.
