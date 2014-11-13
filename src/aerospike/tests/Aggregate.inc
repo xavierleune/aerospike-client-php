@@ -22,8 +22,10 @@ class Aggregate extends AerospikeTestCommon
     protected function setUp(&$db, &$key) {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
-        $db->createIndex("test", "demo", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
-        time_nanosleep(0, 25000000); // pause 20ms for the index creation
+        if (!$db->isConnected()) {
+            return $db->errorno();
+        }
+        $this->ensureIndex($db, 'test', 'demo', 'age', 'demo_age_idx', Aerospike::INDEX_TYPE_INTEGER);
         $key = $db->initKey("test", "demo", "Get_key");
         $db->put($key,array("first_name"=>"raunak", "age"=>29));
         $key = $db->initKey("test", "demo", "Get_key1");
@@ -49,7 +51,6 @@ class Aggregate extends AerospikeTestCommon
         if ($deregister_status != Aerospike::OK) {
             return($db->errorno());
         }
-        $db->dropIndex("test", "age_index");
         $db->close();
     }
 

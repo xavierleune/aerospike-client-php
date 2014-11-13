@@ -159,6 +159,43 @@ abstract class AerospikeTestCommon extends ASTestFramework
         $this->assertRegExp($expr, $errmsg, $msg);
         return true;
     }
+
+    protected function ensureIndex(Aerospike $db, $ns, $set, $bin, $index_name, $index_type) {
+        $index_loaded = false;
+        while (!$index_loaded) {
+            $status = $db->info("sindex/$ns/$index_name", $response);
+            if ($status !== Aerospike::OK || strrpos($response, 'NO INDEX') !== false) {
+                $db->createIndex($ns, $set, $bin, $index_type, $index_name);
+                time_nanosleep(0, 50000000); // pause 50ms for the index creation
+                continue;
+            } else {
+                if (strpos($response, 'load_pct=100') !== false) {
+                    $index_loaded = true;
+                } else {
+                    time_nanosleep(0, 10000000); // pause 10ms more for index creation to complete
+                }
+            }
+        }
+    }
+
+    protected function ensureUdfModule(Aerospike $db, $module_path, $module_alias) {
+        $module_loaded = false;
+        while (!$module_loaded) {
+            $status = $db->info("udf-list", $response);
+            if ($status !== Aerospike::OK || strpos($response, 'filename='. $module_alias) === false) {
+                $status = $db->register($module_path, $module_alias);
+                time_nanosleep(0, 50000000); // pause 50ms for module registration
+                continue;
+            } else {
+                if (strpos($response, 'filename='. $module_alias) !== false) {
+                    $module_loaded = true;
+                } else {
+                    time_nanosleep(0, 10000000); // pause 10ms more for module registration
+                }
+            }
+        }
+    }
+
 }
 
 ?>

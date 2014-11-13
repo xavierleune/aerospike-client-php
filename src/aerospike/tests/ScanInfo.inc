@@ -15,6 +15,10 @@ class ScanInfo extends AerospikeTestCommon
     protected function setUp(&$db, &$key) {
 	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
+        if (!$db->isConnected()) {
+            return $db->errorno();
+        }
+        $this->ensureUdfModule($db, "tests/lua/test_transform.lua", "test_transform.lua");
         $key = $db->initKey("test", "demo", "Get_key");
         $db->put($key,array("first_name"=>"raunak", "age"=>29));
         $key = $db->initKey("test", "demo", "Get_key1");
@@ -23,15 +27,6 @@ class ScanInfo extends AerospikeTestCommon
         $db->put($key,array("first_name"=>"bhushan", "age"=>22));
 	    $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key,array("first_name"=>"ajit", "age"=>32));
-        $register_status = $db->register("tests/lua/test_transform.lua", "test_transform.lua");
-        if ($register_status != Aerospike::OK) {
-            return($db->errorno());
-        }
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
-        ScanInfo::$myscan_id = $scan_id;
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
-        }
     }
 
     protected function tearDown(&$db, &$key) {
@@ -46,10 +41,6 @@ class ScanInfo extends AerospikeTestCommon
              $key=$db->initKey("test", "demo", "Get_key".$i);
              $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                  =>Aerospike::POLICY_RETRY_NONE));
-        }
-        $deregister_status = $db->deregister("test_transform.lua");
-        if ($deregister_status != Aerospike::OK) {
-        return($db->errorno());
         }
         $db->close();
     }
@@ -71,10 +62,12 @@ class ScanInfo extends AerospikeTestCommon
 	 */
 	function testScanInfoPositive($db)
     {
-        if (!$db->isConnected()) {
+        $info = array();
+        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
             return($db->errorno());
         }
-        $info = array();
+        ScanInfo::$myscan_id = $scan_id;
         do {
             time_nanosleep(0, 5000000); // pause 5ms
             $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
@@ -130,9 +123,11 @@ class ScanInfo extends AerospikeTestCommon
 	 */
 	function testScanInfoScanIdArray($db)
     {
-        if (!$db->isConnected()) {
+        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
             return($db->errorno());
         }
+        ScanInfo::$myscan_id = $scan_id;
         try {
             $status = $db->scanInfo(array(ScanInfo::$myscan_id), $info);
         } catch (Exception $e) {
@@ -182,9 +177,11 @@ class ScanInfo extends AerospikeTestCommon
 	 */
 	function testScanInfoInfoIsString($db)
     {
-        if (!$db->isConnected()) {
+        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
             return($db->errorno());
         }
+        ScanInfo::$myscan_id = $scan_id;
         $scan_info = "age";
         $status = $db->scanInfo(ScanInfo::$myscan_id, $scan_info);
 	    if($status != Aerospike::OK) {
@@ -209,9 +206,11 @@ class ScanInfo extends AerospikeTestCommon
 	 */
 	function testScanInfoWithOptionals($db,$scan_id)
     {
-        if (!$db->isConnected()) {
-        return($db->errorno());
+        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return($db->errorno());
         }
+        ScanInfo::$myscan_id = $scan_id;
         $status = $db->scanInfo(ScanInfo::$myscan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
         $info = array();
         do {
