@@ -49,7 +49,7 @@ detect_linux()
 
     case ${DIST_NAME} in
 
-      "centos6" | "redhatenterpriceserver6" | "fedora20" | "oracleserver6" )
+      "centos6" | "redhatenterpriseserver6" | "fedora20" | "oracleserver6" )
         echo "el6" "rpm"
         return 0
         ;;
@@ -330,7 +330,7 @@ if [ $DOWNLOAD ] && [ $DOWNLOAD == 1 ]; then
       "pkg" )
         printf "info: extracting files from '${INST_PATH}'\n"
         xar -xf aerospike-client-c-devel-*.pkg
-        cat Payload | gunzip -dc |cpio -i
+        cat Payload | gunzip -dc | cpio -i
         rm Bom PackageInfo Payload
         ;;
     esac
