@@ -466,17 +466,8 @@ class Info extends AerospikeTestCommon
     function testInfoNegativeForEmptyCommand($db, $host)
     {
         if ($db->isConnected()) {
-            try {
-                return(Aerospike::ERR);
-                $status = $db->info('', $response, $host);
-                if($status == Aerospike::OK) {
-                    if($response==NULL) {
-                        return Aerospike::OK;
-                    }
-                }
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
+            $status = $db->info('', $response, $host);
+            return $status;
         } else {
             return($db->errorno());
         }

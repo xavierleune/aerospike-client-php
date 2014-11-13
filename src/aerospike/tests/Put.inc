@@ -2795,18 +2795,19 @@ class Put extends AerospikeTestCommon
          $db->close();
          return ($db->errorno());
      }
-     return (Aerospike::ERR);
-     $key = $db->initKey("test", "demo", base64_decode("policy_key_send"), true);
-     $put_status = $db->put($key, array("bin1"=>10), NULL,
-         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     $policy = array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND);
+     $key = $db->initKey("test", "demo", "policy_key_send_test");
+     $put_status = $db->put($key, array("bin1"=>10), NULL, $policy);
      if ($put_status != AEROSPIKE::OK) {
-         $db->close();
-         return($put_status);
+         return $put_status;
      }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     $db->close();
-     return ($status);
+     $get_status = $db->get($key, $record, array(), $policy);
+     if ($get_status !== Aerospike::OK) {
+         return $get_status;
+     }
+     if ($record['key']['key'] != 'policy_key_send_test') return Aerospike::ERR;
+     $db->remove($key);
+     return $get_status;
  }
 /**
   * @test  

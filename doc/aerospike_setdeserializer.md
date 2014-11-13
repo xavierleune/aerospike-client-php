@@ -16,8 +16,10 @@ instances of the Aerospike class.
 
 The callback method must follow the signature
 ```
-public function string aerodb_deserialize ( mixed $value )
+public function string aerospike_deserialize ( mixed $value )
 ```
+
+The value passed to it is an as\_bytes (AS\_BYTES\_BLOB).
 
 ## Parameters
 
@@ -29,12 +31,11 @@ public function string aerodb_deserialize ( mixed $value )
 <?php
 
 Aerospike::setDeserializer(function ($val) {
-    $prefix = substr($val, 0, 3);
-    if ($prefix !== 'r||') {
-        return unserialize(substr ($val, 3));
-    }
-    return unserialize(substr ($val, 3));
+    return json_decode(gzuncompress($val));
 });
 
 ?>
 ```
+
+## See Also
+ - [Aerospike::setSerializer()](aerospike_setserializer.md)

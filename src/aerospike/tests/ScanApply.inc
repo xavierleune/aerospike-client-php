@@ -29,13 +29,12 @@ class ScanApply extends AerospikeTestCommon
         $db->put($key, array("first_name"=>"bhushan", "age"=>($this->ages[2])));
         $key = $db->initKey("test", "demo", "Get_key3");
         $db->put($key, array("first_name"=>"ajit", "age"=>($this->ages[3])));
-         
-        $register_status =
-            $db->register(self::$lua_user_path . "/test_transform.lua", "test_transform.lua");
+
+        $register_status = $db->register(self::$lua_user_path . "/test_transform.lua", "test_transform.lua");
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        sleep(2);
+        time_nanosleep(0, 20000000); // pause 20ms
     }
 
     protected function tearDown(&$db, &$key) {
@@ -83,7 +82,7 @@ class ScanApply extends AerospikeTestCommon
             return($db->errorno());
         }
         do {
-            sleep(10);
+            time_nanosleep(0, 5000000); // pause 5ms
             $status = $db->scanInfo($scan_id, $info);
             if ($status != Aerospike::OK) {
                 return($db->errorno());
@@ -450,7 +449,7 @@ class ScanApply extends AerospikeTestCommon
             return($db->errorno());
         }
         do {
-            sleep(10);
+            time_nanosleep(0, 5000000); // pause 5ms
             $status = $db->scanInfo($scan_id, $info);
             if ($status != Aerospike::OK) {
                 return($db->errorno());

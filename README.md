@@ -10,7 +10,7 @@ The PHP extension was tested to build on 64-bit
 
  - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7 and related distros using the **apt** package manager
  - CentOS 6.x, 7.x, RedHat 6.x, 7.x and related distros using the **yum** package manager
- - Mac OS X 10.9 (Mavericks)
+ - OS X 10.9 (Mavericks), 10.10 (Yosemite)
 
 Windows is currently not supported.
 
@@ -38,9 +38,9 @@ Full documentation of the Aerospike database is available at http://www.aerospik
     sudo apt-get install build-essential autoconf libssl-dev liblua5.1-dev
     sudo apt-get install php5-dev php-pear # unless PHP was manually installed
 
-### Mac OS X
+### OS X
 
-By default Mac OS X will be missing command line tools. On Mavericks (OS X 10.9)
+By default OS X will be missing command line tools. On Mavericks (OS X 10.9)
 and higher those [can be installed without Xcode](http://osxdaily.com/2014/02/12/install-command-line-tools-mac-os-x/).
 
     xcode-select --install # install the command line tools, if missing

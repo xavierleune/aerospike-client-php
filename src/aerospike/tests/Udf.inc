@@ -26,7 +26,7 @@ class Udf extends AerospikeTestCommon
         if ($udf_register_status != Aerospike::OK) {
             return ($db->errorno());
         }
-        sleep(2);
+        time_nanosleep(0, 20000000); // pause 20ms
     }
 
     protected function tearDown(&$db, &$key) {

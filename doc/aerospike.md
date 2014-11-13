@@ -167,7 +167,7 @@ class Aerospike
     public void setLogHandler ( callback $log_handler )
 
     // key-value methods
-    public array initKey ( string $ns, string $set, int|string $pk )
+    public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
     public int put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
     public int get ( array $key, array &$record [, array $filter [, array $options ]] )
     public int exists ( array $key, array &$metadata [, array $options ] )
@@ -215,6 +215,7 @@ class Aerospike
 ```
 
 ### [Runtime Configuration](aerospike_config.md)
+### [Session Handler](aerospike_sessions.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)
