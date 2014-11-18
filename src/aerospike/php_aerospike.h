@@ -52,6 +52,9 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     char *lua_user_path;
     int key_policy;
     int key_gen;
+    char *session_save_handler;
+    char *session_save_path;
+    int session_cache_expire;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     int persistent_ref_count;

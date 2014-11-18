@@ -1,0 +1,8 @@
+001+ Fatal error: Uncaught exception 'ReflectionException' with message 'Method testSessionRead does not exist' in /home/gslab/aerospike-client-php/src/aerospike/tests/astestframework/ASTestFramework.inc:192
+001- OK
+002+ Stack trace:
+003+ #0 /home/gslab/aerospike-client-php/src/aerospike/tests/astestframework/ASTestFramework.inc(192): ReflectionClass->getMethod('testSessionRead')
+004+ #1 /home/gslab/aerospike-client-php/src/aerospike/tests/astestframework/astest-phpt-loader.inc(28): ASTestFramework->runSingleTest('testSessionRead')
+005+ #2 /home/gslab/aerospike-client-php/src/aerospike/tests/phpt/AerospikeSession/TestSessionRead.php(3): aerospike_phpt_runtest('AerospikeSessio...', 'testSessionRead')
+006+ #3 {main}
+007+   thrown in /home/gslab/aerospike-client-php/src/aerospike/tests/astestframework/ASTestFramework.inc on line 192

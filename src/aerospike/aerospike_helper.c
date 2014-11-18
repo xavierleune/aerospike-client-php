@@ -10,6 +10,10 @@
 #include "pthread.h"
 #include "aerospike_common.h"
 
+#define SAVE_PATH_DELIMITER "|"
+#define IP_PORT_DELIMITER ":"
+#define HOST_DELIMITER ","
+
 /*
  *******************************************************************************************************
  * PHP Userland logger callback.
@@ -106,25 +110,6 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
 
     return true;
 }
-
-/*
- *******************************************************************************************************
- * Sets C client's logger callback.
- *
- * @param as_log_p          The as_log to be set.
- * @return 1 if log set succeeds. Otherwise 0.
- *******************************************************************************************************
- */
-/*extern int parseLogParameters(as_log* as_log_p)
-{
-    if (as_log_set_callback((as_log_callback)&aerospike_helper_log_callback)) {
-	is_callback_registered = 1;
-        Z_ADDREF_P(func_call_info.function_name);
-        return 1;
-    } else {
-        return 0;;
-    }
-}*/
 
 /*
  *******************************************************************************************************
@@ -540,8 +525,9 @@ exit:
  */
 extern as_status
 aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
-        as_error *error_p TSRMLS_DC) {
-    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
+        as_error *error_p TSRMLS_DC) 
+{
+    as_error_init(error_p);
     DEBUG_PHP_EXT_DEBUG("In aerospike_helper_close_php_connection");
     if (as_obj_p->as_ref_p) {
         if (as_obj_p->as_ref_p->ref_as_p >= 1) {
@@ -561,3 +547,189 @@ aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
     return error_p->code;
 }
 
+/*
+ *******************************************************************************************************
+ * Function that trims leading and trailing white spaces in a given string.
+ *
+ * @param str               The input string to be trimmed.
+ * @param len               The length of input string.
+ *
+ * @return len of trimmed str string on success. Otherwise 1.
+ *******************************************************************************************************
+ */
+static int
+trim_white_space(const char *str, size_t len)
+{
+    if (len == 0) {
+        return 0;
+    }
+
+    const char *end;
+    int out_size;
+
+    /* Trim leading space */
+    while(isspace(*str)) {
+        str++;
+    }
+
+    if(*str == 0) {
+        /* All spaces? */
+        return 1;
+    }
+
+    /* Trim trailing space */
+    end = str + strlen(str) - 1;
+    while(end > str && isspace(*end)) {
+        end--;
+    }
+    end++;
+
+    /* Set output size to minimum of trimmed string length and buffer size minus 1 */
+    out_size = (end - str) < len-1 ? (end - str) : len-1;
+
+    /* Copy trimmed string and add null terminator */
+
+    return out_size;
+}
+
+/*
+ *******************************************************************************************************
+ * Function to parse the session save path.
+ * It sets the ns and set in aerospike_session by allocating memory to it.
+ * It also sets the host within as_config.
+ *
+ * @param save_path         The session save path to be parsed.
+ * @param session_p         The aerospike_session object whose ns_p and set_p
+ *                          are to be set using the save_path.
+ * @param config_p          The as_config whose hosts are to be set using the
+ *                          save_path.
+ * @param error_p           The C SDK's as_error object to be populated by this
+ *                          method in case of any errors if encountered.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+static as_status
+parse_save_path(char *save_path, aerospike_session *session_p,
+        as_config *config_p, as_error *error_p TSRMLS_DC)
+{
+    char        *tok = NULL;
+    char        *saved = NULL;
+    char        port[INET_PORT];
+    int16_t     iter_host = 0;
+    
+    tok = strtok_r(save_path, SAVE_PATH_DELIMITER, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Could not read SAVE_PATH settings");
+        DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+        goto exit;
+    }
+
+    strncpy(session_p->ns_p, tok, strlen(tok));
+    session_p->ns_p[strlen(tok)] = '\0';
+
+    tok = strtok_r(NULL, SAVE_PATH_DELIMITER, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Could not read SAVE_PATH settings");
+        DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+        goto exit;
+    }
+
+    strncpy(session_p->set_p, tok, strlen(tok));
+    session_p->set_p[strlen(tok)] = '\0';
+
+    while (tok != NULL) {
+        tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
+        if (tok == NULL) {
+            if (iter_host == 0) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                        "Could not read SAVE_PATH settings");
+                DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+                goto exit;
+            } else {
+                break;
+            }
+        }
+        trim_white_space(tok, strlen(tok) + 1);
+        config_p->hosts[iter_host].addr = tok;
+
+        tok = strtok_r(NULL, HOST_DELIMITER, &saved);
+        if (tok == NULL) {
+            if (iter_host == 0) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                        "Could not read SAVE_PATH settings");
+                DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+                goto exit;
+            } else {
+                break;
+            }
+        }
+        trim_white_space(tok, strlen(tok) + 1);
+        config_p->hosts[iter_host].port = atoi(tok);
+        config_p->hosts_size++;
+        iter_host++;
+    }
+
+exit:
+    return error_p->code;
+}
+
+/*
+ *******************************************************************************************************
+ * Function to check save path and set config and session object.
+ * It uses the save path passed to it. If NULL, checks for PHP INI entries.
+ * It sets the ns and set in aerospike_session by allocating memory to it.
+ * It also sets the host within as_config.
+ *
+ * @param config_p          The as_config whose hosts are to be set using the
+ *                          save_path.
+ * @param save_path         The session save path to be parsed.
+ * @param session_p         The aerospike_session object whose ns_p and set_p
+ *                          are to be set using the save_path.
+ * @param error_p           The C SDK's as_error object to be populated by this
+ *                          method in case of any errors if encountered.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_helper_check_and_set_config_for_session(as_config *config_p,
+        char *save_path, aerospike_session *session_p,
+        as_error *error_p TSRMLS_DC)
+{
+    char        *ini_save_path = NULL;
+    char        *ip = NULL;
+    uint16_t    port = 0;
+
+    as_error_init(error_p);
+
+    as_config_init(config_p);
+    strcpy(config_p->lua.system_path, LUA_SYSTEM_PATH_PHP_INI);
+    strcpy(config_p->lua.user_path, LUA_USER_PATH_PHP_INI);
+
+    if (SAVE_HANDLER_PHP_INI && (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN))) {
+        if (!save_path) {
+            ini_save_path = SAVE_PATH_PHP_INI;
+        }
+
+        if (save_path) {
+            if (AEROSPIKE_OK != parse_save_path(save_path, session_p,
+                        config_p, error_p TSRMLS_CC)) {
+                goto exit;
+            }
+        } else {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_PATH settings");
+            DEBUG_PHP_EXT_ERROR("Could not read SAVE_PATH settings");
+            goto exit;
+        }
+    } else {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_HANDLER settings");
+        DEBUG_PHP_EXT_ERROR("Could not read SAVE_HANDLER settings");
+        goto exit;
+    }
+
+exit:
+    return error_p->code;
+}

@@ -34,6 +34,7 @@
 #include "php.h"
 #include "php_aerospike.h"
 #include "ext/standard/info.h"
+#include "ext/session/php_session.h"
 
 #include "aerospike/aerospike.h"
 #include "aerospike/aerospike_key.h"
@@ -73,7 +74,8 @@ static zend_object_handlers Aerospike_handlers;
  ********************************************************************
  */
 
-static int persist;
+int persist;
+extern ps_module ps_mod_aerospike;
 
 PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
@@ -87,6 +89,9 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("session.save_handler", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, session_save_handler, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("session.save_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, session_save_path, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("session.cache_expire", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, session_cache_expire, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -428,7 +433,7 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
  * Aerospike class new method
  ********************************************************************
  */
-zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 {
     //zend_object_value retval;
     zend_object_value retval = {0};
@@ -484,7 +489,7 @@ PHP_METHOD(Aerospike, __construct)
     char*                  ini_value = NULL;
     HashTable              *persistent_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    persistent_list = (AEROSPIKE_G(persistent_list_g));
+    persistent_list =      (AEROSPIKE_G(persistent_list_g));
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR;
@@ -3518,6 +3523,7 @@ PHP_MINIT_FUNCTION(aerospike)
     EXPOSE_GENERAL_CONSTANTS_LONG_ZEND(Aerospike_ce);
     EXPOSE_GENERAL_CONSTANTS_STRING_ZEND(Aerospike_ce);
 
+    php_session_register_module(&ps_mod_aerospike);
     return SUCCESS;
 }
 
