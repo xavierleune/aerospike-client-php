@@ -120,7 +120,7 @@ destroy_session(aerospike_session *session_p TSRMLS_DC)
         efree(session_p->aerospike_obj_p);
         session_p->aerospike_obj_p = NULL;
         efree(session_p);
-        DEBUG_PHP_EXT_INFO("aerospike ssession object destroyed");
+        DEBUG_PHP_EXT_INFO("aerospike session object destroyed");
     } else {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
     }
@@ -225,13 +225,9 @@ PS_CLOSE_FUNC(aerospike)
         DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
     }
 
-    if (session_p->aerospike_obj_p) {
-        efree(session_p->aerospike_obj_p);
-        session_p->aerospike_obj_p = NULL;
-        DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
-    }
-
+    destroy_session(session_p TSRMLS_CC);
     PS_SET_MOD_DATA(NULL);
+
 exit:
     return (error.code == AEROSPIKE_OK) ? SUCCESS : FAILURE;
 }
@@ -253,6 +249,7 @@ PS_READ_FUNC(aerospike)
     as_record*          record_p = NULL;
     as_key              key_get;
     int16_t             init_key = 0;
+    char*               session_data_p = NULL;
 
     DEBUG_PHP_EXT_INFO("In PS_READ_FUNC");
 
@@ -269,14 +266,15 @@ PS_READ_FUNC(aerospike)
         goto exit;
     }
 
-    if (NULL == (*val = as_record_get_str(record_p, AEROSPIKE_SESSION_BIN))) {
+    if (NULL == (session_data_p = as_record_get_str(record_p, AEROSPIKE_SESSION_BIN))) {
          PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR,
                     "Unable to get session bin of the record");
          DEBUG_PHP_EXT_DEBUG("Unable to get session bin of the record");
          goto exit;
     }
 
-    *vallen = strlen(*val);
+    *val = estrndup(session_data_p, strlen(session_data_p));
+    *vallen = strlen(session_data_p);
 
 exit:
     if (init_key) {
