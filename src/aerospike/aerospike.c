@@ -278,6 +278,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, __destruct, NULL, ZEND_ACC_DTOR | ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      *  Cluster Management APIs:
@@ -288,6 +289,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, info, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, infoMany, NULL, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      * Error Handling APIs:
@@ -295,6 +297,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, error, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, errorno, NULL, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      *  Key Value Store (KVS) APIs:
@@ -316,6 +319,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, setDeserializer, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, setSerializer, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, touch, NULL, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      *  Logging APIs:
@@ -323,6 +327,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, setLogLevel, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, setLogHandler, NULL, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      *  Secondary Index APIs:
@@ -330,6 +335,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, createIndex, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, dropIndex, NULL, ZEND_ACC_PUBLIC)
+
     /*
      ********************************************************************
      * Query and Scan APIs:
@@ -362,50 +368,8 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, existsMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
 
-#if 0 // TBD
-
-    // Large Data Type (LDT) APIs:
-    // Shared Memory APIs:
-
-#endif
-
     { NULL, NULL, NULL }
 };
-
-/*
- ********************************************************************
- * Aerospike class destructor
- ********************************************************************
- */
-static void Aerospike_object_dtor(void *object, zend_object_handle handle TSRMLS_DC)
-{
-    Aerospike_object *intern_obj_p = (Aerospike_object *) object;
-    as_error error;
-    /*Aerospike_object *intern_obj_p;
-      intern_obj_p = aerospike_object; */
-
-    /* if (intern_obj_p && intern_obj_p->as_ref_p) {
-       if (intern_obj_p->as_ref_p->ref_as_p > 1) {
-       intern_obj_p->as_ref_p->ref_as_p--;
-       } else {
-       if (intern_obj_p->as_ref_p->as_p) {
-       if (AEROSPIKE_OK != aerospike_close(intern_obj_p->as_ref_p->as_p, &error)) {
-       DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
-       }
-       aerospike_destroy(intern_obj_p->as_ref_p->as_p);
-       }
-       intern_obj_p->as_ref_p->ref_as_p = 0;
-       intern_obj_p->as_ref_p->as_p = NULL;
-       if (intern_obj_p->as_ref_p) {
-       efree(intern_obj_p->as_ref_p);
-       }
-       intern_obj_p->as_ref_p = NULL;
-       }
-       DEBUG_PHP_EXT_INFO("aerospike c sdk object destroyed");
-       } else {
-       DEBUG_PHP_EXT_ERROR("invalid aerospike object");
-       }*/
-}
 
 /*
  ********************************************************************
@@ -435,12 +399,10 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
  */
 static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 {
-    //zend_object_value retval;
     zend_object_value retval = {0};
     Aerospike_object *intern_obj_p;
 
     if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
-      //  printf("intern_obj_p = %u \n", intern_obj_p);
         zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
 #if PHP_VERSION_ID < 50399
         zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
@@ -448,10 +410,9 @@ static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
         object_properties_init((zend_object*) &(intern_obj_p->std), ce);
 #endif
 
-        retval.handle = zend_objects_store_put(intern_obj_p, Aerospike_object_dtor, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
+        retval.handle = zend_objects_store_put(intern_obj_p, NULL, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
         retval.handlers = &Aerospike_handlers;
         intern_obj_p->as_ref_p = NULL;
-        //return (retval);
     } else {
         DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
     }
@@ -563,7 +524,6 @@ PHP_METHOD(Aerospike, __construct)
 
     DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object");
 exit:
-    // pthread_mutex_unlock(&aerospike_mutex);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);

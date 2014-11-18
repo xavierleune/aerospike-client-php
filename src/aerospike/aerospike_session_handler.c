@@ -140,7 +140,6 @@ destroy_session(aerospike_session *session_p TSRMLS_DC)
  */
 PS_OPEN_FUNC(aerospike)
 {
-    TSRMLS_FETCH();
     as_error                error;
     as_config               config;
     aerospike_session*      session_p = NULL;
