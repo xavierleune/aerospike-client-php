@@ -286,6 +286,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, isConnected, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, close, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, reconnect, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getNodes, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, info, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, infoMany, NULL, ZEND_ACC_PUBLIC)
@@ -373,14 +374,30 @@ static zend_function_entry Aerospike_class_functions[] =
 
 /*
  ********************************************************************
- * Aerospike module freeing up
+ * Aerospike object freeing up on scope termination
  ********************************************************************
  */
 static void Aerospike_object_free_storage(void *object TSRMLS_DC)
 {
-    Aerospike_object *intern_obj_p = (Aerospike_object *) object;
+    Aerospike_object    *intern_obj_p = (Aerospike_object *) object;
+    as_error            error;
+
+    as_error_init(&error);
 
     if (intern_obj_p) {
+        if (intern_obj_p->is_persistent == false && intern_obj_p->as_ref_p) {
+            if (intern_obj_p->as_ref_p->ref_as_p != 0) {
+                if (AEROSPIKE_OK != aerospike_close(intern_obj_p->as_ref_p->as_p, &error)) {
+                    DEBUG_PHP_EXT_ERROR("Aerospike close returned error for a non-persistent Aerospike object");
+                }
+                intern_obj_p->as_ref_p->ref_as_p = 0;
+            }
+            aerospike_destroy(intern_obj_p->as_ref_p->as_p);
+            intern_obj_p->as_ref_p->as_p = NULL;
+            if (intern_obj_p->as_ref_p) {
+                pefree(intern_obj_p->as_ref_p, 1);
+            }
+        }
         intern_obj_p->as_ref_p = NULL;
         zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
         efree(intern_obj_p);
@@ -606,13 +623,24 @@ PHP_METHOD(Aerospike, close)
         goto exit;
     }
 
+    if ((aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE)
+            || (aerospike_obj_p->as_ref_p->ref_as_p < 1)) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Already disconnected");
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+        DEBUG_PHP_EXT_ERROR("Already disconnected");
+        goto exit;
+    }
+
     if (aerospike_obj_p->is_persistent == false) {
-        if (AEROSPIKE_OK != (status = aerospike_close(aerospike_obj_p->as_ref_p->as_p, &error))) {
+        if (AEROSPIKE_OK !=
+                 (status = aerospike_close(aerospike_obj_p->as_ref_p->as_p, &error))) {
             DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
             PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         }
+        aerospike_obj_p->as_ref_p->ref_as_p = 0;
     } else {
-        if (AEROSPIKE_OK ==
+        if (AEROSPIKE_OK !=
                 aerospike_helper_close_php_connection(aerospike_obj_p,
                     &error TSRMLS_CC)) {
             DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
@@ -629,6 +657,59 @@ exit:
     RETURN_LONG(status);
 }
 
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::reconnect()
+ *******************************************************************************************************
+ * Reconnect to the Aerospike DB.
+ * Method prototype for PHP userland:
+ * public void Aerospike::reconnect ( void )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, reconnect)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
+            !(aerospike_obj_p->as_ref_p->as_p)) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if ((aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_TRUE) ||
+            (aerospike_obj_p->as_ref_p->ref_as_p > 0)) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Already connected");
+        PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+        DEBUG_PHP_EXT_ERROR("Already connected");
+        goto exit;
+    }
+
+    if (aerospike_obj_p->is_persistent == false) {
+        if (AEROSPIKE_OK !=
+                 (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error))) {
+            PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Unable to connect to server");
+            DEBUG_PHP_EXT_ERROR("Unable to connect to server");
+            PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+        }
+        aerospike_obj_p->as_ref_p->ref_as_p = 1;
+    } else {
+        aerospike_obj_p->as_ref_p->ref_as_p++;
+        PHP_EXT_RESET_AS_ERR_IN_CLASS();
+    }
+
+    /* Now as connection is getting reopened we need to set the connection flag to true*/
+    aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
+
+exit:
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
 /*
  *******************************************************************************************************
  *  Key Value Store (KVS) APIs:
@@ -3369,69 +3450,6 @@ PHP_METHOD(Aerospike, errorno)
 }
 
 /*
- *******************************************************************************************************
- *  Shared Memory APIs:
- *******************************************************************************************************
- */
-
-/*** TBD ***/
-
-#if 0 // XXX -- Currently unused.  Delete???
-static int zend_std_cast_object_tostring(zval *readobj, zval *writeobj, int type TSRMLS_DC)
-{
-    zval *retval = NULL;
-    if (type == IS_STRING) {
-        zend_call_method_wiht_0_params(&readobj, NULL, NULL, "__tostring", &retval);
-        if (retval) {
-            if (Z_TYPE_P(retval) != IS_STRING) {
-                zend_error(E_ERROR, "Method %s::__toString() must return a string value", Z_OBJCE_P(readobj)->name);
-            }
-        } else {
-            MAKE_STD_ZVAL(retval);
-            ZVAL_EMPTY_STRING(retval);
-        }
-        ZVAL_ZVAL(writeobj, retval, 1, 1);
-        INT_PZVAL(writeobj);
-    }
-
-    return retval ? SUCCESS : FAILURE;
-}
-#endif
-
-/*
- *******************************************************************************************************
- * Function to declare policy constants in Aerospike class.
- *
- * @param Aerospike_ce          The zend class entry for Aerospike class.
- *
- * @return AEROSPIKE_OK if the success. Otherwise AEROSPIKE_x.
- *******************************************************************************************************
- */
-/*
-static as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
-{
-    int32_t i;
-    as_status   status = AEROSPIKE_OK;
-
-    if (!Aerospike_ce) {
-        status = AEROSPIKE_ERR;
-        goto exit;
-    }
-
-    for (i = 0; i <= AEROSPIKE_CONSTANTS_ARR_SIZE; i++) {
-        zend_declare_class_constant_long(
-                Aerospike_ce, aerospike_constants[i].constant_str,
-                strlen(aerospike_constants[i].constant_str),
-                aerospike_constants[i].constantno TSRMLS_CC);
-    }
-
-exit:
-    return status;
-}
-*/
-//zend_class_entry *Aerospike_ce;
-//static zend_class_entry ce;
-/*
  ********************************************************************
  * Aerospike module init.
  ********************************************************************
@@ -3452,9 +3470,6 @@ PHP_MINIT_FUNCTION(aerospike)
     Aerospike_ce->create_object = Aerospike_object_new;
 
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    //	Aerospike_handlers.clone_obj = Aerospike_object_clone;
-
-    //	zend_class_implements(Aerospike_ce TSRMLS_CC, 1, zend_ce_iterator);
 
     Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
 #ifdef ZTS
@@ -3463,14 +3478,12 @@ PHP_MINIT_FUNCTION(aerospike)
     ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
 #endif
     REGISTER_INI_ENTRIES();
-    //	Aerospike_ce->get_iterator = Aerospike_get_iterator;
     /* Refer aerospike_policy.h
      * This will expose the policy values for PHP
      * as well as CSDK to PHP client.
      */
     declare_policy_constants_php(Aerospike_ce TSRMLS_CC);
 
-    //declare_policy_constants_php(Aerospike_ce);
     /* Refer aerospike_status.h
      * This will expose the status code from CSDK
      * to PHP client.

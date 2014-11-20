@@ -537,7 +537,6 @@ aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
                     "Connection already closed!");
             DEBUG_PHP_EXT_ERROR("Connection already closed!");
         }
-        as_obj_p->as_ref_p = NULL;
         DEBUG_PHP_EXT_INFO("Connection successfully closed!");
     } else {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
