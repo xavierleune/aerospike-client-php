@@ -13,7 +13,7 @@ local function count(group_by_bin)
     if rec[group_by_bin] then
       local bin_name = rec[group_by_bin]
       group[bin_name] = (group[bin_name] or 0) + 1
-      debug("group_count::count: bin %s has value %s which has the count of %s", tostring(bin_name), tostring(group[bin_name]))
+      debug("group_count::count: bin %s has value %s which has the count of %s", tostring(group_by_bin), tostring(bin_name), tostring(group[bin_name]))
     end
     return group
   end

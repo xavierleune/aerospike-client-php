@@ -1,15 +1,14 @@
 <?php
 class GetNodes extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$host) {
-        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
-        $config = array("hosts"=>array($host));
-        $db = new Aerospike($config);
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
-    protected function tearDown(&$db, &$host) {
-        $db->close();
-    }
     /**
      * @test
      * Basic GetNodes positive
@@ -25,20 +24,16 @@ class GetNodes extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testGetNodesPositive($db)
+    function testGetNodesPositive()
     {
-        if ($db->isConnected()) {
-            try {
-                if ($db->getNodes()) {
-                    return Aerospike::OK;
-                } else {
-                    return Aerospike::ERR_CLIENT;
-                }
-            } catch (ErrorException $e) {
-                return($db->errorno());
+        try {
+            if ($this->db->getNodes()) {
+                return Aerospike::OK;
+            } else {
+                return Aerospike::ERR_CLIENT;
             }
-        } else {
-            return($db->errorno());
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -56,20 +51,16 @@ class GetNodes extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testGetNodesWithParameter($db)
+    function testGetNodesWithParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                if ($db->getNodes($request)) {
-                    return Aerospike::OK;
-                } else {
-                    return Aerospike::ERR_CLIENT;
-                }
-            } catch (ErrorException $e) {
-                return($db->errorno());
+        try {
+            if ($this->db->getNodes($request)) {
+                return Aerospike::OK;
+            } else {
+                return Aerospike::ERR_CLIENT;
             }
-        } else {
-            return($db->errorno());
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
 }

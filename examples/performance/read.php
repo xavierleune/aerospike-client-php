@@ -52,14 +52,14 @@ if (!$db->isConnected()) {
 }
 echo success();
 
-echo colorize("Assuming that write.php was run before to create $total_ops records in test.write_perf\n", 'black', true);
+echo colorize("Assuming that write.php was run before to create $total_ops records in test.write_perf\n", 'black', false);
 $key = $db->initKey("test", "write_perf", 0);
 $reads = 0;
 $read_fails = 0;
 $begin = microtime(true);
 
 echo colorize("Read $total_ops records ≻", 'black', true);
-for ($num_ops = 0; $num_ops < $total_ops; $num_ops++) {
+for ($num_ops = 1; $num_ops < $total_ops; $num_ops++) {
     $key['key']++;
     $res = $db->get($key, $record);
     $reads++;

@@ -68,40 +68,41 @@ class Aerospike
     // The error status codes map to the C client
     //  src/include/aerospike/as_status.h
 
-    //
     // Client status codes:
     //
-    const OK                     ; // Success status
-    const ERR                    ; // Generic error
-    const ERR_CLIENT             ; // Generic client error
     const ERR_PARAM              ; // Invalid client parameter
-    const ERR_CLUSTER            ; // Cluster discovery and connection error
-    const ERR_TIMEOUT            ; // Client-side timeout error
-    const ERR_THROTTLED          ; // Client-side request throttling (Deprecated, use ERR_CLIENT)
+    const ERR_CLIENT             ; // Generic client error
 
-    //
     // Server status codes:
     //
+    const OK                     ; // Success status
     const ERR_SERVER             ; // Generic server error
-    const ERR_REQUEST_INVALID    ; // Invalid request protocol or protocol field
     const ERR_SERVER_FULL        ; // Node running out of memory/storage
-    const ERR_CLUSTER_CHANGE     ; // Cluster state changed during the request
-    const ERR_UNSUPPORTED_FEATURE;
     const ERR_DEVICE_OVERLOAD    ; // Node storage lagging write load
-    // Record specific
-    const ERR_RECORD             ; // Generic record error (Deprecated)
-    const ERR_RECORD_BUSY        ; // Hot key: too many concurrent requests for the record
+    const ERR_TIMEOUT            ; // Client or server side timeout error
+    const ERR_CLUSTER            ; // Generic cluster discovery and connection error
+    const ERR_CLUSTER_CHANGE     ; // Cluster state changed during the request
+    const ERR_REQUEST_INVALID    ; // Invalid request protocol or protocol field
+    const ERR_UNSUPPORTED_FEATURE;
+    const ERR_NO_XDR             ; // XDR not available for the cluster
+    // Record specific:
+    const ERR_NAMESPACE_NOT_FOUND;
     const ERR_RECORD_NOT_FOUND   ;
-    const ERR_RECORD_EXISTS      ;
+    const ERR_RECORD_EXISTS      ; // Record already exists
     const ERR_RECORD_GENERATION  ; // Write policy regarding generation violated
     const ERR_RECORD_TOO_BIG     ; // Record written cannot fit in storage write block
+    const ERR_RECORD_BUSY        ; // Hot key: too many concurrent requests for the record
+    const ERR_RECORD_KEY_MISMATCH; // Digest incompatibility?
+    // Bin specific:
+    const ERR_BIN_NAME           ; // Name too long or exceeds the unique name quota for the namespace
+    const ERR_BIN_NOT_FOUND      ;
     const ERR_BIN_TYPE           ; // Bin modification failed due to value type
-    const ERR_RECORD_KEY_MISMATCH;
-    // Scan operations:
-    const ERR_SCAN               ; // Generic scan error (Deprecated, use ERR)
+    const ERR_BIN_EXISTS         ; // Bin already exists
+    const ERR_BIN_INCOMPATIBLE_TYPE;
+    // Query and Scan operations:
     const ERR_SCAN_ABORTED       ; // Scan aborted by the user
-    // Query operations:
     const ERR_QUERY              ; // Generic query error
+    const ERR_QUERY_END          ; // Out of records to query
     const ERR_QUERY_ABORTED      ; // Query aborted by the user
     const ERR_QUERY_QUEUE_FULL   ;
     // Index operations:
@@ -115,7 +116,6 @@ class Aerospike
     // UDF operations:
     const ERR_UDF                ; // Generic UDF error
     const ERR_UDF_NOT_FOUND      ; // UDF does not exist
-    const ERR_UDF_FILE_NOT_FOUND ; // Source file for the module not found
     const ERR_LUA_FILE_NOT_FOUND ; // Source file for the module not found
 
     // Status values returned by scanInfo()

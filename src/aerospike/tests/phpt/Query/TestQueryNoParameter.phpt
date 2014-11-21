@@ -6,5 +6,5 @@ Query - query call has no parameters
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryNoParameter");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM
 

@@ -7,6 +7,13 @@ require_once 'Common.inc';
 
 class InitKey extends AerospikeTestCommon
 {
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+    }
     /**
      * @test
      * Basic initKey operation
@@ -23,9 +30,7 @@ class InitKey extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testInitKeyHelper() {
-	$config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("demo", "test", 10000);
+        $key = $this->db->initKey("demo", "test", 10000);
         if (!$key) {
             return Aerospike::ERR;
         } else {
@@ -48,9 +53,7 @@ class InitKey extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testNameSpaceValueInt() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey(2312312, "test", 10000);
+        $key = $this->db->initKey(2312312, "test", 10000);
         if (!$key) {
             return Aerospike::ERR;
         } else {
@@ -73,9 +76,7 @@ class InitKey extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testSetValueInt() {
-        $config = array("hosts"=>array(array("name"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("demo", 12312312, 10000);
+        $key = $this->db->initKey("demo", 12312312, 10000);
         if (!$key) {
             return Aerospike::ERR;
         } else {

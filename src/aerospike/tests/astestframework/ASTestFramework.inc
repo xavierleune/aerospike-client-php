@@ -179,14 +179,6 @@ class ASTestFramework {
         return true;
     }
 
-    protected function setUp(&$db, &$key) {
-
-    }
-
-    protected function tearDown(&$db, &$key) {
-
-    }
-
     public function runSingleTest($name) {
         $reflector = new ReflectionClass($this);
         $meth = $reflector->getMethod($name);
@@ -195,24 +187,25 @@ class ASTestFramework {
             fprintf(STDERR, "Running $name..\n");
         }
 
-        $this->setUp($db, $key);
-
-        $uncaught = NULL;
-
-        try {
-            $status = $meth->invoke($this, $db, $key);
-        } catch (ASTestFramework_PrematureGracefulException $exc) {
-
-            if (self::$verbose) {
-                printf("\tSkipped.. " . $exc->getMessage());
+        $status = $this->setUp();
+        if (!is_null($status) && $status !== Aerospike::OK) {
+            // error during test set-up. cannot continue
+            // to test
+        } else {
+            $uncaught = NULL;
+            try {
+                $status = $meth->invoke($this);
+            } catch (ASTestFramework_PrematureGracefulException $exc) {
+                if (self::$verbose) {
+                    printf("\tSkipped.. " . $exc->getMessage());
+                }
+            } catch (Exception $exc) {
+                $uncaught = $exc;
+                $status = 201;
             }
-
-        } catch (Exception $exc) {
-            $uncaught = $exc;
-            $status = 201;
         }
 
-        $this->tearDown($db, $key);
+        $this->tearDown();
 
         if (self::$verbose) {
             fprintf(STDERR, "\tDone..\n");

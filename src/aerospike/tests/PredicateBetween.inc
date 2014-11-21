@@ -7,23 +7,17 @@ require_once 'Common.inc';
 
 class PredicateBetween extends AerospikeTestCommon
 {
-    /*
-     * TODO: Remove these constants and map with actual Aerospike class
-     * constants.
-     */
-    static $parameter_exception = 2000;
-    static $status_err = 2001;
-    static $status_get_record_fail = 2002;
+    private $bin;
 
-    protected function setUp(&$db, &$bin) {
+    protected function setUp() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $bin = "age";
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $this->bin = "age";
     }
 
-    protected function tearDown(&$db, &$bin) {
-        $db->close();
-    }
     /**
      * @test
      * Basic Predicate Between without parameter
@@ -39,18 +33,14 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenNoParameter($db, $bin)
+    function testPredicateBetweenNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                $db->predicateBetween();
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-            return Aerospike::OK;
-        } else {
-            return($db->errorno());
+        try {
+            $this->db->predicateBetween();
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
+        return Aerospike::OK;
     }
     /**
      * @test
@@ -67,22 +57,18 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenValueIsBool($db, $bin)
+    function testPredicateBetweenValueIsBool()
     {
-        if ($db->isConnected()) {
-            try {
-                $ans = $db->predicateBetween($bin, true, true);
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-            $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(1, 1)));
-            if(!empty($op)) {
-                return Aerospike::ERR;
-            }
-            return Aerospike::OK;
-        } else {
-            return($db->errorno());
+        try {
+            $ans = $this->db->predicateBetween($this->bin, true, true);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
+        $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(1, 1)));
+        if(!empty($op)) {
+            return Aerospike::ERR;
+        }
+        return Aerospike::OK;
     }
     /**
      * @test
@@ -99,18 +85,14 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenValueIsArray($db, $bin)
+    function testPredicateBetweenValueIsArray()
     {
-        if ($db->isConnected()) {
-            try {
-                $db->predicateBetween($bin, array("age", "email"), array(2, 3));
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-            return Aerospike::OK;
-        } else {
-            return($db->errorno());
+        try {
+            $this->db->predicateBetween($this->bin, array("age", "email"), array(2, 3));
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
+        return Aerospike::OK;
     }
     /**
      * @test
@@ -127,18 +109,14 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetweenValueHasOneArgument($db, $bin)
+    function testPredicateBetweenValueHasOneArgument()
     {
-        if ($db->isConnected()) {
-            try {
-                $db->predicateBetween($bin);
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-            return Aerospike::OK;
-        } else {
-            return($db->errorno());
+        try {
+            $this->db->predicateBetween($this->bin);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
+        return Aerospike::OK;
     }
     /**
      * @test
@@ -155,22 +133,18 @@ class PredicateBetween extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPredicateBetween($db, $bin)
+    function testPredicateBetween()
     {
-        if ($db->isConnected()) {
-            try {
-                $ans = $db->predicateBetween($bin, 30, 40);
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-            $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(30, 40)));
-            if(!empty($op)) {
-                return Aerospike::ERR;
-            }
-            return Aerospike::OK;
-        } else {
-            return($db->errorno());
+        try {
+            $ans = $this->db->predicateBetween($this->bin, 30, 40);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
+        $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(30, 40)));
+        if(!empty($op)) {
+            return Aerospike::ERR;
+        }
+        return Aerospike::OK;
     }
 }
 ?>

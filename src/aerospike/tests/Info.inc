@@ -1,15 +1,17 @@
 <?php
 class Info extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$host) {
-        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
-        $config = array("hosts"=>array($host));
-        $db = new Aerospike($config);
+    private $test_host;
+
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->test_host = $config['hosts'][0];
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
-    protected function tearDown(&$db, &$host) {
-        $db->close();
-    }
     /**
      * @test
      * Basic INFO without parameter
@@ -25,17 +27,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoNoParameter($db)
+    function testInfoNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info());
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }    
-        }
-        else {
-            return($db->errorno());
+        try {
+            return $this->db->info();
+        } catch(ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -53,14 +50,10 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForBins($db, $host)
+    function testInfoPositiveForBins()
     {
-        if ($db->isConnected()) {
-            $status = $db->info('bins/test', $response, $host);
-        } else {
-            return($db->errorno());
-        }
-        return($status);
+        $status = $this->db->info('bins/test', $response, $this->test_host);
+        return $status;
     }
     /**
      * @test
@@ -77,16 +70,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForBuild($db, $host)
+    function testInfoPositiveForBuild()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('build', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return($this->db->info('build', $response, $this->test_host));
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -104,17 +93,13 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForConfig($db, $host)
+    function testInfoPositiveForConfig()
     {
         $response = array();
-        if ($db->isConnected()) {
-            try {
-                return($db->info('get-config:context=namespace;id=test', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('get-config:context=namespace;id=test', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -132,16 +117,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForHistogram($db, $host)
+    function testInfoPositiveForHistogram()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('hist-dump:ns=test;hist=ttl', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('hist-dump:ns=test;hist=ttl', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -159,16 +140,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForJobs($db, $host)
+    function testInfoPositiveForJobs()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('jobs:', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('jobs:', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -186,17 +163,13 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForJobsScan($db, $host)
+    function testInfoPositiveForJobsScan()
     {
         $response = "";
-        if ($db->isConnected()) {
-            try {
-                return($db->info('jobs:module=scan', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('jobs:module=scan', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -214,16 +187,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForLatency($db, $host)
+    function testInfoPositiveForLatency()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('latency:hist=reads;slice=30;back=300;duration:120', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('latency:hist=reads;slice=30;back=300;duration:120', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -241,17 +210,13 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForLog($db, $host)
+    function testInfoPositiveForLog()
     {
         $response = NULL;
-        if ($db->isConnected()) {
-            try {
-                return($db->info('log/0', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('log/0', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -268,16 +233,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForAllLogs($db, $host)
+    function testInfoPositiveForAllLogs()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('logs', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('logs', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -295,16 +256,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForMcast($db, $host)
+    function testInfoPositiveForMcast()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('mcast', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('mcast', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -322,16 +279,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForMesh($db, $host)
+    function testInfoPositiveForMesh()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('mesh', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('mesh', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -349,16 +302,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForNamespace($db, $host)
+    function testInfoPositiveForNamespace()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('namespace/test', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('namespace/test', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -376,16 +325,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForNode($db, $host)
+    function testInfoPositiveForNode()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('node', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('node', $response, $this->test_host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -403,17 +348,13 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoNegativeForIncorrectHost($db, $host)
+    function testInfoNegativeForIncorrectHost()
     {
         $host = array("addr"=>"localhost2", "port"=>3000);
-        if ($db->isConnected()) {
-            try {
-                return($db->info('node', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('node', $response, $host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -431,21 +372,17 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoNegativeForIncorrectCommand($db, $host)
+    function testInfoNegativeForIncorrectCommand()
     {
-        if ($db->isConnected()) {
-            try {
-                $status = $db->info('abcd', $response, $host);
-                if($status == Aerospike::OK) {
-                    if($response==NULL) {
-                        return Aerospike::OK;
-                    }
+        try {
+            $status = $this->db->info('abcd', $response, $this->test_host);
+            if ($status == Aerospike::OK) {
+                if($response==NULL) {
+                    return Aerospike::OK;
                 }
-            } catch (ErrorException $e) {
-                return($db->errorno());
             }
-        } else {
-            return($db->errorno());
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -463,14 +400,10 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoNegativeForEmptyCommand($db, $host)
+    function testInfoNegativeForEmptyCommand()
     {
-        if ($db->isConnected()) {
-            $status = $db->info('', $response, $host);
-            return $status;
-        } else {
-            return($db->errorno());
-        }
+        $status = $this->db->info('', $response, $this->test_host);
+        return $status;
     }
     /**
      * @test
@@ -487,17 +420,13 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoNegativeForIncorrectPort($db, $host)
+    function testInfoNegativeForIncorrectPort()
     {
         $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>3001);
-        if ($db->isConnected()) {
-            try {
-                return($db->info('node', $response, $host));
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('node', $response, $host);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -515,16 +444,12 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForTwoArguments($db, $host)
+    function testInfoPositiveForTwoArguments()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('build', $response));
-                }  catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            return $this->db->info('build', $response);
+            }  catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -542,17 +467,13 @@ class Info extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoPositiveForPolicyArgument($db, $host)
+    function testInfoPositiveForPolicyArgument()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->info('build', $response, $host, array(Aerospike::OPT_READ_TIMEOUT => 2000)));
-                }
-            catch (ErrorException $e) {
-                return($db->errorno());
+        try {
+            return $this->db->info('build', $response, $this->test_host, array(Aerospike::OPT_READ_TIMEOUT => 2000));
             }
-        } else {
-            return($db->errorno());
+        catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
 }

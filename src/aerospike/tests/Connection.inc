@@ -7,8 +7,14 @@ require_once 'Common.inc';
 
 class Connection extends AerospikeTestCommon
 {
-    static $status_ok = 0;
-    static $status_err = -2;
+
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+    }
 
     /**
      * @test
@@ -25,11 +31,9 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testConnect($dummydb, $dummykey) {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $db->close();
-        return ($db->errorno());
+    function testConnect() {
+        $status = $this->db->errorno();
+        return $status;
     }
     /**
      * @test
@@ -46,13 +50,13 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testConfigNotArray($dummydb, $dummykey) {
+    function testConfigNotArray() {
         try {
             $config = "";
             $db = new Aerospike($config);
             return($db->errorno());
         } catch (ErrorException $e) {
-            return self::$status_err;
+            return Aerospike::ERR_PARAM;
         }
     }
     /**
@@ -70,7 +74,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testEmptyArray($dummydb, $dummykey) {
+    function testEmptyArray() {
         $config = array("hosts"=>array(array("addr"=>"", "port"=>"")));
         $db = new Aerospike($config);
         return($db->errorno());
@@ -90,7 +94,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testMissingHostsKeyFromConfigArray($dummydb, $dummykey) {
+    function testMissingHostsKeyFromConfigArray() {
         $config = array(array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         return ($db->errorno());
@@ -110,7 +114,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testMissingAddrKeyFromConfigArray($dummydb, $dummykey) {
+    function testMissingAddrKeyFromConfigArray() {
         $config = array("hosts"=>array(array("0"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         return ($db->errorno());
@@ -130,7 +134,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testMissingPortKeyFromConfigArray($dummydb, $dummykey) {
+    function testMissingPortKeyFromConfigArray() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "qw"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         return ($db->errorno());
@@ -150,7 +154,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testMultipleHostsArray($dummydb, $dummykey) {
+    function testMultipleHostsArray() {
         $config = array("hosts"=>array(
                     array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT),
                     array("addr"=>AEROSPIKE_CONFIG_NAME2,"port"=>AEROSPIKE_CONFIG_PORT2)));
@@ -173,7 +177,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPortValueIsString($dummydb, $dummykey) {
+    function testPortValueIsString() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>"3000")));
         $db = new Aerospike($config);
         return ($db->errorno());
@@ -193,7 +197,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testNullAlias($dummydb, $dummykey) {
+    function testNullAlias() {
         $config = array("hosts"=>array(array("port"=>AEROSPIKE_CONFIG_PORT,"addr"=>AEROSPIKE_CONFIG_NAME)));
         $db = new Aerospike($config, NULL);
         $db->close();
@@ -214,7 +218,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testNoAliasDiffrentConfig($dummydb, $dummykey) {
+    function testNoAliasDiffrentConfig() {
         $test1 = false;
         $test2 = false;
         $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,"port"=>AEROSPIKE_CONFIG_PORT)));
@@ -230,7 +234,7 @@ class Connection extends AerospikeTestCommon
             $db2->close();
         }
         if ($test1 && $test2) {
-            return (self::$status_ok);
+            return Aerospike::OK;
         } elseif (!$test1) {
             return $db1->errorno();
         } else {
@@ -254,7 +258,7 @@ class Connection extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testConnectWithOption($dummydb, $dummykey) {
+    function testConnectWithOption() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250,
             Aerospike::OPT_WRITE_TIMEOUT => 1500);
@@ -264,7 +268,7 @@ class Connection extends AerospikeTestCommon
         return ($status);
     }
 
-    function testConnectWithPersistFlagFalse($dummydb, $dummykey) {
+    function testConnectWithPersistFlagFalse() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, false);
@@ -273,7 +277,7 @@ class Connection extends AerospikeTestCommon
         return ($status);
     }
 
-    function testConnectWithPersistFlagPassedAsStr($dummydb, $dummykey) {
+    function testConnectWithPersistFlagPassedAsStr() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, "persist");
@@ -282,7 +286,7 @@ class Connection extends AerospikeTestCommon
         return ($status);
     }
 
-    function testConnectWithPersistFlagPassedAsInt($dummydb, $dummykey) {
+    function testConnectWithPersistFlagPassedAsInt() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, 11111222);
@@ -291,7 +295,7 @@ class Connection extends AerospikeTestCommon
         return ($status);
     }
 
-    function testConnectWithPersistFlagTrue($dummydb, $dummykey) {
+    function testConnectWithPersistFlagTrue() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config, true);
@@ -300,7 +304,7 @@ class Connection extends AerospikeTestCommon
         return ($status);
     }
 
-    function testConnectWithSameConfigPersistAsTrue($dummydb, $dummykey) {
+    function testConnectWithSameConfigPersistAsTrue() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $config1 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
@@ -308,17 +312,16 @@ class Connection extends AerospikeTestCommon
         $db = new Aerospike($config, true);
         if (!$db->isConnected()) {
             $db->close();
-            return (self::$status_err);
+            return Aerospike::ERR_CLIENT;
         }
         $db1 = new Aerospike($config1, true);
         if (!$db1->isConnected()) {
             $db1->close();
-            return (self::$status_ok);
+            return Aerospike::OK;
         }
         $db1->close();
         $db->close();
-        return (self::$status_ok);
-        
+        return Aerospike::OK;
     }
 } 
 ?>

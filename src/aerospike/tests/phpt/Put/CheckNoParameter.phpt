@@ -6,4 +6,4 @@ Put - No parameter
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testPUTNoParameter");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM

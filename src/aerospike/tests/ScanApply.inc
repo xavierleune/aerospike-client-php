@@ -12,43 +12,27 @@ class ScanApply extends AerospikeTestCommon
      * constants.
      */
     private $ages = array(29, 27, 22, 32);
-    static $lua_user_path = "tests/lua";
 
-    public function __construct() {
-        self::$lua_user_path = file_exists("/opt/aerospike/client-php/usr-lua") ? "/opt/aerospike/client-php/usr-lua" : (file_exists("/usr/local/aerospike/client-php/usr-lua") ? "/usr/local/aerospike/client-php/usr-lua" : "tests/lua");
-    }
 
-    protected function setUp(&$db, &$key) {
+    protected function setUp() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        if (!$db->isConnected()) {
-            return $db->errorno();
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
         }
-        $this->ensureUdfModule($db, self::$lua_user_path . "/test_transform.lua", "test_transform.lua");
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key, array("first_name"=>"raunak", "age"=>($this->ages[0])));
-        $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key, array("first_name"=>"pavan", "age"=>($this->ages[1])));
-        $key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key, array("first_name"=>"bhushan", "age"=>($this->ages[2])));
-        $key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key, array("first_name"=>"ajit", "age"=>($this->ages[3])));
-    }
-
-    protected function tearDown(&$db, &$key) {
-        if (!$db->isConnected()) {
-            $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-            $db = new Aerospike($config);
-        }
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        for($i=1; $i<4; $i++) {
-            $key=$db->initKey("test", "demo", "Get_key".$i);
-            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                =>Aerospike::POLICY_RETRY_NONE));
-        }
-        $db->close();
+        $this->ensureUdfModule("tests/lua/test_transform.lua", "test_transform.lua");
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        $this->db->put($key, array("first_name"=>"raunak", "age"=>($this->ages[0])));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key1");
+        $this->db->put($key, array("first_name"=>"pavan", "age"=>($this->ages[1])));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key2");
+        $this->db->put($key, array("first_name"=>"bhushan", "age"=>($this->ages[2])));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key3");
+        $this->db->put($key, array("first_name"=>"ajit", "age"=>($this->ages[3])));
+        $this->keys[] = $key;
     }
 
     /**
@@ -66,39 +50,39 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyPositive($db, $key)
+    function testScanApplyPositive()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $db->scanInfo($scan_id, $info);
-            if ($status != Aerospike::OK) {
-                return($db->errorno());
+            $status = $this->db->scanInfo($scan_id, $info);
+            if ($status !== Aerospike::OK) {
+                return $this->db->errorno();
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
 
         $ages_got = array();
         $i = 0;
-        $key = $db->initKey("test", "demo", "Get_key");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
-        $key = $db->initKey("test", "demo", "Get_key1");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key1");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
-        $key = $db->initKey("test", "demo", "Get_key2");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key2");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
-        $key = $db->initKey("test", "demo", "Get_key3");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key3");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
@@ -108,13 +92,13 @@ class ScanApply extends AerospikeTestCommon
             }
         }
 
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
         for($i=1; $i<4; $i++) {
-            $key=$db->initKey("test", "demo", "Get_key".$i);
-            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
+            $key=$this->db->initKey("test", "demo", "Get_key".$i);
+            $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -133,13 +117,13 @@ class ScanApply extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanApplyUnknownNamespaceAndSetNegative($db)
+    function testScanApplyUnknownNamespaceAndSetNegative()
     {
-        $status = $db->scanApply("t", "d", "test_transform", "mytransform", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("t", "d", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -158,14 +142,14 @@ class ScanApply extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanApplyUnknownModuleNegative($db)
+    function testScanApplyUnknownModuleNegative()
     {
-        $where = $db->predicateBetween("age", 20, 29);
-        $status = $db->scanApply("test", "demo", "test_transform1", "mytransform", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $where = $this->db->predicateBetween("age", 20, 29);
+        $status = $this->db->scanApply("test", "demo", "test_transform1", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -184,13 +168,13 @@ class ScanApply extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanApplyUnknownFunctionNegative($db)
+    function testScanApplyUnknownFunctionNegative()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform1", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform1", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -208,13 +192,13 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyEmptyNamespaceSetNegative($db)
+    function testScanApplyEmptyNamespaceSetNegative()
     {
-        $status = $db->scanApply("", "", "test_transform", "mytransform", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("", "", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -233,13 +217,13 @@ class ScanApply extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanApplyEmptyFunctionUDFNameNegative($db)
+    function testScanApplyEmptyFunctionUDFNameNegative()
     {
-        $status = $db->scanApply("test", "demo", "", "", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "", "", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -258,14 +242,14 @@ class ScanApply extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanApplyArgumentIsVariableNegative($db)
+    function testScanApplyArgumentIsVariableNegative()
     {
         $arg = "args";
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", "age", $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", "age", $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 
     /**
@@ -284,14 +268,14 @@ class ScanApply extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testScanApplyArgsEmptyNegative($db)
+    function testScanApplyArgsEmptyNegative()
     {
         $arg = "args";
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", "", $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", "", $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -308,13 +292,13 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyExtraParameter($db)
+    function testScanApplyExtraParameter()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20,30), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20,30), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -331,23 +315,14 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyLuaExtraParameter($db)
+    function testScanApplyLuaExtraParameter()
     {
-        $register_status =
-            $db->register(self::$lua_user_path . "/test_transform_extra_parameter.lua",
-                "test_transform_extra_parameter.lua");
-        if ($register_status != Aerospike::OK) {
-            return($db->errorno());
+        $this->ensureUdfModule("tests/lua/test_transform_extra_parameter.lua", "test_transform_extra_parameter.lua");
+        $status = $this->db->scanApply("test", "demo", "test_transform_extra_parameter", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->scanApply("test", "demo", "test_transform_extra_parameter", "mytransform", array(20), $scan_id);
-        $deregister_status = $db->deregister("test_transform_extra_parameter.lua");
-        if ($deregister_status != Aerospike::OK) {
-        	return($db->errorno());
-        }
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
-        }
-        return($status);
+        return $status;
     }
 
     /**
@@ -365,23 +340,14 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyLuaLessParameter($db)
+    function testScanApplyLuaLessParameter()
     {
-        $register_status =
-            $db->register(self::$lua_user_path . "/test_transform_less_parameter.lua",
-                "test_transform_less_parameter.lua");
-        if ($register_status != Aerospike::OK) {
-            return($db->errorno());
+        $this->ensureUdfModule("tests/lua/test_transform_less_parameter.lua", "test_transform_less_parameter.lua");
+        $status = $this->db->scanApply("test", "demo", "test_transform_less_parameter", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->scanApply("test", "demo", "test_transform_less_parameter", "mytransform", array(20), $scan_id);
-        $deregister_status = $db->deregister("test_transform_less_parameter.lua");
-        if ($deregister_status != Aerospike::OK) {
-            return($db->errorno());
-        }
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
-        }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -398,38 +364,38 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyPositiveWithAllArguments($db)
+    function testScanApplyPositiveWithAllArguments()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>100, Aerospike::OPT_SCAN_NOBINS=>false));
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>100, Aerospike::OPT_SCAN_NOBINS=>false));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $db->scanInfo($scan_id, $info);
-            if ($status != Aerospike::OK) {
-                return($db->errorno());
+            $status = $this->db->scanInfo($scan_id, $info);
+            if ($status !== Aerospike::OK) {
+                return $this->db->errorno();
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         $ages_got = array();
         $i = 0;
-        $key = $db->initKey("test", "demo", "Get_key");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
-        $key = $db->initKey("test", "demo", "Get_key1");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key1");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
-        $key = $db->initKey("test", "demo", "Get_key2");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key2");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
-        $key = $db->initKey("test", "demo", "Get_key3");
-        if (Aerospike::OK == $db->get($key, $get_record, array("age"))) {
+        $key = $this->db->initKey("test", "demo", "Get_key3");
+        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
             $ages_got[$i] = $get_record["bins"]["age"];
             $i++;
         }
@@ -439,15 +405,15 @@ class ScanApply extends AerospikeTestCommon
             }
         }
 
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY
             =>Aerospike::POLICY_RETRY_NONE));
         for($i=1; $i<4; $i++) {
-            $key=$db->initKey("test", "demo", "Get_key".$i);
-            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
+            $key=$this->db->initKey("test", "demo", "Get_key".$i);
+            $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE));
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -464,14 +430,14 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyScanIdIsNull($db)
+    function testScanApplyScanIdIsNull()
     {
         $scan_id = "";
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -488,13 +454,13 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyPercentIsString($db)
+    function testScanApplyPercentIsString()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>"abc"));
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>"abc"));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -511,13 +477,13 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyPriorityIsString($db)
+    function testScanApplyPriorityIsString()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PRIORITY=>"SCAN_PRIORITY_AUTO"));
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PRIORITY=>"SCAN_PRIORITY_AUTO"));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -534,13 +500,13 @@ class ScanApply extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanApplyConcurrentIsInt($db)
+    function testScanApplyConcurrentIsInt()
     {
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_CONCURRENTLY=>true));
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_CONCURRENTLY=>true));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 }
 ?>

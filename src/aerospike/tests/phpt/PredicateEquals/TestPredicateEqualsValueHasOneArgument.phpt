@@ -6,5 +6,5 @@ Predicate Equals - Only one argument present
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("PredicateEquals", "testPredicateEqualsValueHasOneArgument");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM
 
