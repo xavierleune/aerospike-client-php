@@ -6,4 +6,4 @@ Get - Key Parameter missing in key array.
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Get", "testCheckKeyParameterMissingInKeyArray");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM

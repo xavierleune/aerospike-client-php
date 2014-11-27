@@ -6,4 +6,4 @@
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ExistsMany", "testExistsManyNoArgumentsNegative");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM

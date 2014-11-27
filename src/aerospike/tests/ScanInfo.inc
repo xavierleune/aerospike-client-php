@@ -7,53 +7,28 @@ require_once 'Common.inc';
 */
 class ScanInfo extends AerospikeTestCommon
 {
-    /*
-     * TODO: Remove these constants and map with actual Aerospike class
-     * constants.
-     */
-    static $myscan_id = 0;
-    protected function setUp(&$db, &$key) {
-	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key,array("first_name"=>"raunak", "age"=>29));
-        $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key,array("first_name"=>"pavan", "age"=>27));
-        $key = $db->initKey("test", "demo", "Get_key2");
-        $db->put($key,array("first_name"=>"bhushan", "age"=>22));
-	    $key = $db->initKey("test", "demo", "Get_key3");
-        $db->put($key,array("first_name"=>"ajit", "age"=>32));
-        $register_status = $db->register("tests/lua/test_transform.lua", "test_transform.lua");
-        if ($register_status != Aerospike::OK) {
-            return($db->errorno());
-        }
-        $status = $db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
-        ScanInfo::$myscan_id = $scan_id;
-        if ($status != Aerospike::OK) {
-            return($db->errorno());
-        }
-    }
+    private $myscan_id = 0;
 
-    protected function tearDown(&$db, &$key) {
-        if (!$db->isConnected()) {
-            $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-            $db = new Aerospike($config);
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
         }
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        for( $i=1; $i<4; $i++) {
-             $key=$db->initKey("test", "demo", "Get_key".$i);
-             $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                 =>Aerospike::POLICY_RETRY_NONE));
-        }
-        $deregister_status = $db->deregister("test_transform.lua");
-        if ($deregister_status != Aerospike::OK) {
-        return($db->errorno());
-        }
-        $db->close();
+        $this->ensureUdfModule($this->db, "tests/lua/test_transform.lua", "test_transform.lua");
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        $this->db->put($key,array("first_name"=>"raunak", "age"=>29));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key1");
+        $this->db->put($key,array("first_name"=>"pavan", "age"=>27));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key2");
+        $this->db->put($key,array("first_name"=>"bhushan", "age"=>22));
+        $this->keys[] = $key;
+	    $key = $this->db->initKey("test", "demo", "Get_key3");
+        $this->db->put($key,array("first_name"=>"ajit", "age"=>32));
+        $this->keys[] = $key;
     }
-
 	/**
 	 * @test
      * ScanInfo - All correct arguments
@@ -69,23 +44,25 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoPositive($db)
+	function testScanInfoPositive()
     {
-        if (!$db->isConnected()) {
-            return($db->errorno());
-        }
         $info = array();
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $this->myscan_id = $scan_id;
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
+            $status = $this->db->scanInfo($this->myscan_id, $info);
             if ($status != Aerospike::OK) {
-                return($db->errorno());
+                return $this->db->errorno();
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         if ($info['progress_pct'] != 100) {
-            return($db->errorno());
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 	/**
 	 * @test
@@ -102,15 +79,12 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoScanIdString($db)
+	function testScanInfoScanIdString()
     {
-        if (!$db->isConnected()) {
-            return($db->errorno());
-        }
         try {
-            $status = $db->scanInfo("", $info);
+            $status = $this->db->scanInfo("", $info);
         } catch (Exception $e) {
-            return($db->errorno());
+            return $this->db->errorno();
         }
     }
 	/**
@@ -128,15 +102,17 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoScanIdArray($db)
+	function testScanInfoScanIdArray()
     {
-        if (!$db->isConnected()) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
+        $this->myscan_id = $scan_id;
         try {
-            $status = $db->scanInfo(array(ScanInfo::$myscan_id), $info);
+            $status = $this->db->scanInfo(array($this->myscan_id), $info);
         } catch (Exception $e) {
-              return($db->errorno());
+              return $this->db->errorno();
         }
     }
 	/**
@@ -154,16 +130,13 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoScanIdNegative($db)
+	function testScanInfoScanIdNegative()
     {
-        if (!$db->isConnected()) {
-            return($db->errorno());
-        }
-        $status = $db->scanInfo(-1, $info);
+        $status = $this->db->scanInfo(-1, $info);
 	    if($status != Aerospike::OK) {
-            return($db->errorno());
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 	/**
 	 * @test
@@ -180,17 +153,19 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoInfoIsString($db)
+	function testScanInfoInfoIsString()
     {
-        if (!$db->isConnected()) {
-            return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
+        $this->myscan_id = $scan_id;
         $scan_info = "age";
-        $status = $db->scanInfo(ScanInfo::$myscan_id, $scan_info);
+        $status = $this->db->scanInfo($this->myscan_id, $scan_info);
 	    if($status != Aerospike::OK) {
-            return($db->errorno());
+            return $this->db->errorno();
 	    }
-        return($status);
+        return $status;
     }
 	/**
 	 * @test
@@ -207,24 +182,26 @@ class ScanInfo extends AerospikeTestCommon
 	 *
 	 * @test_plans{1.1}
 	 */
-	function testScanInfoWithOptionals($db,$scan_id)
+	function testScanInfoWithOptionals()
     {
-        if (!$db->isConnected()) {
-        return($db->errorno());
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->scanInfo(ScanInfo::$myscan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        $this->myscan_id = $scan_id;
+        $status = $this->db->scanInfo($this->myscan_id, $info, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
         $info = array();
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $db->scanInfo(ScanInfo::$myscan_id, $info);
+            $status = $this->db->scanInfo($this->myscan_id, $info);
             if ($status != Aerospike::OK) {
-                return($db->errorno());
+                return $this->db->errorno();
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         if ($info['progress_pct'] != 100) {
-            return($db->errorno());
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
 }
 ?>

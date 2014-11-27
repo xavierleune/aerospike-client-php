@@ -6,5 +6,5 @@ Query - Query call with where parameter missing
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithWhereParameterMissing");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM
 

@@ -6,5 +6,5 @@ PredicateEquals - predicate equals has no parameter
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("PredicateEquals", "testPredicateEqualsNoParameter");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM
 

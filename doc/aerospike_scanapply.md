@@ -81,9 +81,9 @@ if (!$db->isConnected()) {
 // Updates value in bin 'c' with the sum of updated values in bins 'a' and 'b'.
 
 $status = $db->scanApply("test", "users", "my_udf", "mytransform", array(20), $scan_id);
-if ($status == Aerospike::OK) {
+if ($status === Aerospike::OK) {
     var_dump("scan ID is $scan_id");
-} else if ($status == Aerospike::ERR) {
+} else if ($status === Aerospike::ERR_CLIENT) {
     echo "An error occured while initiating the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();
 } else {
     echo "An error occured while running the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();

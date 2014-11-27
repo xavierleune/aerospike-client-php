@@ -179,47 +179,41 @@ class ASTestFramework {
         return true;
     }
 
-    protected function setUp(&$db, &$key) {
-
-    }
-
-    protected function tearDown(&$db, &$key) {
-
-    }
-
     public function runSingleTest($name) {
         $reflector = new ReflectionClass($this);
         $meth = $reflector->getMethod($name);
+        $rethrow = false;
 
         if (self::$verbose) {
             fprintf(STDERR, "Running $name..\n");
         }
 
-        $this->setUp($db, $key);
-
-        $uncaught = NULL;
-
-        try {
-            $status = $meth->invoke($this, $db, $key);
-        } catch (ASTestFramework_PrematureGracefulException $exc) {
-
-            if (self::$verbose) {
-                printf("\tSkipped.. " . $exc->getMessage());
+        $status = $this->setUp();
+        if (!is_null($status) && $status !== Aerospike::OK) {
+            // error during test set-up. cannot continue
+            // to test
+        } else {
+            try {
+                $status = $meth->invoke($this);
+            } catch (ASTestFramework_PrematureGracefulException $exc) {
+                if (self::$verbose) {
+                    printf("\tSkipped.. " . $exc->getMessage());
+                }
+            } catch (Exception $e) {
+                fprintf(STDERR, "=========\n[".$e->getCode()."] ".$e->getMessage()."\n=========\n");
+                $rethrow = $e;
+                $status = 201;
             }
-
-        } catch (Exception $exc) {
-            $uncaught = $exc;
-            $status = 201;
         }
 
-        $this->tearDown($db, $key);
+        $this->tearDown();
 
         if (self::$verbose) {
             fprintf(STDERR, "\tDone..\n");
         }
 
-        if ($uncaught) {
-            throw $uncaught;
+        if ($rethrow) {
+            throw $rethrow;
         }
         return $status;
     }
@@ -233,6 +227,10 @@ class ASTestFramework {
                 $this->runSingleTest($name);
             }
         }
+    }
+
+    public function log_error($message) {
+        fprintf(STDERR, "$message\n");
     }
 
     // View tests use this

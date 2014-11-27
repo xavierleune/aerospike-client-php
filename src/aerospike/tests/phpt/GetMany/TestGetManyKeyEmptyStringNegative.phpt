@@ -6,5 +6,5 @@ GetMany - with empty string for key array.
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("GetMany", "testGetManyKeyEmptyStringNegative");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM
 

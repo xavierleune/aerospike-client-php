@@ -1,4 +1,4 @@
-# Aerospike Session Handler
+# Aerospike Session Handler \[To Be Implemented\]
 
 The Aerospike PHP client provides a custom session handler that can be used to
 store user sessions in Aerospike. A set and namespace must be given to act as

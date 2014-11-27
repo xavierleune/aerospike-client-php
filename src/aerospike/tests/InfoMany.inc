@@ -1,15 +1,16 @@
 <?php
 class InfoMany extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$config) {
-        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
-        $config = array("hosts"=>array($host));
-        $db = new Aerospike($config);
+    private $config;
+
+    protected function setUp() {
+        $this->config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($this->config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
-    protected function tearDown(&$db, &$config) {
-        $db->close();
-    }
     /**
      * @test
      * Basic INFOMANY without parameter
@@ -25,17 +26,12 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyNoParameter($db)
+    function testInfoManyNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->infoMany());
-            } catch(ErrorException $e) {
-                return($db->errorno());    
-            }
-        }
-        else {
-            return($db->errorno());
+        try {
+            return($this->db->infoMany());
+        } catch(ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -53,20 +49,16 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyPositiveForBins($db, $config)
+    function testInfoManyPositiveForBins()
     {
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test');
-                if ($response == NULL)
-                    return ($db->errorno()); 
-                else
-                    return (Aerospike::OK);
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test');
+            if ($response == NULL)
+                return $this->db->errorno();
+            else
+                return (Aerospike::OK);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -84,20 +76,16 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyPositiveForBinsWithConfig($db, $config)
+    function testInfoManyPositiveForBinsWithConfig()
     {
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test', $config);
-                if ($response == NULL)
-                    return ($db->errorno()); 
-                else
-                    return (Aerospike::OK);
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test', $this->config);
+            if ($response == NULL)
+                return $this->db->errorno();
+            else
+                return (Aerospike::OK);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -115,23 +103,19 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyPositiveForBinsWithMultipleHosts($db, $config)
+    function testInfoManyPositiveForBinsWithMultipleHosts()
     {
         $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
         $hostnew = array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2);
         $config = array("hosts"=>array($host, $hostnew));
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test', $config);
-                if ($response == NULL)
-                    return ($db->errorno()); 
-                else
-                    return (Aerospike::OK);
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test', $config);
+            if ($response == NULL)
+                return $this->db->errorno();
+            else
+                return (Aerospike::OK);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -149,20 +133,16 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyPositiveForBinsWithPolicy($db, $config)
+    function testInfoManyPositiveForBinsWithPolicy()
     {
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test', $config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
-                if ($response == NULL)
-                    return ($db->errorno());
-                else
-                    return (Aerospike::OK);
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test', $this->config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
+            if ($response == NULL)
+                return $this->db->errorno();
+            else
+                return (Aerospike::OK);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -180,21 +160,17 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyNegativeIncorrectCommand($db, $config)
+    function testInfoManyNegativeIncorrectCommand()
     {
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('sadfsdfasdfasfdbcd', $config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
-                if ($response == NULL) {
-                    return ($db->errorno());
-                } else {
-                    return (Aerospike::OK);
-                }
-            } catch (Exception $e) {
-                return($db->errorno());
+        try {
+            $response = $this->db->infoMany('sadfsdfasdfasfdbcd', $this->config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
+            if ($response == NULL) {
+                return $this->db->errorno();
+            } else {
+                return (Aerospike::OK);
             }
-        } else {
-            return($db->errorno());
+        } catch (Exception $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -212,17 +188,13 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyNegativeEmptyCommand($db, $config)
+    function testInfoManyNegativeEmptyCommand()
     {
-        if ($db->isConnected()) {
-            $response = $db->infoMany('', $config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
-            if ($response == NULL) {
-                return ($db->errorno());
-            } else {
-                return (Aerospike::OK);
-            }
+        $response = $this->db->infoMany('', $this->config, array(Aerospike::OPT_READ_TIMEOUT => 20000));
+        if ($response == NULL) {
+            return $this->db->errorno();
         } else {
-            return($db->errorno());
+            return Aerospike::OK;
         }
     }
     /**
@@ -240,22 +212,18 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyNegativeIncorrectConfigStructure($db, $config)
+    function testInfoManyNegativeIncorrectConfigStructure()
     {
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test',
-                    array("addr"=>"localhost", "port"=>AEROSPIKE_CONFIG_PORT),
-                    array(Aerospike::OPT_READ_TIMEOUT => 20000));
-                if ($response == NULL)
-                    return ($db->errorno()) ;
-                else
-                    return (Aerospike::OK);
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test',
+                array("addr"=>"localhost", "port"=>AEROSPIKE_CONFIG_PORT),
+                array(Aerospike::OPT_READ_TIMEOUT => 20000));
+            if ($response == NULL)
+                return $this->db->errorno() ;
+            else
+                return (Aerospike::OK);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -273,25 +241,21 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyNegativeIncorrectHostname($db, $config)
+    function testInfoManyNegativeIncorrectHostname()
     {
         $host = array("addr"=>"localhost2", "port"=>AEROSPIKE_CONFIG_PORT);
         $myconfig = array("hosts"=>array($host));
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test', $myconfig,
-                    array(Aerospike::OPT_READ_TIMEOUT => 20000));
-                if ($response == NULL) {
-                    return ($db->errorno());
-                }
-                else {
-                    return (Aerospike::OK);
-                }
-            } catch (ErrorException $e) {
-                return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test', $myconfig,
+                array(Aerospike::OPT_READ_TIMEOUT => 20000));
+            if ($response == NULL) {
+                return $this->db->errorno();
             }
-        } else {
-            return($db->errorno());
+            else {
+                return (Aerospike::OK);
+            }
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -309,25 +273,21 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyNegativeIncorrectPort($db, $config)
+    function testInfoManyNegativeIncorrectPort()
     {
         $host = array("addr"=>"localhost", "port"=>3002);
         $config = array("hosts"=>array($host));
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('bins/test', $config,
-                    array(Aerospike::OPT_READ_TIMEOUT => 20000));
-                if ($response == NULL) {
-                    return ($db->errorno());
-                }
-                else {
-                    return (Aerospike::OK);
-                }
-            } catch (ErrorException $e) {
-                return($db->errorno());
+        try {
+            $response = $this->db->infoMany('bins/test', $config,
+                array(Aerospike::OPT_READ_TIMEOUT => 20000));
+            if ($response == NULL) {
+                return $this->db->errorno();
             }
-        } else {
-            return($db->errorno());
+            else {
+                return (Aerospike::OK);
+            }
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -345,20 +305,16 @@ class InfoMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testInfoManyPositiveForBuild($db, $config)
+    function testInfoManyPositiveForBuild()
     {
-        if ($db->isConnected()) {
-            try {
-                $response = $db->infoMany('build');
-                if ($response == NULL)
-                    return ($db->errorno()); 
-                else
-                    return (Aerospike::OK);
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $response = $this->db->infoMany('build');
+            if ($response == NULL)
+                return $this->db->errorno();
+            else
+                return (Aerospike::OK);
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
 }

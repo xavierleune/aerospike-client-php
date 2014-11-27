@@ -52,6 +52,10 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     char *lua_user_path;
     int key_policy;
     int key_gen;
+    zend_bool shm_use;
+    int shm_max_nodes;
+    int shm_max_namespaces;
+    int shm_takeover_threshold_sec;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     int persistent_ref_count;

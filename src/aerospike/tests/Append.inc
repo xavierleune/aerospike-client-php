@@ -7,21 +7,17 @@ require_once 'Common.inc';
 
 class Append  extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$key) {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
         $key = array("ns" => "test", "set" => "demo","key" =>"Append_key");
-        $db->put($key,array("Greet"=>"World_end"));
+        $this->db->put($key,array("Greet"=>"World_end"));
+        $this->keys[] = $key;
    }
 
-    function tearDown(&$db, &$key) {
-        if ($db->isConnected()) {
-            $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
-            $db->close();
-        }
-   }
-    
     /**
      * @test
      * Basic append opeartion on bin value
@@ -37,13 +33,8 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-        function testAppendOnBinValue($db, $key) {
-        if ($db->isConnected()) {
-            return($db->append($key, 'Greet', ' World',
-                array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
-        } else {
-            return($db->errorno());
-        }
+     function testAppendOnBinValue() {
+        return ($this->db->append($this->keys[0], 'Greet', ' World', array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
     }
     /**
      * @test
@@ -60,16 +51,12 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendKeyNotExist($db, $key) {
-        $key1 = array("ns" => "test", "set" => "demo", "key" =>
-              "---------AppendKey-------");
-        if ($db->isConnected()) {
-            return($db->append($key1, 'Greet', ' World',
+    function testAppendKeyNotExist() {
+        $key = array("ns" => "test", "set" => "demo", "key" => "---------AppendKey-------");
+        $this->keys[] = $key;
+        return($this->db->append($key, 'Greet', ' World',
                 array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
                 Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
-        } else {
-            return($db->errorno());
-        }
     }
     /**
      * @test
@@ -86,13 +73,13 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendBinNotExist($db, $key) {
+    function testAppendBinNotExist() {
         $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE, 
                      Aerospike::OPT_WRITE_TIMEOUT=>1000);
-        if ($db->isConnected()) {
-            return($db->append($key, 'Greet1234', ' World', $opts));
+        if ($this->db->isConnected()) {
+            return($this->db->append($this->keys[0], 'Greet1234', ' World', $opts));
         } else {
-            return($db->errorno());
+            return($this->db->errorno());
         }
     }
     /**
@@ -110,11 +97,11 @@ class Append  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testAppendValueNotString($db, $key) {
-        if ($db->isConnected()) {
-            return($db->append($key, 'Greet', 888888));
+    function testAppendValueNotString() {
+        if ($this->db->isConnected()) {
+            return($this->db->append($this->keys[0], 'Greet', 888888));
         } else {
-            return($db->errorno());
+            return($this->db->errorno());
         }
     }
 }

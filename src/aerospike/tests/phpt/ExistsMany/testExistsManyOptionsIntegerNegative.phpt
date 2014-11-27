@@ -6,4 +6,4 @@ Basic existsMany, Options is of type integer.
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ExistsMany", "testExistsManyOptionsIntegerNegative");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM

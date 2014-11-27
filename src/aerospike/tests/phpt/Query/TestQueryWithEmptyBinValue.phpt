@@ -6,5 +6,4 @@ Query - query call with empty bin value
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithEmptyBinValue");
 --EXPECT--
-Parameter_Exception
-
+ERR_PARAM

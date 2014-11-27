@@ -6,5 +6,5 @@ Query - query call with callback parameter missing
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithCallbackParameterMissing");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM
 

@@ -15,7 +15,7 @@
  */
 #define PHP_EXT_AS_LOG_LEVEL_OFF -1
 
-/* 
+/*
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE Aerospike_object FROM THE ZEND PERSISTENT STORE FOR THE
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
@@ -23,7 +23,7 @@
  */
 #define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
 
-/* 
+/*
  *******************************************************************************************************
  * MACRO TO ITERATE OVER A HASHTABLE.
  *
@@ -38,7 +38,7 @@
                 (void **) &datavalue, &position) == SUCCESS;     \
          zend_hash_move_forward_ex(ht, &position))
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS FOR MAX STORE SIZE.
  *******************************************************************************************************
@@ -47,7 +47,7 @@
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS FOR UDF KEYS AND FILE READING BUFFER SIZE.
  *******************************************************************************************************
@@ -56,7 +56,7 @@
 #define UDF_MODULE_TYPE "type"
 #define LUA_FILE_BUFFER_FRAME 512
 
-/* 
+/*
  *******************************************************************************************************
  * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR LUA SYSTEM AND USER PATHS IF
  * SPECIFIED, ELSE RETURN DEFAULTS.
@@ -65,7 +65,18 @@
 #define LUA_SYSTEM_PATH_PHP_INI INI_STR("aerospike.udf.lua_system_path") ? INI_STR("aerospike.udf.lua_system_path") : ""
 #define LUA_USER_PATH_PHP_INI INI_STR("aerospike.udf.lua_user_path") ? INI_STR("aerospike.udf.lua_user_path") : ""
 
-/* 
+/*
+ *******************************************************************************************************
+ * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR SHM CONFIGURATION IF
+ * SPECIFIED, ELSE RETURN DEFAULTS.
+ *******************************************************************************************************
+ */
+#define SHM_USE_PHP_INI INI_BOOL("aerospike.shm.use") ? INI_BOOL("aerospike.shm.use") : false
+#define SHM_MAX_NODES_PHP_INI INI_INT("aerospike.shm.max_nodes") ? INI_INT("aerospike.shm.max_nodes") : 16
+#define SHM_MAX_NAMESPACES_PHP_INI INI_INT("aerospike.shm.max_namespaces") ? INI_INT("aerospike.shm.max_namespaces") : 8
+#define SHM_TAKEOVER_THRESHOLD_SEC_PHP_INI INI_INT("aerospike.shm.takeover_threshold_sec") ? INI_INT("aerospike.shm.takeover_threshold_sec") : 30
+
+/*
  *******************************************************************************************************
  * MACROS FOR PREDICATE ARRAY KEYS.
  *******************************************************************************************************
@@ -135,7 +146,7 @@ typedef struct list_map_static_pool {
     u_int32_t        current_bytes_id;
 } as_static_pool;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure containing C client's aerospike object and its reference counter.
  *******************************************************************************************************
@@ -145,7 +156,7 @@ typedef struct csdk_aerospike_obj {
     int ref_as_p;
 } aerospike_ref;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure to map the zend Aerospike object with the C client's aerospike object ref structure.
  *******************************************************************************************************
@@ -195,7 +206,7 @@ extern zend_fcall_info_cache func_call_info_cache;
 extern zval                  *func_callback_retval_p;
 extern uint32_t              is_callback_registered;
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland Serializer callback
  *******************************************************************************************************
@@ -205,7 +216,7 @@ extern zend_fcall_info_cache user_serializer_call_info_cache;
 extern zval                  *user_serializer_callback_retval_p;
 extern uint32_t              is_user_serializer_registered;
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland Deserializer callback
  *******************************************************************************************************
@@ -214,6 +225,7 @@ extern zend_fcall_info       user_deserializer_call_info;
 extern zend_fcall_info_cache user_deserializer_call_info_cache;
 extern zval                  *user_deserializer_callback_retval_p;
 extern uint32_t              is_user_deserializer_registered;
+
 /*
  ****************************************************************************
  * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
@@ -278,7 +290,7 @@ aerospike_info_callback(const as_error* err, const as_node* node, char* request,
  *
  */
 extern as_log_level   php_log_level_set;
-/* 
+/*
  *******************************************************************************************************
  * MACRO TO COMPARE LOG LEVEL.
  *
@@ -327,7 +339,7 @@ do {                                                                            
 #define AEROSPIKE_CONN_STATE_TRUE   1
 #define AEROSPIKE_CONN_STATE_FALSE  0
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS TO COMPARE PHP TYPE OF THE SPECIFIED TYPE.
  *
@@ -343,7 +355,7 @@ do {                                                                            
 #define PHP_IS_LONG(type)        (IS_LONG == type)
 #define PHP_IS_NOT_LONG(type)    (IS_LONG != type)
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS TO CHECK PHP TYPE OF A zval*.
  *
@@ -359,7 +371,7 @@ do {                                                                            
 #define PHP_TYPE_ISNOTLONG(zend_val)     PHP_IS_NOT_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
  
-/* 
+/*
  *******************************************************************************************************
  * MACRO TO CHECK IF GIVEN CONNECTION TO AEROSPIKE DB IS ESTABLISHED.
  *
@@ -387,7 +399,7 @@ do {                                                                            
  */
 #define PHP_EXT_SET_AS_ERR(as_err_obj_p, code, msg)                     as_error_setall(as_err_obj_p, code, msg, __func__, __FILE__, __LINE__)
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS TO SET ERROR IN AEROSPIKE CLASS MEMBERS.
  *

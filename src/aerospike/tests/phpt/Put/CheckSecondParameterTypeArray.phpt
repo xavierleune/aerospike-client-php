@@ -6,4 +6,4 @@ Put - PUT With Second Parameter not an array.
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testCheckSecondParameterTypeArray");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM

@@ -6,5 +6,5 @@ Aggregate - where array containing string values
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateWithWhereContainingStringValue");
 --EXPECT--
-Parameter_Exception
+ERR_PARAM
 

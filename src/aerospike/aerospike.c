@@ -87,6 +87,10 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -152,58 +156,57 @@ static PHP_GINIT_FUNCTION(aerospike)
 {
 }
 
+/*
+********************************************************************
+* Using "arginfo_first_by_ref" in zend_arg_info argument of a
+* zend_function_entry accepts first argument of the
+* corresponding functions by reference and rest by value.
+********************************************************************
+*/
+ZEND_BEGIN_ARG_INFO(arginfo_first_by_ref, 0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
 
+/*
+ ********************************************************************
+ * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts second argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
 
-    /*
-    ********************************************************************
-    * Using "arginfo_first_by_ref" in zend_arg_info argument of a
-    * zend_function_entry accepts first argument of the
-    * corresponding functions by reference and rest by value.
-    ********************************************************************
-    */
-    ZEND_BEGIN_ARG_INFO(arginfo_first_by_ref, 0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_END_ARG_INFO()
+/*
+ ********************************************************************
+ * Using "arginfo_third_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts third argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_third_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
 
-    /*
-     ********************************************************************
-     * Using "arginfo_sec_by_ref" in zend_arg_info argument of a
-     * zend_function_entry accepts second argument of the
-     * corresponding functions by reference and rest by value.
-     ********************************************************************
-     */
-    ZEND_BEGIN_ARG_INFO(arginfo_sec_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_END_ARG_INFO()
-
-    /*
-     ********************************************************************
-     * Using "arginfo_third_by_ref" in zend_arg_info argument of a
-     * zend_function_entry accepts third argument of the
-     * corresponding functions by reference and rest by value.
-     ********************************************************************
-     */
-    ZEND_BEGIN_ARG_INFO(arginfo_third_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_END_ARG_INFO()
-    /*
-     ********************************************************************
-     * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
-     * zend_function_entry accepts fifth argument of the
-     * corresponding functions by reference and rest by value.
-     ********************************************************************
-     */
-    ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_ARG_PASS_INFO(1)
-    ZEND_ARG_PASS_INFO(0)
-    ZEND_END_ARG_INFO()
+/*
+ ********************************************************************
+ * Using "arginfo_fifth_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts fifth argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_fifth_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_ARG_PASS_INFO(0)
+ZEND_END_ARG_INFO()
 
 /*
  ********************************************************************
@@ -238,7 +241,6 @@ ZEND_BEGIN_ARG_INFO(arginfo_seventh_by_ref, 0)
     ZEND_ARG_PASS_INFO(1)
 ZEND_END_ARG_INFO()
 
-
 zend_module_entry aerospike_module_entry =
 {
 #if ZEND_MODULE_API_NO >= 20010901
@@ -261,13 +263,13 @@ zend_module_entry aerospike_module_entry =
 ZEND_GET_MODULE(aerospike)
 #endif
 
-    /*
-     ********************************************************************
-     *  The function entries for the main Aerospike class.
-     ********************************************************************
-     */
-    static zend_function_entry Aerospike_class_functions[] =
-    {
+/*
+ ********************************************************************
+ *  The function entries for the main Aerospike class.
+ ********************************************************************
+ */
+static zend_function_entry Aerospike_class_functions[] =
+{
     /*
      ********************************************************************
      *  Client Object APIs:
@@ -366,7 +368,7 @@ ZEND_GET_MODULE(aerospike)
 
 #endif
 
-        { NULL, NULL, NULL }
+    { NULL, NULL, NULL }
 };
 
 /*
@@ -518,6 +520,7 @@ PHP_METHOD(Aerospike, __construct)
     as_config_init(&config);
     strcpy(config.lua.system_path, ini_value = LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config.lua.user_path, ini_value = LUA_USER_PATH_PHP_INI);
+    aerospike_helper_check_and_configure_shm(&config);
 
     /* check for hosts, user and pass within config*/
     transform_zval_config_into transform_zval_config_into_as_config;
