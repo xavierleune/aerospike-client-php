@@ -18,8 +18,7 @@ function aerospike_phpt_runtest($clsname, $name) {
     $reflector = new ReflectionClass($clsname);
 
     if ($reflector->hasMethod("setUpBeforeClass")) {
-        $reflector->getMethod("setUpBeforeClass"
-                              )->invoke(NULL);
+        $reflector->getMethod("setUpBeforeClass")->invoke(NULL);
     }
 
     $obj = $reflector->newInstance();

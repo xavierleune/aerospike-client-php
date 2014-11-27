@@ -64,40 +64,6 @@ class ScanApply extends AerospikeTestCommon
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
 
-        $ages_got = array();
-        $i = 0;
-        $key = $this->db->initKey("test", "demo", "Get_key");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        $key = $this->db->initKey("test", "demo", "Get_key1");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        $key = $this->db->initKey("test", "demo", "Get_key2");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        $key = $this->db->initKey("test", "demo", "Get_key3");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        for ($i = 0; $i < 4; $i++) {
-            if ($ages_got[$i] == ($this->ages[$i]+20)) {
-                continue;
-            }
-        }
-
-        $key = $this->db->initKey("test", "demo", "Get_key");
-        $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
-        for($i=1; $i<4; $i++) {
-            $key=$this->db->initKey("test", "demo", "Get_key".$i);
-            $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
-        }
         return $status;
     }
 
@@ -377,42 +343,6 @@ class ScanApply extends AerospikeTestCommon
                 return $this->db->errorno();
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
-        $ages_got = array();
-        $i = 0;
-        $key = $this->db->initKey("test", "demo", "Get_key");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        $key = $this->db->initKey("test", "demo", "Get_key1");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        $key = $this->db->initKey("test", "demo", "Get_key2");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        $key = $this->db->initKey("test", "demo", "Get_key3");
-        if (Aerospike::OK == $this->db->get($key, $get_record, array("age"))) {
-            $ages_got[$i] = $get_record["bins"]["age"];
-            $i++;
-        }
-        for ($i = 0; $i < 4; $i++) {
-            if ($ages_got[$i] == ($this->ages[$i]+20)) {
-                continue;
-            }
-        }
-
-        $key = $this->db->initKey("test", "demo", "Get_key");
-        $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        for($i=1; $i<4; $i++) {
-            $key=$this->db->initKey("test", "demo", "Get_key".$i);
-            $this->db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-                =>Aerospike::POLICY_RETRY_NONE));
-        }
         return $status;
     }
     /**

@@ -27,7 +27,8 @@ class GetNodes extends AerospikeTestCommon
     function testGetNodesPositive()
     {
         try {
-            if ($this->db->getNodes()) {
+            $info = $this->db->getNodes();
+            if (is_array($info) && count($info) > 0) {
                 return Aerospike::OK;
             } else {
                 return Aerospike::ERR_CLIENT;

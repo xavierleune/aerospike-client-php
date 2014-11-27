@@ -45,12 +45,6 @@ abstract class AerospikeTestCommon extends ASTestFramework
         } elseif (!is_null($this->keys)) {
             $this->db->remove($keys);
         }
-        // remove any UDF modules registered by the test
-        if (is_array($this->modules)) {
-            foreach ($this->modules as $module) {
-                $this->db->deregister($module);
-            }
-        }
         $this->db->close();
     }
 
@@ -184,46 +178,100 @@ abstract class AerospikeTestCommon extends ASTestFramework
     }
 
     protected function ensureIndex($ns, $set, $bin, $index_name, $index_type) {
-        $index_loaded = false;
-        while (!$index_loaded) {
-            $status = $this->db->info("sindex/$ns/$index_name", $response);
-            if ($status !== Aerospike::OK || strrpos($response, 'NO INDEX') !== false) {
+        $host1_index_loaded = false;
+        $host1 = array('addr' => AEROSPIKE_CONFIG_NAME, 'port' => AEROSPIKE_CONFIG_PORT);
+        if (defined('AEROSPIKE_CONFIG_NAME2')) {
+            $host2_index_loaded = false;
+            $host2 = array('addr' => AEROSPIKE_CONFIG_NAME2, 'port' => AEROSPIKE_CONFIG_PORT2);
+        } else {
+            $host2_index_loaded = true;
+        }
+        while (!$host1_index_loaded) {
+            $status = $this->db->info("sindex/$ns/$index_name", $response, $host1);
+            if ($status !== Aerospike::OK) {
+                return $this->db->createIndex($ns, $set, $bin, $index_type, $index_name);
+            } else if (strrpos($response, 'NO INDEX') !== false) {
                 $this->db->createIndex($ns, $set, $bin, $index_type, $index_name);
                 time_nanosleep(0, 50000000); // pause 50ms for the index creation
-                continue;
             } else {
                 if (strpos($response, 'load_pct=100') !== false) {
-                    $index_loaded = true;
+                    $host1_index_loaded = true;
                 } else {
                     time_nanosleep(0, 10000000); // pause 10ms more for index creation to complete
                 }
             }
         }
-    }
-
-    protected function ensureUdfModule($module_path, $module_alias) {
-        $this->db->deregister($module_alias);
-        time_nanosleep(0, 10000000); // pause 10ms more for module registration
-        $module_loaded = false;
-        while (!$module_loaded) {
-            $status = $this->db->info("udf-list", $response);
-            if ($status !== Aerospike::OK || strpos($response, 'filename='. $module_alias) === false) {
-                $status = $this->db->register($module_path, $module_alias);
-                if ($status !== Aerospike::OK) return $status;
-                time_nanosleep(0, 50000000); // pause 50ms for module registration
-                continue;
+        while (!$host2_index_loaded) {
+            $status = $this->db->info("sindex/$ns/$index_name", $response, $host2);
+            if ($status !== Aerospike::OK) {
+               return $status;
+            } else if (strrpos($response, 'NO INDEX') !== false) {
+                time_nanosleep(0, 50000000); // pause 50ms for the index creation
             } else {
-                if (strpos($response, 'filename='. $module_alias) !== false) {
-                    $this->modules[] = $module_alias;
-                    $module_loaded = true;
+                if (strpos($response, 'load_pct=100') !== false) {
+                    $host2_index_loaded = true;
                 } else {
-                    time_nanosleep(0, 10000000); // pause 10ms more for module registration
+                    time_nanosleep(0, 10000000); // pause 10ms more for index creation to complete
                 }
             }
         }
         return Aerospike::OK;
     }
 
+    protected function ensureUdfModule($module_path, $module_alias) {
+        $status = $this->db->register($module_path, $module_alias);
+        time_nanosleep(0, 100000000); // pause 100ms for module registration
+        if ($status !== Aerospike::OK) {
+            return $status;
+        }
+        $host1_module_loaded = false;
+        $host1 = array('addr' => AEROSPIKE_CONFIG_NAME, 'port' => AEROSPIKE_CONFIG_PORT);
+        if (defined('AEROSPIKE_CONFIG_NAME2')) {
+            $host2_module_loaded = false;
+            $host2 = array('addr' => AEROSPIKE_CONFIG_NAME2, 'port' => AEROSPIKE_CONFIG_PORT2);
+        } else {
+            $host2_module_loaded = true;
+        }
+        while (!$host1_module_loaded) {
+            $status = $this->db->info("udf-list", $response, $host1);
+            if ($status !== Aerospike::OK) {
+                sleep(1);
+                return $status; // info is being wonky, give up on waiting
+            }
+            if (strpos($response, 'filename='. $module_alias) === false) {
+                time_nanosleep(0, 50000000); // pause another 50ms for module registration
+            } else {
+                $this->modules[] = $module_alias;
+                $host1_module_loaded = true;
+            }
+        }
+        while (!$host2_module_loaded) {
+            $status = $this->db->info("udf-list", $response, $host2);
+            if ($status !== Aerospike::OK) {
+                sleep(1);
+                return $status; // info is being wonky, give up on waiting
+            }
+            if (strpos($response, 'filename='. $module_alias) === false) {
+                time_nanosleep(0, 50000000); // pause another 50ms for module registration
+            } else {
+                $this->modules[] = $module_alias;
+                $host2_module_loaded = true;
+            }
+        }
+        return Aerospike::OK;
+    }
+
+    private function has_module($module_alias) {
+        $status = $this->db->listRegistered($modules);
+        if ($status !== Aerospike::OK) return false;
+        foreach ($modules as $module) {
+            if ($module['name'] == $module_alias) return true;
+        }
+        return false;
+    }
+
+    public function error() { return $this->db->error(); }
+    public function errorno() { return $this->db->errorno(); }
 }
 
 ?>

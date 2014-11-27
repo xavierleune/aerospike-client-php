@@ -32,8 +32,7 @@ class Increment extends AerospikeTestCommon
      */
     function testBinIncrementByOffsetValue() {
         return $this->db->increment($this->keys[0], 'bin1', 4, 0,
-            array(Aerospike::OPT_WRITE_TIMEOUT=>100,
-            Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+            array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
     }
     /**
      * @test
