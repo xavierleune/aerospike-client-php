@@ -10,3 +10,6 @@ InitKey
 Remove
 Predicate
 Udf
+AerospikeSession
+Reconnect
+

@@ -10,6 +10,10 @@
 #include "pthread.h"
 #include "aerospike_common.h"
 
+#define SAVE_PATH_DELIMITER "|"
+#define IP_PORT_DELIMITER ":"
+#define HOST_DELIMITER ","
+
 /*
  *******************************************************************************************************
  * PHP Userland logger callback.
@@ -109,25 +113,6 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
 
 /*
  *******************************************************************************************************
- * Sets C client's logger callback.
- *
- * @param as_log_p          The as_log to be set.
- * @return 1 if log set succeeds. Otherwise 0.
- *******************************************************************************************************
- */
-/*extern int parseLogParameters(as_log* as_log_p)
-{
-    if (as_log_set_callback((as_log_callback)&aerospike_helper_log_callback)) {
-	is_callback_registered = 1;
-        Z_ADDREF_P(func_call_info.function_name);
-        return 1;
-    } else {
-        return 0;;
-    }
-}*/
-
-/*
- *******************************************************************************************************
  * Sets the private members error and errorno of the Aerospike class.
  *
  * @param ce_p              The zend_class_entry pointer for the Aerospike class.
@@ -173,6 +158,7 @@ do {                                                                          \
     {                                                                         \
         as_object_p->as_ref_p->as_p = NULL;                                   \
         as_object_p->as_ref_p->ref_as_p = 0;                                  \
+        as_object_p->as_ref_p->ref_hosts_entry = 0;                           \
     }                                                                         \
     as_object_p->as_ref_p->as_p = aerospike_new(conf);                        \
     as_object_p->as_ref_p->ref_as_p = 1;                                      \
@@ -194,15 +180,15 @@ do {                                                                           \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
         zend_hash_add(persistent_list, alias, alias_len,                       \
                 (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);         \
+        ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;                     \
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
-        goto exit;                                                             \
     } else {                                                                   \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
         zend_hash_update(persistent_list,                                      \
                 alias, alias_len, (void *) &new_le,                            \
                 sizeof(zend_rsrc_list_entry), (void **) &le);                  \
-          pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                \
-        goto exit;                                                             \
+        ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;                     \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
     }                                                                          \
 } while(0)
 
@@ -271,13 +257,12 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
     char *alias_to_hash = NULL;
     char port[MAX_PORT_SIZE];
 
-    if (!(as_object_p) && !(conf))
-    {
+    if (!(as_object_p) && !(conf)) {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
     }
 
-    if(persist_flag == false) {
+    if (persist_flag == false) {
         ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();
         goto exit;
     }
@@ -287,12 +272,12 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
      * hashed and can be reused.
      */
 
-    alias_to_search = (char*) emalloc(strlen(conf->hosts[0].addr) + MAX_PORT_SIZE + 1);
-    sprintf(port, "%d", conf->hosts[0].port);
-    strcpy(alias_to_search, conf->hosts[0].addr);
-    strcat(alias_to_search, ":");
-    strcat(alias_to_search, port);
-    for(itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+    for (itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+        alias_to_search = (char*) emalloc(strlen(conf->hosts[itr_user].addr) + MAX_PORT_SIZE + 1);
+        sprintf(port, "%d", conf->hosts[itr_user].port);
+        strcpy(alias_to_search, conf->hosts[itr_user].addr);
+        strcat(alias_to_search, ":");
+        strcat(alias_to_search, port);
         pthread_rwlock_rdlock(&AEROSPIKE_G(aerospike_mutex));
         if (zend_hash_find(persistent_list, alias_to_search,
                 strlen(alias_to_search), (void **) &le) == SUCCESS) {
@@ -304,12 +289,28 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
             tmp_ref = le->ptr;
             goto use_existing;
         }
-       pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
+        if (alias_to_search) {
+            efree(alias_to_search);
+            alias_to_search = NULL;
+        }
     }
 
+    alias_to_search = (char*) emalloc(strlen(conf->hosts[0].addr) + MAX_PORT_SIZE + 1);
+    sprintf(port, "%d", conf->hosts[0].port);
+    strcpy(alias_to_search, conf->hosts[0].addr);
+    strcat(alias_to_search, ":");
+    strcat(alias_to_search, port);
     ZEND_HASH_CREATE_ALIAS_NEW(alias_to_search, strlen(alias_to_search), 1);
-    for(itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
-        alias_to_hash = (char*) emalloc(strlen(conf->hosts[0].addr) + MAX_PORT_SIZE + 1);
+
+    /*
+     * Iterate over remaining list of hosts and hash them into the persistent
+     * list, each pointing to the same aerospike_ref object.
+     * Increment corresponding ref_hosts_entry within the aerospike_ref object.
+     */
+
+    for (itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
+        alias_to_hash = (char*) emalloc(strlen(conf->hosts[itr_user].addr) + MAX_PORT_SIZE + 1);
         sprintf(port, "%d", conf->hosts[itr_user].port);
         strcpy(alias_to_hash, conf->hosts[itr_user].addr);
         strcat(alias_to_hash, ":");
@@ -317,14 +318,18 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));
         zend_hash_add(persistent_list, alias_to_hash,
                 strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
+        ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
         efree(alias_to_hash);
         alias_to_hash = NULL;
-   }
+    }
+    goto exit;
 
 use_existing:
-    /* config details are matched, use the existing one obtained from the
-     * storage
+    /*
+     * config details have matched, use the existing one obtained from the
+     * storage.
+     * Increment corresponding ref_as_p of the aerospike_ref object.
      */
     as_object_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
     as_object_p->as_ref_p = tmp_ref;
@@ -511,4 +516,231 @@ aerospike_helper_check_and_configure_shm(as_config *config_p) {
     } else {
         config_p->use_shm = false;
     }
+}
+
+/*
+ *******************************************************************************************************
+ * Function called from Aerospike::close().
+ * It decrements ref_as_p which indicates the no. of references for internal C
+ * SDK aerospike object being held by the various PHP userland Aerospike
+ * objects.
+ * It DOES NOT actually close the connection to server or free as_ref_p as other
+ * PHP userland aerospike objects may re-use it in future.
+ *
+ * @param as_obj_p          The Aerospike_object upon which close() is invoked
+ *                          currently.
+ * @param error_p           The C SDK's as_error object to be populated by this
+ *                          method in case of any errors if encountered.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
+        as_error *error_p TSRMLS_DC) 
+{
+    as_error_init(error_p);
+    DEBUG_PHP_EXT_DEBUG("In aerospike_helper_close_php_connection");
+    if (as_obj_p->as_ref_p) {
+        if (as_obj_p->as_ref_p->ref_as_p >= 1) {
+            as_obj_p->as_ref_p->ref_as_p--;
+        } else if (as_obj_p->as_ref_p->ref_as_p <= 0) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                    "Connection already closed!");
+            DEBUG_PHP_EXT_ERROR("Connection already closed!");
+        }
+        DEBUG_PHP_EXT_INFO("Connection successfully closed!");
+    } else {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Connection already closed and destroyed!");
+        DEBUG_PHP_EXT_ERROR("Connection already closed and destroyed!");
+    }
+    return error_p->code;
+}
+
+/*
+ *******************************************************************************************************
+ * Function that trims leading and trailing white spaces in a given string.
+ *
+ * @param str               The input string to be trimmed.
+ * @param len               The length of input string.
+ *
+ * @return len of trimmed str string on success. Otherwise 1.
+ *******************************************************************************************************
+ */
+static int
+trim_white_space(const char *str, size_t len)
+{
+    if (len == 0) {
+        return 0;
+    }
+
+    const char *end;
+    int out_size;
+
+    /* Trim leading space */
+    while(isspace(*str)) {
+        str++;
+    }
+
+    if(*str == 0) {
+        /* All spaces? */
+        return 1;
+    }
+
+    /* Trim trailing space */
+    end = str + strlen(str) - 1;
+    while(end > str && isspace(*end)) {
+        end--;
+    }
+    end++;
+
+    /* Set output size to minimum of trimmed string length and buffer size minus 1 */
+    out_size = (end - str) < len-1 ? (end - str) : len-1;
+
+    /* Copy trimmed string and add null terminator */
+
+    return out_size;
+}
+
+/*
+ *******************************************************************************************************
+ * Function to parse the session save path.
+ * It sets the ns and set in aerospike_session by allocating memory to it.
+ * It also sets the host within as_config.
+ *
+ * @param save_path         The session save path to be parsed.
+ * @param session_p         The aerospike_session object whose ns_p and set_p
+ *                          are to be set using the save_path.
+ * @param config_p          The as_config whose hosts are to be set using the
+ *                          save_path.
+ * @param error_p           The C SDK's as_error object to be populated by this
+ *                          method in case of any errors if encountered.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+static as_status
+parse_save_path(char *save_path, aerospike_session *session_p,
+        as_config *config_p, as_error *error_p TSRMLS_DC)
+{
+    char        *tok = NULL;
+    char        *saved = NULL;
+    char        port[INET_PORT];
+    int16_t     iter_host = 0;
+    
+    tok = strtok_r(save_path, SAVE_PATH_DELIMITER, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Could not read SAVE_PATH settings");
+        DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+        goto exit;
+    }
+
+    strncpy(session_p->ns_p, tok, strlen(tok));
+    session_p->ns_p[strlen(tok)] = '\0';
+
+    tok = strtok_r(NULL, SAVE_PATH_DELIMITER, &saved);
+    if (tok == NULL) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Could not read SAVE_PATH settings");
+        DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+        goto exit;
+    }
+
+    strncpy(session_p->set_p, tok, strlen(tok));
+    session_p->set_p[strlen(tok)] = '\0';
+
+    while (tok != NULL) {
+        tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
+        if (tok == NULL) {
+            if (iter_host == 0) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                        "Could not read SAVE_PATH settings");
+                DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+                goto exit;
+            } else {
+                break;
+            }
+        }
+        trim_white_space(tok, strlen(tok) + 1);
+        config_p->hosts[iter_host].addr = tok;
+
+        tok = strtok_r(NULL, HOST_DELIMITER, &saved);
+        if (tok == NULL) {
+            if (iter_host == 0) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                        "Could not read SAVE_PATH settings");
+                DEBUG_PHP_EXT_DEBUG("Could not read SAVE_PATH settings");
+                goto exit;
+            } else {
+                break;
+            }
+        }
+        trim_white_space(tok, strlen(tok) + 1);
+        config_p->hosts[iter_host].port = atoi(tok);
+        config_p->hosts_size++;
+        iter_host++;
+    }
+
+exit:
+    return error_p->code;
+}
+
+/*
+ *******************************************************************************************************
+ * Function to check save path and set config and session object.
+ * It uses the save path passed to it. If NULL, checks for PHP INI entries.
+ * It sets the ns and set in aerospike_session by allocating memory to it.
+ * It also sets the host within as_config.
+ *
+ * @param config_p          The as_config whose hosts are to be set using the
+ *                          save_path.
+ * @param save_path         The session save path to be parsed.
+ * @param session_p         The aerospike_session object whose ns_p and set_p
+ *                          are to be set using the save_path.
+ * @param error_p           The C SDK's as_error object to be populated by this
+ *                          method in case of any errors if encountered.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_helper_check_and_set_config_for_session(as_config *config_p,
+        char *save_path, aerospike_session *session_p,
+        as_error *error_p TSRMLS_DC)
+{
+    char        *ini_save_path = NULL;
+    char        *ip = NULL;
+    uint16_t    port = 0;
+
+    as_error_init(error_p);
+
+    as_config_init(config_p);
+    strcpy(config_p->lua.system_path, LUA_SYSTEM_PATH_PHP_INI);
+    strcpy(config_p->lua.user_path, LUA_USER_PATH_PHP_INI);
+
+    if (SAVE_HANDLER_PHP_INI && (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN))) {
+        if (!save_path) {
+            ini_save_path = SAVE_PATH_PHP_INI;
+        }
+
+        if (save_path) {
+            if (AEROSPIKE_OK != parse_save_path(save_path, session_p,
+                        config_p, error_p TSRMLS_CC)) {
+                goto exit;
+            }
+        } else {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_PATH settings");
+            DEBUG_PHP_EXT_ERROR("Could not read SAVE_PATH settings");
+            goto exit;
+        }
+    } else {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_HANDLER settings");
+        DEBUG_PHP_EXT_ERROR("Could not read SAVE_HANDLER settings");
+        goto exit;
+    }
+
+exit:
+    return error_p->code;
 }
