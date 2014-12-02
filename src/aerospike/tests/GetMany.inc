@@ -83,6 +83,60 @@ class GetMany extends AerospikeTestCommon
 
     /**
      * @test
+     * Basic getMany operation with all arguments without options and filter
+     * bins but with one non-existent key.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testGetManyWithNonExistentKeyPositive() {
+        $my_keys = $this->keys;
+        $key4 = array($this->db->initKey("test", "demo", "getMany4"));
+        array_splice($my_keys, 1, 0, $key4);
+        $my_put_records = $this->put_records;
+        $my_put_records[3] = NULL;
+        $status = $this->db->getMany($my_keys, $records);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($records)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i = 0;
+        foreach ($records as $records_key=>$value) {
+            if ($i == 3 && $value) {
+                return Aerospike::ERR_CLIENT;
+            } else {
+                continue;
+            }
+
+            if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
+                (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
+                (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
+                $result = array_diff_assoc_recursive($my_put_records[$i],
+                    $value["bins"]);
+                if (!empty($result)) {
+                    return Aerospike::ERR_CLIENT;
+                }
+                $i++;
+            } else {
+                return Aerospike::ERR_CLIENT;
+            }
+        }
+        return $status;
+    }
+
+    /**
+     * @test
      * Basic getMany operation with all arguments without options and filter bins with digest in initKey().
      *
      * @pre
