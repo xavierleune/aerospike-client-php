@@ -32,6 +32,7 @@ array keys and values. This behavior can be modified using the
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_SERIALIZER**.
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
 
 ## Return Values
 

@@ -15,9 +15,9 @@ class Aerospike
     const POLICY_KEY_SEND;   // also send, store, and get the actual (ns,set,key) with each record
 
     // The generation policy can be set using OPT_POLICY_GEN to one of
-    const POLICY_GEN_IGNORE; // Write a record, regardless of generation
-    const POLICY_GEN_EQ;     // Write a record, ONLY if given value is equal to the current record generation
-    const POLICY_GEN_GT;     // Write a record, ONLY if given value is greater-than the current record generation
+    const POLICY_GEN_IGNORE; // write a record, regardless of generation
+    const POLICY_GEN_EQ;     // write a record, ONLY if given value is equal to the current record generation
+    const POLICY_GEN_GT;     // write a record, ONLY if given value is greater-than the current record generation
 
     // The retry policy can be determined by setting OPT_POLICY_RETRY to one of
     const POLICY_RETRY_NONE; // do not retry an operation (default)
@@ -33,6 +33,15 @@ class Aerospike
     const POLICY_EXISTS_REPLACE;           // replace a record ONLY if it exists
     const POLICY_EXISTS_CREATE_OR_REPLACE; // overwrite the bins if record exists
 
+    // Replica and consistency guarantee options
+    // See: http://www.aerospike.com/docs/client/c/usage/consistency.html
+    const POLICY_REPLICA_MASTER;      // read from the partition master replica node (default)
+    const POLICY_REPLICA_ANY;         // read from either the master or prole node
+    const POLICY_CONSISTENCY_ONE;     // involve a single replica in the read operation (default)
+    const POLICY_CONSISTENCY_ALL;     // involve all replicas in the read operation
+    const POLICY_COMMIT_LEVEL_ALL;    // return success after committing all replicas (default)
+    const POLICY_COMMIT_LEVEL_MASTER; // return success after committing the master replica
+
     // Determines a handler for writing values of unsupported type into bins
     // Set OPT_SERIALIZER to one of the following:
     const SERIALIZER_NONE;
@@ -47,18 +56,21 @@ class Aerospike
     const SCAN_PRIORITY_HIGH;   //High priority scan.
 
     // Options can be assigned values that modify default behavior
-    const OPT_CONNECT_TIMEOUT; // value in milliseconds, default: 1000
-    const OPT_READ_TIMEOUT;    // value in milliseconds, default: 1000
-    const OPT_WRITE_TIMEOUT; // value in milliseconds, default: 1000
-    const OPT_POLICY_RETRY; // set to a Aerospike::POLICY_RETRY_* value
-    const OPT_POLICY_EXISTS; // set to a Aerospike::POLICY_EXISTS_* value
-    const OPT_SERIALIZER; // set the unsupported type handler
-    const OPT_SCAN_PRIORITY; // set to a Aerospike::SCAN_PRIORITY_* value
-    const OPT_SCAN_PERCENTAGE; // integer value 1-100, default: 100
-    const OPT_SCAN_CONCURRENTLY; // boolean value, default: false
-    const OPT_SCAN_NOBINS; // boolean value, default: false
-    const OPT_POLICY_KEY; // records store the digest unique ID, optionally also its (ns,set,key) inputs
-    const OPT_POLICY_GEN; // set to array( Aerospike::POLICY_GEN_* [, $gen_value ] )
+    const OPT_CONNECT_TIMEOUT;    // value in milliseconds, default: 1000
+    const OPT_READ_TIMEOUT;       // value in milliseconds, default: 1000
+    const OPT_WRITE_TIMEOUT;      // value in milliseconds, default: 1000
+    const OPT_POLICY_RETRY;       // set to a Aerospike::POLICY_RETRY_* value
+    const OPT_POLICY_EXISTS;      // set to a Aerospike::POLICY_EXISTS_* value
+    const OPT_SERIALIZER;         // set the unsupported type handler
+    const OPT_SCAN_PRIORITY;      // set to a Aerospike::SCAN_PRIORITY_* value
+    const OPT_SCAN_PERCENTAGE;    // integer value 1-100, default: 100
+    const OPT_SCAN_CONCURRENTLY;  // boolean value, default: false
+    const OPT_SCAN_NOBINS;        // boolean value, default: false
+    const OPT_POLICY_KEY;         // records store the digest unique ID, optionally also its (ns,set,key) inputs
+    const OPT_POLICY_GEN;         // set to array( Aerospike::POLICY_GEN_* [, $gen_value ] )
+    const OPT_POLICY_REPLICA;     // set to one of Aerospike::POLICY_REPLICA_*
+    const OPT_POLICY_CONSISTENCY; // set to one of Aerospike::POLICY_CONSISTENCY_*
+    const OPT_POLICY_COMMIT_LEVEL;// set to one of Aerospike::POLICY_COMMIT_LEVEL_*
 
     // Aerospike Status Codes:
     //

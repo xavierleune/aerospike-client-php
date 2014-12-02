@@ -24,6 +24,7 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
 
 ## Return Values
 

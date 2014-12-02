@@ -27,6 +27,7 @@ set it to the *initial_value* if it does not exist.
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
 
 ## Return Values
 

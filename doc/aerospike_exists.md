@@ -27,6 +27,8 @@ otherwise it will be NULL.
 - **Aerospike::OPT_READ_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_KEY**
+- **Aerospike::OPT_POLICY_REPLICA**
+- **Aerospike::OPT_POLICY_CONSISTENCY**
 
 ## Return Values
 

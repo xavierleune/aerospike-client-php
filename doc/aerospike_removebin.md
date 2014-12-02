@@ -23,6 +23,7 @@ public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
 
 ## Return Values
 

@@ -23,6 +23,7 @@ and incrementing its generation.
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
 
 ## Return Values
 

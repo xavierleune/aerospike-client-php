@@ -22,7 +22,6 @@ and non-existent records will return as NULL.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
-- **Aerospike::OPT_POLICY_KEY**
 
 ## Return Values
 
