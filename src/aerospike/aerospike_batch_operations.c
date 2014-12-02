@@ -267,6 +267,7 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
             foreach_record_callback_udata.udata_p = get_record_p;
             foreach_record_callback_udata.error_p = udata_ptr->error_p;
             foreach_record_callback_udata.obj = udata_ptr->obj;
+            null_flag = false;
         } else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
             null_flag = true;
         } else {
@@ -319,7 +320,6 @@ cleanup:
         if (record_p) {
             zval_ptr_dtor(&record_p);
         }
-        goto exit;
     }
 
 exit:
