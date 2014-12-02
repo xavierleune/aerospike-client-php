@@ -319,7 +319,6 @@ cleanup:
         if (record_p) {
             zval_ptr_dtor(&record_p);
         }
-        goto exit;
     }
 
 exit:
