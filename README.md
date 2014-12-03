@@ -1,8 +1,8 @@
 # Aerospike PHP Client
 [![Build Status](https://travis-ci.org/aerospike/aerospike-client-php.svg?branch=master)](https://travis-ci.org/aerospike/aerospike-client-php)
-[![Latest Stable Version](https://poser.pugx.org/aerospike/aerospike-client-php/v/stable.svg)](https://packagist.org/packages/aerospike/aerospike-client-php)
-[![Total Downloads](https://poser.pugx.org/aerospike/aerospike-client-php/downloads.svg)](https://packagist.org/packages/aerospike/aerospike-client-php)
-[![License](https://poser.pugx.org/aerospike/aerospike-client-php/license.svg)](https://packagist.org/packages/aerospike/aerospike-client-php)
+[![Latest Release](https://img.shields.io/packagist/v/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/v/aerospike/aerospike-client-php.svg)
+[![Downloads](https://img.shields.io/packagist/dt/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/dt/aerospike/aerospike-client-php.svg)
+[![License](https://img.shields.io/packagist/l/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/l/aerospike/aerospike-client-php.svg)
 
 The Aerospike PHP Client works with PHP 5.3, 5.4, 5.5, and 5.6.
 
