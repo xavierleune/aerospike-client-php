@@ -93,11 +93,6 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
-   /*
-   STD_PHP_INI_ENTRY("session.save_handler", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, session_save_handler, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("session.save_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, session_save_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("session.cache_expire", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, session_cache_expire, zend_aerospike_globals, aerospike_globals)
-   */
 PHP_INI_END()
 
 

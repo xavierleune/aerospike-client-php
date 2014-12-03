@@ -56,11 +56,6 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int shm_max_nodes;
     int shm_max_namespaces;
     int shm_takeover_threshold_sec;
-    /*
-    char *session_save_handler;
-    char *session_save_path;
-    int session_cache_expire;
-    */
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     int persistent_ref_count;
