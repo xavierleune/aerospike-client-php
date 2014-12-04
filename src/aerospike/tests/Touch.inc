@@ -57,5 +57,149 @@ class Touch extends AerospikeTestCommon
         $key1 = array("ns" => "test", "set" => "demo", "key" => "-----sshh---");
         return ($this->db->touch($key1, 120, array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
     }
+    /**
+     * @test
+     * Basic touch opeartion on with policy GEN_GT
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithGenGTPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 10;
+        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value))));
+    }
+    /**
+     * @test
+     * Basic touch opeartion on with policy GEN_GT value lesser
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithGenGTLesser() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value))));
+    }
+    /**
+     * @test
+     * Basic touch opeartion on with policy GEN_EQ
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithGenEQPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value))));
+    }
+    /**
+     * @test
+     * Basic touch opeartion on with policy GEN_EQ not equal
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithGenEQNotEqual() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value))));
+    }
+    /**
+     * @test
+     * Basic touch opeartion on with policy GEN_EQ_IGNORE
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithGenEQIgnore() {
+        $gen_value = 10;
+        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value))));
+    }
+    /**
+     * @test
+     * Basic touch opeartion on with policy key digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithPolicyKeyDigest() {
+        $gen_value = 10;
+        $key = $this->db->initKey("test", "demo",
+         base64_decode("increment_option_policy_key_digest"), true);
+        $put_status = $this->db->put($key, array("bin1"=>1), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        return($this->db->touch($key, 120, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
+    }
+    /**
+     * @test
+     * Basic touch operation on with policy key send
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testTouchOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testTouchWithPolicyKeySend() {
+        $gen_value = 10;
+        $key = $this->db->initKey("test", "demo", 1);
+        $put_status = $this->db->put($key, array("bin1"=>1), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        return($this->db->touch($key, 120, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
+    }
 }
 ?>

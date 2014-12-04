@@ -247,7 +247,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, 1);
-
+    get_generation_value(options_p, &ops.gen, error_p);
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
                                                       options_p, error_p,
@@ -308,6 +308,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, zend_hash_num_elements(operations_array_p));
+    get_generation_value(options_p, &ops.gen, error_p);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,

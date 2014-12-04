@@ -11,7 +11,7 @@ class Increment extends AerospikeTestCommon
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $this->db = new Aerospike($config);
         $key = $this->db->initKey("test", "demo", "increment_test");
-        $this->db->put($key, array("bin1"=>"1"));
+        $this->db->put($key, array("bin1"=>1, "bin2"=>"1"));
         $this->keys[] = $key;
    }
 
@@ -31,7 +31,7 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementByOffsetValue() {
-        return $this->db->increment($this->keys[0], 'bin1', 4, 0,
+        return $this->db->increment($this->keys[0], 'bin2', 4, 0,
             array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
     }
     /**
@@ -96,6 +96,185 @@ class Increment extends AerospikeTestCommon
             return Aerospike::OK;
         }
         return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
+     * Basic increment opeartion on with policy GEN_GT
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testIncrementOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithGenGTPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 10;
+        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic increment opeartion on with policy GEN_GT value lesser
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testIncrementOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithGenGTLesser() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(1 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic increment opeartion on with policy GEN_EQ
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testIncrementOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithGenEQPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic increment opeartion on with policy GEN_EQ not equal
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testIncrementOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithGenEQNotEqual() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(1 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic increment opeartion on with policy GEN_EQ_IGNORE
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testIncrementOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithGenEQIgnore() {
+        $gen_value = 10;
+        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic increment opeartion on with policy key digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithPolicyKeyDigest() {
+        $gen_value = 10;
+        $key = $this->db->initKey("test", "demo",
+         base64_decode("increment_option_policy_key_digest"), true);
+        $put_status = $this->db->put($key, array("bin1"=>1), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $this->db->increment($key, 'bin1', 4, 0, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $status = $this->db->get($key, $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic increment operation on with policy key send
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testIncrementOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testIncrementWithPolicyKeySend() {
+        $gen_value = 10;
+        $key = $this->db->initKey("test", "demo", 1);
+        $put_status = $this->db->put($key, array("bin1"=>1), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $this->db->increment($key, 'bin1', 4, 0, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->get($key, $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
 }
 ?>
