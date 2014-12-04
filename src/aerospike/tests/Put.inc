@@ -63,7 +63,9 @@ class Put extends AerospikeTestCommon
     function testMultiPUT()
     {
         $key = array("ns"=>"test", "set"=>"demo", "key"=>"key_multi");
-        $status = $this->db->put($key,array("bin1"=>"Hello World","bin2"=>123456));
+        $status = $this->db->put($key, array("bin1"=>"Hello
+            World","bin2"=>123456), NULL,
+            array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
         $this->keys[] = $key;
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
@@ -141,7 +143,8 @@ class Put extends AerospikeTestCommon
     {
         try {
             $key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
-            $status = $this->db->put(array("bin1"=>"Hello World"));
+            $status = $this->db->put(array("bin1"=>"Hello World",
+                array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL)));
             $this->keys[] = $key;
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
@@ -279,48 +282,48 @@ class Put extends AerospikeTestCommon
         }
         return Undefined_Error;
     }
-        /**
-         * @test
-         * Basic PUT Check sequence of key parameter in Key array
-         *
-         * @pre
-         * Connect using aerospike object to the specified node
-         *
-         * @post
-         * newly initialized Aerospike objects
-         *
-         * @remark
-         * Variants: OO (testCheckParameterSequenceChangeInKeyArray)
-         *
-         * @test_plans{1.1}
-         */
-        function testCheckParameterSequenceChangeInKeyArray()
-        {
-            $key = $this->db->initKey("demo", "test", "key_int1");
-            $status = $this->db->put($key,array("bin1"=>"Hello World"));
-            $this->keys[] = $key;
-            if($status !== Aerospike::OK) {
-                return $this->db->errorno();
-            }
-            return $status;
-       }
-/**
-  * @test
-  * Basic PUT Check key parameter value non exist in database
-  *
-  * @pre
-  * Connect using aerospike object to the specified node
-  *
-  * @post
-  * newly initialized Aerospike objects
-  *
-  * @remark
-  * Variants: OO (testCheckKeyValueNotExistInDB)
-  *
-  * @test_plans{1.1}
-  */
-  function testCheckKeyValueNotExistInDB()
-  {
+    /**
+     * @test
+     * Basic PUT Check sequence of key parameter in Key array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckParameterSequenceChangeInKeyArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckParameterSequenceChangeInKeyArray()
+    {
+        $key = $this->db->initKey("demo", "test", "key_int1");
+        $status = $this->db->put($key,array("bin1"=>"Hello World"));
+        $this->keys[] = $key;
+        if($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return $status;
+    }
+    /**
+      * @test
+      * Basic PUT Check key parameter value non exist in database
+      *
+      * @pre
+      * Connect using aerospike object to the specified node
+      *
+      * @post
+      * newly initialized Aerospike objects
+      *
+      * @remark
+      * Variants: OO (testCheckKeyValueNotExistInDB)
+      *
+      * @test_plans{1.1}
+      */
+    function testCheckKeyValueNotExistInDB()
+    {
       $key = array("ns"=>"test","set"=>"demo","key"=>"-------------");
       $status = $this->db->put($key,array("bin1"=>"Hello World"), 500,
           array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
@@ -329,7 +332,7 @@ class Put extends AerospikeTestCommon
           return $this->db->errorno();
       }
       return $status;
-  }
+    }
 
 /**
   * @test

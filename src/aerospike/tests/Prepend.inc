@@ -34,7 +34,9 @@ class Prepend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPrependOnBinValue() {
-        return($this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
+        return($this->db->prepend($this->keys[0], 'Greet', 'Hello ',
+            array(Aerospike::OPT_WRITE_TIMEOUT=>1000,
+            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL)));
     }
     /**
      * @test
@@ -53,7 +55,9 @@ class Prepend extends AerospikeTestCommon
      */
     function testPrependKeyNotExist() {
         $key1 = $this->db->initKey("test", "demo", "---sss----");
-        return $this->db->prepend($key1, 'Greet', ' World', array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        return $this->db->prepend($key1, 'Greet', ' World',
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
+            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
     }
     /**
      * @test

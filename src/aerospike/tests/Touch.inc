@@ -36,7 +36,9 @@ class Touch extends AerospikeTestCommon
 
     function testBasicTouchOperation() {
         $rv = $this->db->put($this->keys[0], array("bin1"=>"Hello World"));
-        return ($this->db->touch($this->keys[0], 10, array(Aerospike::OPT_WRITE_TIMEOUT=>200)));
+        return ($this->db->touch($this->keys[0], 10,
+            array(Aerospike::OPT_WRITE_TIMEOUT=>200,
+            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
     }
     /**
      * @test

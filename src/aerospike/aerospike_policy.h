@@ -19,7 +19,10 @@ enum Aerospike_constants {
     OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
     OPT_SCAN_NOBINS,          /* boolean value, default: false */
     OPT_POLICY_KEY,           /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
-    OPT_POLICY_GEN
+    OPT_POLICY_GEN,
+    OPT_POLICY_REPLICA,       /* set to one of Aerospike::POLICY_REPLICA_* */
+    OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
+    OPT_POLICY_COMMIT_LEVEL   /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
 };
 
 /*
@@ -56,6 +59,9 @@ enum Aerospike_constants {
  * for AS_POLICY_RETRY in the C client. (Here, the mapping is done by
  * subtracting the value of AS_POLICY_RETRY from the user's value and adding 1
  * to it.)
+ *
+ * NOTE: You may add ONLY upto 16 hex bits in the below set of constants as the max
+ * value supported by long is upto 16^16 ~ of the order of 19 digits!
  *******************************************************************************************************
  */
 #define AS_POLICY_RETRY 0x00000010
@@ -66,37 +72,47 @@ enum Aerospike_constants {
 #define AS_SCAN_STATUS 0x01000000
 #define AS_POLICY_KEY_DIGEST 0x10000000
 #define AS_POLICY_KEY_GEN 0x100000000
+#define AS_POLICY_REPLICA 0x1000000000
+#define AS_POLICY_CONSISTENCY 0x10000000000
+#define AS_POLICY_COMMIT_LEVEL 0x100000000000
+
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant values. (POLICY_* or SERIALIZER_*)
  *******************************************************************************************************
  */
 enum Aerospike_values {
-    POLICY_RETRY_NONE      = AS_POLICY_RETRY,       /* do not retry an operation (default behavior for policy_retry) */
-    POLICY_RETRY_ONCE,                              /* allow for a single retry on an operation */
-    POLICY_EXISTS_IGNORE   = AS_POLICY_EXISTS,      /* write record regardless of existence */
-    POLICY_EXISTS_CREATE,                           /* create a record ONLY if it DOES NOT exist */
-    POLICY_EXISTS_UPDATE,                           /* update a record ONLY if it exists */
-    POLICY_EXISTS_REPLACE,                          /* replace a record ONLY if it exists */
-    POLICY_EXISTS_CREATE_OR_REPLACE,                /* default behavior for policy_exists */
+    POLICY_RETRY_NONE      = AS_POLICY_RETRY,           /* do not retry an operation (default behavior for policy_retry) */
+    POLICY_RETRY_ONCE,                                  /* allow for a single retry on an operation */
+    POLICY_EXISTS_IGNORE   = AS_POLICY_EXISTS,          /* write record regardless of existence */
+    POLICY_EXISTS_CREATE,                               /* create a record ONLY if it DOES NOT exist */
+    POLICY_EXISTS_UPDATE,                               /* update a record ONLY if it exists */
+    POLICY_EXISTS_REPLACE,                              /* replace a record ONLY if it exists */
+    POLICY_EXISTS_CREATE_OR_REPLACE,                    /* default behavior for policy_exists */
     SERIALIZER_NONE        = AS_SERIALIZER_TYPE,
-    SERIALIZER_PHP,                                 /* default handler for serializer type */
+    SERIALIZER_PHP,                                     /* default handler for serializer type */
     SERIALIZER_JSON,
     SERIALIZER_USER,
-    UDF_TYPE_LUA           = AS_UDF_TYPE,           /* UDF language type */
-    SCAN_PRIORITY_AUTO     = AS_SCAN_PRIORITY,      /* The cluster will auto adjust the scan priority */
-    SCAN_PRIORITY_LOW,                              /* Low priority scan */
-    SCAN_PRIORITY_MEDIUM,                           /* Medium priority scan */
-    SCAN_PRIORITY_HIGH,                             /* High priority scan */
-    SCAN_STATUS_UNDEF      = AS_SCAN_STATUS,        /* Undefined scan status likely due to the status not being properly checked */
-    SCAN_STATUS_INPROGRESS,                         /* The scan is currently running*/
-    SCAN_STATUS_ABORTED,                            /* The scan was aborted due to failure or the user */
-    SCAN_STATUS_COMPLETED,                          /* The scan completed successfully  */
-    POLICY_KEY_DIGEST      = AS_POLICY_KEY_DIGEST,  /* hashes (ns,set,key) data into a unique record ID (default) */
-    POLICY_KEY_SEND,                                /* also send, store, and get the actual (ns,set,key) with each record */
-    POLICY_GEN_IGNORE      = AS_POLICY_KEY_GEN,     /* Write a record, regardless of generation */
-    POLICY_GEN_EQ,                                  /* Write a record, ONLY if generations are equal */
-    POLICY_GEN_GT                                   /* Write a record, ONLY if local generation is greater-than remote generation */
+    UDF_TYPE_LUA           = AS_UDF_TYPE,               /* UDF language type */
+    SCAN_PRIORITY_AUTO     = AS_SCAN_PRIORITY,          /* The cluster will auto adjust the scan priority */
+    SCAN_PRIORITY_LOW,                                  /* Low priority scan */
+    SCAN_PRIORITY_MEDIUM,                               /* Medium priority scan */
+    SCAN_PRIORITY_HIGH,                                 /* High priority scan */
+    SCAN_STATUS_UNDEF      = AS_SCAN_STATUS,            /* Undefined scan status likely due to the status not being properly checked */
+    SCAN_STATUS_INPROGRESS,                             /* The scan is currently running*/
+    SCAN_STATUS_ABORTED,                                /* The scan was aborted due to failure or the user */
+    SCAN_STATUS_COMPLETED,                              /* The scan completed successfully  */
+    POLICY_KEY_DIGEST      = AS_POLICY_KEY_DIGEST,      /* hashes (ns,set,key) data into a unique record ID (default) */
+    POLICY_KEY_SEND,                                    /* also send, store, and get the actual (ns,set,key) with each record */
+    POLICY_GEN_IGNORE      = AS_POLICY_KEY_GEN,         /* Write a record, regardless of generation */
+    POLICY_GEN_EQ,                                      /* Write a record, ONLY if generations are equal */
+    POLICY_GEN_GT,                                      /* Write a record, ONLY if local generation is greater-than remote generation */
+    POLICY_REPLICA_MASTER  = AS_POLICY_REPLICA,         /* read from the partition master replica node (default) */
+    POLICY_REPLICA_ANY,                                 /* read from either the master or prole node */
+    POLICY_CONSISTENCY_ONE = AS_POLICY_CONSISTENCY,     /* involve a single replica in the read operation (default) */
+    POLICY_CONSISTENCY_ALL,                             /* involve all replicas in the read operation */
+    POLICY_COMMIT_LEVEL_ALL = AS_POLICY_COMMIT_LEVEL,   /* return success after committing all replicas (default) */
+    POLICY_COMMIT_LEVEL_MASTER                          /* return success after committing the master replica */
 };
 
 #define MAX_CONSTANT_STR_SIZE 512
@@ -131,6 +147,9 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_SCAN_CONCURRENTLY 		    ,   "OPT_SCAN_CONCURRENTLY" 		    },
     { OPT_SCAN_NOBINS 			        ,   "OPT_SCAN_NOBINS" 			        },
     { OPT_POLICY_GEN                    ,   "OPT_POLICY_GEN"                    },
+    { OPT_POLICY_REPLICA                ,   "OPT_POLICY_REPLICA"                },
+    { OPT_POLICY_CONSISTENCY            ,   "OPT_POLICY_CONSISTENCY"            },
+    { OPT_POLICY_COMMIT_LEVEL           ,   "OPT_POLICY_COMMIT_LEVEL"           },
     { POLICY_RETRY_NONE                 ,   "POLICY_RETRY_NONE"                 },
     { POLICY_RETRY_ONCE                 ,   "POLICY_RETRY_ONCE"                 },
     { POLICY_EXISTS_IGNORE              ,   "POLICY_EXISTS_IGNORE"              },
@@ -155,7 +174,13 @@ AerospikeConstants aerospike_constants[] = {
     { POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
     { POLICY_GEN_IGNORE                 ,   "POLICY_GEN_IGNORE"                 },
     { POLICY_GEN_EQ                     ,   "POLICY_GEN_EQ"                     },
-    { POLICY_GEN_GT                     ,   "POLICY_GEN_GT"                     }
+    { POLICY_GEN_GT                     ,   "POLICY_GEN_GT"                     },
+    { POLICY_REPLICA_MASTER             ,   "POLICY_REPLICA_MASTER"             },
+    { POLICY_REPLICA_ANY                ,   "POLICY_REPLICA_ANY"                },
+    { POLICY_CONSISTENCY_ONE            ,   "POLICY_CONSISTENCY_ONE"            },
+    { POLICY_CONSISTENCY_ALL            ,   "POLICY_CONSISTENCY_ALL"            },
+    { POLICY_COMMIT_LEVEL_ALL           ,   "POLICY_COMMIT_LEVEL_ALL"           },
+    { POLICY_COMMIT_LEVEL_MASTER        ,   "POLICY_COMMIT_LEVEL_MASTER"        }
 };
 /*
  *******************************************************************************************************

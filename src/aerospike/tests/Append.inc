@@ -34,7 +34,9 @@ class Append  extends AerospikeTestCommon
      * @test_plans{1.1}
      */
      function testAppendOnBinValue() {
-        return ($this->db->append($this->keys[0], 'Greet', ' World', array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
+         return ($this->db->append($this->keys[0], 'Greet', ' World',
+             array(Aerospike::OPT_WRITE_TIMEOUT=>1000,
+             Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
     }
     /**
      * @test
@@ -75,7 +77,8 @@ class Append  extends AerospikeTestCommon
      */
     function testAppendBinNotExist() {
         $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE, 
-                     Aerospike::OPT_WRITE_TIMEOUT=>1000);
+            Aerospike::OPT_WRITE_TIMEOUT=>1000,
+            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL);
         if ($this->db->isConnected()) {
             return($this->db->append($this->keys[0], 'Greet1234', ' World', $opts));
         } else {
