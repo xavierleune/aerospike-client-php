@@ -236,7 +236,8 @@ class Put extends AerospikeTestCommon
         if ($db->isConnected()) {
             $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 => Aerospike::POLICY_RETRY_NONE,
-                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND,
+                Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL));
             $db->close();
         } else{
             $db->close();

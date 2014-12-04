@@ -493,7 +493,9 @@ class Get extends AerospikeTestCommon
       }
       if ($db->isConnected()) {  
           $status = $db->get($key1,$get_rec, NULL, 
-              array(Aerospike::OPT_READ_TIMEOUT=>2000));
+              array(Aerospike::OPT_READ_TIMEOUT=>2000,
+              Aerospike::OPT_POLICY_REPLICA=>Aerospike::POLICY_REPLICA_ONE,
+              Aerospike::OPT_POLICY_CONSISTENCY=>Aerospike::POLICY_CONSISTENCY_ONE));
       } else {
           return($db->errorno());
       }

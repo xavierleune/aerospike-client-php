@@ -12,7 +12,7 @@ class Append  extends AerospikeTestCommon
             "port"=>AEROSPIKE_CONFIG_PORT)));
         $db = new Aerospike($config);
         $key = array("ns" => "test", "set" => "demo","key" =>"Append_key");
-        $db->put($key,array("Greet"=>"World_end"));
+        $db->put($key, array("Greet"=>"World_end"));
    }
 
     function tearDown(&$db, &$key) {
@@ -40,7 +40,8 @@ class Append  extends AerospikeTestCommon
         function testAppendOnBinValue($db, $key) {
         if ($db->isConnected()) {
             return($db->append($key, 'Greet', ' World',
-                array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
+                array(Aerospike::OPT_WRITE_TIMEOUT=>1000,
+                Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
         } else {
             return($db->errorno());
         }
@@ -88,7 +89,8 @@ class Append  extends AerospikeTestCommon
      */
     function testAppendBinNotExist($db, $key) {
         $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE, 
-                     Aerospike::OPT_WRITE_TIMEOUT=>1000);
+            Aerospike::OPT_WRITE_TIMEOUT=>1000,
+            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL);
         if ($db->isConnected()) {
             return($db->append($key, 'Greet1234', ' World', $opts));
         } else {

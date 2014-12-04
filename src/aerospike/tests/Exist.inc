@@ -37,7 +37,9 @@ class Exist extends AerospikeTestCommon
    function testKeyExist($db, $key) {
         if ($db->isConnected()) {
             return($db->exists($key, $metadata,
-                array(Aerospike::OPT_READ_TIMEOUT=>3000)));
+                array(Aerospike::OPT_READ_TIMEOUT=>3000,
+                Aerospike::OPT_POLICY_REPLICA=>Aerospike::POLICY_REPLICA_MASTER,
+                Aerospike::OPT_POLICY_CONSISTENCY=>Aerospike::POLICY_CONSISTENCY_ONE)));
         } else {
             return($db->errorno());
         }

@@ -96,7 +96,8 @@ class Operate  extends AerospikeTestCommon
             );
             $returned = array();
             $status = $db->operate($key, $operations, $returned,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+                array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
+                    Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
             if ($status != AEROSPIKE::OK) {
                 return $db->errorno();
             }
@@ -212,7 +213,8 @@ class Operate  extends AerospikeTestCommon
             );
             $returned = array();
             $status = $db->operate("", $operations, $returned,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+                array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
+                        Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL));
             if ($status != AEROSPIKE::OK) {
                 return $db->errorno();
             }

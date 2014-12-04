@@ -47,7 +47,8 @@ class Increment extends AerospikeTestCommon
         if ($db->isConnected()) {
             return($db->increment($key, 'bin1', 4, 0,
                 array(Aerospike::OPT_WRITE_TIMEOUT=>100,
-                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST,
+                Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
         } else {
             return($db->errorno());
         }

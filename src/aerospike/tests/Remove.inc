@@ -45,7 +45,8 @@ class Remove extends AerospikeTestCommon
         if ($db->isConnected()) {
             return ($db->remove($key, array(Aerospike::OPT_POLICY_RETRY
                 =>Aerospike::POLICY_RETRY_NONE,
-                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND,
+                Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
         } else {
             return($db->errorno());
         }
@@ -94,6 +95,29 @@ class Remove extends AerospikeTestCommon
     function testBinRemove($db, $key) {
         if ($db->isConnected()) {
             return $db->removeBin($key, array("bin1"));
+        } else {
+            return($db->errorno());
+        }
+    }
+    /**
+     * @test
+     * Basic bin remove operation with options
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testBinRemoveWithOptions($db, $key) {
+        if ($db->isConnected()) {
+            return $db->removeBin($key, array("bin1"),
+                array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
         } else {
             return($db->errorno());
         }

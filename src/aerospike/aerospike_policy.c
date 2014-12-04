@@ -677,6 +677,68 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     break;
+                case OPT_POLICY_COMMIT_LEVEL:
+                    if((Z_TYPE_PP(options_value) != IS_LONG) &&
+                            ((Z_LVAL_PP(options_value) & AS_POLICY_COMMIT_LEVEL) !=
+                             AS_POLICY_COMMIT_LEVEL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_COMMIT_LEVEL");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_COMMIT_LEVEL");
+                        goto exit;
+                    }
+                    if (write_policy_p) {
+                        write_policy_p->commit_level = Z_LVAL_PP(options_value) - AS_POLICY_COMMIT_LEVEL;
+                    } else if (operate_policy_p) {
+                        operate_policy_p->commit_level = Z_LVAL_PP(options_value) - AS_POLICY_COMMIT_LEVEL;
+                    } else if (remove_policy_p) {
+                        remove_policy_p->commit_level = Z_LVAL_PP(options_value) - AS_POLICY_COMMIT_LEVEL;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_COMMIT_LEVEL");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_COMMIT_LEVEL");
+                        goto exit;
+                    }
+                    break;
+                case OPT_POLICY_CONSISTENCY:
+                    if((Z_TYPE_PP(options_value) != IS_LONG) &&
+                            ((Z_LVAL_PP(options_value) & AS_POLICY_CONSISTENCY) !=
+                             AS_POLICY_CONSISTENCY)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_CONSISTENCY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_CONSISTENCY");
+                        goto exit;
+                    }
+                    if (read_policy_p) {
+                        read_policy_p->consistency_level = Z_LVAL_PP(options_value) - AS_POLICY_CONSISTENCY;
+                    } else if (operate_policy_p) {
+                        operate_policy_p->consistency_level = Z_LVAL_PP(options_value) - AS_POLICY_CONSISTENCY;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_CONSISTENCY");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_CONSISTENCY");
+                        goto exit;
+                    }
+                    break;
+                case OPT_POLICY_REPLICA:
+                    if((Z_TYPE_PP(options_value) != IS_LONG) &&
+                            ((Z_LVAL_PP(options_value) & AS_POLICY_REPLICA) !=
+                             AS_POLICY_REPLICA)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_REPLICA");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_REPLICA");
+                        goto exit;
+                    }
+                    if (read_policy_p) {
+                        read_policy_p->replica = Z_LVAL_PP(options_value) - AS_POLICY_REPLICA;
+                    } else if (operate_policy_p) {
+                        operate_policy_p->replica = Z_LVAL_PP(options_value) - AS_POLICY_REPLICA;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_REPLICA");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_POLICY_REPLICA");
+                        goto exit;
+                    }
+                    break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
