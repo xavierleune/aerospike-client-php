@@ -216,7 +216,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned,
+        $status = $this->db->operate($this->keys[0], $operations, $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
@@ -254,8 +254,8 @@ class Operate  extends AerospikeTestCommon
             array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
         );
 
-        $returned = "abc";
-        $status = array($this->keys[0], $operations, NULL, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        $returned = NULL;
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -291,7 +291,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -333,7 +333,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -375,7 +375,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -417,7 +417,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -459,7 +459,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -504,7 +504,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($key, $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $status = $this->db->operate($key, $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
@@ -545,7 +545,7 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
         if ($status !== AEROSPIKE::OK) {
             return $this->db->errorno();
         }
