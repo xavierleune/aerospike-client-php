@@ -1,6 +1,7 @@
 #ifndef __AEROSPIKE_GENERAL_CONSTANTS_H__
 #define __AEROSPIKE_GENERAL_CONSTANTS_H__
 
+#include "aerospike/aerospike_index.h"
 #define MAX_GENERAL_CONSTANT_STR_SIZE 512
 
 /*
@@ -9,8 +10,8 @@
  *******************************************************************************************************
  */
 enum Aerospike_index_constants {
-    INDEX_TYPE_STRING = 1,    /* Secondary index on a string bin */
-    INDEX_TYPE_INTEGER = 2    /* Secondary index on an integer bin */
+    INDEX_TYPE_STRING = AS_INDEX_STRING,     /* Secondary index on a string bin */
+    INDEX_TYPE_INTEGER = AS_INDEX_NUMERIC    /* Secondary index on an integer bin */
 };
 
 /*

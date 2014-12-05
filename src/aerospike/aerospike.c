@@ -2607,7 +2607,7 @@ PHP_METHOD(Aerospike, scanApply)
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                scan_id_p, options_p TSRMLS_CC))) {
+                                                scan_id_p, options_p, true TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }

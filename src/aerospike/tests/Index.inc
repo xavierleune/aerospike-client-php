@@ -281,7 +281,8 @@ class Index extends AerospikeTestCommon
 
     /**
      * @test
-     * Negative index create and drop operation on integer bin: invalid index type
+     * Positive index create and drop operation on integer bin: invalid index
+     * type, will use the default string index type.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -294,13 +295,13 @@ class Index extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateAndDropIndexIntegerBinInvalidIndexTypeNegative() {
+    function testCreateAndDropIndexIntegerBinInvalidIndexTypePositive() {
         if (Aerospike::OK == $this->db->createIndex("test", "demo",
             "bin2", 10,
             "bin2_integer_index")) {
             return($this->db->dropIndex("test", "bin2_integer_index"));
         } else {
-            return $this->db->errorno();
+            return($this->db->errorno());
         }
     }
 

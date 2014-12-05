@@ -17,7 +17,7 @@
 
 /*
  ******************************************************************************************************
- Scans a set in the Aerospike DB.
+ * Scans a set in the Aerospike DB.
  *
  * @param as_object_p               The C client's aerospike object.
  * @param error_p                   The C client's as_error to be set to the encountered error.
@@ -93,7 +93,7 @@ exit:
 
 /*
  ******************************************************************************************************
- Scans a set in the Aerospike DB and applies UDF on it.
+ * Scans a set in the Aerospike DB and applies UDF on it.
  *
  * @param as_object_p               The C client's aerospike object.
  * @param error_p                   The C client's as_error to be set to the encountered error.
@@ -113,6 +113,9 @@ exit:
  * @param concurrent                Whether to scan all nodes in parallel.
  * @param no_bins                   Whether to return only metadata (and no bins).
  * @param options_p                 The optional policy.
+ * @param block                     Whether to block the scan API until the scan
+ *                                  job is completed or make an asynchronous call
+ *                                  to scan and return ID.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
@@ -120,13 +123,14 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, zval* options_p TSRMLS_DC)
+        char* set_p, zval* scan_id_p, zval* options_p, bool block TSRMLS_DC)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
     uint32_t                    serializer_policy = -1;
     as_policy_scan              scan_policy;
+    as_policy_info              info_policy;
     as_scan                     scan;
     as_scan*                    scan_p = NULL;
     uint64_t                    scan_id = 0;
@@ -177,6 +181,20 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
+    if (block) {
+        set_policy_info(&info_policy, options_p, error_p TSRMLS_CC);
+
+        if (AEROSPIKE_OK != (error_p->code)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+            goto exit;
+        }
+
+        if (AEROSPIKE_OK != aerospike_scan_wait(as_object_p,
+                error_p, &info_policy, scan_id, 0)) {
+            DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+            goto exit;
+        }
+    }
     ZVAL_LONG(scan_id_p, scan_id);
 
 exit:
@@ -194,7 +212,7 @@ exit:
 
 /*
  ******************************************************************************************************
- Check the progress of a background scan running on the database.
+ * Check the progress of a background scan running on the database.
  *
  * @param as_object_p               The C client's aerospike object.
  * @param error_p                   The C client's as_error to be set to the encountered error.
