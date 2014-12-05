@@ -59,6 +59,179 @@ class Remove extends AerospikeTestCommon
     }
     /**
      * @test
+     * Basic key remove operation with policy gen GT lesser
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithGenGTLesser() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $check = array("bin1"=>"1");
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        $comp_res = array_diff_assoc_recursive($get_record, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_CLIENT;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy gen GT positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithGenGTPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 10;
+
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        return $status;
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy gen EQ positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithGenEQPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        return $status;
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy gen EQ not equal
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithGenEQNotEqual() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $check = array("bin1"=>"1");
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        $comp_res = array_diff_assoc_recursive($get_record, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_CLIENT;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy gen ignore
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithGenIgnore() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        return $status;
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy key send
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithPolicyKeySend() {
+        $put_status = $this->db->put($this->keys[0], array("bin1"=>"1"), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        return $status;
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy key digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithPolicyKeyDigest() {
+         $key = $this->db->initKey("test", "demo",
+         base64_decode("removebin_option_policy_key_digest"), true);
+        $put_status = $this->db->put($key, array("bin1"=>"1"), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $this->db->remove($key, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $status = $this->db->get($key, $get_record, array('bin1'));
+        return $status;
+    }
+    /**
+     * @test
      * Basic bin remove operation
      *
      * @pre
@@ -92,6 +265,200 @@ class Remove extends AerospikeTestCommon
      */
     function testBinRemoveBinNotExist() {
         return($this->db->removeBin($this->keys[0], array("-------------bin1------------")));
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy gen GT lesser
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithGenGTLesser() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $check = array("bin1"=>"1");
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        $comp_res = array_diff_assoc_recursive($get_record, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_CLIENT;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy gen GT positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithGenGTPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 10;
+
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(!array_key_exists('bins', $get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
+
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy gen EQ positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithGenEQPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(!array_key_exists('bins',$get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
+
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy gen EQ not equal
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithGenEQNotEqual() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $check = array("bin1"=>"1");
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        $comp_res = array_diff_assoc_recursive($get_record, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_CLIENT;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy gen ignore
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithGenIgnore() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(!array_key_exists('bins',$get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
+
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy key send
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithPolicyKeySend() {
+        //$key = $this->db->initKey("test", "demo", 1);
+        $put_status = $this->db->put($this->keys[0], array("bin1"=>"1"), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(!array_key_exists('bins',$get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
+     * Basic bin remove operation with policy key digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveBinWithPolicyKeyDigest() {
+         $key = $this->db->initKey("test", "demo",
+         base64_decode("removebin_option_policy_key_digest"), true);
+        $put_status = $this->db->put($key, array("bin1"=>"1"), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+
+        $this->db->removeBin($key, array("bin1"), array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $status = $this->db->get($key, $get_record, array('bin1'));
+        if(!array_key_exists('bins',$get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
     }
 }
 ?>

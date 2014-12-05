@@ -191,6 +191,7 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
+    get_generation_value(options_p, &remove_policy.generation, error_p);
     if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p,
                     &remove_policy, as_key_p))) {
         goto exit;
@@ -453,6 +454,7 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
         }
     }
 
+    get_generation_value(options_p, &rec.gen, error_p);
     if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p,
                     NULL, as_key_p, &rec))) {
          goto exit;
