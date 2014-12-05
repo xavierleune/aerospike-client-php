@@ -1,4 +1,4 @@
-# Aerospike Session Handler \[To Be Implemented\]
+# Aerospike Session Handler
 
 The Aerospike PHP client provides a custom session handler that can be used to
 store user sessions in Aerospike. A set and namespace must be given to act as
@@ -13,4 +13,5 @@ record. The value of *session.cache_expire* is used as the record ttl.
     Set to _aerospike_ to enable sessions support.
 
 **session.save\_path string**
-    A string formatted as ns|set|addr:port[,addr:port[,...]]. for example "test|sess|127.0.0.1:3000"
+    A string formatted as **ns|set|addr:port\[,addr:port\[,...\]\]**. for example "test|sess|127.0.0.1:3000"
+    As with the *$config* of the constructor, the host info of just one cluster node is necessary.

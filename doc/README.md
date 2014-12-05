@@ -4,7 +4,7 @@
 The Aerospike PHP client API is described in the following sections:
 
 ### [Runtime Configuration](aerospike_config.md)
-### [Session Handler](aerospike_sessions.md) \[To Be Implemented\]
+### [Session Handler](aerospike_sessions.md)
 ### [Aerospike Class](aerospike.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling Methods](apiref_error.md)
@@ -21,6 +21,9 @@ So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
 , *Admin Methods*, *Info Methods* and *Key-Value Methods* have been implemented.
 
 The *Large Data Type Methods* are implemented as a PHP library.
+
+Addition of the consistency policies, and improvements to createIndex() and
+register() are in-progress.
 
 We expect the specification of the PHP client to closely describe our next
 release, including the unimplemented methods.  However, it is possible that
