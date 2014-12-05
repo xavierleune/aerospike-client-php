@@ -95,7 +95,13 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
                       udf_content_p)) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
+    } else if (AEROSPIKE_OK !=
+            aerospike_udf_put_wait(aerospike_obj_p->as_ref_p->as_p,
+                error_p, &info_policy, module_p, 0)) {
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+        goto exit;
     }
+
 exit:
     if (file_p) {
         fclose(file_p);

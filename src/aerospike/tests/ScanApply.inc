@@ -35,7 +35,6 @@ class ScanApply extends AerospikeTestCommon
         if ($register_status != Aerospike::OK) {
             return($db->errorno());
         }
-        sleep(2);
     }
 
     protected function tearDown(&$db, &$key) {
@@ -82,13 +81,6 @@ class ScanApply extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        do {
-            sleep(10);
-            $status = $db->scanInfo($scan_id, $info);
-            if ($status != Aerospike::OK) {
-                return($db->errorno());
-            }
-        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
 
         $ages_got = array();
         $i = 0;
@@ -449,13 +441,6 @@ class ScanApply extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return($db->errorno());
         }
-        do {
-            sleep(10);
-            $status = $db->scanInfo($scan_id, $info);
-            if ($status != Aerospike::OK) {
-                return($db->errorno());
-            }
-        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         $ages_got = array();
         $i = 0;
         $key = $db->initKey("test", "demo", "Get_key");

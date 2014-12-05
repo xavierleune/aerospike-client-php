@@ -559,6 +559,9 @@ set_policy_ex(as_config *as_config_p,
                     serializer_flag = 1;
                     break;
                 case OPT_SCAN_PRIORITY:
+                    if (info_policy_p) {
+                        break;
+                    }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -577,6 +580,9 @@ set_policy_ex(as_config *as_config_p,
                     }
                     break;
                 case OPT_SCAN_PERCENTAGE:
+                    if (info_policy_p) {
+                        break;
+                    }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_PERCENTAGE");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -595,6 +601,9 @@ set_policy_ex(as_config *as_config_p,
                     }
                     break;
                 case OPT_SCAN_CONCURRENTLY:
+                    if (info_policy_p) {
+                        break;
+                    }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
@@ -609,6 +618,9 @@ set_policy_ex(as_config *as_config_p,
                     }
                     break;
                 case OPT_SCAN_NOBINS:
+                    if (info_policy_p) {
+                        break;
+                    }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,

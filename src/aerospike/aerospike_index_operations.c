@@ -31,6 +31,7 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_info              info_policy;
+    as_index_task               task;
 
     set_policy_info(&info_policy, options_p, error_p TSRMLS_CC);
 
@@ -46,32 +47,17 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
         goto exit;
     }
 
-    switch (type) {
-        case INDEX_TYPE_STRING:
-            if (AEROSPIKE_OK !=
-                    (status = aerospike_index_string_create(as_object_p, error_p,
-                                                             &info_policy, ns_p,
-                                                             set_p, bin_p, name_p))) {
-                DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-                goto exit;
-            }
-            break;
-
-        case INDEX_TYPE_INTEGER:
-            if (AEROSPIKE_OK !=
-                    (status = aerospike_index_integer_create(as_object_p, error_p,
-                                                            &info_policy, ns_p,
-                                                            set_p, bin_p, name_p))) {
-                DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-                goto exit;
-            }
-            break;
-
-        default:
-            status = AEROSPIKE_ERR_PARAM;
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid index type");
-            DEBUG_PHP_EXT_DEBUG("Invalid index type");
-            goto exit;
+    if (AEROSPIKE_OK !=
+            (status = aerospike_index_create(as_object_p, error_p,
+                                             &task, &info_policy, ns_p,
+                                             set_p, bin_p, name_p,
+                                             type))) {
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+        goto exit;
+    } else if (AEROSPIKE_OK !=
+            (status = aerospike_index_create_wait(error_p, &task, 0))) {
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+        goto exit;
     }
 
 exit:
