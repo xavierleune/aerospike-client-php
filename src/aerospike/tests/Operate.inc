@@ -279,33 +279,25 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperatePositiveIncrement($db, $key) {
-        if ($db->isConnected()) {
-            $db->removeBin($key, array("age"));
-            $check = array("first_name" => "John", "last_name" => "Smith", "age" => 1);
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1)
-            );
-            $returned = array();
-            $status = $db->operate($key, $operations, $returned);
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-            $status = $db->get( $key, $bin_arr);
-            $comp_res = array_diff_assoc_recursive($bin_arr['bins'], $check);
-            if (!empty($comp_res)) {
-                return Aerospike::ERR;
-            }
-            else {
-                return AEROSPIKE::OK;
-            } 
-        } else {
-            return($db->errorno());
+    function testOperatePositiveIncrement() {
+        $this->db->removeBin($this->keys[0], array("age"));
+        $check = array("first_name" => "John", "last_name" => "Smith", "age" => 1);
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1)
+        );
+        $returned = array();
+        $status = $this->db->operate($this->keys[0], $operations, $returned);
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-             Aerospike::POLICY_RETRY_NONE));
+        $status = $this->db->get($this->keys[0], $bin_arr);
+        $comp_res = array_diff_assoc_recursive($bin_arr['bins'], $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return AEROSPIKE::OK;
+        } 
         return $status;
-
     }
 }
 ?>
