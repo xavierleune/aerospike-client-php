@@ -64,6 +64,9 @@ array(
 - **Aerospike::OPT_WRITE_TIMEOUT**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
+- **Aerospike::OPT_POLICY_REPLICA**
+- **Aerospike::OPT_POLICY_CONSISTENCY**
 
 ## Return Values
 

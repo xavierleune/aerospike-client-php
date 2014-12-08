@@ -2,10 +2,11 @@
 
 require_once 'ASTestFramework.inc';
 require_once dirname(__FILE__).'/../Common.inc';
+define('Undefined_Error', 2001);
 
 // Mapping the Aerospike error codes to their string names
 $ref_class = new ReflectionClass('Aerospike');
-$status_codes = array(Aerospike::OK => 'OK', 2000=>"Parameter_Exception", 2001=>"Undefined_Error");
+$status_codes = array(Aerospike::OK => 'OK', Undefined_Error=>"Undefined_Error");
 foreach ($ref_class->getConstants() as $class_constant => $const_val) {
     if (substr($class_constant, 0, 3) == 'ERR') {
         $status_codes[$const_val] = $class_constant;
@@ -17,8 +18,7 @@ function aerospike_phpt_runtest($clsname, $name) {
     $reflector = new ReflectionClass($clsname);
 
     if ($reflector->hasMethod("setUpBeforeClass")) {
-        $reflector->getMethod("setUpBeforeClass"
-                              )->invoke(NULL);
+        $reflector->getMethod("setUpBeforeClass")->invoke(NULL);
     }
 
     $obj = $reflector->newInstance();

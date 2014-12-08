@@ -1,16 +1,19 @@
 <?php
 class CreateUser extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$config) {
+    protected function setUp() {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
-        $db = new Aerospike($config);
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
-    protected function tearDown(&$db, &$config) {
-        $db->dropUser("createuser-example");
-        $db->dropUser("createuser2");
-        $db->close();
+    protected function tearDown() {
+        $this->db->dropUser("createuser-example");
+        $this->db->dropUser("createuser2");
+        $this->db->close();
     }
     /**
      * @test
@@ -27,17 +30,12 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserNoParameter($db)
+    function testCreateUserNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->createUser());
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }
-        }
-        else {
-            return($db->errorno());
+        try {
+            return($this->db->createUser());
+        } catch(ErrorException $e) {
+            return($this->db->errorno());
         }
     }
     /**
@@ -55,23 +53,18 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserPositive($db)
+    function testCreateUserPositive()
     {
-        if ($db->isConnected()) {
-            $test = array("read", "read-write");
-            $db->createUser("createuser-example", "example123", array("read", "read-write"));
-            sleep(2);
-            $db->queryUser("createuser-example", $roles);
-            $db->dropUser("createuser-example");
-            $result = array_diff_assoc_recursive($test, $roles);
-            if(empty($result)) 
-                return Aerospike::OK;
-            else
-                return Aerospike::ERR;
-        }
-        else {
-            return($db->errorno());
-        }
+        $test = array("read", "read-write");
+        $this->db->createUser("createuser-example", "example123", array("read", "read-write"));
+        sleep(2);
+        $this->db->queryUser("createuser-example", $roles);
+        $this->db->dropUser("createuser-example");
+        $result = array_diff_assoc_recursive($test, $roles);
+        if(empty($result)) 
+            return Aerospike::OK;
+        else
+            return Aerospike::ERR;
     }
     /**
      * @test
@@ -88,23 +81,18 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserPositivePolicy($db)
+    function testCreateUserPositivePolicy()
     {
-        if ($db->isConnected()) {
-            $test = array("read", "read-write");
-            $db->createUser("createuser-example", "example123", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
-            sleep(2);
-            $db->queryUser("createuser-example", $roles);
-            $db->dropUser("createuser-example");
-            $result = array_diff_assoc_recursive($test, $roles);
-            if(empty($result)) 
-                return Aerospike::OK;
-            else
-                return Aerospike::ERR;
-        }
-        else {
-            return($db->errorno());
-        }
+        $test = array("read", "read-write");
+        $this->db->createUser("createuser-example", "example123", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+        sleep(2);
+        $this->db->queryUser("createuser-example", $roles);
+        $this->db->dropUser("createuser-example");
+        $result = array_diff_assoc_recursive($test, $roles);
+        if(empty($result)) 
+            return Aerospike::OK;
+        else
+            return Aerospike::ERR;
     }
     /**
      * @test
@@ -121,15 +109,10 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserPolicyIncorrect($db)
+    function testCreateUserPolicyIncorrect()
     {
-        if ($db->isConnected()) {
-            $test = array("read", "read-write");
-            return($db->createUser("createuser-example", "example123", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
-        }
-        else {
-            return($db->errorno());
-        }
+        $test = array("read", "read-write");
+        return($this->db->createUser("createuser-example", "example123", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
     }
     /**
      * @test
@@ -146,15 +129,10 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserPasswordNull($db)
+    function testCreateUserPasswordNull()
     {
         $pass = NULL;
-        if ($db->isConnected()) {
-            return ($db->createUser("createuser-example", $pass, array("read", "read-write")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return ($this->db->createUser("createuser-example", $pass, array("read", "read-write")));
     }
     /**
      * @test
@@ -171,15 +149,10 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserNull($db)
+    function testCreateUserNull()
     {
         $user = NULL;
-        if ($db->isConnected()) {
-            return ($db->createUser($user, "example123", array("read", "read-write")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return ($this->db->createUser($user, "example123", array("read", "read-write")));
     }
     /**
      * @test
@@ -196,18 +169,13 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserRolesNull($db)
+    function testCreateUserRolesNull()
     {
         $roles = NULL;
-        if ($db->isConnected()) {
-            try {
-                return ($db->createUser("createuser-example", "example123", $roles));
-            } catch(ErrorException $e) {
-                return $db->errorno();
-            }
-        }
-        else {
-            return($db->errorno());
+        try {
+            return ($this->db->createUser("createuser-example", "example123", $roles));
+        } catch(ErrorException $e) {
+            return($this->db->errorno());
         }
     }
     /**
@@ -225,14 +193,9 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserRolesEmpty($db)
+    function testCreateUserRolesEmpty()
     {
-        if ($db->isConnected()) {
-            return $db->createUser("createuser-example", "example123", array());
-        }
-        else {
-            return($db->errorno());
-        }
+        return $this->db->createUser("createuser-example", "example123", array());
     }
     /**
      * @test
@@ -249,14 +212,9 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserExisting($db)
+    function testCreateUserExisting()
     {
-        if ($db->isConnected()) {
-            return ($db->createUser("john", "example123", array("read", "read-write")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return ($this->db->createUser("john", "example123", array("read", "read-write")));
     }
     /**
      * @test
@@ -273,14 +231,9 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserInvalidRole($db)
+    function testCreateUserInvalidRole()
     {
-        if ($db->isConnected()) {
-            return ($db->createUser("createuser-example", "example123", array("invalid")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return ($this->db->createUser("createuser-example", "example123", array("invalid")));
     }
     /**
      * @test
@@ -297,17 +250,12 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserUnderPrivileged($db)    
+    function testCreateUserUnderPrivileged()
     {
-        if ($db->isConnected()) {
-            $db->createUser("createuser-example", "example123", array("read"));
-            sleep(2);
-            $key = $db->initKey("test", "demo", 1);
-            return ($db->put($key, array("age" => 1)));
-        }
-        else {
-            return($db->errorno());
-        }
+        $this->db->createUser("createuser-example", "example123", array("read"));
+        sleep(2);
+        $key = $this->db->initKey("test", "demo", 1);
+        return ($this->db->put($key, array("age" => 1)));
     }
     /**
      * @test
@@ -324,21 +272,16 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserMultiple($db)
+    function testCreateUserMultiple()
     {
-        if ($db->isConnected()) {
-            $test = array("read", "read-write");
-            $db->createUser("createuser-example", "example123", array("read", "read-write"));
-            sleep(2);
-            $db->queryUser("createuser-example", $roles);
-            $result = $db->createUser("createuser2", "example123", array("read", "read-write"));
-            $db->dropUser("createuser2");
-            $db->dropUser("createuser-example");
-            return $result;
-        }
-        else {
-            return($db->errorno());
-        }
+        $test = array("read", "read-write");
+        $this->db->createUser("createuser-example", "example123", array("read", "read-write"));
+        sleep(2);
+        $this->db->queryUser("createuser-example", $roles);
+        $result = $this->db->createUser("createuser2", "example123", array("read", "read-write"));
+        $this->db->dropUser("createuser2");
+        $this->db->dropUser("createuser-example");
+        return $result;
     }
     /**
      * @test
@@ -355,32 +298,27 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserLongUsername($db)
+    function testCreateUserLongUsername()
     {
-        if ($db->isConnected()) {
-            $user = "user";
-            for ($i = 0; $i <1000; $i++) {
-                $user = $user + "user";
-            }
-            $test = array("read", "read-write");
-            $db->createUser($user, "example123", array("read", "read-write"));
-            if ($db->errorno() != 0) {
-                sleep(2);
-                $db->queryUser($user, $roles);
-                if ($db->errorno() != 0) {
-                    $db->dropUser($user);
-                    $result = array_diff_assoc_recursive($test, $roles);
-                    if(empty($result)) 
-                        return Aerospike::OK;
-                    else
-                        return Aerospike::ERR;
-                }
+        $user = "user";
+        for ($i = 0; $i <1000; $i++) {
+            $user = $user + "user";
+        }
+        $test = array("read", "read-write");
+        $this->db->createUser($user, "example123", array("read", "read-write"));
+        if ($this->db->errorno() != 0) {
+            sleep(2);
+            $this->db->queryUser($user, $roles);
+            if ($this->db->errorno() != 0) {
+                $this->db->dropUser($user);
+                $result = array_diff_assoc_recursive($test, $roles);
+                if(empty($result)) 
+                    return Aerospike::OK;
+                else
+                    return Aerospike::ERR;
             }
         }
-        else {
-            return($db->errorno());
-        }
-        return $db->errorno();
+        return $this->db->errorno();
     }
     /**
      * @test
@@ -397,29 +335,24 @@ class CreateUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateUserSpecialCharacterUsername($db)
+    function testCreateUserSpecialCharacterUsername()
     {
-        if ($db->isConnected()) {
-            $user = "!#Q#AEQ@#$%&^*((^&*~~~````";
-            $test = array("read", "read-write");
-            $db->createUser($user, "example123", array("read", "read-write"));
-            if ($db->errorno() != 0) {
-                sleep(2);
-                $db->queryUser($user, $roles);
-                if ($db->errorno() != 0) {
-                    $db->dropUser($user);
-                    $result = array_diff_assoc_recursive($test, $roles);
-                    if(empty($result)) 
-                        return Aerospike::OK;
-                    else
-                        return Aerospike::ERR;
-                }
+        $user = "!#Q#AEQ@#$%&^*((^&*~~~````";
+        $test = array("read", "read-write");
+        $this->db->createUser($user, "example123", array("read", "read-write"));
+        if ($this->db->errorno() != 0) {
+            sleep(2);
+            $this->db->queryUser($user, $roles);
+            if ($this->db->errorno() != 0) {
+                $this->db->dropUser($user);
+                $result = array_diff_assoc_recursive($test, $roles);
+                if(empty($result)) 
+                    return Aerospike::OK;
+                else
+                    return Aerospike::ERR;
             }
         }
-        else {
-            return($db->errorno());
-        }
-        return $db->errorno();
+        return $this->db->errorno();
     }
 }
 ?>

@@ -7,25 +7,12 @@ require_once 'Common.inc';
 
 class Increment extends AerospikeTestCommon
 {
-    /*
-     * TODO: Remove these constants and map with actual Aerospike class
-     * constants.
-     */
-    static $status_ok = 0;
-    static $status_err = 201;
-
-    function setUp(&$db, &$key) {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("test", "demo", "increment_test");
-        $db->put($key,array("bin1"=>"1"));
-   }
-
-   function tearDown(&$db, &$key) {
-       $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-           =>Aerospike::POLICY_RETRY_NONE));
-       $db->close();
+    function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        $key = $this->db->initKey("test", "demo", "increment_test");
+        $this->db->put($key, array("bin1"=>"1"));
+        $this->keys[] = $key;
    }
 
     /**
@@ -43,15 +30,9 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementByOffsetValue($db, $key) {
-        if ($db->isConnected()) {
-            return($db->increment($key, 'bin1', 4, 0,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>100,
-                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST,
-                Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
-        } else {
-            return($db->errorno());
-        }
+    function testBinIncrementByOffsetValue() {
+        return $this->db->increment($this->keys[0], 'bin1', 4, 0,
+            array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
     }
     /**
      * @test
@@ -68,15 +49,11 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementKeyNotExist($db, $key) {
+    function testBinIncrementKeyNotExist() {
         $key1 = array("ns" => "test", "set" => "demo", "key" => "----ssss----");
-        if ($db->isConnected()) {
-            return($db->increment($key1, 'bin1', 4, 0,
-                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE,
-                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
-        } else {
-            return($db->errorno());
-        }
+        return $this->db->increment($key1, 'bin1', 4, 0,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE,
+            Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
     }
     /**
      * @test
@@ -93,12 +70,8 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementBinNotExist($db, $key) {
-        if ($db->isConnected()) {
-            return($db->increment($key, 'abc', 4));
-        } else {
-            return($db->errorno());
-        }
+    function testBinIncrementBinNotExist() {
+        return $this->db->increment($this->keys[0], 'abc', 4);
     }
     /**
      * @test
@@ -115,18 +88,14 @@ class Increment extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testBinIncrementOffsetValueString($db, $key)
-    {   
-        if ($db->isConnected()) {
+    function testBinIncrementOffsetValueString()
+    {
         try {
-            $db->increment($key, 'bin1', "abc");
+            $this->db->increment($this->keys[0], 'bin1', "abc");
         } catch (ErrorException $e) {
-            return self::$status_ok;
+            return Aerospike::OK;
         }
-        return self::$status_err;
-        } else {
-            return($db->errorno());
-        }
+        return Aerospike::ERR_CLIENT;
     }
 }
 ?>

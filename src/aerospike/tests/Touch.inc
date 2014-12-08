@@ -6,19 +6,17 @@ require_once 'Common.inc';
 */
 
 class Touch extends AerospikeTestCommon
-{   
-      
-    protected function setUp(&$db, &$key) {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("test", "demo", "touch_key");
-        $db->put($key, array("Greet"=>"World_end"));
-    }
+{
 
-    protected function tearDown(&$db, &$key) {
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
-        $db->close();
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $key = $this->db->initKey("test", "demo", "touch_key");
+        $this->db->put($key, array("Greet"=>"World_end"));
+        $this->keys[] = $key;
     }
     /**
      * @test
@@ -36,15 +34,9 @@ class Touch extends AerospikeTestCommon
      * @test_plans{1.1}
      */
 
-    function testBasicTouchOperation($db, $key) {
-        $rv = $db->put($key, array("bin1"=>"Hello World"));
-        if ($db->isConnected()) {
-            return ($db->touch($key, 10,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>200,
-                Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
-        } else {
-            return($db->errorno());
-        }
+    function testBasicTouchOperation() {
+        $rv = $this->db->put($this->keys[0], array("bin1"=>"Hello World"));
+        return ($this->db->touch($this->keys[0], 10, array(Aerospike::OPT_WRITE_TIMEOUT=>200)));
     }
     /**
      * @test
@@ -61,14 +53,9 @@ class Touch extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testTouchOperationKeyNotExist($db, $key) {
+    function testTouchOperationKeyNotExist() {
         $key1 = array("ns" => "test", "set" => "demo", "key" => "-----sshh---");
-        if ($db->isConnected()) {
-            return ($db->touch($key1, 120,
-                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
-        } else {
-            return($db->errorno());
-        }
+        return ($this->db->touch($key1, 120, array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE)));
     }
 }
 ?>

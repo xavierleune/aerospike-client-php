@@ -8,19 +8,26 @@ os:
 - linux
 before_install:
 - ./.travis/start-aerospike.sh
+- cp .travis/slacktee.conf ~/.slacktee
 install:
 - sudo apt-get install autoconf libssl-dev liblua5.1-dev
 script:
 - cd src/aerospike
 - ./build.sh
 - ../../.travis/load-extension.sh
-- make test TESTS=tests/phpt
+- php pause-for-server.php
+- cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
+- make test TESTS=tests/phpt TEST_PHP_ARGS="--show-diff"
 after_failure:
-- cat configure.in
-- cat Makefile
+- cat configure.in | ./scripts/slacktee.sh -t "$TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER ($TRAVIS_COMMIT)" -f
+- cat Makefile | ./scripts/slacktee.sh -t "$TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER ($TRAVIS_COMMIT)" -f
 after_script:
+- ./scripts/slack-debug.sh
 - ./scripts/test-cleanup.sh
-- cd ../..
 notifications:
   slack:
     secure: tDCFds8n08P67Bz5RtkKv7OZBOW6xOa5dmSgcj27/JtEVNDOlyqYWyUCzYA/yJDXGCmefWx1iH9H5s6JtwvMurHuwHDeFp9TCjGwomCx1SZ/I9G31gX2h09Divhz9/C6CvsJGhbP1IPEy1xovC7JWuJHG2BfPgv1XtVGE5ozfUg=
+env:
+  global:
+  - secure: fJ2nIo5OYkrOFQFo/TXCqiyLXABuhYmLO8037ALplv3JbEZLMI7/NtZptKop+YZVO/HQ2jolWRVeKrXDY6ZDjdnI67hk+FSeIdhviNeWOoWEUt1Yk+YE6lLSFgtgZ0gI11hHrqqU9uzZ1h4MgkPpMPbA85O6RFWLrvjE9fcHLR4=
+  - secure: 3zu4iH0VlDWPps9cT8Jz4LOsjKErbrqNabHqAKKHA1GfVZjd9C/UKxqjfCzF+F196rmZZgiOy5hG6zYPn9dM6JMpMPiKbnrguRTB6me79zP5FGWakp5B4IwkjQAm/eRCPa0VV3Ft//vG0/OgyrHQtrR0eFEDv1DVSonZ4s91QtM=

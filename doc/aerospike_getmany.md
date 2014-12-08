@@ -24,7 +24,6 @@ The bins returned can be filtered by passing an array of the bins needed.
 **filter** an array of bin names
 
 **[options](aerospike.md)** including
-- **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_READ_TIMEOUT**
 
 ## Return Values

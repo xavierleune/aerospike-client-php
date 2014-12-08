@@ -7,21 +7,24 @@ require_once 'Common.inc';
 
 class ExistsMany extends AerospikeTestCommon
 {
-   static $parameter_exception = 2000;
 
-   protected function setUp(&$db, &$key) {
-       $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-       $db = new Aerospike($config);
-   }
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $key = $this->db->initKey("test", "demo", "existsMany1");
+        $this->db->put($key, array("binA"=>10));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "existsMany2");
+        $this->db->put($key, array("binB"=>20));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "existsMany3");
+        $this->db->put($key, array("binC"=>30));
+        $this->keys[] = $key;
+    }
 
-   protected function tearDown(&$db, &$key) {
-       for($i = 0;$i < 3;$i++) { 
-           $key = $db->initKey("test", "demo", "existsMany".($i+1));
-           $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
-       }
-       $db->close();
-   }
     /**
      * @test
      * Basic existsMany operation with all arguments.
@@ -37,29 +40,16 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-   function testExistsManyPositive($db, $key) {
-       if ($db->isConnected()) {
-           $key1 = $db->initKey("test", "demo", "existsMany1");
-           $db->put($key1, array("binA"=>10));
-           $key2 = $db->initKey("test", "demo", "existsMany2");
-           $db->put($key2, array("binB"=>20));
-           $key3 = $db->initKey("test", "demo", "existsMany3");
-           $db->put($key3, array("binC"=>30));
-
-           $keys = array($key1, $key2, $key3);
-           $status = $db->existsMany($keys, $metadata,
-               array(Aerospike::OPT_READ_TIMEOUT=>3000));
-           if ($status != AEROSPIKE::OK) {
-               return ($db->errorno());
-           }
-           if (empty($metadata)) {
-               return Aerospike::ERR;
-           }
-       } else {
-           return $db->errorno();
-       }
-       return $status;
-   }
+    function testExistsManyPositive() {
+        $status = $this->db->existsMany($this->keys, $metadata, array(Aerospike::OPT_READ_TIMEOUT=>3000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($metadata)) {
+            return Aerospike::ERR;
+        }
+        return $status;
+    }
     /**
      * @test
      * Basic existsMany operation with empty key array.
@@ -75,20 +65,8 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyEmptyKeyArrayNegative($db, $key) {
-        if ($db->isConnected()) {
-            $key1 = $db->initKey("test", "demo", "existsMany1");
-            $db->put($key1, array("binA"=>10));
-            $key2 = $db->initKey("test", "demo", "existsMany2");
-            $db->put($key2, array("binB"=>20));
-            $key3 = $db->initKey("test", "demo", "existsMany3");
-            $db->put($key3, array("binC"=>30));
-
-            $key_array = array();
-            $status = $db->existsMany($key_array, $metadata);
-        } else {
-            return($db->errorno());
-        }
+    function testExistsManyEmptyKeyArrayNegative() {
+        $status = $this->db->existsMany(array(), $metadata);
         return $status;
     }
     /**
@@ -107,16 +85,11 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyKeyEmptyStringNegative($db, $key) {
-        if ($db->isConnected()) {
-            $key_array = "";
-            try {
-                $status = $db->existsMany($key_array, $metadata);
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-        } else {
-            return($db->errorno());
+    function testExistsManyKeyEmptyStringNegative() {
+        try {
+            $status = $this->db->existsMany("", $metadata);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
         return $status;
     }
@@ -135,15 +108,11 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyNoArgumentsNegative($db, $key) {
-        if ($db->isConnected()) {
-            try {
-                $status = $db->existsMany();
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-        } else {
-            return($db->errorno());
+    function testExistsManyNoArgumentsNegative() {
+        try {
+            $status = $this->db->existsMany();
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
         return $status;
     }
@@ -162,20 +131,9 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyMetadataEmptyStringPositive($db, $key) {
-        if ($db->isConnected()) {
-            $key1 = $db->initKey("test", "demo", "existsMany1");
-            $db->put($key1, array("binA"=>10));
-            $key2 = $db->initKey("test", "demo", "existsMany2");
-            $db->put($key2, array("binB"=>20));
-            $key3 = $db->initKey("test", "demo", "existsMany3");
-            $db->put($key3, array("binC"=>30));
-            $keys = array($key1, $key2, $key3);
-            $metadta = "";
-            $status = $db->existsMany($keys, $metadata);
-        } else {
-            return($db->errorno());
-        }
+    function testExistsManyMetadataEmptyStringPositive() {
+        $metadta = "";
+        $status = $this->db->existsMany($this->keys, $metadata);
         return $status;
     }
     /**
@@ -193,20 +151,9 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyMetadataStringVariablePositive($db, $key) {
-        if ($db->isConnected()) {
-            $key1 = $db->initKey("test", "demo", "existsMany1");
-            $db->put($key1, array("binA"=>10));
-            $key2 = $db->initKey("test", "demo", "existsMany2");
-            $db->put($key2, array("binB"=>20));
-            $key3 = $db->initKey("test", "demo", "existsMany3");
-            $db->put($key3, array("binC"=>30));
-            $keys = array($key1, $key2, $key3);
-            $metadata = "abc";
-            $status = $db->existsMany($keys, $metadata);
-        } else {
-            return($db->errorno());
-        }
+    function testExistsManyMetadataStringVariablePositive() {
+        $metadata = "abc";
+        $status = $this->db->existsMany($this->keys, $metadata);
         return $status;
     }
     /**
@@ -224,23 +171,11 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyOptionsIntegerNegative($db, $key) {
-        if ($db->isConnected()) {
-            $key1 = $db->initKey("test", "demo", "existsMany1");
-            $db->put($key1, array("binA"=>10));
-            $key2 = $db->initKey("test", "demo", "existsMany2");
-            $db->put($key2, array("binB"=>20));
-            $key3 = $db->initKey("test", "demo", "existsMany3");
-            $db->put($key3, array("binC"=>30));
-
-            $keys = array($key1, $key2, $key3);
-            try {
-                $status = $db->existsMany($keys, $metadata, 20);
-            } catch (ErrorException $e) {
-                return self::$parameter_exception;
-            }
-        } else {
-            return($db->errorno());
+    function testExistsManyOptionsIntegerNegative() {
+        try {
+            $status = $this->db->existsMany($this->keys, $metadata, 20);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
         return $status;
     }
@@ -259,25 +194,21 @@ class ExistsMany extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testExistsManyInitKeyWithDigest($db, $key) {
-        if ($db->isConnected()) {
-            $key1 = $db->initKey("test", "demo", "existsMany1", true);
-            $db->put($key1, array("binA"=>10));
-            $key2 = $db->initKey("test", "demo", "existsMany2", true);
-            $db->put($key2, array("binB"=>20));
-            $key3 = $db->initKey("test", "demo", "existsMany3", true);
+    function testExistsManyInitKeyWithDigest() {
+        $key1 = $this->db->initKey("test", "demo", "existsMany1", true);
+        $this->db->put($key1, array("binA"=>10));
+        $this->keys[] = $key1;
+        $key2 = $this->db->initKey("test", "demo", "existsMany2", true);
+        $this->db->put($key2, array("binB"=>20));
+        $this->keys[] = $key2;
 
-            $keys = array($key1, $key2, $key3);
-            $status = $db->existsMany($keys, $metadata,
-                array(Aerospike::OPT_READ_TIMEOUT=>3000));
-            if ($status != AEROSPIKE::OK) {
-                return ($db->errorno());
-            }
-            if (empty($metadata)) {
-                return Aerospike::ERR;
-            }
-        } else {
-            return($db->errorno());
+        $keys = array($key1, $key2);
+        $status = $this->db->existsMany($keys, $metadata, array(Aerospike::OPT_READ_TIMEOUT=>3000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($metadata)) {
+            return Aerospike::ERR;
         }
         return $status;
     }

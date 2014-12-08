@@ -20,6 +20,7 @@ public int Aerospike::remove ( array $key [, array $options ] )
 - **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_POLICY_RETRY**
 - **Aerospike::OPT_POLICY_GEN**
+- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
 
 ## Return Values
 

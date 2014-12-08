@@ -11,13 +11,16 @@ public static void Aerospike::setSerializer ( callback $serialize_cb )
 
 **Aerospike::setSerializer()** registers a callback method that will be triggered
 whenever a write method handles a value whose type is unsupported.
-This is a static method and the *serialize_cb* handler is global across all 
+This is a static method and the *serialize_cb* handler is global across all
 instances of the Aerospike class.
 
 The callback method must follow the signature
 ```
-public function string aerodb_serialize ( mixed $value )
+public function string aerospike_serialize ( mixed $value )
 ```
+
+The value returned from the callback must be a string, and will be cast to an
+as\_bytes (AS\_BYTES\_BLOB) bin type.
 
 ## Parameters
 
@@ -29,15 +32,11 @@ public function string aerodb_serialize ( mixed $value )
 <?php
 
 Aerospike::setSerializer(function ($val) {
-    if (is_bool ($val)) {
-        return "b||". serialize($val);
-    }
-    if (is_object ($val)) {
-        return "o||". serialize($val);
-    }
-    // otherwise, mark it as raw
-    return "r||". $val;
+    return gzcompress(json_encode($val));
 });
 
 ?>
 ```
+
+## See Also
+ - [Aerospike::setDeserializer()](aerospike_setdeserializer.md)

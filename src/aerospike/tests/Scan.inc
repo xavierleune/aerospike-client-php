@@ -4,34 +4,21 @@ require_once("Common.inc");
 
 class Scan extends AerospikeTestCommon
 {
-    /*
-     * TODO: Remove these constants and map with actual Aerospike class
-     * constants.
-     */
-    static $status_ok = 2000;
-    static $status_err = 2001;
-    static $status_get_record_fail = 2002;
 
-    protected function setUp(&$db, &$key) {
+    protected function setUp() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $ns = "test";
-        $set = "demo";
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key, array("email"=>"raunak"));
-        $key = $db->initKey("test", "demo", "Get_key1");
-        $db->put($key, array("email"=>"pavan"));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        $this->db->put($key, array("email"=>"raunak"));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key1");
+        $this->db->put($key, array("email"=>"pavan"));
+        $this->keys[] = $key;
     }
 
-    protected function tearDown(&$db, &$key) {
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        $key = $db->initKey("test", "demo", "Get_key1");
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        $db->close();
-    }
     /**
      * @test
      * Basic SCAN without parameter
@@ -47,16 +34,12 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanNoParameter($db)
+    function testScanNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                $db->scan();
-            } catch (ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $this->db->scan();
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -74,19 +57,15 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckSetAndNsValueNotExistInDB($db)
+    function testCheckSetAndNsValueNotExistInDB()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            return($db->scan("r1", "rr", function ($record) {
-                if (array_key_exists("email", $record["bins"]) &&
-                    !is_null($record["bins"]["email"]))
-                    echo $record["bins"]["email"]."\n";
-                if ($processed++ > 19) return false;
-            }, array("email")));
-        } else {
-            return($db->errorno());
-        }
+        return($this->db->scan("r1", "rr", function ($record) use (&$processed) {
+            if (array_key_exists("email", $record["bins"]) &&
+                !is_null($record["bins"]["email"]))
+                echo $record["bins"]["email"]."\n";
+            if ($processed++ > 19) return false;
+        }, array("email")));
     }
     /**
      * @test
@@ -103,25 +82,21 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckSetAndNsValueNull($db)
+    function testCheckSetAndNsValueNull()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            try {
-                return($db->scan("", "", function ($record) {
-                if (array_key_exists("email", $record["bins"]) &&
-                    !is_null($record["bins"]["email"])) {
-                        echo $record["bins"]["email"]."\n";
-                    }
-                if ($processed++ > 19) {
-                    return false;
-                    }
-                }, array("email")));
-            } catch(Exception $e) {
-                return($db->errorno());
+        try {
+            return($this->db->scan("", "", function ($record) use (&$processed) {
+            if (array_key_exists("email", $record["bins"]) &&
+                !is_null($record["bins"]["email"])) {
+                    echo $record["bins"]["email"]."\n";
+                }
+            if ($processed++ > 19) {
+                return false;
             }
-        } else {
-            return($db->errorno());
+            }, array("email")));
+        } catch(Exception $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -139,22 +114,18 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckIncorrectNameOfBins($db)
+    function testCheckIncorrectNameOfBins()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            return($db->scan("test", "demo", function ($record) {
-                if (array_key_exists("account", $record["bins"]) &&
-                    !is_null($record["bins"]["account"])) {
-                        echo $record["bins"]["account"]."\n";
-                    }
-                if ($processed++ > 19) {
-                    return false;
+        return($this->db->scan("test", "demo", function ($record) use (&$processed) {
+            if (array_key_exists("account", $record["bins"]) &&
+                !is_null($record["bins"]["account"])) {
+                    echo $record["bins"]["account"]."\n";
                 }
-            }, array("account")));
-        } else {
-            return($db->errorno());
-        }
+            if ($processed++ > 19) {
+                return false;
+            }
+        }, array("account")));
     }
     /**
      * @test
@@ -171,20 +142,15 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckIncorrectBinNameInCallback($db)
+    function testCheckIncorrectBinNameInCallback()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            return($db->scan("test", "demo", function ($record) {
-                global $processed;
-                if (array_key_exists("account", $record["bins"]) &&
-                    !is_null($record["bins"]["account"]))
-                    echo $record["bins"]["email"]."\n";
-                if ($processed++ > 19) return false;
-            }, array("email")));
-        } else {
-            return($db->errorno());
-        }
+        return($this->db->scan("test", "demo", function ($record) use (&$processed) {
+            if (array_key_exists("account", $record["bins"]) &&
+                !is_null($record["bins"]["account"]))
+                echo $record["bins"]["email"]."\n";
+            if ($processed++ > 19) return false;
+        }, array("email")));
     }
     /**
      * @test
@@ -201,25 +167,21 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckForEmptyBinValue($db, $key)
+    function testCheckForEmptyBinValue()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            try {
-                $status =  $db->scan("test", "demo", function ($record) {
-                    if (array_key_exists("email", $record["bins"]) &&
-                        !is_null($record["bins"]["email"])) {
-                            echo $record["bins"]["email"]."\n";
-                        }
-                    if ($processed++ > 19) {
-                        return false;
+        try {
+            $status =  $this->db->scan("test", "demo", function ($record) use (&$processed) {
+                if (array_key_exists("email", $record["bins"]) &&
+                    !is_null($record["bins"]["email"])) {
+                        echo $record["bins"]["email"]."\n";
                     }
-                }, "");
-            } catch (exception $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+                if ($processed++ > 19) {
+                    return false;
+                }
+            }, "");
+        } catch (exception $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -237,22 +199,17 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckIncorrectValueForOptions($db)
+    function testCheckIncorrectValueForOptions()
     {
-        if ($db->isConnected()) {
-            return($db->scan( "test", "demo", function ($record) {
-                global $processed;
-                if (array_key_exists("account", $record["bins"]) &&
-                    !is_null($record["bins"]["account"])) {
-                        echo $record["bins"]["email"]."\n";
-                    }
-                if ($processed++ > 19) {
-                    return false;
+        return($this->db->scan( "test", "demo", function ($record) use (&$processed) {
+            if (array_key_exists("account", $record["bins"]) &&
+                !is_null($record["bins"]["account"])) {
+                    echo $record["bins"]["email"]."\n";
                 }
-            }, array("email"), array(Aerospike::OPT_SCAN_NOBINS=>false, Aerospike::OPT_READ_TIMEOUT=>"pqr")));
-        } else {
-            return($db->errorno());
-        }
+            if ($processed++ > 19) {
+                return false;
+            }
+        }, array("email"), array(Aerospike::OPT_SCAN_NOBINS=>false, Aerospike::OPT_READ_TIMEOUT=>"pqr")));
     }
     /**
      * @test
@@ -269,17 +226,12 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckForCallbackParameterMissing($db)
+    function testCheckForCallbackParameterMissing()
     {
-        $processed = 0;
-        if ($db->isConnected()) {
-            try {
-                $db->scan( "test", "demo", array("email"));
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+        try {
+            $this->db->scan( "test", "demo", array("email"));
+        } catch(ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -297,37 +249,32 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckForCorrectArguments($db)
+    function testCheckForCorrectArguments()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            $status = $db->scan( "test", "demo", function ($record) {
-                global $processed;
-                if ((strcmp("test", $record["key"]["ns"]) == 0) && (strcmp("demo",
-                    $record["key"]["set"]) == 0)) {
-                        if ($processed < 2) {
-                            if (array_key_exists("email", $record["bins"]) &&
-                                !is_null($record["bins"]["email"])) {
-                                    if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                        (!strcmp($record["bins"]["email"], "raunak"))) {
-                                            $processed++;
-                                        }
-                                }
-                        }
-                        if ($processed == 2) {
-                            return Aerospike::OK;
-                        }
-                    } else {
-                        return(AEROSPIKE::ERR);
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
+            if ((strcmp("test", $record["key"]["ns"]) == 0) && (strcmp("demo",
+                $record["key"]["set"]) == 0)) {
+                    if ($processed < 2) {
+                        if (array_key_exists("email", $record["bins"]) &&
+                            !is_null($record["bins"]["email"])) {
+                                if ((!strcmp($record["bins"]["email"], "pavan")) ||
+                                    (!strcmp($record["bins"]["email"], "raunak"))) {
+                                        $processed++;
+                                    }
+                            }
                     }
-            }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
-            if ($status != AEROSPIKE::OK) {
-                    return $db->errorno();
-            }
-        } else {
-            return($db->errorno());
+                    if ($processed == 2) {
+                        return Aerospike::OK;
+                    }
+                } else {
+                    return(AEROSPIKE::ERR);
+                }
+        }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
+        if ($status !== AEROSPIKE::OK) {
+                return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -344,37 +291,32 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testScanPositiveWithAllArguments($db)
+    function testScanPositiveWithAllArguments()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            $status = $db->scan( "test", "demo", function ($record) {
-                global $processed;
-                if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
-                    $record["key"]["set"]) == 0) {
-                        if ($processed < 2) {
-                            if (array_key_exists("email", $record["bins"]) &&
-                                !is_null($record["bins"]["email"])) {
-                                if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                    (!strcmp($record["bins"]["email"], "raunak"))) {
-                                        $processed++;
-                                    }
-                            }
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
+            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
+                $record["key"]["set"]) == 0) {
+                    if ($processed < 2) {
+                        if (array_key_exists("email", $record["bins"]) &&
+                            !is_null($record["bins"]["email"])) {
+                            if ((!strcmp($record["bins"]["email"], "pavan")) ||
+                                (!strcmp($record["bins"]["email"], "raunak"))) {
+                                    $processed++;
+                                }
                         }
-                        if ($processed == 2) {
-                            return Aerospike::OK;
-                        }
-                    } else {
-                        return(AEROSPIKE::ERR);
                     }
-            }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000, Aerospike::OPT_SCAN_CONCURRENTLY=>true));
-            if ($status != AEROSPIKE::OK) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+                    if ($processed == 2) {
+                        return Aerospike::OK;
+                    }
+                } else {
+                    return AEROSPIKE::ERR_CLIENT;
+                }
+        }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000, Aerospike::OPT_SCAN_CONCURRENTLY=>true));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -391,37 +333,32 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckForCorrectArgumentsWithoutOptionals($db)
+    function testCheckForCorrectArgumentsWithoutOptionals()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            $status = $db->scan( "test", "demo", function ($record) {
-                global $processed;
-                if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
-                    $record["key"]["set"]) == 0) {
-                        if ($processed < 2) {
-                            if (array_key_exists("email", $record["bins"]) &&
-                                !is_null($record["bins"]["email"])) {
-                                if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                    (!strcmp($record["bins"]["email"], "raunak"))) {
-                                        $processed++;
-                                    }
-                            }
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
+            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
+                $record["key"]["set"]) == 0) {
+                    if ($processed < 2) {
+                        if (array_key_exists("email", $record["bins"]) &&
+                            !is_null($record["bins"]["email"])) {
+                            if ((!strcmp($record["bins"]["email"], "pavan")) ||
+                                (!strcmp($record["bins"]["email"], "raunak"))) {
+                                    $processed++;
+                                }
                         }
-                        if ($processed == 2) {
-                            return Aerospike::OK;
-                        }
-                    } else {
-                        return AEROSPIKE::ERR;
                     }
-            });
-            if ($status != AEROSPIKE::OK) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+                    if ($processed == 2) {
+                        return Aerospike::OK;
+                    }
+                } else {
+                    return AEROSPIKE::ERR_CLIENT;
+                }
+        });
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -438,37 +375,32 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckForOneOptionalArgument($db)
+    function testCheckForOneOptionalArgument()
     {
         $processed = 0;
-        if ($db->isConnected()) {
-            $status = $db->scan( "test", "demo", function ($record) {
-                global $processed;
-                if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
-                    $record["key"]["set"]) == 0) {
-                        if ($processed < 2) {
-                            if (array_key_exists("email", $record["bins"]) &&
-                                !is_null($record["bins"]["email"])) {
-                                if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                    (!strcmp($record["bins"]["email"], "raunak"))) {
-                                        $processed++;
-                                    }
-                            }
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
+            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
+                $record["key"]["set"]) == 0) {
+                    if ($processed < 2) {
+                        if (array_key_exists("email", $record["bins"]) &&
+                            !is_null($record["bins"]["email"])) {
+                            if ((!strcmp($record["bins"]["email"], "pavan")) ||
+                                (!strcmp($record["bins"]["email"], "raunak"))) {
+                                    $processed++;
+                                }
                         }
-                        if ($processed == 2) {
-                            return Aerospike::OK;
-                        }
-                    } else {
-                        return AEROSPIKE::ERR;
                     }
-            }, array("email"));
-            if ($status != AEROSPIKE::OK) {
-                return($db->errorno());
-            }
-        } else {
-            return($db->errorno());
+                    if ($processed == 2) {
+                        return Aerospike::OK;
+                    }
+                } else {
+                    return AEROSPIKE::ERR_CLIENT;
+                }
+        }, array("email"));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        return($status);
+        return $status;
     }
     /**
      * @test
@@ -485,17 +417,15 @@ class Scan extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCheckForEmptyCallbackFunction($db)
+    function testCheckForEmptyCallbackFunction()
     {
-        if ($db->isConnected()) {
-            $status = $db->scan("test", "demo", function ($record) {
-            },array("email"), array(Aerospike::OPT_SCAN_PRIORITY=>Aerospike::SCAN_PRIORITY_AUTO,
-                Aerospike::OPT_READ_TIMEOUT=>2000));
-            if ($status != AEROSPIKE::OK) {
-                return($db->errorno());
-            }
-            return($status);
+        $status = $this->db->scan("test", "demo", function ($record) {},
+         array("email"), array(Aerospike::OPT_SCAN_PRIORITY=>Aerospike::SCAN_PRIORITY_AUTO,
+            Aerospike::OPT_READ_TIMEOUT=>2000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
+        return $status;
     }
 }
 ?>

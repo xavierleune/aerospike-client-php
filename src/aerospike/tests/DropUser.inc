@@ -1,15 +1,18 @@
 <?php
 class DropUser extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$config) {
+    protected function setUp() {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
-        $db = new Aerospike($config);
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
-    protected function tearDown(&$db, &$config) {
-        $db->dropUser("examplephp");
-        $db->close();
+    protected function tearDown() {
+        $this->db->dropUser("examplephp");
+        $this->db->close();
     }
     /**
      * @test
@@ -26,17 +29,12 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserNoParameter($db)
+    function testDropUserNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->dropUser());
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }
-        }
-        else {
-            return($db->errorno());
+        try {
+            return($this->db->dropUser());
+        } catch(ErrorException $e) {
+            return($this->db->errorno());
         }
     }
     /**
@@ -54,15 +52,10 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserUserIsNull($db)
+    function testDropUserUserIsNull()
     {
         $user = NULL;
-        if ($db->isConnected()) {
-            return ($db->dropUser($user));
-        }
-        else {
-            return($db->errorno());
-        }
+        return ($this->db->dropUser($user));
     }
     /**
      * @test
@@ -79,24 +72,19 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserUserPositive($db)
+    function testDropUserUserPositive()
     {
         $user = "examplephp";
-        if ($db->isConnected()) {
-            $db->createUser($user, "example123", array("read"));
-            sleep(2);
-            $db->dropUser($user);
-            sleep(2);
-            $db->queryUser($user, $roles);
-            if(empty($roles))
-                return Aerospike::OK;
-            else
-                return Aerospike::ERR;
-            return($db->errorno());
-        }
-        else {
-            return($db->errorno());
-        }
+        $this->db->createUser($user, "example123", array("read"));
+        sleep(2);
+        $this->db->dropUser($user);
+        sleep(2);
+        $this->db->queryUser($user, $roles);
+        if(empty($roles))
+            return Aerospike::OK;
+        else
+            return Aerospike::ERR;
+        return($this->db->errorno());
     }
     /**
      * @test
@@ -113,18 +101,13 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserNonExistentUser($db)
+    function testDropUserNonExistentUser()
     {
         $user = "abcdefgh";
-        if ($db->isConnected()) {
-            try {
-                return($db->dropUser($user));
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }
-        }
-        else {
-            return($db->errorno());
+        try {
+            return($this->db->dropUser($user));
+        } catch(ErrorException $e) {
+            return($this->db->errorno());
         }
     }
     /**
@@ -142,24 +125,19 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserUserPositiveWithPolicy($db)
+    function testDropUserUserPositiveWithPolicy()
     {
         $user = "examplephp";
-        if ($db->isConnected()) {
-            $db->createUser($user, "example123", array("read"));
-            sleep(2);
-            $db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
-            sleep(2);
-            $db->queryUser($user, $roles);
-            if(empty($roles))
-                return Aerospike::OK;
-            else
-                return Aerospike::ERR;
-            return($db->errorno());
-        }
-        else {
-            return($db->errorno());
-        }
+        $this->db->createUser($user, "example123", array("read"));
+        sleep(2);
+        $this->db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+        sleep(2);
+        $this->db->queryUser($user, $roles);
+        if(empty($roles))
+            return Aerospike::OK;
+        else
+            return Aerospike::ERR;
+        return($this->db->errorno());
     }
     /**
      * @test
@@ -176,17 +154,12 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserUserPositiveWithIncorrectPolicy($db)
+    function testDropUserUserPositiveWithIncorrectPolicy()
     {
         $user = "examplephp";
-        if ($db->isConnected()) {
-            $db->createUser($user, "example123", array("read"));
-            sleep(2);
-            return ($db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
-        }
-        else {
-            return($db->errorno());
-        }
+        $this->db->createUser($user, "example123", array("read"));
+        sleep(2);
+        return ($this->db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
     }
     /**
      * @test
@@ -203,20 +176,15 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserUserExtraArgument($db)
+    function testDropUserUserExtraArgument()
     {
         $user = "examplephp";
-        if ($db->isConnected()) {
-            $db->createUser($user, "example123", array("read"));
-            sleep(2);
-            try {
-                $db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 2000), "");
-            } catch (ErrorException $e) {
-                return $db->errorno();
-            }
-        }
-        else {
-            return($db->errorno());
+        $this->db->createUser($user, "example123", array("read"));
+        sleep(2);
+        try {
+            $this->db->dropUser($user, array(Aerospike::OPT_WRITE_TIMEOUT => 2000), "");
+        } catch (ErrorException $e) {
+            return $this->db->errorno();
         }
     }
     /**
@@ -234,20 +202,15 @@ class DropUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testDropUserPolicyNull($db)
+    function testDropUserPolicyNull()
     {
         $user = "examplephp";
-        if ($db->isConnected()) {
-            $db->createUser($user, "example123", array("read"));
-            sleep(2);
-            try {
-                $db->dropUser($user, NULL);
-            } catch(ErrorException $e) {
-                return $db->errorno();
-            }
-        }
-        else {
-            return($db->errorno());
+        $this->db->createUser($user, "example123", array("read"));
+        sleep(2);
+        try {
+            $this->db->dropUser($user, NULL);
+        } catch(ErrorException $e) {
+            return $this->db->errorno();
         }
     }
 }

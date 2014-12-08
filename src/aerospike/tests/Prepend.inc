@@ -7,18 +7,17 @@ require_once 'Common.inc';
 
 class Prepend extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$key) {
-	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("test", "demo", "Prepend_key");
-	    $db->put($key,array("Greet"=>"World_end"));
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $key = $this->db->initKey("test", "demo", "Prepend_key");
+        $this->db->put($key,array("Greet"=>"World_end"));
+        $this->keys[] = $key;
     }
 
-    protected function tearDown(&$db, &$key) {
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        $db->close();
-    }
     /**
      * @test
      * Basic prepend opeartion on bin value
@@ -34,14 +33,8 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependOnBinValue($db, $key) {
-        if ($db->isConnected()) {
-            return($db->prepend($key, 'Greet', 'Hello ',
-                array(Aerospike::OPT_WRITE_TIMEOUT=>1000,
-                    Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL)));
-        } else {
-            return($db->errorno());
-        }
+    function testPrependOnBinValue() {
+        return($this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
     }
     /**
      * @test
@@ -58,15 +51,9 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependKeyNotExist($db, $key) {
-        $key1 = $db->initKey("test", "demo", "---sss----");
-        if ($db->isConnected()) {
-            return($db->prepend($key1, 'Greet', ' World',
-                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
-                    Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER)));
-        } else {
-            return($db->errorno());
-        }
+    function testPrependKeyNotExist() {
+        $key1 = $this->db->initKey("test", "demo", "---sss----");
+        return $this->db->prepend($key1, 'Greet', ' World', array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
     }
     /**
      * @test
@@ -83,13 +70,8 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-        function testPrependBinNotExist($db, $key) {
-        if ($db->isConnected()) {
-            return($db->prepend($key, 'sssssssssss', ' World',
-                array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE)));
-        } else {
-            return($db->errorno());
-        }
+        function testPrependBinNotExist() {
+            return $this->db->prepend($this->keys[0], 'sssssssssss', ' World', array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE));
     }
     /**
      * @test
@@ -106,15 +88,11 @@ class Prepend extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testPrependValueNotString($db, $key) {
+    function testPrependValueNotString() {
         $opts = array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE,
             Aerospike::OPT_WRITE_TIMEOUT=>1000,
             Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND);
-        if ($db->isConnected()) {
-            return($db->prepend($key, 'Greet', 888888, $opts));
-        } else {
-            return($db->errorno());
-        }
+        return $this->db->prepend($this->keys[0], 'Greet', 888888, $opts);
     }
 }
 ?>

@@ -1,16 +1,19 @@
 <?php
 class QueryUser extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$config) {
+    protected function setUp() {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
-        $db = new Aerospike($config);
-        $res = $db->createUser("example", "example@123", array("read"));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $res = $this->db->createUser("example", "example@123", array("read"));
     }
 
-    protected function tearDown(&$db, &$config) {
-        $res = $db->dropUser("example");
-        $db->close();
+    protected function tearDown() {
+        $res = $this->db->dropUser("example");
+        $this->db->close();
     }
     /**
      * @test
@@ -27,17 +30,12 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserNoParameter($db)
+    function testQueryUserNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->queryUser());
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }
-        }
-        else {
-            return($db->errorno());
+        try {
+            return($this->db->queryUser());
+        } catch(ErrorException $e) {
+            return($this->db->errorno());
         }
     }
     /**
@@ -55,21 +53,16 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserPositive($db)
+    function testQueryUserPositive()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            sleep(2);
-            $db->queryUser("example", $roles);	
-            $result = array_diff_assoc_recursive($test, $roles);
-            if(!empty($result)) {
-                return Aerospike::ERR;
-            } else {
-                return Aerospike::OK;
-            }
-        }
-        else {
-            return($db->errorno());
+        sleep(2);
+        $this->db->queryUser("example", $roles);	
+        $result = array_diff_assoc_recursive($test, $roles);
+        if(!empty($result)) {
+            return Aerospike::ERR;
+        } else {
+            return Aerospike::OK;
         }
     }
     /**
@@ -87,21 +80,16 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserPositiveWithPolicy($db)
+    function testQueryUserPositiveWithPolicy()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            sleep(2);
-            $db->queryUser("example", $roles, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
-            $result = array_diff_assoc_recursive($test, $roles);
-            if(!empty($result)) {
-                return Aerospike::ERR;
-            } else {
-                return Aerospike::OK;
-            }
-        }
-        else {
-            return($db->errorno());
+        sleep(2);
+        $this->db->queryUser("example", $roles, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+        $result = array_diff_assoc_recursive($test, $roles);
+        if(!empty($result)) {
+            return Aerospike::ERR;
+        } else {
+            return Aerospike::OK;
         }
     }
     /**
@@ -119,20 +107,15 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserIncorrectPolicy($db)
+    function testQueryUserIncorrectPolicy()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            $result = $db->queryUser("example", $roles, array("OPT_WRITE_TIMEOUT" => 0.5));	
-            $result = array_diff_assoc_recursive($test, $roles);
-            if(!empty($result)) {
-                return Aerospike::ERR;
-            } else {
-                return Aerospike::OK;
-            }
-        }
-        else {
-            return($db->errorno());
+        $result = $this->db->queryUser("example", $roles, array("OPT_WRITE_TIMEOUT" => 0.5));
+        $result = array_diff_assoc_recursive($test, $roles);
+        if(!empty($result)) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
         }
     }
     /**
@@ -150,24 +133,19 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserUserIsNull($db)
+    function testQueryUserUserIsNull()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            $db->queryUser(NULL, $roles);	
-            if ($db->errorno() != 0) {
-                return $db->errorno();
+        $status = $this->db->queryUser(NULL, $roles);	
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        } else {
+            $result = array_diff_assoc_recursive($test, $roles);
+            if(!empty($result)) {
+                return Aerospike::ERR_CLIENT;
             } else {
-                $result = array_diff_assoc_recursive($test, $roles);
-                if(!empty($result)) {
-                    return Aerospike::ERR;
-                } else {
-                    return Aerospike::OK;
-                }
+                return Aerospike::OK;
             }
-        }
-        else {
-            return($db->errorno());
         }
     }
     /**
@@ -185,19 +163,14 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserNonexistentUser($db)
+    function testQueryUserNonexistentUser()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            $db->queryUser("abcasfdgasddas", $roles);
-            if ($db->errorno() != 0) {
-                return $db->errorno();
-            }
-            return Aerospike::OK;
+        $status = $this->db->queryUser("abcasfdgasddas", $roles);
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
         }
-        else {
-            return($db->errorno());
-        }
+        return Aerospike::OK;
     }
     /**
      * @test
@@ -214,22 +187,19 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserNoRoles($db)
+    function testQueryUserNoRoles()
     {
         $test = array();
-        if ($db->isConnected()) {
-            $db->revokeRoles("example", array("read"));
+        if ($this->db->isConnected()) {
+            $this->db->revokeRoles("example", array("read"));
             sleep(2);
-            $db->queryUser("example", $roles);	
+            $this->db->queryUser("example", $roles);	
             $result = array_diff_assoc_recursive($test, $roles);
             if(!empty($result)) {
-                return Aerospike::ERR;
+                return Aerospike::ERR_CLIENT;
             } else {
                 return Aerospike::OK;
             }
-        }
-        else {
-            return($db->errorno());
         }
     }
     /**
@@ -247,24 +217,19 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUserStringPolicy($db)
+    function testQueryUserStringPolicy()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            try {
-                $db->queryUser("example", $roles, array("OPT_READ_TIMEOUT" => "incorrect"));	
-                $result = array_diff_assoc_recursive($test, $roles);
-                if(!empty($result)) {
-                    return Aerospike::ERR;
-                } else {
-                    return Aerospike::OK;
-                }
-            } catch (ErrorExcpetion $e) {
-                return $db->errorno();
+        try {
+            $this->db->queryUser("example", $roles, array("OPT_READ_TIMEOUT" => "incorrect"));	
+            $result = array_diff_assoc_recursive($test, $roles);
+            if(!empty($result)) {
+                return Aerospike::ERR_CLIENT;
+            } else {
+                return Aerospike::OK;
             }
-        }
-        else {
-            return($db->errorno());
+        } catch (ErrorExcpetion $e) {
+            return $db->errorno();
         }
     }
     /**
@@ -282,24 +247,19 @@ class QueryUser extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testQueryUsesExtraParameter($db)
+    function testQueryUsesExtraParameter()
     {
         $test = array("read");
-        if ($db->isConnected()) {
-            try {
-                $db->queryUser("example", $roles, array("OPT_READ_TIMEOUT" => 1000), "");
-                $result = array_diff_assoc_recursive($test, $roles);
-                if(!empty($result)) {
-                    return Aerospike::ERR;
-                } else {
-                    return Aerospike::OK;
-                }
-            } catch(ErrorException $e) {
-                return $db->errorno();
+        try {
+            $this->db->queryUser("example", $roles, array("OPT_READ_TIMEOUT" => 1000), "");
+            $result = array_diff_assoc_recursive($test, $roles);
+            if(!empty($result)) {
+                return Aerospike::ERR_CLIENT;
+            } else {
+                return Aerospike::OK;
             }
-        }
-        else {
-            return($db->errorno());
+        } catch(ErrorException $e) {
+            return $this->db->errorno();
         }
     }
 }

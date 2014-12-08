@@ -3,7 +3,7 @@
 
 ### [Aerospike::initKey](aerospike_initkey.md)
 ```
-public array Aerospike::initKey ( string $ns, string $set, string $pk )
+public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
 ```
 
 ### [Aerospike::put](aerospike_put.md)

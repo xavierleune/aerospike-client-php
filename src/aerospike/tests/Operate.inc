@@ -7,22 +7,17 @@ require_once 'Common.inc';
 
 class Operate  extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$key) {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME,
-            "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("test", "demo", "operate_key");
-        $db->put($key,array("first_name"=>"John"));
-        $db->put($key,array("last_name"=>"Smith"));
-        $db->put($key,array("age"=>25));
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $key = $this->db->initKey("test", "demo", "operate_key");
+        $this->db->put($key,array("first_name"=>"John","last_name"=>"Smith","age"=>25));
+        $this->keys[] = $key;
     }
 
-    function tearDown(&$db, &$key) {
-        if ($db->isConnected()) {
-            $db->close();
-        }
-   }
-    
     /**
      * @test
      * Basic Operate on a single record.
@@ -38,36 +33,28 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperatePositive($db, $key) {
-        if ($db->isConnected()) {
-            $check = array("first_name" => "Mr John");
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-                array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
-                "val" => "."),
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-                array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
-            );
-            $returned = array();
-            $status = $db->operate($key, $operations, $returned);
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-            $comp_res = array_diff_assoc_recursive($returned, $check);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-                else {
-                    return AEROSPIKE::OK;
-                }
- 
-        } else {
-            return($db->errorno());
+    function testOperatePositive() {
+        $check = array("first_name" => "Mr John");
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+        $returned = array();
+        $status = $this->db->operate($this->keys[0], $operations, $returned);
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-             Aerospike::POLICY_RETRY_NONE));
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
         return $status;
-
     }
     /**
      * @test
@@ -84,36 +71,27 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperateWithOptionsPositive($db, $key) {
-        if ($db->isConnected()) {
-            $check = array("first_name" => "Mr John");
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-                array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
-                "val" => "."),
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-                array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
-            );
-            $returned = array();
-            $status = $db->operate($key, $operations, $returned,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
-                    Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-            $comp_res = array_diff_assoc_recursive($returned, $check);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-                else {
-                    return AEROSPIKE::OK;
-                }
-             
-        } else {
-            return($db->errorno());
+    function testOperateWithOptionsPositive() {
+        $check = array("first_name" => "Mr John");
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+        $returned = array();
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-            Aerospike::POLICY_RETRY_NONE));
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
         return $status;
     }
     /**
@@ -131,32 +109,25 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperateSameBinNegative($db, $key) {
-        if ($db->isConnected()) {
-            $check = array("first_name" => "Mr John");
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-                array("op" => Aerospike::OPERATOR_APPEND, "bin" => "first_name",
-                "val" => ".")
-            );
-            $returned = array();
-            $status = $db->operate($key, $operations, $returned);
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-            $comp_res = array_diff_assoc_recursive($returned, $check);
-            if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-                else {
-                    return AEROSPIKE::OK;
-                }
- 
-        } else {
-            return($db->errorno());
+    function testOperateSameBinNegative() {
+        $check = array("first_name" => "Mr John");
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "first_name",
+            "val" => ".")
+        );
+        $returned = array();
+        $status = $this->db->operate($this->keys[0], $operations, $returned);
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
         }
-        $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-             Aerospike::POLICY_RETRY_NONE));
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
         return $status;
     }
     /**
@@ -174,16 +145,11 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperateEmptyArgumentsNegative($db, $key) {
-        if ($db->isConnected()) {
-            try {
-                $status = $db->operate();
-            } catch (ErrorException $e) {
-                return Aerospike::ERR;
-                $db->close();
-            }
-        } else {
-            return($db->errorno());
+    function testOperateEmptyArgumentsNegative() {
+        try {
+            $status = $this->db->operate();
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_CLIENT;
         }
     }
     /**
@@ -201,33 +167,27 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperateKeyIsEmptyStringNegative($db, $key) {
-        if ($db->isConnected()) {
-            $check = array("first_name" => "Mr John");
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-                array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
-                "val" => "."),
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-                array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
-            );
-            $returned = array();
-            $status = $db->operate("", $operations, $returned,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
-                        Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL));
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-            $comp_res = array_diff_assoc_recursive($returned, $check);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-                else {
-                    return AEROSPIKE::OK;
-                }
-             
-        } else {
-            return($db->errorno());
+    function testOperateKeyIsEmptyStringNegative() {
+        $check = array("first_name" => "Mr John");
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+        $returned = array();
+        $status = $this->db->operate("", $operations, $returned,
+            array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        else {
+            return AEROSPIKE::OK;
         }
     }
     /**
@@ -245,33 +205,28 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperateReturnIsStringPositive($db, $key) {
-        if ($db->isConnected()) {
-            $check = array("first_name" => "Mr John");
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-                array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
-                "val" => "."),
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-                array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
-            );
+    function testOperateReturnIsStringPositive() {
+        $check = array("first_name" => "Mr John");
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
 
-            $returned = "abc";
-            $status = array($key, $operations, $returned,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-             
-            $comp_res = array_diff_assoc_recursive($returned, $check);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-                else {
-                    return AEROSPIKE::OK;
-                }
-        } else {
-            return($db->errorno());
+        $returned = "abc";
+        $status = array($this->keys[0], $operations, $returned,
+            array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        else {
+            return AEROSPIKE::OK;
         }
     }
     /**
@@ -289,28 +244,23 @@ class Operate  extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testOperateReturnNotPassedPositive($db, $key) {
-        if ($db->isConnected()) {
-            $check = array("first_name" => "Mr John");
-            $operations = array(
-                array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-                array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
-                "val" => "."),
-                array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-                array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
-            );
+    function testOperateReturnNotPassedPositive() {
+        $check = array("first_name" => "Mr John");
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
 
-            $returned = "abc";
-            $status = array($key, $operations, NULL,
-                array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-            if ($status != AEROSPIKE::OK) {
-                return $db->errorno();
-            }
-            else {
-                return Aerospike::OK;
-            } 
-        } else {
-            return($db->errorno());
+        $returned = "abc";
+        $status = array($this->keys[0], $operations, NULL, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            return Aerospike::OK;
         }
     }
 

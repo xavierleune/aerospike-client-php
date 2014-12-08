@@ -6,7 +6,7 @@ Aerospike::initKey - helper method for building the key array
 ## Description
 
 ```
-public array Aerospike::initKey ( string $ns, string $set, int|string $pk, boolean $is_digest = false )
+public array Aerospike::initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
 ```
 
 **Aerospike::initKey()** will return an array that can be passed as the

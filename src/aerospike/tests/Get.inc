@@ -6,7 +6,7 @@ require_once 'Common.inc';
 */
 class Employee
 {
-        public $desg = 'Manager';
+    public $desg = 'Manager';
 }
 
 class Get extends AerospikeTestCommon
@@ -15,301 +15,257 @@ class Get extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    static $status_ok = 2000;
-    static $status_err = 2001;
-    static $status_get_record_fail = 2002; 
     static $put_rec = array("Greet"=>"World_end");
 
-    protected function setUp(&$db, &$key) {
-	    $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-        $key = $db->initKey("test", "demo", "Get_key");
-        $db->put($key,array("Greet"=>"World_end"));
+    protected function setUp() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
+        $key = $this->db->initKey("test", "demo", "Get_key");
+        $this->db->put($key,array("Greet"=>"World_end"));
+        $this->keys[] = $key;
     }
 
-    protected function tearDown(&$db, &$key) {
-        $db->remove($key, array(Aerospike::OPT_POLICY_RETRY
-            =>Aerospike::POLICY_RETRY_NONE));
-        $db->close();
-    }
-	/**
-	 * @test
-	 * Basic GET without parameter
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testGETNoParameter)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testGETNoParameter($db, $key) 
-    {   
-        if ($db->isConnected()) { 
-        try {
-            $db->get();
-        } catch (ErrorException $e) {
-            return self::$status_ok;
-        }
-        return self::$status_err;
-        } else {
-            return($db->errorno());
-        }
-    }
-	/**
-	 * @test
-	 * Basic GET
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testGETTwoParameter)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testGETTwoParameter($db, $key) 
-	{
-        if ($db->isConnected()) {  
-            $status = $db->get($key,$bin_arr);
-        } else {
-            return($db->errorno());
-        }
-        if($status != Aerospike::OK) {
-            return($status);
-        }
-        if (strcmp($bin_arr["key"]["ns"], $key["ns"]) == 0 &&
-            strcmp($bin_arr["key"]["set"], $key["set"]) == 0 &&
-            strcmp($bin_arr["key"]["key"], NULL) == 0) {
-                $comp_res = array_diff_assoc_recursive(self::$put_rec, $bin_arr["bins"]);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-            } else {
-                return AEROSPIKE::ERR;
-            }
-        return ($status);
-    }
-	/**
-	 * @test
-	 * Basic GET Three Parameter
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testGETThreeParameter)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testGETThreeParameter($db, $key) 
-	{
-		$bin_arr = array("Greet");
-        if ($db->isConnected()) {  
-            $status = $db->get($key,$rec_arr,$bin_arr,
-                array(Aerospike::OPT_READ_TIMEOUT=>2000));
-        } else {
-            return($db->errorno());
-        }
-        if($status != Aerospike::OK) {
-            return($status);
-        }
-        if (strcmp($rec_arr["key"]["ns"], $key["ns"]) == 0 &&
-            strcmp($rec_arr["key"]["set"], $key["set"]) == 0 &&
-            strcmp($rec_arr["key"]["key"], NULL) == 0) {
-                $comp_res = array_diff_assoc_recursive(self::$put_rec,
-                    $rec_arr["bins"]);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-            } else {
-                    return Aerospike::ERR;
-            }
-        return ($status);
-    }
-	/**
-	 * @test
-	 * Basic GET wrong Parameter
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testGETThreeParameter)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testGETWrongParameter($db, $key) 
+    /**
+     * @test
+     * Basic GET without parameter
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETNoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testGETNoParameter() 
     {
-        if ($db->isConnected()) {
         try {
-		    $db->get($key);
+            $this->db->get();
         } catch (ErrorException $e) {
-            return self::$status_ok;
+            return Aerospike::ERR_PARAM;
         }
-        return self::$status_err;
-        } else {
-            return($db->errorno());
-        }
+        return Undefined_Error;
     }
-	/**
-	 * @test
-	 * Basic GET Second Parameter Array
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testCheckSecondParameterTypeArray)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testCheckSecondParameterTypeArray($db, $key) 
+    /**
+     * @test
+     * Basic GET
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETTwoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testGETTwoParameter() 
+    {
+        $status = $this->db->get($this->keys[0],$bin_arr);
+        if ($status !== Aerospike::OK) {
+            return $status;
+        }
+        if (strcmp($bin_arr["key"]["ns"], $this->keys[0]["ns"]) == 0 &&
+            strcmp($bin_arr["key"]["set"], $this->keys[0]["set"]) == 0 &&
+            strcmp($bin_arr["key"]["key"], NULL) == 0) {
+            $comp_res = array_diff_assoc_recursive(self::$put_rec, $bin_arr["bins"]);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR;
+            }
+        } else {
+            return Aerospike::ERR;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic GET Three Parameter
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETThreeParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testGETThreeParameter()
+    {
+        $bin_arr = array("Greet");
+        $status = $this->db->get($this->keys[0], $rec_arr, $bin_arr, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+        if ($status !== Aerospike::OK) {
+            return $status;
+        }
+        if (strcmp($rec_arr["key"]["ns"], $this->keys[0]["ns"]) == 0 &&
+            strcmp($rec_arr["key"]["set"], $this->keys[0]["set"]) == 0 &&
+            strcmp($rec_arr["key"]["key"], NULL) == 0) {
+            $comp_res = array_diff_assoc_recursive(self::$put_rec, $rec_arr["bins"]);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR;
+            }
+        } else {
+            return Aerospike::ERR;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic GET wrong Parameter
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETThreeParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testGETWrongParameter() 
+    {
+        try {
+            $this->db->get($this->keys[0]);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
+        }
+        return Undefined_Error;
+    }
+    /**
+     * @test
+     * Basic GET Second Parameter Array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckSecondParameterTypeArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckSecondParameterTypeArray() 
     {
         $rec_array = "";
-        if ($db->isConnected()) {  
-            $status = $db->get($key, $get_record);
-        } else {
-            return($db->errorno());
+        $status = $this->db->get($this->keys[0], $get_record);
+        if ($status !== Aerospike::OK) {
+            return $status;
         }
-        if($status != Aerospike::OK) {
-            return($status);
-        }
-        if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
-            strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
+        if (strcmp($get_record["key"]["ns"], $this->keys[0]["ns"]) == 0 &&
+            strcmp($get_record["key"]["set"], $this->keys[0]["set"]) == 0 &&
             strcmp($get_record["key"]["key"], NULL) == 0) {
-                $comp_res = array_diff_assoc_recursive(self::$put_rec,
-                    $get_record["bins"]);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-            } else {
-                return AEROSPIKE::ERR;
+            $comp_res = array_diff_assoc_recursive(self::$put_rec, $get_record["bins"]);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR;
             }
-        return ($status);
-    }
-	/**
-	 * @test
-	 * Basic GET Third Parameter Array
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testCheckThirdParameterTypeArray)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testCheckThirdParameterTypeArray($db, $key) 
-    {
-        if ($db->isConnected()) {  
-            try {
-                $db->get($key, $rec, "");
-            } catch (ErrorException $e) {
-                return self::$status_ok;
-            }
-            return($db->errorno());
         } else {
-            return($db->errorno());
+            return Aerospike::ERR;
         }
-
+        return $status;
     }
-	/**
-	 * @test
-	 * Basic GET Check key parameter missing in key array
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testCheckKeyParameterMissingInKeyArray)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testCheckKeyParameterMissingInKeyArray($db, $key) 
+    /**
+     * @test
+     * Basic GET Third Parameter Array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckThirdParameterTypeArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckThirdParameterTypeArray()
     {
-        if ($db->isConnected()) {  
         try {
-            $key1 = $db->initKey("test", "demo");
-            $rv = $db->get($key1, $rec);
+            $this->db->get($this->keys[0], $rec, "");
         } catch (ErrorException $e) {
-            return self::$status_ok;
+            return Aerospike::ERR_PARAM;
         }
-        return self::$status_err;
-        } else {
-            return($db->errorno());
+        return $this->db->errorno();
+    }
+    /**
+     * @test
+     * Basic GET Check key parameter missing in key array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckKeyParameterMissingInKeyArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckKeyParameterMissingInKeyArray() 
+    {
+        try {
+            $key1 = $this->db->initKey("test", "demo");
+            $rv = $this->db->get($key1, $rec);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
         }
-    }	
+        return Undefined_Error;
+    }
 
   /**
-	 * @test
-	 * Basic GET Check ns(namespace) parameter missing in key array
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testCheckNameSpaceParameterMissingInKeyArray)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testCheckNameSpaceParameterMissingInKeyArray($db, $key) 
-	{
-		$key1 = array("set"=>"demo", "key"=>"10000");
-        if ($db->isConnected()) {  
-            return($db->get($key1, $rec));
-        } else { 
-            return($db->errorno());
-        }
+     * @test
+     * Basic GET Check ns(namespace) parameter missing in key array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckNameSpaceParameterMissingInKeyArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckNameSpaceParameterMissingInKeyArray() 
+    {
+        $key1 = array("set"=>"demo", "key"=>"10000");
+        return($this->db->get($key1, $rec));
     }
-	/**
-	 * @test
-	 * Basic GET Check set parameter missing in key array
-	 *
-	 * @pre
-	 * Connect using aerospike object to the specified node
-	 *
-	 * @post
-	 * newly initialized Aerospike objects
-	 *
-	 * @remark
-	 * Variants: OO (testCheckSetParameterMissingInKeyArray)
-	 *
-	 * @test_plans{1.1}
-	 */
-	function testCheckSetParameterMissingInKeyArray($db, $key) 
-	{
-		$key1 = array("ns"=>"test","key"=>"10000");
-        if ($db->isConnected()) {  
-            return($db->get($key1,$rec));
-        } else {
-            return($db->errorno());
-        }
+    /**
+     * @test
+     * Basic GET Check set parameter missing in key array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckSetParameterMissingInKeyArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckSetParameterMissingInKeyArray() 
+    {
+        $key1 = array("ns"=>"test","key"=>"10000");
+        return $this->db->get($key1,$rec);
     }
         /**
          * @test
@@ -326,15 +282,11 @@ class Get extends AerospikeTestCommon
          *
          * @test_plans{1.1}
          */
-        function testCheckParameterSequenceChangeInKeyArray($db, $key)
+        function testCheckParameterSequenceChangeInKeyArray()
         {
-                $key1 = $db->initKey("demo", "test", "key_int1");
-                if ($db->isConnected()) {  
-                    return($db->get($key1,$rec));
-                } else {
-                    return($db->errorno());
-                }
-    	}
+            $key1 = $this->db->initKey("demo", "test", "key_int1");
+            return $this->db->get($key1,$rec);
+        }
         /**
          * @test
          * Basic GET Check set parameter value non exist in database
@@ -350,14 +302,10 @@ class Get extends AerospikeTestCommon
          *
          * @test_plans{1.1}
          */
-        function testCheckSetValueNotExistInDB($db, $key)
+        function testCheckSetValueNotExistInDB()
         {
-                $key1 = $db->initKey("test", "ssss---ssss", "key_int1");
-                if ($db->isConnected()) {  
-                    return($db->get($key1,$rec));
-                } else {
-                    return($db->errorno());
-                }
+            $key1 = $this->db->initKey("test", "ssss---ssss", "key_int1");
+            return $this->db->get($key1,$rec);
         }
 /**
   * @test
@@ -374,16 +322,10 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
-  function testCheckNameSpaceValueNotExistInDB($db, $key)
+  function testCheckNameSpaceValueNotExistInDB()
   {
-      $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-      $db = new Aerospike($config);
-      $key1 = $db->initKey("sss--ss", "demo", "key_int1");
-      if ($db->isConnected()) {  
-          return($db->get($key1,$rec));
-      } else {
-          return($db->errorno());
-      }
+      $key1 = $this->db->initKey("sss--ss", "demo", "key_int1");
+      return $this->db->get($key1,$rec);
 
   }
 
@@ -402,14 +344,10 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
-  function testCheckKeyValueNotExistInDB($db, $key)
+  function testCheckKeyValueNotExistInDB()
   {
-      $key1 = $db->initKey("test", "demo", "ss--sss");
-      if ($db->isConnected()) {  
-          return($db->get($key1,$rec));
-      } else {
-          return($db->errorno());
-      }
+      $key1 = $this->db->initKey("test", "demo", "ss--sss");
+      return $this->db->get($key1,$rec);
   }
 /**
   * @test
@@ -426,43 +364,29 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
-  function testCheckListInsert($db, $key)
+  function testCheckListInsert()
   {
-      $key1 = $db->initKey("test", "demo", "10000");
-      if ($db->isConnected()) {  
-          $status = $db->put($key1,array("bin1"=>array("speaking", "reading", "writing")));
-      } else{
-          return($db->errorno());
+      $key1 = $this->db->initKey("test", "demo", "10000");
+      $status = $this->db->put($key1,array("bin1"=>array("speaking", "reading", "writing")));
+      $this->keys[] = $key1;
+      if ($status !== Aerospike::OK) {
+          return $status;
       }
-      if($status != Aerospike::OK) {
-          return($status);
-      }
-      if ($db->isConnected()) {  
-          $status = $db->get($key1,$get_rec);
-      } else {
-          return($db->errorno());
-      }
-      if($status != Aerospike::OK) {
-          return($status);
+      $status = $this->db->get($key1,$get_rec);
+      if ($status !== Aerospike::OK) {
+          return $status;
       }
       if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
-            strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
-            strcmp($get_rec["key"]["key"], NULL) == 0) {
-                $comp_res = array_diff_assoc_recursive(array("bin1"=>array("speaking", "reading",
-                    "writing")), $get_rec["bins"]);
-                if (!empty($comp_res)) {
-                    return Aerospike::ERR;
-                }
-            } else {
-                return AEROSPIKE::ERR;
-            }
-      if ($db->isConnected()) {
-          $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
-              =>Aerospike::POLICY_RETRY_NONE));
+          strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
+          strcmp($get_rec["key"]["key"], NULL) == 0) {
+          $comp_res = array_diff_assoc_recursive(array("bin1"=>array("speaking", "reading", "writing")), $get_rec["bins"]);
+          if (!empty($comp_res)) {
+              return Aerospike::ERR;
+          }
       } else {
-          return($db->errorno());
+          return Aerospike::ERR;
       }
-      return($status);
+      return $status;
   }
 /**
   * @test
@@ -479,47 +403,30 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
-  function testCheckMapInsert($db, $key)
+  function testCheckMapInsert()
   {
-      $key1 = $db->initkey("test", "demo", "10000");
+      $key1 = $this->db->initkey("test", "demo", "10000");
       $map1= array("k1"=>10, "k2"=>5, "k3"=>6, "k4"=>7, "k5"=>8);
-      if ($db->isConnected()) {  
-          $status = $db->put($key1, array("bin1"=>$map1));
-      } else {
-          return($db->errorno());
+      $status = $this->db->put($key1, array("bin1"=>$map1));
+      $this->keys[] = $key1;
+      if ($status !== Aerospike::OK) {
+          return $status;
       }
-      if($status != Aerospike::OK) {
-          return($status);
-      }
-      if ($db->isConnected()) {  
-          $status = $db->get($key1,$get_rec, NULL, 
-              array(Aerospike::OPT_READ_TIMEOUT=>2000,
-              Aerospike::OPT_POLICY_REPLICA=>Aerospike::POLICY_REPLICA_ONE,
-              Aerospike::OPT_POLICY_CONSISTENCY=>Aerospike::POLICY_CONSISTENCY_ONE));
-      } else {
-          return($db->errorno());
-      }
-      if($status != Aerospike::OK) {
-          return($status);
+      $status = $this->db->get($key1,$get_rec, NULL, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+      if ($status !== Aerospike::OK) {
+          return $status;
       }
       if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
           strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
           strcmp($get_rec["key"]["key"], NULL) == 0) {
-              $comp_res = array_diff_assoc_recursive(array("bin1"=>$map1),
-                  $get_rec["bins"]);
-              if (!empty($comp_res)) {
-                  return Aerospike::ERR;
-              }
-          } else {
-              return AEROSPIKE::ERR;
+          $comp_res = array_diff_assoc_recursive(array("bin1"=>$map1), $get_rec["bins"]);
+          if (!empty($comp_res)) {
+              return Aerospike::ERR;
           }
-      if ($db->isConnected()) {  
-      $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
       } else {
-          return($db->errorno());
+          return Aerospike::ERR;
       }
-      return($status);
+      return $status;
   }
 /**
   * @test
@@ -536,9 +443,9 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
-  function testCheckListMapCombineInsert($db, $key)
+  function testCheckListMapCombineInsert()
   {
-      $key1 = $db->initkey("test", "demo", "10000");
+      $key1 = $this->db->initkey("test", "demo", "10000");
       $softskills = array("speaking", "reading", "writing");
       $skills = array("python", "c", "java",$softskills);
       $innermostmap = array("month"=>"May", "year"=>2013);
@@ -548,38 +455,25 @@ class Get extends AerospikeTestCommon
       $innermostlist = array("twitter", 100);
       $innerlist = array(1,2,"facebook", $innermostlist);
       $mylist = array(10, 20, "whatsup", $innerlist, $mymap);
-      $rec = array("bin1"=>$mylist);	
-      if ($db->isConnected()) {  
-          $status = $db->put($key1,$rec);
-      } else {
-          return($db->errorno());
+      $rec = array("bin1"=>$mylist);
+      $status = $this->db->put($key1,$rec);
+      $this->keys[] = $key1;
+      if ($status !== Aerospike::OK) {
+          return $status;
       }
-      if($status != Aerospike::OK) {
-          return($status);
-      }
-      if ($db->isConnected()) {
-          $status = $db->get($key1,$get_rec);
-      } else {
-          return($db->errorno());
-      }
-      if($status != Aerospike::OK) {
-          return($status);
+      $status = $this->db->get($key1,$get_rec);
+      if ($status !== Aerospike::OK) {
+          return $status;
       }
       if (strcmp($get_rec["key"]["ns"], $key1["ns"]) == 0 &&
           strcmp($get_rec["key"]["set"], $key1["set"]) == 0 &&
           strcmp($get_rec["key"]["key"], NULL) == 0) {
-              $comp_res = array_diff_assoc_recursive($rec, $get_rec["bins"]);
-              if (!empty($comp_res)) {
-                  return Aerospike::ERR;
-              }
+          $comp_res = array_diff_assoc_recursive($rec, $get_rec["bins"]);
+          if (!empty($comp_res)) {
+              return Aerospike::ERR;
           }
-      if ($db->isConnected()) { 
-      $status = $db->remove($key1, array(Aerospike::OPT_POLICY_RETRY
-          =>Aerospike::POLICY_RETRY_NONE));
-      } else {
-          return($db->errorno());
       }
-      return($status);
+      return $status;
   }
 /**
   * @test
@@ -596,13 +490,9 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
-  function testCheckBinMissing($db, $key)
+  function testCheckBinMissing()
   {
-      if ($db->isConnected()) {  
-          return($db->get($key,$rec,array("bin1","bin2","00000000000bin1000000")));
-      } else {
-          return($db->errorno());
-      }
+      return($this->db->get($this->keys[0],$rec,array("bin1","bin2","00000000000bin1000000")));
   }
 
 /**
@@ -621,14 +511,8 @@ class Get extends AerospikeTestCommon
   * @test_plans{1.1}
   */
  #Testcases for object 
- function testGetNestedListOfObjectsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_of_objects_with_PHP_serializer");
+ function testGetNestedListOfObjectsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_of_objects_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -641,29 +525,25 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", $obj4, $list2);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
- 
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     $this->keys[] = $key;
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
       if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
           strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
           strcmp($get_record["key"]["key"], NULL) == 0) {
-              $comp_res = array_diff_assoc_recursive($put_record,
-                  $get_record["bins"]);
-              if(!empty($comp_res)) {
-                  return self::$status_get_record_fail;
-              }
+          $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+          if (!empty($comp_res)) {
+              return Aerospike::ERR_RECORD_NOT_FOUND;
           }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+      }
+     return $status;
  }
 
 /**
@@ -681,14 +561,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedListOfObjectsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_of_objects_with_UDF_serializer");
+ function testGetNestedListOfObjectsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_of_objects_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -715,10 +589,10 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", $obj4, $list2);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key,$put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key,$put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     $this->keys[] = $key;
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      #Set Deserializer
@@ -730,29 +604,25 @@ class Get extends AerospikeTestCommon
          return unserialize(substr ($val, 3));
      });
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res))
-             {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
   * @test
-  * GET Nested map of objects with PHP Serializer.   
+  * GET Nested map of objects with PHP Serializer.
   *
   * @pre
   * Connect using aerospike object to the specified node
@@ -765,14 +635,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedMapOfObjectsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_objects_with_PHP_serializer");
+ function testGetNestedMapOfObjectsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_of_objects_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -785,29 +649,25 @@ class Get extends AerospikeTestCommon
      $map3 = array("k1", $obj4, 56=>$map2);
 
      $put_record = array("bin1"=>$map3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -825,14 +685,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedMapOfObjectsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_objects_with_UDF_serializer");
+ function testGetNestedMapOfObjectsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_of_objects_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -859,11 +713,11 @@ class Get extends AerospikeTestCommon
      $map3 = array("k1", $obj4, 56=>$map2);
 
      $put_record = array("bin1"=>$map3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -873,23 +727,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -907,14 +758,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetListMapObjectsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
+ function testGetListMapObjectsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -924,29 +769,26 @@ class Get extends AerospikeTestCommon
      $map = array(12=>"k5", "k78"=>$obj1, $obj2);
      $list = array("k1", $obj3, $map);
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -964,14 +806,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetListMapObjectsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_objects_with_UDF_serializer");
+ function testGetListMapObjectsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_objects_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -997,11 +833,11 @@ class Get extends AerospikeTestCommon
      $list = array("k1", $obj4, $map, 55);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1011,23 +847,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -1045,14 +878,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapListObjectsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
+ function testGetMapListObjectsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_objects_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -1063,29 +890,26 @@ class Get extends AerospikeTestCommon
      $list = array("k1", $obj3, $obj2, $map);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
  
 /**
@@ -1103,14 +927,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapListObjectsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
+ function testGetMapListObjectsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1136,11 +954,11 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, $obj1, 56=>$list);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1150,23 +968,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -1185,43 +1000,34 @@ class Get extends AerospikeTestCommon
   * @test_plans{1.1}
   */
  #Testcases for bool
- function testGetNestedListOfBoolsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_of_bools_with_PHP_serializer");
+ function testGetNestedListOfBoolsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_of_bools_with_PHP_serializer");
 
      $list1 = array(12, TRUE);
      $list2 = array($list1, " ");
      $list3 = array("k1", 56, $list2, FALSE);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1239,14 +1045,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedListOfBoolsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_of_bools_with_UDF_serializer");
+ function testGetNestedListOfBoolsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_of_bools_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1267,11 +1067,11 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", 56, $list2, FALSE);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1281,23 +1081,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1315,43 +1112,34 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedMapOfBoolsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_bools_with_PHP_serializer");
+ function testGetNestedMapOfBoolsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_of_bools_with_PHP_serializer");
 
      $map1 = array(12=>TRUE, FALSE);
      $map2 = array($map1, "K5"=>" ");
      $map3 = array("k1", TRUE, 56=>$map2);
 
      $put_record = array("bin1"=>$map3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1369,14 +1157,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedMapOfBoolsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_bools_with_UDF_serializer");
+ function testGetNestedMapOfBoolsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_of_bools_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1397,11 +1179,11 @@ class Get extends AerospikeTestCommon
      $map3 = array("k1", TRUE, 56=>$map2);
 
      $put_record = array("bin1"=>$map3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1411,23 +1193,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1445,14 +1224,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetListMapBoolsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_bools_with_PHP_serializer");
+ function testGetListMapBoolsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_bools_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -1464,11 +1237,11 @@ class Get extends AerospikeTestCommon
      $list = array("k1", $obj4, $map, 55=>TRUE);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1478,23 +1251,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -1512,14 +1282,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetListMapBoolsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_bools_with_UDF_serializer");
+ function testGetListMapBoolsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_bools_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1545,11 +1309,12 @@ class Get extends AerospikeTestCommon
      $list = array("k1", $obj4, $map, 55=>TRUE);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
+     $status = $this->db->put($key, $put_record, NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1559,23 +1324,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -1593,14 +1355,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapListBoolsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_bools_with_PHP_serializer");
+ function testGetMapListBoolsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_list_bools_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -1612,29 +1368,26 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
  
 /**
@@ -1652,14 +1405,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapListBoolsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
+ function testGetMapListBoolsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1685,11 +1432,11 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1699,23 +1446,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -1734,43 +1478,34 @@ class Get extends AerospikeTestCommon
   * @test_plans{1.1}
   */
  #Testcases for float
- function testGetNestedListOfFloatsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_of_floats_with_PHP_serializer");
+ function testGetNestedListOfFloatsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_of_floats_with_PHP_serializer");
 
      $list1 = array(12, 11.2);
      $list2 = array($list1, " ");
      $list3 = array("k1", 56, $list2, 56.896);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1788,14 +1523,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedListOfFloatsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_of_floats_with_UDF_serializer");
+ function testGetNestedListOfFloatsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_of_floats_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1816,11 +1545,11 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", 56, $list2, 56.896);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1830,23 +1559,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1864,43 +1590,34 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedMapOfFloatsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_floats_with_PHP_serializer");
+ function testGetNestedMapOfFloatsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_of_floats_with_PHP_serializer");
 
      $map1 = array(12=>89.4, 55.44);
      $map2 = array($map1, "K5"=>" ");
      $map3 = array("k1", TRUE, 56=>$map2);
 
      $put_record = array("bin1"=>$map3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1918,14 +1635,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetNestedMapOfFloatsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_floats_with_UDF_serializer");
+ function testGetNestedMapOfFloatsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_of_floats_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -1946,11 +1657,11 @@ class Get extends AerospikeTestCommon
      $map3 = array("k1", TRUE, 56=>$map2);
 
      $put_record = array("bin1"=>$map3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -1960,23 +1671,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return($status);
+     }
+     return $status;
  }
 
 /**
@@ -1994,14 +1702,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetListMapFloatsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_floats_with_PHP_serializer");
+ function testGetListMapFloatsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_floats_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -2013,29 +1715,26 @@ class Get extends AerospikeTestCommon
      $list = array("k1", $obj4, $map, 55=>89.56, FALSE, 45.78);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2053,14 +1752,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetListMapFloatsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "list_map_floats_with_UDF_serializer");
+ function testGetListMapFloatsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "list_map_floats_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -2086,11 +1779,11 @@ class Get extends AerospikeTestCommon
      $list = array("k1", $obj4, $map, 55=>89.56, FALSE, 45.78);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -2100,23 +1793,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2134,14 +1824,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapListFloatsWithPHPSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_floats_with_PHP_serializer");
+ function testGetMapListFloatsWithPHPSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_list_floats_with_PHP_serializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -2153,29 +1837,26 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
 
      $put_record = array("bin1"=>$list);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(aErospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
  
 /**
@@ -2193,14 +1874,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapListFloatsWithUDFSerializer($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
+ function testGetMapListFloatsWithUDFSerializer() {
+     $key = $this->db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -2226,11 +1901,11 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -2240,23 +1915,20 @@ class Get extends AerospikeTestCommon
          }
          return unserialize(substr ($val, 3));
      });
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2275,15 +1947,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetObjectPHPSerializedAndUDFDeserialized($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo",
-         "list_of_objects_with_PHP_SERIALIZER_USER_deserializer");
+ function testGetObjectPHPSerializedAndUDFDeserialized() {
+     $key = $this->db->initKey("test", "demo", "list_of_objects_with_PHP_SERIALIZER_USER_deserializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -2296,12 +1961,11 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", $obj4, $list2);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
- 
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -2312,23 +1976,20 @@ class Get extends AerospikeTestCommon
          return unserialize(substr ($val, 3));
      });
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2347,14 +2008,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetObjectUDFSerializedAndPHPDeserialized($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
+ function testGetObjectUDFSerializedAndPHPDeserialized() {
+     $key = $this->db->initKey("test", "demo", "map_list_objects_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -2380,29 +2035,26 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2421,14 +2073,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetBoolPHPSerializedAndUDFDeserialized($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo",
+ function testGetBoolPHPSerializedAndUDFDeserialized() {
+     $key = $this->db->initKey("test", "demo",
          "list_of_bools_with_PHP_SERIALIZER_USER_deserializer");
 
      #Creating objects
@@ -2442,12 +2088,11 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", $obj4, $list2);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
- 
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -2458,23 +2103,20 @@ class Get extends AerospikeTestCommon
          return unserialize(substr ($val, 3));
      });
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2493,14 +2135,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetBoolUDFSerializedAndPHPDeserialized($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
+ function testGetBoolUDFSerializedAndPHPDeserialized() {
+     $key = $this->db->initKey("test", "demo", "map_list_bools_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -2526,29 +2162,26 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2567,15 +2200,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetFloatPHPSerializedAndUDFDeserialized($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo",
-         "list_of_floats_with_PHP_SERIALIZER_USER_deserializer");
+ function testGetFloatPHPSerializedAndUDFDeserialized() {
+     $key = $this->db->initKey("test", "demo", "list_of_floats_with_PHP_SERIALIZER_USER_deserializer");
 
      #Creating objects
      $obj1 = new Employee();
@@ -2588,12 +2214,11 @@ class Get extends AerospikeTestCommon
      $list3 = array("k1", $obj4, $list2);
 
      $put_record = array("bin1"=>$list3);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
- 
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
      #Set Deserializer
      Aerospike::setDeserializer(function ($val) {
@@ -2604,23 +2229,20 @@ class Get extends AerospikeTestCommon
          return unserialize(substr ($val, 3));
      });
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2639,14 +2261,8 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetFloatUDFSerializedAndPHPDeserialized($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
+ function testGetFloatUDFSerializedAndPHPDeserialized() {
+     $key = $this->db->initKey("test", "demo", "map_list_floats_with_UDF_serializer");
 
      #Set Serializer
      Aerospike::setSerializer(function ($val) {
@@ -2672,29 +2288,26 @@ class Get extends AerospikeTestCommon
      $map = array("k1"=>$obj3, "k8"=>TRUE, 56=>$list, $obj1, "k22"=>56.75);
 
      $put_record = array("bin1"=>$map);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_USER));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2712,42 +2325,33 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapOfBoolsKeyIsBool($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_bools_key_is_bool");
+ function testGetMapOfBoolsKeyIsBool() {
+     $key = $this->db->initKey("test", "demo", "map_of_bools_key_is_bool");
 
      #Creating objects
      $obj1 = new Employee();
      $obj2 = new Employee();
 
      $map = array("k1", TRUE=>$obj2, $obj1);
-     $status = $db->put($key, array("bin1"=>$map), NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, array("bin1"=>$map), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $this->keys[] = $key;
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
 
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2765,41 +2369,32 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapOfFloatsKeyIsFloat($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_bools_key_is_bool");
+ function testGetMapOfFloatsKeyIsFloat() {
+     $key = $this->db->initKey("test", "demo", "map_of_bools_key_is_bool");
 
      #Creating objects
      $obj1 = new Employee();
      $obj2 = new Employee();
 
      $map = array("k1", 78.5=>56.35, $obj1=>1, $obj2);
-     $status = $db->put($key, array("bin1"=>$map), NULL,
-         array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->put($key, array("bin1"=>$map), NULL, array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $this->keys[] = $key;
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2817,38 +2412,30 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetWithPolicyKeySend($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "policy_key_send");
+ function testGetWithPolicyKeySend() {
+     $key = $this->db->initKey("test", "demo", "policy_key_send");
      $put_record = array("bin1"=>45);
-     $status = $db->put($key, $put_record);
+     $status = $this->db->put($key, $put_record);
 
-     if ($status != AEROSPIKE::OK) {
-         return($db->errorno());
+     if ($status !== Aerospike::OK) {
+         return $this->db->errorno();
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"),
+     $status = $this->db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], $key["key"]) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 
 /**
@@ -2866,38 +2453,30 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetWithPolicyKeyDigest($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "policy_key_digest");
+ function testGetWithPolicyKeyDigest() {
+     $key = $this->db->initKey("test", "demo", "policy_key_digest");
      $put_record = array("bin1"=>45);
-     $status = $db->put($key, $put_record);
+     $status = $this->db->put($key, $put_record);
 
-     if ($status != AEROSPIKE::OK) {
-         return($db->errorno());
+     if ($status !== Aerospike::OK) {
+         return $this->db->errorno();
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"),
+     $status = $this->db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 /**
   * @test  
@@ -2914,39 +2493,31 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetWithPolicyKeySendAndReadTimeout($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "policy_key_send_and_read_timeout");
+ function testGetWithPolicyKeySendAndReadTimeout() {
+     $key = $this->db->initKey("test", "demo", "policy_key_send_and_read_timeout");
      $put_record = array("bin1"=>45);
-     $status = $db->put($key, $put_record);
+     $status = $this->db->put($key, $put_record);
 
-     if ($status != AEROSPIKE::OK) {
-         return($db->errorno());
+     if ($status !== Aerospike::OK) {
+         return $this->db->errorno();
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"),
+     $status = $this->db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_READ_TIMEOUT=>2000,
          Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], $key["key"]) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 /**
   * @test  
@@ -2964,39 +2535,30 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetWithPolicyKeyDigestAndReadTimeout($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "policy_key_digest_and_read_timeout");
+ function testGetWithPolicyKeyDigestAndReadTimeout() {
+     $key = $this->db->initKey("test", "demo", "policy_key_digest_and_read_timeout");
      $put_record = array("bin1"=>45);
-     $status = $db->put($key, $put_record);
+     $status = $this->db->put($key, $put_record);
 
-     if ($status != AEROSPIKE::OK) {
-         return($db->errorno());
+     if ($status !== Aerospike::OK) {
+         return $this->db->errorno();
      }
 
-     $status = $db->get($key, $get_record, array("bin1"),
+     $status = $this->db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_READ_TIMEOUT=>2000,
          Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], NULL) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
 /**
   * @test  
@@ -3014,41 +2576,30 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetAndPutWithPolicyKeySend($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "policy_key_send_for_get_and_put");
+ function testGetAndPutWithPolicyKeySend() {
+     $key = $this->db->initKey("test", "demo", "policy_key_send_for_get_and_put");
      $put_record = array("bin1"=>45);
-     $status = $db->put($key, $put_record, NULL,
-         array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
-         Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-
-     if ($status != AEROSPIKE::OK) {
-         return($db->errorno());
+     $status = $this->db->put($key, $put_record, NULL, array(Aerospike::OPT_WRITE_TIMEOUT=>2000, Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+     if ($status !== Aerospike::OK) {
+         return $this->db->errorno();
      }
+     $this->keys[] = $key;
 
-     $status = $db->get($key, $get_record, array("bin1"),
+     $status = $this->db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_READ_TIMEOUT=>2000,
          Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], $key["key"]) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }
  /*
   * This testcase will be uncommented, When aerospike csdk fault resolved.
@@ -3069,40 +2620,31 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- /*function testGetPolicyKeySendAndPutKeyDigestNegative($dummydb, $dummykey) {
-     $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", base64_decode( "initkey_digest"), true);
+ /*function testGetPolicyKeySendAndPutKeyDigestNegative() {
+     $key = $this->db->initKey("test", "demo", base64_decode( "initkey_digest"), true);
      $put_record = array("bin1"=>45);
-     $status = $db->put($key, $put_record,
+     $status = $this->db->put($key, $put_record,
          Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
 
-     if ($status != AEROSPIKE::OK) {
-         return($db->errorno());
+     if ($status !== Aerospike::OK) {
+         return $this->db->errorno();
      }
 
-     $status = $db->get($key, $get_record, array("bin1"),
+     $status = $this->db->get($key, $get_record, array("bin1"),
          array(Aerospike::OPT_READ_TIMEOUT=>2000,
          Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      if (strcmp($get_record["key"]["ns"], $key["ns"]) == 0 &&
          strcmp($get_record["key"]["set"], $key["set"]) == 0 &&
          strcmp($get_record["key"]["key"], $key["key"]) == 0) {
-             $comp_res = array_diff_assoc_recursive($put_record,
-                 $get_record["bins"]);
-             if(!empty($comp_res)) {
-                 return self::$status_get_record_fail;
-             }
+         $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+         if (!empty($comp_res)) {
+             return Aerospike::ERR_RECORD_NOT_FOUND;
          }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));
-     return ($status);
+     }
+     return $status;
  }*/
 /**
   * @test  
@@ -3119,35 +2661,28 @@ class Get extends AerospikeTestCommon
   *
   * @test_plans{1.1}
   */
- function testGetMapOfObjectsKeyIsObject($dummydb, $dummykey) {
-     /*$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-     $db = new Aerospike($config);
-     if(!$db->isConnected())
-     {
-         return ($db->errorno());
-     }
-     $key = $db->initKey("test", "demo", "map_of_objects_key_is_object");
+ function testGetMapOfObjectsKeyIsObject() {
+     /*
+     $key = $this->db->initKey("test", "demo", "map_of_objects_key_is_object");
 
      #Creating objects
      $obj1 = new Employee();
      $obj2 = new Employee();
 
      $map = array("k1", $obj1=>$obj2, "k2");
-     $status = $db->put($key, array("bin1"=>$map), NULL,
+     $status = $this->db->put($key, array("bin1"=>$map), NULL,
          array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
-     $status = $db->get($key, $get_record, array("bin1"));
-     if ($status != AEROSPIKE::OK) {
-         return($status);
+     $status = $this->db->get($key, $get_record, array("bin1"));
+     if ($status !== Aerospike::OK) {
+         return $status;
      }
      $comp_res = array_diff_assoc_recursive($put_record, $get_record);
-     if(!empty($comp_res)) {
-         return self::$status_get_record_fail;
-     }
-     $status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY =>
-         Aerospike::POLICY_RETRY_NONE));*/
- }
+     if (!empty($comp_res)) {
+         return Aerospike::ERR_RECORD_NOT_FOUND;
+     }*/
+    }
 }
 ?>

@@ -1,16 +1,19 @@
 <?php
 class ReplaceRoles extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$config) {
+    protected function setUp() {
         $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
-        $db = new Aerospike($config);
-        $res = $db->createUser("example", "example@123", array("read","read-write","sys-admin"));
+        $this->db = new Aerospike($config);
+        $res = $this->db->createUser("example", "example@123", array("read","read-write","sys-admin"));
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
-    protected function tearDown(&$db, &$config) {
-        $res = $db->dropUser("example");
-        $db->close();
+    protected function tearDown() {
+        $res = $this->db->dropUser("example");
+        $this->db->close();
     }
     /**
      * @test
@@ -27,17 +30,12 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesNoParameter($db)
+    function testReplaceRolesNoParameter()
     {
-        if ($db->isConnected()) {
-            try {
-                return($db->replaceRoles());
-            } catch(ErrorException $e) {
-                return($db->errorno());
-            }
-        }
-        else {
-            return($db->errorno());
+       try {
+            return($this->db->replaceRoles());
+        } catch(ErrorException $e) {
+            return($this->db->errorno());
         }
     }
     /**
@@ -55,21 +53,17 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesPositive($db)
+    function testReplaceRolesPositive()
     {
-        if ($db->isConnected()) {
-            $status = $db->replaceRoles("example", array("read", "read-write"));
-            sleep(4);
-            $status = $db->queryUser("example", $roles);
-            sleep(2);
-            $result = array_diff_assoc_recursive($roles, array("read","read-write"));
-            if(!empty($result)) 
-                return Aerospike::ERR;
-            else
-                return Aerospike::OK;
-        }
-        else {
-            return($db->errorno());
+        $status = $this->db->replaceRoles("example", array("read", "read-write"));
+        sleep(4);
+        $status = $this->db->queryUser("example", $roles);
+        sleep(2);
+        $result = array_diff_assoc_recursive($roles, array("read","read-write"));
+        if(!empty($result)) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
         }
     }
     /**
@@ -87,20 +81,16 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesPositivePolicy($db)
+    function testReplaceRolesPositivePolicy()
     {
-        if ($db->isConnected()) {
-            $db->replaceRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000));
-            sleep(4);
-            $db->queryUser("example", $roles);
-            $result = array_diff_assoc_recursive($roles, array("read","read-write"));
-            if(!empty($result)) 
-                return Aerospike::ERR;
-            else
-                return Aerospike::OK;
-        }
-        else {
-            return($db->errorno());
+        $this->db->replaceRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000));
+        sleep(4);
+        $this->db->queryUser("example", $roles);
+        $result = array_diff_assoc_recursive($roles, array("read","read-write"));
+        if(!empty($result)) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
         }
     }
     /**
@@ -118,14 +108,9 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesPolicyIncorrect($db)
+    function testReplaceRolesPolicyIncorrect()
     {
-        if ($db->isConnected()) {
-            return($db->replaceRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
-        }
-        else {
-            return($db->errorno());
-        }
+        return($this->db->replaceRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 0.5)));
     }
     /**
      * @test
@@ -142,14 +127,9 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesUserIsNull($db)
+    function testReplaceRolesUserIsNull()
     {
-        if ($db->isConnected()) {
-            return($db->replaceRoles(NULL, array("read", "read-write")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return($this->db->replaceRoles(NULL, array("read", "read-write")));
     }
     /**
      * @test
@@ -166,14 +146,9 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesNonExistentUser($db)
+    function testReplaceRolesNonExistentUser()
     {
-        if ($db->isConnected()) {
-            return($db->replaceRoles("abcdefgh", array("read", "read-write")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return($this->db->replaceRoles("abcdefgh", array("read", "read-write")));
     }
     /**
      * @test
@@ -190,14 +165,9 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesEmptyRoles($db)
+    function testReplaceRolesEmptyRoles()
     {
-        if ($db->isConnected()) {
-            return($db->replaceRoles("example", array()));
-        }
-        else {
-            return($db->errorno());
-        }
+        return($this->db->replaceRoles("example", array()));
     }
     /**
      * @test
@@ -214,14 +184,9 @@ class ReplaceRoles extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReplaceRolesInvalidRoleList($db)
+    function testReplaceRolesInvalidRoleList()
     {
-        if ($db->isConnected()) {
-            return($db->replaceRoles("example", array("viewer")));
-        }
-        else {
-            return($db->errorno());
-        }
+        return($this->db->replaceRoles("example", array("viewer")));
     }
 }
 ?>
