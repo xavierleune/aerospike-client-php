@@ -15,7 +15,7 @@ class Touch extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $key = $this->db->initKey("test", "demo", "touch_key");
-        $this->db->put($key, array("Greet"=>"World_end"));
+        $this->db->put($key, array("Greet"=>"Hello World"));
         $this->keys[] = $key;
     }
     /**
@@ -105,7 +105,12 @@ class Touch extends AerospikeTestCommon
     function testTouchWithGenGTPositive() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"] + 10;
-        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value))));
+        $touch_status = $this->db->touch($this->keys[0], 12, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
     /**
      * @test
@@ -125,7 +130,12 @@ class Touch extends AerospikeTestCommon
     function testTouchWithGenGTLesser() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"];
-        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value))));
+        $touch_status = $this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
     /**
      * @test
@@ -145,7 +155,12 @@ class Touch extends AerospikeTestCommon
     function testTouchWithGenEQPositive() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"];
-        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value))));
+        $touch_status = $this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
     /**
      * @test
@@ -165,7 +180,12 @@ class Touch extends AerospikeTestCommon
     function testTouchWithGenEQNotEqual() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"] + 5;
-        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value))));
+        $touch_status = $this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
     /**
      * @test
@@ -184,7 +204,12 @@ class Touch extends AerospikeTestCommon
      */
     function testTouchWithGenEQIgnore() {
         $gen_value = 10;
-        return($this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value))));
+        $touch_status = $this->db->touch($this->keys[0], 120, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
     /**
      * @test
@@ -207,7 +232,12 @@ class Touch extends AerospikeTestCommon
          base64_decode("increment_option_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("bin1"=>1), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
-        return($this->db->touch($key, 120, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST)));
+        $touch_status = $this->db->touch($key, 120, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $status = $this->db->get($key, $get_record, array('bin1'));
+        if(1 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
     /**
      * @test
@@ -229,7 +259,12 @@ class Touch extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", 1);
         $put_status = $this->db->put($key, array("bin1"=>1), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-        return($this->db->touch($key, 120, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
+        $touch_status = $this->db->touch($key, 120, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->get($key, $get_record, array('bin1'));
+        if(1 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $touch_status;
     }
 }
 ?>
