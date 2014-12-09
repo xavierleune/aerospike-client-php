@@ -11,7 +11,7 @@ class ScanApply extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    private $ages = array(29, 27, 22, 32);
+    private $ages = array(29, 27, 22, 32, 35);
 
 
     protected function setUp() {
@@ -34,6 +34,9 @@ class ScanApply extends AerospikeTestCommon
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key3");
         $this->db->put($key, array("first_name"=>"ellie", "age"=>($this->ages[3])));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_key4");
+        $this->db->put($key, array("first_name"=>"mitchell", "age"=>($this->ages[4])));
         $this->keys[] = $key;
     }
 
@@ -419,6 +422,42 @@ class ScanApply extends AerospikeTestCommon
             return Aerospike::ERR_CLIENT;
         }
         return $status;
+    }
+    /**
+     * @test
+     * ScanApply - percent is 80
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanApplyPercentIsInt()
+    {
+        $count = 0;
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_PERCENTAGE=>80));
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        for($i=0;$i<5;$i++) {
+        $key = $this->db->initKey("test", "demo", "Get_key".$i);
+        $status = $this->db->get($key, $get_record, array('age','first_name'));
+        if(($this->keys[i] + 20) != $get_record['bins']['age']) {
+            //return Aerospike::ERR_CLIENT;
+        } else {
+            $count++;
+        }
+
+        }
+        if($count >= 3)
+            return Aerospike::OK;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
