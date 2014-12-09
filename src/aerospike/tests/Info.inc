@@ -312,12 +312,10 @@ class Info extends AerospikeTestCommon
     {
         try {
             $status = $this->db->info('mesh', $response, $this->test_host);
-            if(!empty($response))
-                return $status;
+            return $status;
         } catch (ErrorException $e) {
             return $this->db->errorno();
         }
-        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
