@@ -497,7 +497,7 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if ((Z_LVAL_PP(options_value) & AS_POLICY_EXISTS) == AS_POLICY_EXISTS) {
-                        write_policy_p->exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS + 1;
+                        write_policy_p->exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_EXISTS");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,

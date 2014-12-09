@@ -17,16 +17,16 @@ class ScanInfo extends AerospikeTestCommon
         }
         $this->ensureUdfModule($this->db, "tests/lua/test_transform.lua", "test_transform.lua");
         $key = $this->db->initKey("test", "demo", "Get_key");
-        $this->db->put($key,array("first_name"=>"raunak", "age"=>29));
+        $this->db->put($key,array("first_name"=>"john", "age"=>29));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key1");
-        $this->db->put($key,array("first_name"=>"pavan", "age"=>27));
+        $this->db->put($key,array("first_name"=>"smith", "age"=>27));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key2");
-        $this->db->put($key,array("first_name"=>"bhushan", "age"=>22));
+        $this->db->put($key,array("first_name"=>"adam", "age"=>22));
         $this->keys[] = $key;
 	    $key = $this->db->initKey("test", "demo", "Get_key3");
-        $this->db->put($key,array("first_name"=>"ajit", "age"=>32));
+        $this->db->put($key,array("first_name"=>"ellie", "age"=>32));
         $this->keys[] = $key;
     }
 	/**
@@ -162,9 +162,16 @@ class ScanInfo extends AerospikeTestCommon
         $this->myscan_id = $scan_id;
         $scan_info = "age";
         $status = $this->db->scanInfo($this->myscan_id, $scan_info);
-	    if($status != Aerospike::OK) {
+        do {
+            time_nanosleep(0, 5000000); // pause 5ms
+            $status = $this->db->scanInfo($this->myscan_id, $info);
+            if ($status != Aerospike::OK) {
+                return $this->db->errorno();
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+        if ($info['progress_pct'] != 100) {
             return $this->db->errorno();
-	    }
+        }
         return $status;
     }
 	/**

@@ -44,7 +44,7 @@ class Operate  extends AerospikeTestCommon
         );
         $returned = array();
         $status = $this->db->operate($this->keys[0], $operations, $returned);
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -82,7 +82,7 @@ class Operate  extends AerospikeTestCommon
         );
         $returned = array();
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -118,7 +118,7 @@ class Operate  extends AerospikeTestCommon
         );
         $returned = array();
         $status = $this->db->operate($this->keys[0], $operations, $returned);
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -179,7 +179,7 @@ class Operate  extends AerospikeTestCommon
         $returned = array();
         $status = $this->db->operate("", $operations, $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -218,7 +218,7 @@ class Operate  extends AerospikeTestCommon
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -256,12 +256,17 @@ class Operate  extends AerospikeTestCommon
 
         $returned = NULL;
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
-        else {
-            return Aerospike::OK;
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
         }
+        else {
+            return AEROSPIKE::OK;
+        }
+        return $status;
     }
     /**
      * @test
@@ -292,7 +297,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
@@ -334,7 +339,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
@@ -376,7 +381,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
@@ -418,7 +423,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
@@ -460,7 +465,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
@@ -505,7 +510,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($key, $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
@@ -546,7 +551,7 @@ class Operate  extends AerospikeTestCommon
 
         $returned = "abc";
         $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {

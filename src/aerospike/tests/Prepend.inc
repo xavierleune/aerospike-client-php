@@ -34,7 +34,35 @@ class Prepend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPrependOnBinValue() {
-        return($this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ');
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on bin value with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependOnBinValueWithPolicy() {
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
     /**
      * @test

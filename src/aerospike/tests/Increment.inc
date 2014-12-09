@@ -31,8 +31,60 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementByOffsetValue() {
-        return $this->db->increment($this->keys[0], 'bin2', 4, 0,
-            array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $this->db->increment($this->keys[0], 'bin1', 4, 0);
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic bin increment operation with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinIncrementByOffsetValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testBinIncrementByOffsetValueWithPolicy() {
+        $this->db->increment($this->keys[0], 'bin1', 4, 0,
+            array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(5 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic bin increment operation use initial value
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinIncrementByOffsetValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testBinIncrementByOffsetValueUseInitialValue() {
+        $this->db->increment($this->keys[0], 'bin3', 4, 2,
+            array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin3'));
+        if(2 != $get_record['bins']['bin3']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
     /**
      * @test

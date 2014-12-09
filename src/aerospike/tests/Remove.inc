@@ -34,8 +34,30 @@ class Remove extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testKeyRemove() {
-        return ($this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE,
-                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND)));
+        $this->db->remove($this->keys[0]);
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        return $status;
+    }
+    /**
+     * @test
+     * Basic key remove operation with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testKeyRemoveWithPolicy() {
+        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE,
+                Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        return $status;
     }
     /**
      * @test
@@ -230,6 +252,7 @@ class Remove extends AerospikeTestCommon
         $status = $this->db->get($key, $get_record, array('bin1'));
         return $status;
     }
+
     /**
      * @test
      * Basic bin remove operation
@@ -246,7 +269,36 @@ class Remove extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinRemove() {
-        return $this->db->removeBin($this->keys[0], array("bin1"));
+        $this->db->removeBin($this->keys[0], array("bin1"));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(!array_key_exists('bins', $get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * Basic bin remove operation with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testBinRemoveWithPolicy() {
+        $this->db->removeBin($this->keys[0], array("bin1"), array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
+        if(!array_key_exists('bins', $get_record)) {
+            return $status;
+        }
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -421,7 +473,6 @@ class Remove extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testRemoveBinWithPolicyKeySend() {
-        //$key = $this->db->initKey("test", "demo", 1);
         $put_status = $this->db->put($this->keys[0], array("bin1"=>"1"), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
 

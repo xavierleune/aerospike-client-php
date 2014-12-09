@@ -34,7 +34,35 @@ class Append  extends AerospikeTestCommon
      * @test_plans{1.1}
      */
      function testAppendOnBinValue() {
-        return ($this->db->append($this->keys[0], 'Greet', ' World', array(Aerospike::OPT_WRITE_TIMEOUT=>1000)));
+        $this->db->append($this->keys[0], 'Greet', ' World');
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("World_end World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic append opeartion on bin value with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAppendOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+     function testAppendOnBinValueWithPolicy() {
+        $this->db->append($this->keys[0], 'Greet', ' World', array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("World_end World" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
     /**
      * @test
