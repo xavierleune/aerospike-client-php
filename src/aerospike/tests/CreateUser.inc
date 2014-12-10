@@ -279,9 +279,15 @@ class CreateUser extends AerospikeTestCommon
         sleep(2);
         $this->db->queryUser("createuser-example", $roles);
         $result = $this->db->createUser("createuser2", "example123", array("read", "read-write"));
+        sleep(2);
+        $this->db->queryUser("createuser2", $roles);
         $this->db->dropUser("createuser2");
         $this->db->dropUser("createuser-example");
-        return $result;
+        $result = array_diff_assoc_recursive($test, $roles);
+        if(empty($result)) 
+            return Aerospike::OK;
+        else
+            return Aerospike::ERR;
     }
     /**
      * @test

@@ -55,7 +55,15 @@ class GrantRoles extends AerospikeTestCommon
      */
     function testGrantRolesPositive()
     {
-        return($this->db->grantRoles("example", array("read", "read-write")));
+        $this->db->grantRoles("example", array("read", "read-write"));
+        sleep(2);
+        $status = $this->db->queryUser("example", $roles);
+        $result = array_diff_assoc_recursive($roles, array("read", "read-write"));
+        if(!empty($result)) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
+        }
     }
     /**
      * @test
@@ -74,7 +82,15 @@ class GrantRoles extends AerospikeTestCommon
      */
     function testGrantRolesPositivePolicy()
     {
-        return($this->db->grantRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000)));
+        $this->db->grantRoles("example", array("read", "read-write"), array(Aerospike::OPT_WRITE_TIMEOUT => 1000));
+        sleep(2);
+        $status = $this->db->queryUser("example", $roles);
+        $result = array_diff_assoc_recursive($roles, array("read", "read-write"));
+        if(!empty($result)) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
+        }
     }
     /**
      * @test
