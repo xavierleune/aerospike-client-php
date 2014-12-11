@@ -522,9 +522,43 @@ class ScanApply extends AerospikeTestCommon
      */
     function testScanApplyConcurrentIsInt()
     {
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_CONCURRENTLY=>5));
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * ScanApply - conncurent option is positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanApplyConcurrentPositive()
+    {
         $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20), $scan_id, array(Aerospike::OPT_SCAN_CONCURRENTLY=>true));
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
+        }
+        do {
+            time_nanosleep(0, 5000000); // pause 5ms
+            $status = $this->db->scanInfo($scan_id, $info);
+            if ($status != Aerospike::OK) {
+                return $this->db->errorno();
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+        $status = $this->db->get($this->keys[2], $get_record, array('age'));
+        if(42 != $get_record['bins']['age']) {
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
