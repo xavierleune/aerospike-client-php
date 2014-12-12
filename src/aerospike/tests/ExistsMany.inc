@@ -52,6 +52,44 @@ class ExistsMany extends AerospikeTestCommon
     }
     /**
      * @test
+     * Basic existsMany operation with all arguments without options and filter
+     * bins but with one non-existent key.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testExistsManyWithNonExistentKeyPositive() {
+        $my_keys = $this->keys;
+        $key4 = array($this->db->initKey("test", "demo", "existsMany4"));
+        array_splice($my_keys, 1, 0, $key4);
+        $status = $this->db->existsMany($my_keys, $metadata);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($metadata)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i = 0;
+        foreach ($metadata as $metadata_key=>$value) {
+            if (strcmp($my_keys[$i]["key"], $metadata_key) || ($i == 1 && $value)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            $i++;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
      * Basic existsMany operation with empty key array.
      *
      * @pre
