@@ -252,7 +252,7 @@ check_and_set_default_policies(as_config *as_config_p,
  *  *                           with the encountered error if any.
  */
 extern void
-get_generation_value(zval* options_p, int* generation_value_p, as_error *error_p TSRMLS_DC)
+get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *error_p TSRMLS_DC)
 {
     zval**                  gen_policy_pp = NULL;
     zval**                  gen_value_pp = NULL;

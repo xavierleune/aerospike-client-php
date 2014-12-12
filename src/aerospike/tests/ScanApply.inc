@@ -445,18 +445,15 @@ class ScanApply extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        for($i=0;$i<5;$i++) {
-        $key = $this->db->initKey("test", "demo", "Get_key".$i);
-        $status = $this->db->get($key, $get_record, array('age','first_name'));
-        if(($this->keys[i] + 20) != $get_record['bins']['age']) {
-            //return Aerospike::ERR_CLIENT;
-        } else {
-            $count++;
+        for ($i = 0; $i < 5; $i++) {
+            $status = $this->db->get($this->keys[$i], $get_record, array('age'));
+            if (($this->ages[$i] + 20) == $get_record['bins']['age']) {
+                $count++;
+            }
         }
-
-        }
-        if($count >= 3)
+        if($count >= 3) {
             return Aerospike::OK;
+        }
         return Aerospike::ERR_CLIENT;
     }
     /**

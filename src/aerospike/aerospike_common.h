@@ -511,7 +511,7 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p,
         zval* options_p TSRMLS_DC);
 
 extern void
-get_generation_value(zval* options_p, int* generation_value_p,
+get_generation_value(zval* options_p, uint16_t* generation_value_p,
         as_error *error_p TSRMLS_DC);
 /*
  *******************************************************************************************************
