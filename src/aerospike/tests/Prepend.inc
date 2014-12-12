@@ -34,9 +34,37 @@ class Prepend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPrependOnBinValue() {
-        return($this->db->prepend($this->keys[0], 'Greet', 'Hello ',
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ');
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on bin value with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependOnBinValueWithPolicy() {
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ',
             array(Aerospike::OPT_WRITE_TIMEOUT=>1000,
-            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL)));
+            Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
     /**
      * @test
@@ -97,6 +125,185 @@ class Prepend extends AerospikeTestCommon
             Aerospike::OPT_WRITE_TIMEOUT=>1000,
             Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND);
         return $this->db->prepend($this->keys[0], 'Greet', 888888, $opts);
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on with policy GEN_GT
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithGenGTPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 10;
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on with policy GEN_GT value lesser
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithGenGTLesser() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on with policy GEN_EQ
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithGenEQPositive() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on with policy GEN_EQ not equal
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithGenEQNotEqual() {
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on with policy GEN_EQ_IGNORE
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithGenEQIgnore() {
+        $gen_value = 10;
+        $this->db->prepend($this->keys[0], 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend opeartion on with policy key digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithPolicyKeyDigest() {
+        $gen_value = 10;
+        $key = $this->db->initKey("test", "demo",
+         base64_decode("prepend_option_policy_key_digest"), true);
+        $put_status = $this->db->put($key, array("Greet"=>"World_end"), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $this->db->prepend($key, 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $status = $this->db->get($key, $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic prepend operation on with policy key send
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPrependOnBinValue)
+     *
+     * @test_plans{1.1}
+     */
+    function testPrependWithPolicyKeySend() {
+        $gen_value = 10;
+        $key = $this->db->initKey("test", "demo", 1);
+        $put_status = $this->db->put($key, array("Greet"=>"World_end"), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $this->db->prepend($key, 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $status = $this->db->get($key, $get_record, array('Greet'));
+        if("Hello World_end" != $get_record['bins']['Greet']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
 }
 ?>

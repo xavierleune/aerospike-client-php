@@ -44,7 +44,7 @@ class Operate  extends AerospikeTestCommon
         );
         $returned = array();
         $status = $this->db->operate($this->keys[0], $operations, $returned);
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -84,14 +84,13 @@ class Operate  extends AerospikeTestCommon
         $status = $this->db->operate($this->keys[0], $operations, $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
             Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
             return Aerospike::ERR;
-        }
-        else {
+        } else {
             return AEROSPIKE::OK;
         }
         return $status;
@@ -120,7 +119,7 @@ class Operate  extends AerospikeTestCommon
         );
         $returned = array();
         $status = $this->db->operate($this->keys[0], $operations, $returned);
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -182,7 +181,7 @@ class Operate  extends AerospikeTestCommon
         $status = $this->db->operate("", $operations, $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT=>2000,
             Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -219,9 +218,9 @@ class Operate  extends AerospikeTestCommon
         );
 
         $returned = "abc";
-        $status = array($this->keys[0], $operations, $returned,
+        $status = $this->db->operate($this->keys[0], $operations, $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
@@ -257,13 +256,314 @@ class Operate  extends AerospikeTestCommon
             array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
         );
 
+        $returned = NULL;
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($returned, $check);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR;
+        }
+        else {
+            return AEROSPIKE::OK;
+        }
+        return $status;
+    }
+    /**
+     * @test
+     * Basic operate with policy gen GT lesser
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithGenGTLesser() {
+        $check = array("first_name" => "John");
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
         $returned = "abc";
-        $status = array($this->keys[0], $operations, NULL, array(Aerospike::OPT_WRITE_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
         else {
-            return Aerospike::OK;
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
+        }
+    }
+    /**
+     * @test
+     * Basic operate with policy gen GT positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithGenGTPositive() {
+        $check = array("first_name" => "Mr John");
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
+        $returned = "abc";
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
+        }
+    }
+    /**
+     * @test
+     * Basic operate with policy gen EQ positive
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithGenEQPositive() {
+        $check = array("first_name" => "Mr John");
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"];
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
+        $returned = "abc";
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
+        }
+    }
+    /**
+     * @test
+     * Basic operate with policy gen EQ not equal
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithGenEQNotEqual() {
+        $check = array("first_name" => "John");
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
+        $returned = "abc";
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
+        }
+    }
+    /**
+     * @test
+     * Basic operate with policy gen ignore
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithGenEQIgnore() {
+        $check = array("first_name" => "Mr John");
+        $exists_status = $this->db->exists($this->keys[0], $metadata);
+        $gen_value = $metadata["generation"] + 5;
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
+        $returned = "abc";
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
+        }
+    }
+    /**
+     * @test
+     * Basic operate with policy key digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithPolicyKeyDigest() {
+        $check = array("first_name" => "Mr John");
+        $key = $this->db->initKey("test", "demo",
+         base64_decode("operate_option_policy_key_digest"), true);
+        $put_status = $this->db->put($key, array("first_name"=>"John", "last_name"=>"Smith", "age"=>25), NULL,
+         array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
+        $returned = "abc";
+        $status = $this->db->operate($key, $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
+        }
+    }
+    /**
+     * @test
+     * Basic operate with policy key send
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testOperateReturnIsStringNegative)
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWithPolicyKeySend() {
+        $check = array("first_name" => "Mr John");
+
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "last_name",
+            "val" => "."),
+            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
+        );
+
+        $returned = "abc";
+        $status = $this->db->operate($this->keys[0], $operations, $returned, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        if ($status != AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        else {
+            $comp_res = array_diff_assoc_recursive($returned, $check);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            else {
+                return AEROSPIKE::OK;
+            }
         }
     }
 }

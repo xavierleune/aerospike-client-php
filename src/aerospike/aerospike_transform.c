@@ -2785,7 +2785,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;
-    int                         gen_value = 0;
+    uint16_t                    gen_value = 0;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");

@@ -252,7 +252,7 @@ check_and_set_default_policies(as_config *as_config_p,
  *  *                           with the encountered error if any.
  */
 extern void
-get_generation_value(zval* options_p, int* generation_value_p, as_error *error_p TSRMLS_DC)
+get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *error_p TSRMLS_DC)
 {
     zval**                  gen_policy_pp = NULL;
     zval**                  gen_value_pp = NULL;
@@ -497,7 +497,7 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if ((Z_LVAL_PP(options_value) & AS_POLICY_EXISTS) == AS_POLICY_EXISTS) {
-                        write_policy_p->exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS + 1;
+                        write_policy_p->exists = Z_LVAL_PP(options_value) - AS_POLICY_EXISTS;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_EXISTS");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,

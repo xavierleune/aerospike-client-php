@@ -6,4 +6,4 @@ Increment - bin value by offset
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Increment", "testBinIncrementByOffsetValue");
 --EXPECT--
-ERR_BIN_INCOMPATIBLE_TYPE
+OK
