@@ -513,11 +513,11 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
+                        write_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY;
                     } else if(operate_policy_p) {
-                        operate_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
+                        operate_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY;
                     } else if(remove_policy_p) {
-                        remove_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY + 1;
+                        remove_policy_p->retry = Z_LVAL_PP(options_value) - AS_POLICY_RETRY;
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
