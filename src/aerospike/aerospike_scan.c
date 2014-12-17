@@ -248,7 +248,7 @@ aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
 
     add_assoc_long(scan_info_p, PROGRESS_PCT, scan_info.progress_pct);
     add_assoc_long(scan_info_p, RECORDS_SCANNED, scan_info.records_scanned);
-    add_assoc_long(scan_info_p, STATUS, (scan_info.status + AS_SCAN_STATUS));
+    add_assoc_long(scan_info_p, STATUS, scan_info.status);
 exit:
     return error_p->code;
 }

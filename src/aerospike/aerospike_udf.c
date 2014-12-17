@@ -38,13 +38,6 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    if ((language & AS_UDF_TYPE) != AS_UDF_TYPE) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                    "Invalid Value for language");
-            DEBUG_PHP_EXT_ERROR("Invalid value for language");
-            goto exit;
-    }
-
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL,
             NULL, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -83,7 +76,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     while (read) {
         size += read;
         buff_p += read;
-        read = (int)fread(buff_p, 1, LUA_FILE_BUFFER_FRAME, file_p);
+        read = (int) fread(buff_p, 1, LUA_FILE_BUFFER_FRAME, file_p);
     }
 
     as_bytes_init_wrap(&udf_content, bytes_p, size, false);
@@ -92,7 +85,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
      * Register the UDF file in the database cluster.
      */
     if (AEROSPIKE_OK != aerospike_udf_put(aerospike_obj_p->as_ref_p->as_p,
-                error_p, &info_policy, module_p, language - AS_UDF_TYPE,
+                error_p, &info_policy, module_p, language,
                       udf_content_p)) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
@@ -255,16 +248,9 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
 {
     as_udf_files            udf_files;
     uint32_t                init_udf_files = 0;
-    uint32_t                i=0;
+    uint32_t                i = 0;
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
-
-    if ((language != -1) && ((language & AS_UDF_TYPE) != AS_UDF_TYPE)) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                    "Invalid Value for language");
-            DEBUG_PHP_EXT_ERROR("Invalid value for language");
-            goto exit;
-    }
 
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL,
             NULL, options_p, error_p TSRMLS_CC);
@@ -282,8 +268,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
     }
 
     for (i = 0; i < udf_files.size; i++) {
-        if ((language != -1) && ((udf_files.entries[i].type) != 
-                    (language - AS_UDF_TYPE))) {
+        if ((language != -1) && (udf_files.entries[i].type != language)) {
                 continue;
         }
         zval* module_p = NULL;
@@ -292,7 +277,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
         add_assoc_stringl(module_p, UDF_MODULE_NAME, udf_files.entries[i].name,
                 strlen(udf_files.entries[i].name), 1);
         add_assoc_long(module_p, UDF_MODULE_TYPE,
-                (udf_files.entries[i].type + AS_UDF_TYPE));
+                (udf_files.entries[i].type));
         add_next_index_zval(array_of_modules_p, module_p);
     }
 
@@ -330,13 +315,6 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    if ((language & AS_UDF_TYPE) != AS_UDF_TYPE) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                    "Invalid Value for language");
-            DEBUG_PHP_EXT_ERROR("Invalid value for language");
-            goto exit;
-    }
-
     set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL,
             NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -348,8 +326,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
     init_udf_file = 1;
     
     if (AEROSPIKE_OK != aerospike_udf_get(aerospike_obj_p->as_ref_p->as_p,
-                error_p, &info_policy, module_p, (language - AS_UDF_TYPE),
-                &udf_file)) {
+                error_p, &info_policy, module_p, language, &udf_file)) {
         DEBUG_PHP_EXT_ERROR("%s", error_p->message);
         goto exit;
     }

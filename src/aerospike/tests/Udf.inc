@@ -44,7 +44,7 @@ class Udf extends AerospikeTestCommon
             }
         }
         if ($is_registered) return Aerospike::OK;
-        else return Aerospike::ERR;
+        else return Aerospike::ERR_CLIENT;
     }
     /**
      * @test

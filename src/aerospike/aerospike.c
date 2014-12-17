@@ -2730,7 +2730,7 @@ PHP_METHOD(Aerospike, register)
     char*                  module_p = NULL;
     long                   path_len = 0;
     long                   module_len = 0;
-    long                   language = UDF_TYPE_LUA;
+    long                   language = AS_UDF_TYPE_LUA;
     zval*                  module_zval_p = NULL;
     zval*                  path_zval_p = NULL;
     zval*                  options_p = NULL;
@@ -3080,7 +3080,7 @@ PHP_METHOD(Aerospike, getRegistered)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     char*                  module_p = NULL;
-    long                   language = UDF_TYPE_LUA;
+    long                   language = AS_UDF_TYPE_LUA;
     zval*                  module_zval_p = NULL;
     zval*                  udf_code_p = NULL;
     zval*                  options_p = NULL;
