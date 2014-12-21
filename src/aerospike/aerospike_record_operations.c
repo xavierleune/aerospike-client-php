@@ -191,6 +191,7 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
+    get_generation_value(options_p, &remove_policy.generation, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p,
                     &remove_policy, as_key_p))) {
         goto exit;
@@ -247,7 +248,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, 1);
-
+    get_generation_value(options_p, &ops.gen, error_p TSRMLS_CC);
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
                                                       options_p, error_p,
@@ -308,6 +309,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, zend_hash_num_elements(operations_array_p));
+    get_generation_value(options_p, &ops.gen, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
@@ -452,6 +454,7 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
         }
     }
 
+    get_generation_value(options_p, &rec.gen, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p,
                     NULL, as_key_p, &rec))) {
          goto exit;

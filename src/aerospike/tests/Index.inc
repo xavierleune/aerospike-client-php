@@ -202,7 +202,93 @@ class Index extends AerospikeTestCommon
             return $this->db->errorno();
         }
     }
+    /**
+     * @test
+     * Index recreate and drop operation on string bin with same name on which index is already created
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCreateIndexIntegerBinPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testCreateAndDropIndexSameStringBinWithSameNamePositive() {
+        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
+            Aerospike::INDEX_TYPE_STRING, "bin2_string_index")) {
+            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
+                Aerospike::INDEX_TYPE_STRING, "bin2_string_index")) {
+                return($this->db->dropIndex("test", "bin2_string_index"));
+            } else {
+                return $this->db->errorno();
+            }
+        } else {
+            return $this->db->errorno();
+        }
+    }
 
+    /**
+     * @test
+     * Index create and drop operation with same name as an existing index on a different string bin.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCreateIndexIntegerBinPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testCreateAndDropIndexDifferentStringBinWithSameNamePositive() {
+        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
+            Aerospike::INDEX_TYPE_STRING, "test_index")) {
+            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin3",
+                Aerospike::INDEX_TYPE_STRING, "test_index")) {
+                return($this->db->dropIndex("test", "test_index"));
+            } else {
+                return $this->db->errorno();
+            }
+        } else {
+            return $this->db->errorno();
+        }
+    }
+
+    /**
+     * @test
+     * Index create and drop operation with new index with different name on an already
+     * indexed integer bin.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCreateIndexIntegerBinPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testCreateAndDropIndexSameStringBinWithDifferentNamePositive() {
+        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
+            Aerospike::INDEX_TYPE_STRING, "test_index")) {
+            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
+                Aerospike::INDEX_TYPE_STRING, "test_index_new")) {
+                return($this->db->dropIndex("test", "test_index"));
+            } else {
+                return $this->db->errorno();
+            }
+        } else {
+            return $this->db->errorno();
+        }
+     }
     /**
      * @test
      * Positive index create and drop operation on integer bin: non existing bin
@@ -281,7 +367,8 @@ class Index extends AerospikeTestCommon
 
     /**
      * @test
-     * Negative index create and drop operation on integer bin: invalid index type
+     * Positive index create and drop operation on integer bin: invalid index
+     * type, will use the default string index type.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -294,13 +381,13 @@ class Index extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testCreateAndDropIndexIntegerBinInvalidIndexTypeNegative() {
+    function testCreateAndDropIndexIntegerBinInvalidIndexTypePositive() {
         if (Aerospike::OK == $this->db->createIndex("test", "demo",
             "bin2", 10,
             "bin2_integer_index")) {
             return($this->db->dropIndex("test", "bin2_integer_index"));
         } else {
-            return $this->db->errorno();
+            return($this->db->errorno());
         }
     }
 

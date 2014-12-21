@@ -412,7 +412,10 @@ class Get extends AerospikeTestCommon
       if ($status !== Aerospike::OK) {
           return $status;
       }
-      $status = $this->db->get($key1,$get_rec, NULL, array(Aerospike::OPT_READ_TIMEOUT=>2000));
+      $status = $this->db->get($key1,$get_rec, NULL,
+          array(Aerospike::OPT_READ_TIMEOUT=>2000,
+          Aerospike::OPT_POLICY_REPLICA=>Aerospike::POLICY_REPLICA_ANY,
+          Aerospike::OPT_POLICY_CONSISTENCY=>Aerospike::POLICY_CONSISTENCY_ONE));
       if ($status !== Aerospike::OK) {
           return $status;
       }
