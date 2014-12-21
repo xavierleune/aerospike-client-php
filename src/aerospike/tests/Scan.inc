@@ -12,10 +12,10 @@ class Scan extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $key = $this->db->initKey("test", "demo", "Get_key");
-        $this->db->put($key, array("email"=>"raunak"));
+        $this->db->put($key, array("email"=>"john"));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key1");
-        $this->db->put($key, array("email"=>"pavan"));
+        $this->db->put($key, array("email"=>"smith"));
         $this->keys[] = $key;
     }
 
@@ -117,15 +117,30 @@ class Scan extends AerospikeTestCommon
     function testCheckIncorrectNameOfBins()
     {
         $processed = 0;
-        return($this->db->scan("test", "demo", function ($record) use (&$processed) {
+        $db= $this->db;
+        $this->db->scan("test", "demo", function ($record) use (&$processed, &$db) {
             if (array_key_exists("account", $record["bins"]) &&
                 !is_null($record["bins"]["account"])) {
                     echo $record["bins"]["account"]."\n";
                 }
+            else {
+                return Aerospike::ERR_CLIENT;
+            }
+            $key = $db->initKey("test", "demo", "testing");
+            $db->put($key, array("bin1"=>10));
             if ($processed++ > 19) {
                 return false;
             }
-        }, array("account")));
+        }, array("account"));
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(array_key_exists('bins',$record)) {
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
+        }
+        }
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -145,12 +160,32 @@ class Scan extends AerospikeTestCommon
     function testCheckIncorrectBinNameInCallback()
     {
         $processed = 0;
-        return($this->db->scan("test", "demo", function ($record) use (&$processed) {
+        $db= $this->db;
+        $this->db->scan("test", "demo", function ($record) use (&$processed, &$db) {
             if (array_key_exists("account", $record["bins"]) &&
                 !is_null($record["bins"]["account"]))
                 echo $record["bins"]["email"]."\n";
-            if ($processed++ > 19) return false;
-        }, array("email")));
+            if ((!strcmp($record["bins"]["email"], "smith")) ||
+                (!strcmp($record["bins"]["email"], "john"))) {
+                    $processed++;
+                } else {
+                    return Aerospike::ERR_CLIENT;
+            }
+            if ($processed == 2) {
+                $key = $db->initKey("test", "demo", "testing");
+                $db->put($key, array("bin1"=>10));
+                return Aerospike::OK;
+            } else if($processed > 2) {
+                return Aerospike::ERR_CLIENT;
+            } 
+        }, array("email"));
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -252,29 +287,35 @@ class Scan extends AerospikeTestCommon
     function testCheckForCorrectArguments()
     {
         $processed = 0;
-        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
+        $db= $this->db;
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed, &$db) {
             if ((strcmp("test", $record["key"]["ns"]) == 0) && (strcmp("demo",
                 $record["key"]["set"]) == 0)) {
                     if ($processed < 2) {
                         if (array_key_exists("email", $record["bins"]) &&
                             !is_null($record["bins"]["email"])) {
-                                if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                    (!strcmp($record["bins"]["email"], "raunak"))) {
+                                if ((!strcmp($record["bins"]["email"], "smith")) ||
+                                    (!strcmp($record["bins"]["email"], "john"))) {
                                         $processed++;
                                     }
                             }
                     }
                     if ($processed == 2) {
+                        $key = $db->initKey("test", "demo", "testing");
+                        $db->put($key, array("bin1"=>10));
                         return Aerospike::OK;
                     }
                 } else {
                     return(AEROSPIKE::ERR);
                 }
         }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
-        if ($status !== AEROSPIKE::OK) {
-                return $this->db->errorno();
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
         }
-        return $status;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -294,29 +335,35 @@ class Scan extends AerospikeTestCommon
     function testScanPositiveWithAllArguments()
     {
         $processed = 0;
-        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
-            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
+        $db = $this->db;
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed, &$db) {
+            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {
                     if ($processed < 2) {
                         if (array_key_exists("email", $record["bins"]) &&
                             !is_null($record["bins"]["email"])) {
-                            if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                (!strcmp($record["bins"]["email"], "raunak"))) {
+                            if ((!strcmp($record["bins"]["email"], "smith")) ||
+                                (!strcmp($record["bins"]["email"], "john"))) {
                                     $processed++;
                                 }
                         }
                     }
                     if ($processed == 2) {
+                        $key = $db->initKey("test", "demo", "testing");
+                        $db->put($key, array("bin1"=>10));
                         return Aerospike::OK;
                     }
                 } else {
                     return AEROSPIKE::ERR_CLIENT;
                 }
         }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000, Aerospike::OPT_SCAN_CONCURRENTLY=>true));
-        if ($status !== AEROSPIKE::OK) {
-            return $this->db->errorno();
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
         }
-        return $status;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -336,29 +383,35 @@ class Scan extends AerospikeTestCommon
     function testCheckForCorrectArgumentsWithoutOptionals()
     {
         $processed = 0;
-        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
-            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
+        $db= $this->db;
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed, &$db) {
+            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {
                     if ($processed < 2) {
                         if (array_key_exists("email", $record["bins"]) &&
                             !is_null($record["bins"]["email"])) {
-                            if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                (!strcmp($record["bins"]["email"], "raunak"))) {
+                            if ((!strcmp($record["bins"]["email"], "smith")) ||
+                                (!strcmp($record["bins"]["email"], "john"))) {
                                     $processed++;
                                 }
                         }
                     }
                     if ($processed == 2) {
+                        $key = $db->initKey("test", "demo", "testing");
+                        $db->put($key, array("bin1"=>10));
                         return Aerospike::OK;
                     }
                 } else {
                     return AEROSPIKE::ERR_CLIENT;
                 }
         });
-        if ($status !== AEROSPIKE::OK) {
-            return $this->db->errorno();
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
         }
-        return $status;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -378,29 +431,35 @@ class Scan extends AerospikeTestCommon
     function testCheckForOneOptionalArgument()
     {
         $processed = 0;
-        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
-            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("set",
+        $db= $this->db;
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed, &$db) {
+            if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {
                     if ($processed < 2) {
                         if (array_key_exists("email", $record["bins"]) &&
                             !is_null($record["bins"]["email"])) {
-                            if ((!strcmp($record["bins"]["email"], "pavan")) ||
-                                (!strcmp($record["bins"]["email"], "raunak"))) {
+                            if ((!strcmp($record["bins"]["email"], "smith")) ||
+                                (!strcmp($record["bins"]["email"], "john"))) {
                                     $processed++;
                                 }
                         }
                     }
                     if ($processed == 2) {
+                        $key = $db->initKey("test", "demo", "testing");
+                        $db->put($key, array("bin1"=>10));
                         return Aerospike::OK;
                     }
                 } else {
                     return AEROSPIKE::ERR_CLIENT;
                 }
         }, array("email"));
-        if ($status !== AEROSPIKE::OK) {
-            return $this->db->errorno();
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
         }
-        return $status;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test

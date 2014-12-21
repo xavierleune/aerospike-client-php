@@ -52,6 +52,72 @@ class ExistsMany extends AerospikeTestCommon
     }
     /**
      * @test
+     * Basic existsMany operation with all arguments without options and filter
+     * bins but with one non-existent key.
+     * Basic existsMany operation incorrect key
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testExistsManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testExistsManyWithNonExistentKeyPositive() {
+        $my_keys = $this->keys;
+        $key4 = array($this->db->initKey("test", "demo", "existsMany5"));
+        array_splice($my_keys, 1, 0, $key4);
+        $status = $this->db->existsMany($my_keys, $metadata);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($metadata)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i = 0;
+        foreach ($metadata as $metadata_key=>$value) {
+            if (strcmp($my_keys[$i]["key"], $metadata_key) || ($i == 1 && $value)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            $i++;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Basic existsMany operation incorrect key
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testExistsManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testExistsManyPositiveIncorrectKey() {
+        $key = $this->db->initKey("test", "demo", "existsMany4");
+        $this->db->put($key, array("binA"=>10));
+        $status = $this->db->existsMany($this->keys, $metadata, array(Aerospike::OPT_READ_TIMEOUT=>3000));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($metadata)) {
+            return Aerospike::ERR;
+        }
+        return $status;
+    }
+    /**
+     * @test
      * Basic existsMany operation with empty key array.
      *
      * @pre
@@ -67,6 +133,9 @@ class ExistsMany extends AerospikeTestCommon
      */
     function testExistsManyEmptyKeyArrayNegative() {
         $status = $this->db->existsMany(array(), $metadata);
+        if (!empty($metadata)) {
+            return Aerospike::ERR_CLIENT;
+        }
         return $status;
     }
     /**
@@ -134,6 +203,9 @@ class ExistsMany extends AerospikeTestCommon
     function testExistsManyMetadataEmptyStringPositive() {
         $metadta = "";
         $status = $this->db->existsMany($this->keys, $metadata);
+        if (empty($metadata)) {
+            return Aerospike::ERR;
+        }
         return $status;
     }
     /**
@@ -154,6 +226,9 @@ class ExistsMany extends AerospikeTestCommon
     function testExistsManyMetadataStringVariablePositive() {
         $metadata = "abc";
         $status = $this->db->existsMany($this->keys, $metadata);
+        if (empty($metadata)) {
+            return Aerospike::ERR;
+        }
         return $status;
     }
     /**

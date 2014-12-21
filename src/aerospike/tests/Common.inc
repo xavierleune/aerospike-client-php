@@ -219,8 +219,12 @@ abstract class AerospikeTestCommon extends ASTestFramework
     }
 
     protected function ensureUdfModule($module_path, $module_alias) {
+        if ($this->has_module($module_alias)) {
+            return Aerospike::OK;
+        }
         $status = $this->db->register($module_path, $module_alias);
         time_nanosleep(0, 100000000); // pause 100ms for module registration
+        //sleep(2); // pause 100ms for module registration
         if ($status !== Aerospike::OK) {
             return $status;
         }
@@ -233,17 +237,24 @@ abstract class AerospikeTestCommon extends ASTestFramework
             $host2_module_loaded = true;
         }
         while (!$host1_module_loaded) {
-            $status = $this->db->info("udf-list", $response, $host1);
+            //$status = $this->db->info("udf-list", $response, $host1);
+            $status = $this->db->listRegistered($response);
             if ($status !== Aerospike::OK) {
                 sleep(1);
                 return $status; // info is being wonky, give up on waiting
             }
-            if (strpos($response, 'filename='. $module_alias) === false) {
+            foreach ($response as $file) {
+                if (!strcmp($file["name"], "test_transform.lua")) {
+                    $host1_module_loaded = true;
+                    break;
+                }
+            }
+            /*if (strpos($response, 'filename='. $module_alias) === false) {
                 time_nanosleep(0, 50000000); // pause another 50ms for module registration
             } else {
                 $this->modules[] = $module_alias;
                 $host1_module_loaded = true;
-            }
+            }*/
         }
         while (!$host2_module_loaded) {
             $status = $this->db->info("udf-list", $response, $host2);

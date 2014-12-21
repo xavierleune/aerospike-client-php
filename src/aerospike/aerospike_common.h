@@ -550,7 +550,7 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p,
         zval* options_p TSRMLS_DC);
 
 extern void
-get_generation_value(zval* options_p, int* generation_value_p,
+get_generation_value(zval* options_p, uint16_t* generation_value_p,
         as_error *error_p TSRMLS_DC);
 
 /*
@@ -613,14 +613,12 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
         char* namespace_p, char* set_p, userland_callback* user_func_p,
-        HashTable* bins_ht_p, /*long percent, long scan_priority,
-        bool concurrent, bool no_bins,*/ zval* options_p TSRMLS_DC);
+        HashTable* bins_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, /*long percent,
-        long scan_priority, bool concurrent, bool no_bins,*/ zval *options_p TSRMLS_DC);
+        char* set_p, zval* scan_id_p, zval *options_p, bool block TSRMLS_DC);
 
 extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
