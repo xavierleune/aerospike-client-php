@@ -71,9 +71,9 @@ class LMap extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lmap', 'put', array($this->bin, $key, $value));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lmap', 'put', array($this->bin, $key, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -86,9 +86,9 @@ class LMap extends LDT
      * @see put
      */
     public function putMany(array $key_values) {
-        $res = $this->db->apply($this->key, 'lmap', 'put_all', array($this->bin, $key_values));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lmap', 'put_all', array($this->bin, $key_values));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -105,9 +105,9 @@ class LMap extends LDT
             return $this->errorno;
         }
         $element = array();
-        $res = $this->db->apply($this->key, 'lmap', 'get', array($this->bin, $key), $element);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lmap', 'get', array($this->bin, $key), $element);
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -122,9 +122,9 @@ class LMap extends LDT
             $this->error = self::MSG_TYPE_NOT_ATOMIC;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lmap', 'remove', array($this->bin, $key));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lmap', 'remove', array($this->bin, $key));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -135,9 +135,9 @@ class LMap extends LDT
      */
     public function scan(&$elements) {
         $elements = array();
-        $res = $this->db->apply($this->key, 'lmap', 'scan', array($this->bin), $elements);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lmap', 'scan', array($this->bin), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**

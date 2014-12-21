@@ -254,9 +254,9 @@ abstract class LDT
      * @return boolean
      */
     public function isLDT() {
-        $res = $this->db->apply($this->key, $this->module, 'ldt_exists', array($this->bin), $returned);
-        $this->processStatusCode($res);
-        if ($res !== Aerospike::OK) {
+        $status = $this->db->apply($this->key, $this->module, 'ldt_exists', array($this->bin), $returned);
+        $this->processStatusCode($status);
+        if ($status !== Aerospike::OK) {
             return false;
         } else {
             return (boolean) $returned;
@@ -270,9 +270,9 @@ abstract class LDT
      * @return int status code of the operation
      */
     public function size(&$num_elements) {
-        $res = $this->db->apply($this->key, $this->module, 'size', array($this->bin), $num_elements);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, $this->module, 'size', array($this->bin), $num_elements);
+        $this->processStatusCode($status);
+        return $status;
     }
 
     /**
@@ -282,9 +282,9 @@ abstract class LDT
      * @return int status code of the operation
      */
     public function getCapacity(&$num_elements) {
-        $res = $this->db->apply($this->key, $this->module, 'get_capacity', array($this->bin), $num_elements);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, $this->module, 'get_capacity', array($this->bin), $num_elements);
+        $this->processStatusCode($status);
+        return $status;
     }
 
     /**
@@ -294,9 +294,9 @@ abstract class LDT
      * @return int status code of the operation
      */
     public function setCapacity($num_elements) {
-        $res = $this->db->apply($this->key, $this->module, 'set_capacity', array($this->bin, $num_elements));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, $this->module, 'set_capacity', array($this->bin, $num_elements));
+        $this->processStatusCode($status);
+        return $status;
     }
 
     /**
@@ -305,9 +305,9 @@ abstract class LDT
      * @return int status code of the operation
      */
     public function destroy() {
-        $res = $this->db->apply($this->key, $this->module, 'destroy', array($this->bin));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, $this->module, 'destroy', array($this->bin));
+        $this->processStatusCode($status);
+        return $status;
     }
 
     /**
@@ -316,13 +316,23 @@ abstract class LDT
      * @param int $status code of the operation
      */
     protected function processStatusCode($status) {
-        if ($status !== Aerospike::OK) {
-            $this->error = $this->db->error();
-            $this->errorno = $this->db->errorno();
-        } else {
+        if ($status === Aerospike::OK) {
             $this->error = '';
             $this->errorno = self::OK;
+            return true;
         }
+        if ($status === Aerospike::ERR_UDF) {
+            // parse the secondary error code embedded in the error message
+            $rhs = strrpos($this->db->error(), ':LDT');
+            $lhs = strrpos($this->db->error(), ': ');
+            if ($rhs !== false && $lhs !== false) {
+                $this->errorno = substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2)));
+                $this->error = substr($this->db->error(), $rhs + 1);
+                return true;
+            }
+        }
+        $this->error = $this->db->error();
+        $this->errorno = $this->db->errorno();
     }
 
     /**

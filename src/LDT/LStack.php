@@ -65,9 +65,9 @@ class LStack extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lstack', 'push', array($this->bin, $value));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lstack', 'push', array($this->bin, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -80,9 +80,9 @@ class LStack extends LDT
      * @see push
      */
     public function pushMany(array $values) {
-        $res = $this->db->apply($this->key, 'lstack', 'push_all', array($this->bin, $values));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lstack', 'push_all', array($this->bin, $values));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -99,9 +99,9 @@ class LStack extends LDT
             return $this->errorno;
         }
         $elements = array();
-        $res = $this->db->apply($this->key, 'lstack', 'peek', array($this->bin, $num), $elements);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lstack', 'peek', array($this->bin, $num), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
