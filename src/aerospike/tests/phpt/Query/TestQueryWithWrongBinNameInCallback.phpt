@@ -6,5 +6,4 @@ Query - query call has wrong bin name in callback
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithWrongBinNameInCallback");
 --EXPECT--
-OK
-
+ERR_RECORD_NOT_FOUND

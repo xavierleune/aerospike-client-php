@@ -1,9 +1,9 @@
 --TEST--
-Exists - Get Key metadata if Key exists
+Exists - Error if Key not exists
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Exist", "testKeyExist");
+aerospike_phpt_runtest("Exists", "testKeyDoesNotExist");
 --EXPECT--
-OK
+ERR_RECORD_NOT_FOUND

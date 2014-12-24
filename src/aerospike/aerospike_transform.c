@@ -2785,7 +2785,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;
-    int                         gen_value = 0;
+    uint16_t                    gen_value = 0;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
@@ -2969,7 +2969,7 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         }
 
         if ((!record_key_p->valuep) || (!key_policy_pp) || (key_policy_pp &&
-                    Z_LVAL_PP(key_policy_pp) == POLICY_KEY_DIGEST)) {
+                    Z_LVAL_PP(key_policy_pp) == AS_POLICY_KEY_DIGEST)) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
                 status = AEROSPIKE_ERR;

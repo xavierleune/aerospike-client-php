@@ -67,9 +67,9 @@ class LList extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'llist', 'add', array($this->bin, $value));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'llist', 'add', array($this->bin, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -81,9 +81,9 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function addMany(array $values) {
-        $res = $this->db->apply($this->key, 'llist', 'add_all', array($this->bin, $values));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'llist', 'add_all', array($this->bin, $values));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -96,15 +96,15 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function find($value, &$elements) {
-        if (!is_string($value) && !is_int($value)) {
+        if (!is_string($value) && !is_int($value) && !is_array($value)) {
             $this->errorno = self::ERR_INPUT_PARAM;
-            $this->error = self::MSG_TYPE_NOT_ATOMIC;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
         $elements = array();
-        $res = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -122,9 +122,9 @@ class LList extends LDT
             $this->error = self::MSG_TYPE_NOT_ATOMIC;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'llist', 'remove', array($this->bin, $value));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'llist', 'remove', array($this->bin, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -141,7 +141,7 @@ class LList extends LDT
     public function scan(&$elements, $min=null, $max=null) {
         $elements = array();
         if (is_null($min) && is_null($max)) {
-            $res = $this->db->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
+            $status = $this->db->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
         } else {
             if ((!is_string($min) && !is_int($min) && !is_null($min)) ||
                 (!is_string($max) && !is_int($max) && !is_null($max))) {
@@ -149,10 +149,10 @@ class LList extends LDT
                 $this->error = self::MSG_RANGE_TYPE_INVALID;
                 return $this->errorno;
             }
-            $res = $this->db->apply($this->key, 'llist', 'range', array($this->bin, $min, $max), $elements);
+            $status = $this->db->apply($this->key, 'llist', 'range', array($this->bin, $min, $max), $elements);
         }
-        $this->processStatusCode($res);
-        return $res;
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**

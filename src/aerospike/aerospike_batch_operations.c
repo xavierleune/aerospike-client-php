@@ -80,29 +80,31 @@ bool
 batch_exists_cb(const as_batch_read* results, uint32_t n, void* udata)
 {
     TSRMLS_FETCH();
-    as_status                   status = AEROSPIKE_OK;
-    foreach_callback_udata*     udata_ptr = (foreach_callback_udata*)udata;
+    foreach_callback_udata*     udata_ptr = (foreach_callback_udata*) udata;
     uint32_t                    i = 0;
-    zval*                       record_metadata_p = NULL;
     bool                        null_flag = false;
 
     for (i = 0; i < n; i++) {
+        zval *record_metadata_p = NULL;
         if (results[i].result == AEROSPIKE_OK) {
             MAKE_STD_ZVAL(record_metadata_p);
             array_init(record_metadata_p);
             if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
                         results[i].record.gen)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
-                status = AEROSPIKE_ERR;
-                goto exit;
+                PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
+                        "Unable to get generation of a record");
+                goto cleanup;
             }
 
             if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_TTL,
                     results[i].record.ttl)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get ttl of a record");
-                status = AEROSPIKE_ERR;
-                goto exit;
+                PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
+                        "Unable to get ttl of a record");
+                goto cleanup;
             }
+            null_flag = false;
         } else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
             null_flag = true;
         } else {
@@ -112,21 +114,17 @@ batch_exists_cb(const as_batch_read* results, uint32_t n, void* udata)
         populate_result_for_get_exists_many((as_key *) results[i].key,
                 udata_ptr->udata_p, record_metadata_p, udata_ptr->error_p,
                 null_flag TSRMLS_CC);
+
         if (AEROSPIKE_OK != udata_ptr->error_p->code) {
             DEBUG_PHP_EXT_DEBUG("%s", udata_ptr->error_p->message);
             goto cleanup;
         } else {
             continue;
         }
-
-        if (null_flag) {
-            goto cleanup;
-        }
 cleanup:
-        if (record_metadata_p && AEROSPIKE_OK != udata_ptr->error_p->code) {
+        if (record_metadata_p && (AEROSPIKE_OK != udata_ptr->error_p->code)) {
             zval_ptr_dtor(&record_metadata_p);
         }
-        goto exit;
     }
 
 exit:

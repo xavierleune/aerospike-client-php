@@ -6,5 +6,4 @@ Scan - Incorrect name of bins
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Scan", "testCheckIncorrectNameOfBins");
 --EXPECT--
-OK
-
+ERR_CLIENT

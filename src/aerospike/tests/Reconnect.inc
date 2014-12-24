@@ -4,13 +4,12 @@ require_once("Common.inc");
 
 class Reconnect extends AerospikeTestCommon
 {
-    protected function setUp(&$db, &$key) {
+    protected function setUp() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $db = new Aerospike($config);
-    }
-
-    protected function tearDown(&$db, &$key) {
-        $db->close();
+        $this->db = new Aerospike($config);
+        if (!$this->db->isConnected()) {
+            return $this->db->errorno();
+        }
     }
 
     /**
@@ -28,37 +27,33 @@ class Reconnect extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReconnectPersistentConnectionPositive($db)
+    function testReconnectPersistentConnectionPositive()
     {
-        if ($db->isConnected()) {
-            $key = $db->initKey("test", "demo", "testkey");
-            $db->put($key, array("username"=>"John"));
-            $close_status = $db->close();
-            if (Aerospike::OK == $close_status) {
-                $reconnect_status = $db->reconnect();
-                if (Aerospike::OK == $reconnect_status) {
-                    if (Aerospike::OK == $db->get($key, $rec)) {
-                        if (!array_key_exists("username", $rec["bins"])) {
-                            return Aerospike::ERR_CLIENT;
-                        } else {
-                            if ($rec["bins"]["username"] == "John") {
-                                $db->remove($key);
-                                return Aerospike::OK;
-                            } else {
-                                return Aerospike::ERR_CLIENT;
-                            }
-                        }
-                    } else {
+        $key = $this->db->initKey("test", "demo", "testkey");
+        $this->db->put($key, array("username"=>"John"));
+        $close_status = $this->db->close();
+        if (Aerospike::OK == $close_status) {
+            $reconnect_status = $this->db->reconnect();
+            if (Aerospike::OK == $reconnect_status) {
+                if (Aerospike::OK == $this->db->get($key, $rec)) {
+                    if (!array_key_exists("username", $rec["bins"])) {
                         return Aerospike::ERR_CLIENT;
+                    } else {
+                        if ($rec["bins"]["username"] == "John") {
+                            $this->db->remove($key);
+                            return Aerospike::OK;
+                        } else {
+                            return Aerospike::ERR_CLIENT;
+                        }
                     }
                 } else {
-                    return $reconnect_status; 
+                    return Aerospike::ERR_CLIENT;
                 }
             } else {
-                return $close_status;
+                return $reconnect_status; 
             }
         } else {
-            return($db->errorno());
+            return $close_status;
         }
     }
 
@@ -77,7 +72,7 @@ class Reconnect extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReconnectNonPersistentConnectionPositive($db)
+    function testReconnectNonPersistentConnectionPositive()
     {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,
             "port"=>AEROSPIKE_CONFIG_PORT2)));
@@ -130,43 +125,39 @@ class Reconnect extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReconnectMultiplePersistentConnectionPositive($db)
+    function testReconnectMultiplePersistentConnectionPositive()
     {
-        if ($db->isConnected()) {
-            $key = $db->initKey("test", "demo", "testkey");
-            $db->put($key, array("username"=>"John"));
-            $close_status = $db->close();
+        $key = $this->db->initKey("test", "demo", "testkey");
+        $this->db->put($key, array("username"=>"John"));
+        $close_status = $this->db->close();
+        if (Aerospike::OK == $close_status) {
+            $reconnect_status = $this->db->reconnect();
+            $close_status = $this->db->close();
             if (Aerospike::OK == $close_status) {
-                $reconnect_status = $db->reconnect();
-                $close_status = $db->close();
-                if (Aerospike::OK == $close_status) {
-                    $reconnect_status = $db->reconnect();                
-                    if (Aerospike::OK == $reconnect_status) {
-                        if (Aerospike::OK == $db->get($key, $rec)) {
-                            if (!array_key_exists("username", $rec["bins"])) {
-                                return Aerospike::ERR_CLIENT;
-                            } else {
-                                if ($rec["bins"]["username"] == "John") {
-                                    $db->remove($key);
-                                    return Aerospike::OK;
-                                } else {
-                                    return Aerospike::ERR_CLIENT;
-                                }
-                            }
-                        } else {
+                $reconnect_status = $this->db->reconnect();                
+                if (Aerospike::OK == $reconnect_status) {
+                    if (Aerospike::OK == $this->db->get($key, $rec)) {
+                        if (!array_key_exists("username", $rec["bins"])) {
                             return Aerospike::ERR_CLIENT;
+                        } else {
+                            if ($rec["bins"]["username"] == "John") {
+                                $this->db->remove($key);
+                                return Aerospike::OK;
+                            } else {
+                                return Aerospike::ERR_CLIENT;
+                            }
                         }
                     } else {
-                        return $reconnect_status; 
+                        return Aerospike::ERR_CLIENT;
                     }
                 } else {
-                    return $close_status;
+                    return $reconnect_status; 
                 }
             } else {
-                return($db->errorno());
+                return $close_status;
             }
         } else {
-            return ($db->errorno());
+            return($this->db->errorno());
         }
     }
 
@@ -185,13 +176,9 @@ class Reconnect extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testReconnectWithoutCloseNegative($db)
+    function testReconnectWithoutCloseNegative()
     {
-        if ($db->isConnected()) {
-            return ($db->reconnect());
-        } else {
-            return ($db->errorno());
-        }
+        return ($this->db->reconnect());
     }
 }
 ?>

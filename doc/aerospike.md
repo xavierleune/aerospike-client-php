@@ -33,7 +33,7 @@ class Aerospike
     const POLICY_EXISTS_REPLACE;           // replace a record ONLY if it exists
     const POLICY_EXISTS_CREATE_OR_REPLACE; // overwrite the bins if record exists
 
-    // Replica and consistency guarantee options [in-progress]
+    // Replica and consistency guarantee options
     // See: http://www.aerospike.com/docs/client/c/usage/consistency.html
     const POLICY_REPLICA_MASTER;      // read from the partition master replica node (default)
     const POLICY_REPLICA_ANY;         // read from either the master or prole node
@@ -68,9 +68,9 @@ class Aerospike
     const OPT_SCAN_NOBINS;        // boolean value, default: false
     const OPT_POLICY_KEY;         // records store the digest unique ID, optionally also its (ns,set,key) inputs
     const OPT_POLICY_GEN;         // set to array( Aerospike::POLICY_GEN_* [, $gen_value ] )
-    const OPT_POLICY_REPLICA;     // [in-progress] set to one of Aerospike::POLICY_REPLICA_*
-    const OPT_POLICY_CONSISTENCY; // [in-progress] set to one of Aerospike::POLICY_CONSISTENCY_*
-    const OPT_POLICY_COMMIT_LEVEL;// [in-progress] set to one of Aerospike::POLICY_COMMIT_LEVEL_*
+    const OPT_POLICY_REPLICA;     // set to one of Aerospike::POLICY_REPLICA_*
+    const OPT_POLICY_CONSISTENCY; // set to one of Aerospike::POLICY_CONSISTENCY_*
+    const OPT_POLICY_COMMIT_LEVEL;// set to one of Aerospike::POLICY_COMMIT_LEVEL_*
 
     // Aerospike Status Codes:
     //
@@ -227,7 +227,7 @@ class Aerospike
 ```
 
 ### [Runtime Configuration](aerospike_config.md)
-### [Session Handler](aerospike_sessions.md) \[To Be Implemented\]
+### [Session Handler](aerospike_sessions.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)

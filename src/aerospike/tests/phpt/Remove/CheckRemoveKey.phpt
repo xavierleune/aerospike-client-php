@@ -6,4 +6,4 @@ Remove - Remove key from database
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Remove", "testKeyRemove");
 --EXPECT--
-OK
+ERR_RECORD_NOT_FOUND
