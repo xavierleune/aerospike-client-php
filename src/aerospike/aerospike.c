@@ -1880,7 +1880,7 @@ PHP_METHOD(Aerospike, initKey)
     array_init(return_value);
 
     if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p,
-                is_digest, return_value, NULL, NULL TSRMLS_CC)) {
+                is_digest, return_value, NULL, NULL, false TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
         zval_dtor(return_value); 
         RETURN_NULL();
