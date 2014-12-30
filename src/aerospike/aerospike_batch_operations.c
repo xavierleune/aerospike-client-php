@@ -284,7 +284,7 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
         }
 
         if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record((as_record *) &results[i].record,
-                    (as_key *) results[i].key, record_p, NULL TSRMLS_CC)) {
+                    (as_key *) results[i].key, record_p, NULL, false TSRMLS_CC)) {
             PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
                     "Unable to get metadata of a record");
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");

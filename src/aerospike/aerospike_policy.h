@@ -38,6 +38,8 @@ enum Aerospike_serializer_values {
     SERIALIZER_USER,
 };
 
+#define SERIALIZER_DEFAULT "1"
+
 #define MAX_CONSTANT_STR_SIZE 512
 /*
  *******************************************************************************************************

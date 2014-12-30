@@ -2899,6 +2899,8 @@ exit:
  * @param reurn_value               Result of initkey
  * @param record_key_p              Key of a record
  * @param options_p                 The options array
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
@@ -2906,7 +2908,7 @@ exit:
 extern as_status
 aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
-        as_key *record_key_p, zval *options_p TSRMLS_DC)
+        as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC)
 {
     as_status       status = AEROSPIKE_OK;
 
@@ -2927,6 +2929,9 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         goto exit;
     }
     if (pk_p) {
+        /*
+         * pk_p != NULL in case of initKey().
+         */
         switch(Z_TYPE_P(pk_p)) {
             case IS_LONG:
                 if (!is_digest) {
@@ -2954,7 +2959,7 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         }
     } else {
         /*
-         * pk_p == NULL in case of get().
+         * pk_p == NULL in case of get() or scan().
          */
 
         zval **key_policy_pp = NULL;
@@ -2965,11 +2970,15 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         }
 
         if (options_p) {
+            /*
+             * Optionally NOT NULL in case of get().
+             * Always NULL in case of scan().
+             */
             zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
         }
 
-        if ((!record_key_p->valuep) || (!key_policy_pp) || (key_policy_pp &&
-                    Z_LVAL_PP(key_policy_pp) == AS_POLICY_KEY_DIGEST)) {
+        if ((!record_key_p->valuep) || (get_flag && ((!key_policy_pp) || (key_policy_pp &&
+                    Z_LVAL_PP(key_policy_pp) == AS_POLICY_KEY_DIGEST)))) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
                 status = AEROSPIKE_ERR;
@@ -3028,12 +3037,15 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  * @param get_record_p              Record
  * @param record_key_p              Key of record
  * @param key_container_p           Key container
+ * @param options                   Optional parameters
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
 static as_status
-aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p TSRMLS_DC)
+aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status                  status = AEROSPIKE_OK;
     php_unserialize_data_t     var_hash;
@@ -3046,7 +3058,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
 
     if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
             record_key_p->set, strlen(record_key_p->set), NULL, false,
-            key_container_p, record_key_p, options_p TSRMLS_CC))) {
+            key_container_p, record_key_p, options_p, get_flag TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
         status = AEROSPIKE_ERR;
         goto exit;
@@ -3119,13 +3131,16 @@ exit:
  *
  * @param get_record_p              Record
  * @param record_key_p              Key of a record
- * @param outer_container_p         Return value 
+ * @param outer_container_p         Return value
+ * @param options                   Optional parameters
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
 extern as_status
-aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p, zval* options_p TSRMLS_DC)
+aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     zval*               metadata_container_p = NULL;
@@ -3140,9 +3155,8 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
 
     MAKE_STD_ZVAL(key_container_p);
     array_init(key_container_p);
-    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p, options_p TSRMLS_CC);
+    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
-        status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
         goto exit;
     }
@@ -3151,7 +3165,6 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
     array_init(metadata_container_p);
     status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
-        status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
         goto exit;
     }
@@ -3245,7 +3258,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p, options_p TSRMLS_CC))) {
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p, options_p, true TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
         status = AEROSPIKE_ERR;
         goto exit;

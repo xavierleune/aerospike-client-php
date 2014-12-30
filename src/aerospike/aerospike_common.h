@@ -491,7 +491,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
 extern as_status
 aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
-        as_key *record_key_p, zval *options_p TSRMLS_DC);
+        as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
 
 extern void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
         uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
@@ -547,7 +547,7 @@ aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
 extern as_status
 aerospike_get_key_meta_bins_of_record(as_record* get_record_p,
         as_key* record_key_p, zval* outer_container_p,
-        zval* options_p TSRMLS_DC);
+        zval* options_p, bool get_flag TSRMLS_DC);
 
 extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p,
