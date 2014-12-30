@@ -376,7 +376,7 @@ class Put extends AerospikeTestCommon
     function testCheckKeyValueNotExistInDB()
     {
       $key = array("ns"=>"test","set"=>"demo","key"=>"-------------");
-      $status = $this->db->put($key,array("bin1"=>"Hello World"), 500,
+      $status = $this->db->put($key,array("bin1"=>"Hello World"), 10,
           array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
       $this->keys[] = $key;
       if ($status !== Aerospike::OK) {
@@ -453,7 +453,7 @@ class Put extends AerospikeTestCommon
   function testCheckListInsert()
   {
       $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
-      $status = $this->db->put($key,array("bin1"=>array("speaking", "reading", "writing", 100,
+      $status = $this->db->put($key,array("bin1"=>array("speaking", "reading", "writing", 10,
               array(Aerospike::OPT_POLICY_EXISTS =>Aerospike::POLICY_EXISTS_CREATE))));
       $this->keys[] = $key;
       if ($status !== Aerospike::OK) {
@@ -604,14 +604,14 @@ class Put extends AerospikeTestCommon
   * @test_plans{1.1}
   */
   function testListWithWrongIP() {
-     $config = array("hosts"=>array(array("addr"=>"X.X.X.X", "port"=>AEROSPIKE_CONFIG_PORT)));
+     $config = array("hosts"=>array(array("addr"=>"1.2.3.123", "port"=>3456)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "list_list_strval");
      $list1 = array("p","q","r","s","d","op",12,56,89,55);
      $list2 = array(105,"r","s","t","p",$list1);
      if ($db->isConnected()) {
-     $status = $db->put($key,array("bin1"=>$list2));
-      $this->keys[] = $key;
+        $status = $db->put($key,array("bin1"=>$list2));
+        $this->keys[] = $key;
      } else {
          return $db->errorno();
      }
@@ -713,6 +713,46 @@ class Put extends AerospikeTestCommon
           }
      return $status;
  }
+ /**
+  * @test
+  * Serialization with mixed types and no explicit serializer policy
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testMixedTypesWithDefaultSerializer)
+  *
+  * @test_plans{1.1}
+  */
+function testMixedTypesWithDefaultSerializer()
+{
+    if (ini_get('aerospike.serializer') !== false) {
+        $options = array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP);
+    } else {
+        $options = array();
+    }
+    $key = array("ns"=>"test","set"=>"demo","key"=>"map_with_mixed_types");
+    $obj = new stdClass();
+    $obj->z = 26;
+    $vals = array(
+    "_string" => "A string value",
+    "_integer" => 101,
+    "_boolean" => true,
+    "_float" => 6.969,
+    "_object" => $obj,
+    "_list" => array("A", "Word", "to", "the", "Wise"),
+    "_map" => array("foo" => "bar", "boo" => "hoo"));
+    $status = $this->db->put($key, $vals, 10, $options);
+    $this->keys[] = $key;
+    if ($status !== Aerospike::OK) {
+        return $this->db->errorno();
+    }
+    return $status;
+}
 
 /**
   * @test
@@ -1964,7 +2004,7 @@ class Put extends AerospikeTestCommon
      }
      $gen_value = $metadata["generation"];
      $put_record =  array("bin1"=>10);
-     $put_status = $this->db->put($key, $put_record, NULL,
+     $put_status = $this->db->put($key, $put_record, 0,
          array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();

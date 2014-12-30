@@ -1,5 +1,5 @@
 --TEST--
-Put - PUT With nested List.
+Put - Nested List with default options.
 
 --FILE--
 <?php
