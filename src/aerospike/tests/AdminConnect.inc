@@ -12,7 +12,7 @@ class AdminConnect extends AerospikeTestCommon
             $db->close();
             return Aerospike::OK;
         } else {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
     }
 

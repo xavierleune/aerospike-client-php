@@ -64,7 +64,7 @@ class CreateUser extends AerospikeTestCommon
         if(empty($result)) 
             return Aerospike::OK;
         else
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -92,7 +92,7 @@ class CreateUser extends AerospikeTestCommon
         if(empty($result)) 
             return Aerospike::OK;
         else
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -287,7 +287,7 @@ class CreateUser extends AerospikeTestCommon
         if(empty($result)) 
             return Aerospike::OK;
         else
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -321,7 +321,7 @@ class CreateUser extends AerospikeTestCommon
                 if(empty($result)) 
                     return Aerospike::OK;
                 else
-                    return Aerospike::ERR;
+                    return Aerospike::ERR_CLIENT;
             }
         }
         return $this->db->errorno();
@@ -355,7 +355,7 @@ class CreateUser extends AerospikeTestCommon
                 if(empty($result)) 
                     return Aerospike::OK;
                 else
-                    return Aerospike::ERR;
+                    return Aerospike::ERR_CLIENT;
             }
         }
         return $this->db->errorno();

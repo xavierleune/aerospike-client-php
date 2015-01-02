@@ -203,7 +203,7 @@ class QueryUsers extends AerospikeTestCommon
             $this->db->queryUsers($roles, array("OPT_READ_TIMEOUT" => 1000), "");
             $result = array_diff_assoc_recursive($test, $roles);
             if(!empty($result)) {
-                return Aerospike::ERR;
+                return Aerospike::ERR_CLIENT;
             } else {
                 return Aerospike::OK;
             }

@@ -83,7 +83,7 @@ class DropUser extends AerospikeTestCommon
         if(empty($roles))
             return Aerospike::OK;
         else
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         return($this->db->errorno());
     }
     /**
@@ -136,7 +136,7 @@ class DropUser extends AerospikeTestCommon
         if(empty($roles))
             return Aerospike::OK;
         else
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         return($this->db->errorno());
     }
     /**

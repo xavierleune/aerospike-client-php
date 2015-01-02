@@ -252,7 +252,7 @@ class Aerospike
 ```
 
 ### [Runtime Configuration](aerospike_config.md)
-### [Session Handler](aerospike_sessions.md) \[To Be Implemented\]
+### [Session Handler](aerospike_sessions.md)
 ### [Lifecycle and Connection Methods](apiref_connection.md)
 ### [Error Handling and Logging Methods](apiref_error.md)
 ### [Key-Value Methods](apiref_kv.md)

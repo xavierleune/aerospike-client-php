@@ -1,9 +1,9 @@
 --TEST--
-Exists - Error if Key not exists
+ScanApply - Percent is int
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Exist", "testKeyNotExist");
+aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsInt");
 --EXPECT--
-ERR_RECORD_NOT_FOUND
+OK

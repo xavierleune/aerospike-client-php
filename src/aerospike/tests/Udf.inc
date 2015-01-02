@@ -44,7 +44,39 @@ class Udf extends AerospikeTestCommon
             }
         }
         if ($is_registered) return Aerospike::OK;
-        else return Aerospike::ERR;
+        else return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
+     * Registers UDF Module with policy
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveRegisterModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveRegisterModuleWithPolicy() {
+        $status = $this->db->register("tests/lua/test_record_udf.lua", "module.lua", Aerospike::UDF_TYPE_LUA, array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        sleep(1);
+        $status = $this->db->listRegistered($modules);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $is_registered = false;
+        foreach($modules as $module) {
+            if ($module['name'] == 'module.lua') {
+                $is_registered = true;
+                break;
+            }
+        }
+        if ($is_registered) return Aerospike::OK;
+        else return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -92,6 +124,72 @@ class Udf extends AerospikeTestCommon
         return $status;
     }
 
+    /**
+     * @test
+     * Deregisters a UDF module which is registered
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfNegativeDeregisterUnknownModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfDeregisterModulePositive() {
+        $status = $this->db->deregister("module.lua");
+        sleep(1);
+        $status = $this->db->listRegistered($modules);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $is_registered = false;
+        foreach($modules as $module) {
+            if ($module['name'] == 'module.lua') {
+                $is_registered = true;
+                break;
+            }
+        }
+        if($is_registered)
+            return Aerospike::ERR_CLIENT;
+        return $status;
+    }
+    /**
+     * @test
+     * Deregisters a UDF module which is registered with policy
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfNegativeDeregisterUnknownModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfDeregisterModulePositivePolicy() {
+        $status = $this->db->deregister("module.lua", array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
+        sleep(1);
+        $status = $this->db->listRegistered($modules);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $is_registered = false;
+        foreach($modules as $module) {
+            if ($module['name'] == 'module.lua') {
+                $is_registered = true;
+                break;
+            }
+        }
+        if($is_registered)
+            return Aerospike::ERR_CLIENT;
+        return $status;
+    }
     /**
      * @test
      * Deregisters a UDF module which is not registered.
@@ -190,7 +288,7 @@ class Udf extends AerospikeTestCommon
         if($returned == "helloworld") {
             return Aerospike::OK;
         }
-        return Aerospike::ERR;
+        return Aerospike::ERR_CLIENT;
     }
 
     /**
@@ -232,7 +330,7 @@ class Udf extends AerospikeTestCommon
         $testList = array("bin1" => array(94, 222, 25, 58));
         $result = array_diff_assoc_recursive($testList, $returned["bins"]);
         if(!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -276,7 +374,7 @@ class Udf extends AerospikeTestCommon
         $testList = array(94, 222, 25, 58);
         $result = array_diff_assoc_recursive($testList, $returned);
         if(!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -319,7 +417,7 @@ class Udf extends AerospikeTestCommon
         $testMap = array("bin1"=>array("k30"=>55555, "k20"=>55555, "k10"=>55555));
         $result = array_diff_assoc_recursive($returned["bins"], $testMap);
         if (!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -362,7 +460,7 @@ class Udf extends AerospikeTestCommon
         $testMap = array("k30"=>85, "k20"=>85, "k10"=>85);
         $result = array_diff_assoc_recursive($testMap, $returned);
         if(!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -406,7 +504,7 @@ class Udf extends AerospikeTestCommon
         $testMap = array("k30"=>5, "k20"=>5, "k10"=>5);
         $result = array_diff_assoc_recursive($testMap, $ret_val);
         if(!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -446,7 +544,7 @@ class Udf extends AerospikeTestCommon
         $status = $this->db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         if ($returned != "") {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -487,46 +585,6 @@ class Udf extends AerospikeTestCommon
         $status = $this->db->remove($key,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
         return ($status);
-    }
-
-    /**
-     * @test
-     * Apply UDF on record, Where UDF puts bytes array in DB.
-     *
-     * @pre
-     * Udf using aerospike object to the specified node
-     *
-     * @post
-     * newly initialized Aerospike objects
-     *
-     * @remark
-     * Variants: OO (testUdfPositiveApplyPutByteArray)
-     *
-     * @test_plans{1.1}
-     */
-    function testUdfPositiveApplyPutByteArray() {
-        if (!$this->db->isConnected()) {
-            return ($this->db->errorno());
-        }
-        $key = $this->db->initKey("test", "demo", "udf_put_bytes");
-        $list = array(94, 5, 25);
-        if ($this->db->isConnected()) {
-            $status = $this->db->put($key, array("bin1"=>$list), NULL);
-        } else {
-            $this->db->close();
-            return($this->db->errorno());
-        }
-        $status = $this->db->apply($key, "module", "udf_put_bytes", array("bin1"),
-            $returned);
-        if ($status != Aerospike::OK) {
-            return ($this->db->errorno());
-        }
-        if (!empty($returned)) {
-             return Aerospike::ERR;
-        }
-        $status = $this->db->remove($key,
-            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        return $status;
     }
 
     /**
@@ -588,7 +646,7 @@ class Udf extends AerospikeTestCommon
                     return Aerospike::OK;
                 }
             }
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return($status);
     }
@@ -623,7 +681,7 @@ class Udf extends AerospikeTestCommon
                     return Aerospike::OK;
                 }
             }
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return($status);
     }
@@ -658,7 +716,7 @@ class Udf extends AerospikeTestCommon
                     return Aerospike::OK;
                 }
             }
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return($status);
     }
@@ -685,6 +743,41 @@ class Udf extends AerospikeTestCommon
         else {
             $code = array();
             $status = $this->db->getRegistered("module.lua", $code,
+                Aerospike::UDF_TYPE_LUA);
+            if ($status != Aerospike::OK) {
+                return($this->db->errorno());
+            }
+        }
+        $handle = fopen("tests/lua/test_record_udf.lua","r");
+        $mycode = fread($handle,filesize("tests/lua/test_record_udf.lua"));
+        $result = strcmp($code, $mycode);
+        if(!$result) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
+     * Get registered UDF's code with policy
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveGetRegisteredModule)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveGetRegisteredModuleWithPolicy() {
+        if (!$this->db->isConnected()) {
+            return ($this->db->errorno());
+        }
+        else {
+            $code = array();
+            $status = $this->db->getRegistered("module.lua", $code,
                 Aerospike::UDF_TYPE_LUA,
                 array(Aerospike::OPT_READ_TIMEOUT => 2000));
             if ($status != Aerospike::OK) {
@@ -697,7 +790,7 @@ class Udf extends AerospikeTestCommon
         if(!$result) {
             return Aerospike::OK;
         }
-        return Aerospike::ERR;
+        return Aerospike::ERR_CLIENT;
     }
 
     /**
@@ -765,7 +858,7 @@ class Udf extends AerospikeTestCommon
              return ($this->db->errorno());
          }
          if (!empty($returned)) {
-             return Aerospike::ERR;
+             return Aerospike::ERR_CLIENT;
          }
          $status = $this->db->remove($key,
              array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));

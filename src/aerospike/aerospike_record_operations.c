@@ -61,14 +61,14 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                    if (AS_NIL == value_p->type) {
                        if (!as_operations_add_write_int64(ops, bin_name_p,
                                    initial_value)) {
-                           status = AEROSPIKE_ERR;
+                           status = AEROSPIKE_ERR_CLIENT;
                            goto exit;
                        }
                    } else {
                        as_operations_add_incr(ops, bin_name_p, offset);
                    }
                 } else {
-                    status = AEROSPIKE_ERR;
+                    status = AEROSPIKE_ERR_CLIENT;
                     goto exit;
                 }
             }
@@ -91,7 +91,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             break;
 
         default:
-            status = AEROSPIKE_ERR;
+            status = AEROSPIKE_ERR_CLIENT;
             goto exit;
     }
 
@@ -127,7 +127,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
 
     if ( (!as_key_p) || (!error_p) ||
          (!as_object_p) || (!metadata_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -179,7 +179,7 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
 
     if ( (!as_key_p) || (!error_p) ||
          (!as_object_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -189,6 +189,7 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
+    get_generation_value(options_p, &remove_policy.generation, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = aerospike_key_remove(as_object_p, error_p,
                     &remove_policy, as_key_p))) {
         goto exit;
@@ -210,7 +211,7 @@ aerospike_record_initialization(aerospike* as_object_p,
     as_policy_operate_init(operate_policy);
 
     if ((!as_object_p) || (!error_p) || (!as_key_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -245,7 +246,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, 1);
-
+    get_generation_value(options_p, &ops.gen, error_p TSRMLS_CC);
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
                                                       options_p, error_p,
@@ -306,6 +307,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, zend_hash_num_elements(operations_array_p));
+    get_generation_value(options_p, &ops.gen, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_initialization(as_object_p, as_key_p,
@@ -346,11 +348,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
                         } else {
-                            status = AEROSPIKE_ERR;
+                            status = AEROSPIKE_ERR_CLIENT;
                             goto exit;
                         }
                     } else {
-                        status = AEROSPIKE_ERR;
+                        status = AEROSPIKE_ERR_CLIENT;
                         goto exit;
                     }
                 }
@@ -362,7 +364,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                 goto exit;
             }
         } else {
-            status = AEROSPIKE_ERR;
+            status = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
     }
@@ -426,7 +428,7 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
     as_record_inita(&rec, zend_hash_num_elements(bins_array_p));
 
     if ((!as_object_p) || (!error_p) || (!as_key_p) || (!bins_array_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -440,15 +442,16 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
     foreach_hashtable(bins_array_p, pointer, bin_names) {
         if (IS_STRING == Z_TYPE_PP(bin_names)) {
             if (!(as_record_set_nil(&rec, Z_STRVAL_PP(bin_names)))) {
-                status = AEROSPIKE_ERR;
+                status = AEROSPIKE_ERR_CLIENT;
                 goto exit;
             }
         } else {
-             status = AEROSPIKE_ERR;
+             status = AEROSPIKE_ERR_CLIENT;
              goto exit;
         }
     }
 
+    get_generation_value(options_p, &rec.gen, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p,
                     NULL, as_key_p, &rec))) {
          goto exit;
@@ -487,7 +490,7 @@ aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     if ((!as_object_p) || (!key_record_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 

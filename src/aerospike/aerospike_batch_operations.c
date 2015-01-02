@@ -14,13 +14,13 @@ populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
     if (!(as_val*)(key_p->valuep)) {
         if (!null_flag) {
             if (0 != add_assoc_zval(outer_container_p, (char *) key_p->digest.value, inner_container_p)) {
-                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                         "Unable to get key of a record");
                 DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
             }
         } else {
             if (0 != add_assoc_null(outer_container_p, (char *) key_p->digest.value)) {
-                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                         "Unable to get key of a record");
                 DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
             }
@@ -30,13 +30,13 @@ populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
             case AS_STRING:
                 if (!null_flag) {
                     if (0 != add_assoc_zval(outer_container_p, key_p->value.string.value, inner_container_p)) {
-                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get key of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
                     }
                 } else {
                     if (0 != add_assoc_null(outer_container_p, key_p->value.string.value)) {
-                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get key of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
                     }
@@ -46,13 +46,13 @@ populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
                 if (!null_flag) {
                     if (FAILURE == add_index_zval(outer_container_p, key_p->value.integer.value,
                                 inner_container_p)) {
-                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get key of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
                     }
                 } else {
                     if (0 != add_index_null(outer_container_p, key_p->value.integer.value)) {
-                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get key of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
                     }
@@ -80,29 +80,31 @@ bool
 batch_exists_cb(const as_batch_read* results, uint32_t n, void* udata)
 {
     TSRMLS_FETCH();
-    as_status                   status = AEROSPIKE_OK;
-    foreach_callback_udata*     udata_ptr = (foreach_callback_udata*)udata;
+    foreach_callback_udata*     udata_ptr = (foreach_callback_udata*) udata;
     uint32_t                    i = 0;
-    zval*                       record_metadata_p = NULL;
     bool                        null_flag = false;
 
     for (i = 0; i < n; i++) {
+        zval *record_metadata_p = NULL;
         if (results[i].result == AEROSPIKE_OK) {
             MAKE_STD_ZVAL(record_metadata_p);
             array_init(record_metadata_p);
             if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
                         results[i].record.gen)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
-                status = AEROSPIKE_ERR;
-                goto exit;
+                PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_CLIENT,
+                        "Unable to get generation of a record");
+                goto cleanup;
             }
 
             if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_TTL,
                     results[i].record.ttl)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get ttl of a record");
-                status = AEROSPIKE_ERR;
-                goto exit;
+                PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_CLIENT,
+                        "Unable to get ttl of a record");
+                goto cleanup;
             }
+            null_flag = false;
         } else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
             null_flag = true;
         } else {
@@ -112,21 +114,17 @@ batch_exists_cb(const as_batch_read* results, uint32_t n, void* udata)
         populate_result_for_get_exists_many((as_key *) results[i].key,
                 udata_ptr->udata_p, record_metadata_p, udata_ptr->error_p,
                 null_flag TSRMLS_CC);
+
         if (AEROSPIKE_OK != udata_ptr->error_p->code) {
             DEBUG_PHP_EXT_DEBUG("%s", udata_ptr->error_p->message);
             goto cleanup;
         } else {
             continue;
         }
-
-        if (null_flag) {
-            goto cleanup;
-        }
 cleanup:
-        if (record_metadata_p && AEROSPIKE_OK != udata_ptr->error_p->code) {
+        if (record_metadata_p && (AEROSPIKE_OK != udata_ptr->error_p->code)) {
             zval_ptr_dtor(&record_metadata_p);
         }
-        goto exit;
     }
 
 exit:
@@ -225,7 +223,7 @@ process_filer_bins(HashTable *bins_array_p, char **select_p TSRMLS_DC)
                 select_p[count++] = Z_STRVAL_PP(bin_names);
                 break;
             default:
-                status = AEROSPIKE_ERR;
+                status = AEROSPIKE_ERR_CLIENT;
                 DEBUG_PHP_EXT_DEBUG("Invalid type of bin");
                 goto exit;
         }
@@ -286,8 +284,8 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
         }
 
         if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record((as_record *) &results[i].record,
-                    (as_key *) results[i].key, record_p, NULL TSRMLS_CC)) {
-            PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
+                    (as_key *) results[i].key, record_p, NULL, false TSRMLS_CC)) {
+            PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_CLIENT,
                     "Unable to get metadata of a record");
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
             goto cleanup;
@@ -295,14 +293,14 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
 
         if (!as_record_foreach(&results[i].record, (as_rec_foreach_callback) AS_DEFAULT_GET,
             &foreach_record_callback_udata)) {
-            PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
+            PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_CLIENT,
                     "Unable to get bins of a record");
             DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
             goto cleanup;
         }
 
         if (0 != add_assoc_zval(record_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p)) {
-            PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
+            PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_CLIENT,
                     "Unable to get a record");
             DEBUG_PHP_EXT_DEBUG("Unable to get a record");
             goto cleanup;
@@ -368,7 +366,7 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
 
     if (!(as_object_p) || !(keys_p) || !(records_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate batch get");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate batch get");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate batch get");
         goto exit;
     }
 

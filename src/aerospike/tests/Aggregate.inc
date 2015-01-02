@@ -15,16 +15,16 @@ class Aggregate extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $key = $this->db->initKey("test", "demo", "Get_key");
-        $this->db->put($key,array("first_name"=>"raunak", "age"=>29));
+        $this->db->put($key,array("first_name"=>"john", "age"=>29));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key1");
-        $this->db->put($key,array("first_name"=>"pavan", "age"=>27));
+        $this->db->put($key,array("first_name"=>"smith", "age"=>27));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key2");
-        $this->db->put($key,array("first_name"=>"bhushan", "age"=>22));
+        $this->db->put($key,array("first_name"=>"adam", "age"=>22));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key3");
-        $this->db->put($key,array("first_name"=>"ajit", "age"=>32));
+        $this->db->put($key,array("first_name"=>"ellie", "age"=>32));
         $this->keys[] = $key;
         $this->ensureIndex('test', 'demo', 'age', 'demo_age_idx', Aerospike::INDEX_TYPE_INTEGER);
     }
@@ -55,12 +55,47 @@ class Aggregate extends AerospikeTestCommon
         }
         if (strcmp("test", $returned["key"]["ns"]) == 0 && strcmp("demo",
             $returned["key"]["set"]) == 0) {
-                if (array_key_exists("raunak", $returned["bins"]) &&
-                    array_key_exists("pavan", $returned["bins"]) &&
-                    array_key_exists("bhushan", $returned["bins"])) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
                         return Aerospike::OK;
                     } else {
-                        return Aerospike::ERR;
+                        return Aerospike::ERR_CLIENT;
+                    }
+            }
+    }
+    /**
+     * @test
+     * Aggregate - first name of emp where age in between
+     * 20 and 29 with policy
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testAggregatePositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testAggregatePositiveWithPolicy()
+    {
+        $this->ensureUdfModule("tests/lua/test_stream.lua", "test_stream.lua");
+        $where = $this->db->predicateBetween("age", 20, 29);
+        $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name"), $returned, array(Aerospike::OPT_READ_TIMEOUT=>1000));
+        if ($status != Aerospike::OK) {
+            return($this->db->errorno());
+        }
+        if (strcmp("test", $returned["key"]["ns"]) == 0 && strcmp("demo",
+            $returned["key"]["set"]) == 0) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
+                        return Aerospike::OK;
+                    } else {
+                        return Aerospike::ERR_CLIENT;
                     }
             }
     }
@@ -117,7 +152,7 @@ class Aggregate extends AerospikeTestCommon
         if (empty($names["bins"])) {
             return Aerospike::OK;
         }
-        return Aerospike::ERR;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -329,11 +364,17 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_stream.lua", "test_stream.lua");
         $where = $this->db->predicateBetween("age", 20, 29);
-        $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name", "last_name"), $names);
-        if ($status !== Aerospike::OK) {
-            return $this->db->errorno();
-        }
-        return $status;
+        $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name", "last_name"), $returned);
+        if (strcmp("test", $returned["key"]["ns"]) == 0 && strcmp("demo",
+            $returned["key"]["set"]) == 0) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
+                        return Aerospike::OK;
+                    } else {
+                        return Aerospike::ERR_CLIENT;
+                    }
+            }
     }
     /**
      * @test
@@ -354,11 +395,17 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_aggregate_extra_parameter.lua", "test_aggregate_extra_parameter.lua");
         $where = $this->db->predicateBetween("age", 20, 29);
-        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate_extra_parameter", "group_count", array("first_name"), $names);
-        if ($status !== Aerospike::OK) {
-            return $this->db->errorno();
-        }
-        return $status;
+        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate_extra_parameter", "group_count", array("first_name"), $returned);
+        if (strcmp("test", $returned["key"]["ns"]) == 0 && strcmp("demo",
+            $returned["key"]["set"]) == 0) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
+                        return Aerospike::OK;
+                    } else {
+                        return Aerospike::ERR_CLIENT;
+                    }
+            }
     }
     /**
      * @test
@@ -379,12 +426,17 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_aggregate_less_parameter.lua", "test_aggregate_less_parameter.lua");
         $where = $this->db->predicateBetween("age", 20, 29);
-        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate_less_parameter", "group_count", array("first_name"), $names);
-        if ($status !== Aerospike::OK) {
-            var_dump($this->db->error());
-            return $this->db->errorno();
-        }
-        return $status;
+        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate_less_parameter", "group_count", array("first_name"), $returned);
+        if (strcmp("test", $returned["key"]["ns"]) == 0 && strcmp("demo",
+            $returned["key"]["set"]) == 0) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
+                        return Aerospike::OK;
+                    } else {
+                        return Aerospike::ERR_CLIENT;
+                    }
+            }
     }
     /**
      * @test
@@ -405,7 +457,7 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_aggregate_less_parameter.lua", "test_aggregate_less_parameter.lua");
         try {
-            $status = $this->db->aggregate("test", "demo", "test_aggregate_less_parameter", "group_count", array("first_name"), $names);
+            $status = $this->db->aggregate("test", "demo", "test_aggregate_less_parameter", "group_count", array("first_name"), $returned);
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
@@ -432,7 +484,7 @@ class Aggregate extends AerospikeTestCommon
         $this->ensureUdfModule("tests/lua/test_aggregate_less_parameter.lua", "test_aggregate_less_parameter.lua");
         try {
             $where = $this->db->predicateBetween("age","21","ages");
-            $status = $this->db->aggregate("test", "demo", $where, "test_aggregate_less_parameter", "group_count", array("first_name"), $names);
+            $status = $this->db->aggregate("test", "demo", $where, "test_aggregate_less_parameter", "group_count", array("first_name"), $returned);
             var_dump("status is", $status);
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
@@ -458,7 +510,7 @@ class Aggregate extends AerospikeTestCommon
     function testAggregateWithWhereContainingNullString()
     {
         $this->ensureUdfModule("tests/lua/test_aggregate_less_parameter.lua", "test_aggregate_less_parameter.lua");
-        $status = $this->db->aggregate("test", "demo", array(""), "test_aggregate_less_parameter", "group_count", array("first_name"), $names);
+        $status = $this->db->aggregate("test", "demo", array(""), "test_aggregate_less_parameter", "group_count", array("first_name"), $returned);
         return $status;
     }
     /**
@@ -480,8 +532,17 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_stream.lua", "test_stream.lua");
         $where = $this->db->predicateBetween("age", true, true);
-        $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name"), $names);
-        return $status;
+        $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name"), $returned);
+        if (strcmp("test", $returned["key"]["ns"]) == 0 && strcmp("demo",
+            $returned["key"]["set"]) == 0) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
+                        return Aerospike::OK;
+                    } else {
+                        return Aerospike::ERR_CLIENT;
+                    }
+            }
     }
     /**
      * @test

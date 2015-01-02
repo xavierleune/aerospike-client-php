@@ -60,7 +60,7 @@ class QueryUser extends AerospikeTestCommon
         $this->db->queryUser("example", $roles);	
         $result = array_diff_assoc_recursive($test, $roles);
         if(!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         } else {
             return Aerospike::OK;
         }
@@ -87,7 +87,7 @@ class QueryUser extends AerospikeTestCommon
         $this->db->queryUser("example", $roles, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
         $result = array_diff_assoc_recursive($test, $roles);
         if(!empty($result)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         } else {
             return Aerospike::OK;
         }

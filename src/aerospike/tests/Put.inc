@@ -40,10 +40,10 @@ class Put extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", "put_test");
         $status = $this->db->put($key,array("bin1"=>"Hello World"));
         $this->keys[] = $key;
-        if ($status !== Aerospike::OK) {
-            return $db->errorno();
-        }
-        return $status;
+        $status = $this->db->get($key, $returned);
+        if($returned['bins']['bin1'] == "Hello World")
+            return Aerospike::OK;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -63,12 +63,15 @@ class Put extends AerospikeTestCommon
     function testMultiPUT()
     {
         $key = array("ns"=>"test", "set"=>"demo", "key"=>"key_multi");
-        $status = $this->db->put($key,array("bin1"=>"Hello World","bin2"=>123456));
+        $status = $this->db->put($key, array("bin1"=>"Hello World","bin2"=>123456), NULL,
+            array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
         $this->keys[] = $key;
-        if ($status !== Aerospike::OK) {
-            return $this->db->errorno();
-        }
-        return $status;
+        $status = $this->db->get($key, $returned);
+        if ($returned['bins']['bin1'] == "Hello World" &&
+            $returned['bins']['bin2']==123456) {
+                return Aerospike::OK;
+            }
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -95,6 +98,56 @@ class Put extends AerospikeTestCommon
             return Aerospike::ERR_PARAM;
         }
         return Undefined_Error;
+    }
+    /**
+     * @test
+     * Basic Single PUT with unicode character.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUT)
+     *
+     * @test_plans{1.1}
+     */
+    function testPUTWithUnicodeCharacter()
+    {
+        $key = $this->db->initKey("test", "demo", "put_test");
+        $status = $this->db->put($key,array("bin1"=>utf8_encode("Hello World")));
+        $this->keys[] = $key;
+        $status = $this->db->get($key, $returned);
+        if($returned['bins']['bin1'] == "Hello World")
+            return Aerospike::OK;
+        return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
+     * Basic Single PUT with key as unicode character.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUT)
+     *
+     * @test_plans{1.1}
+     */
+    function testPUTWithKeyAsUnicodeCharacter()
+    {
+        $key = $this->db->initKey("test", "demo", utf8_encode("put_test"));
+        $status = $this->db->put($key,array("bin1"=>"Hello World"));
+        $this->keys[] = $key;
+        $status = $this->db->get($key, $returned);
+        if($returned['bins']['bin1'] == "Hello World")
+            return Aerospike::OK;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -141,7 +194,8 @@ class Put extends AerospikeTestCommon
     {
         try {
             $key = array("ns"=>"test", "set"=>"demo", "key"=>"10000");
-            $status = $this->db->put(array("bin1"=>"Hello World"));
+            $status = $this->db->put(array("bin1"=>"Hello World",
+                array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_ALL)));
             $this->keys[] = $key;
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
@@ -279,57 +333,57 @@ class Put extends AerospikeTestCommon
         }
         return Undefined_Error;
     }
-        /**
-         * @test
-         * Basic PUT Check sequence of key parameter in Key array
-         *
-         * @pre
-         * Connect using aerospike object to the specified node
-         *
-         * @post
-         * newly initialized Aerospike objects
-         *
-         * @remark
-         * Variants: OO (testCheckParameterSequenceChangeInKeyArray)
-         *
-         * @test_plans{1.1}
-         */
-        function testCheckParameterSequenceChangeInKeyArray()
-        {
-            $key = $this->db->initKey("demo", "test", "key_int1");
-            $status = $this->db->put($key,array("bin1"=>"Hello World"));
-            $this->keys[] = $key;
-            if($status !== Aerospike::OK) {
-                return $this->db->errorno();
-            }
-            return $status;
-       }
-/**
-  * @test
-  * Basic PUT Check key parameter value non exist in database
-  *
-  * @pre
-  * Connect using aerospike object to the specified node
-  *
-  * @post
-  * newly initialized Aerospike objects
-  *
-  * @remark
-  * Variants: OO (testCheckKeyValueNotExistInDB)
-  *
-  * @test_plans{1.1}
-  */
-  function testCheckKeyValueNotExistInDB()
-  {
+    /**
+     * @test
+     * Basic PUT Check sequence of key parameter in Key array
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCheckParameterSequenceChangeInKeyArray)
+     *
+     * @test_plans{1.1}
+     */
+    function testCheckParameterSequenceChangeInKeyArray()
+    {
+        $key = $this->db->initKey("demo", "test", "key_int1");
+        $status = $this->db->put($key,array("bin1"=>"Hello World"));
+        $this->keys[] = $key;
+        if($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return $status;
+    }
+    /**
+      * @test
+      * Basic PUT Check key parameter value non exist in database
+      *
+      * @pre
+      * Connect using aerospike object to the specified node
+      *
+      * @post
+      * newly initialized Aerospike objects
+      *
+      * @remark
+      * Variants: OO (testCheckKeyValueNotExistInDB)
+      *
+      * @test_plans{1.1}
+      */
+    function testCheckKeyValueNotExistInDB()
+    {
       $key = array("ns"=>"test","set"=>"demo","key"=>"-------------");
-      $status = $this->db->put($key,array("bin1"=>"Hello World"), 500,
+      $status = $this->db->put($key,array("bin1"=>"Hello World"), 10,
           array(Aerospike::OPT_POLICY_RETRY =>Aerospike::POLICY_RETRY_NONE));
       $this->keys[] = $key;
       if ($status !== Aerospike::OK) {
           return $this->db->errorno();
       }
       return $status;
-  }
+    }
 
 /**
   * @test
@@ -399,7 +453,7 @@ class Put extends AerospikeTestCommon
   function testCheckListInsert()
   {
       $key = array("ns"=>"test","set"=>"demo","key"=>"10000");
-      $status = $this->db->put($key,array("bin1"=>array("speaking", "reading", "writing", 100,
+      $status = $this->db->put($key,array("bin1"=>array("speaking", "reading", "writing", 10,
               array(Aerospike::OPT_POLICY_EXISTS =>Aerospike::POLICY_EXISTS_CREATE))));
       $this->keys[] = $key;
       if ($status !== Aerospike::OK) {
@@ -493,12 +547,15 @@ class Put extends AerospikeTestCommon
       $list2 = array("aa");
       $list3 = array($list2,1,"kk");
       $list4 = array(46,$list3);
+      $put_record = array("bin1" => $list4);
       $status = $this->db->put($key,array("bin1"=>$list4));
       $this->keys[] = $key;
-      if($status !== Aerospike::OK) {
-          return $this->db->errorno();
-      }
-      return $status;
+      $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $status;
   }
 
 /**
@@ -520,12 +577,15 @@ class Put extends AerospikeTestCommon
       $key = $this->db->initKey("test", "demo", "st");
       $list1 = array("aa","vv","hh");
       $list2 = array(100,566,52,$list1);
+      $put_record = array("bin1" => $list2);
       $status = $this->db->put($key,array("bin1"=>$list2));
       $this->keys[] = $key;
-      if($status !== Aerospike::OK) {
-          return $this->db->errorno();
-      }
-      return $status;
+      $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $status;
   }
 
 /**
@@ -544,14 +604,14 @@ class Put extends AerospikeTestCommon
   * @test_plans{1.1}
   */
   function testListWithWrongIP() {
-     $config = array("hosts"=>array(array("addr"=>"X.X.X.X", "port"=>AEROSPIKE_CONFIG_PORT)));
+     $config = array("hosts"=>array(array("addr"=>"1.2.3.123", "port"=>3456)));
      $db = new Aerospike($config);
      $key = $db->initKey("test", "demo", "list_list_strval");
      $list1 = array("p","q","r","s","d","op",12,56,89,55);
      $list2 = array(105,"r","s","t","p",$list1);
      if ($db->isConnected()) {
-     $status = $db->put($key,array("bin1"=>$list2));
-      $this->keys[] = $key;
+        $status = $db->put($key,array("bin1"=>$list2));
+        $this->keys[] = $key;
      } else {
          return $db->errorno();
      }
@@ -580,15 +640,18 @@ class Put extends AerospikeTestCommon
      $key = $this->db->initKey("test", "demo", "reival");
      $map1 = array("k10"=>10);
      $map2 = array(1,"k6"=>"abc",$map1);
+     $put_record = array("bin1"=>$map2);
      if ($this->db->isConnected()) {
      $status = $this->db->put($key,array("bin1"=>$map2));
      $this->keys[] = $key;
      } else {
          return $this->db->errorno();
      }
-     if($status !== Aerospike::OK) {
-         return $this->db->errorno();
-     }
+      $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
      return $status;
  }
 
@@ -611,11 +674,14 @@ class Put extends AerospikeTestCommon
      $key = $this->db->initKey("test", "demo", "list6_key");
      $list1 = array("aa",2);
      $list2 = array(3,"k1","k4"=>$list1);
+     $put_record = array("bin1"=>$list2);
      $status = $this->db->put($key,array("bin1"=>$list2));
      $this->keys[] = $key;
-     if($status !== Aerospike::OK) {
-         return $this->db->errorno();
-     }
+      $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
      return $status;
  }
 
@@ -637,13 +703,56 @@ class Put extends AerospikeTestCommon
  function testPutAssocArray() {
      $key = $this->db->initKey("test", "demo", "key_val_int");
      $map2 = array("k10"=>89,85);
+     $put_record = array("bin1"=>$map2);
      $status = $this->db->put($key,array("bin1"=>$map2));
      $this->keys[] = $key;
-     if($status !== Aerospike::OK) {
-         return $this->db->errorno();
-     }
+      $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
      return $status;
  }
+ /**
+  * @test
+  * Serialization with mixed types and no explicit serializer policy
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testMixedTypesWithDefaultSerializer)
+  *
+  * @test_plans{1.1}
+  */
+function testMixedTypesWithDefaultSerializer()
+{
+    if (ini_get('aerospike.serializer') !== false) {
+        $options = array(Aerospike::OPT_SERIALIZER => Aerospike::SERIALIZER_PHP);
+    } else {
+        $options = array();
+    }
+    $key = array("ns"=>"test","set"=>"demo","key"=>"map_with_mixed_types");
+    $obj = new stdClass();
+    $obj->z = 26;
+    $vals = array(
+    "_string" => "A string value",
+    "_integer" => 101,
+    "_boolean" => true,
+    "_float" => 6.969,
+    "_object" => $obj,
+    "_list" => array("A", "Word", "to", "the", "Wise"),
+    "_map" => array("foo" => "bar", "boo" => "hoo"));
+    $status = $this->db->put($key, $vals, 10, $options);
+    $this->keys[] = $key;
+    if ($status !== Aerospike::OK) {
+        return $this->db->errorno();
+    }
+    return $status;
+}
 
 /**
   * @test
@@ -1856,12 +1965,15 @@ class Put extends AerospikeTestCommon
      if ($put_status !== AEROSPIKE::OK) {
           return ($this->db->errorno());
      }
+     $put_record = array("bin1"=>10);
      $put_status = $this->db->put($key, array("bin1"=>10), NULL,
          array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, 56)));
      $this->keys[] = $key;
-     if ($put_status !== AEROSPIKE::OK) {
-         return $this->db->errorno();
-     }
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
      return $put_status;
  }
 /**
@@ -1892,7 +2004,7 @@ class Put extends AerospikeTestCommon
      }
      $gen_value = $metadata["generation"];
      $put_record =  array("bin1"=>10);
-     $put_status = $this->db->put($key, $put_record, NULL,
+     $put_status = $this->db->put($key, $put_record, 0,
          array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
@@ -1908,7 +2020,7 @@ class Put extends AerospikeTestCommon
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
-                 return AEROSPIKE::ERR;
+                 return AEROSPIKE::ERR_CLIENT;
              }
          }
      return  $status;
@@ -1958,7 +2070,7 @@ class Put extends AerospikeTestCommon
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
-                 return AEROSPIKE::ERR;
+                 return AEROSPIKE::ERR_CLIENT;
              }
          }
      return  $status;
@@ -1984,12 +2096,18 @@ class Put extends AerospikeTestCommon
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
+     $put_record = array("bin1"=>10);
      $put_status = $this->db->put($key, array("bin1"=>10), NULL,
          array(Aerospike::OPT_POLICY_GEN=> array(Aerospike::POLICY_GEN_IGNORE)));
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
      $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
      return $put_status;
  }
 /**
@@ -2014,13 +2132,19 @@ class Put extends AerospikeTestCommon
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
+     $put_record = array("bin1"=>10);
      $put_status = $this->db->put($key, array("bin1"=>10), NULL,
          array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ)));
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
      $this->keys[] = $key;
-     return  $status;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
  }
 /**
   * @test
@@ -2044,13 +2168,260 @@ class Put extends AerospikeTestCommon
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
+     $put_record = array("bin1"=>10);
      $put_status = $this->db->put($key, array("bin1"=>10), NULL,
          array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT)));
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
      $this->keys[] = $key;
-     return  $status;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_CREATE.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsCreatePositive()
+ {
+     $key = $this->db->initKey("test", "demo", "key_gen_greater");
+     $put_record = array("bin1"=>10);
+     $put_status = $this->db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_CREATE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_CREATE negative
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsCreateNegative()
+ {
+     $key = $this->db->initKey("test", "demo", "key_gen_greater");
+     $put_status = $this->db->put($key, array("bin1"=>5));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $put_record = array("bin1"=>10);
+     $put_status = $this->db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_CREATE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_UPDATE.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsUpdatePositive()
+ {
+     $key = $this->db->initKey("test", "demo", "put_test");
+     $status = $this->db->put($key, array("bin1"=>"Hello World"));
+     $this->keys[] = $key;
+     $put_record = array("bin1"=>"Hello");
+     $put_status = $this->db->put($key, array("bin1"=>"Hello"), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_UPDATE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_CREATE_OR_REPLACE
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsCreateOrReplacePositive()
+ {
+     $key = $this->db->initKey("test", "demo", "key_gen_greater");
+     $put_status = $this->db->put($key, array("bin1"=>5));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $put_record = array("bin1"=>10);
+     $put_status = $this->db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_CREATE_OR_REPLACE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_IGNORE.
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsIgnorePositive()
+ {
+     $key = $this->db->initKey("test", "demo", "key_gen_greater");
+     $put_status = $this->db->put($key, array("bin1"=>5));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $put_record = array("bin1"=>10);
+     $put_status = $this->db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_IGNORE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_REPLACE
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsReplacePositive()
+ {
+     $key = $this->db->initKey("test", "demo", "key_gen_greater");
+     $put_status = $this->db->put($key, array("bin1"=>5));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $put_record = array("bin1"=>10);
+     $put_status = $this->db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_REPLACE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
+ }
+/**
+  * @test
+  * PUT with generation policy POLICY_EXISTS_REPLACE negative
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutGenPolicyGTPositive)
+  *
+  * @test_plans{1.1}
+  */
+ function testPutGenPolicyExistsReplaceNegative()
+ {
+     $key = $this->db->initKey("test", "demo", "key_gen_greater");
+     $put_record = array("bin1"=>10);
+     $put_status = $this->db->put($key, array("bin1"=>10), NULL,
+         array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_REPLACE));
+     if ($put_status !== AEROSPIKE::OK) {
+          return $this->db->errorno();
+     }
+     $this->keys[] = $key;
+     $this->db->get($key, $get_record);
+      $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+      if (!empty($comp_res)) {
+          return Aerospike::ERR_RECORD_NOT_FOUND;
+          }
+     return $put_status;
  }
 /**
   * @test
@@ -2070,8 +2441,14 @@ class Put extends AerospikeTestCommon
  function testPutInitKeyWithDigestAndOptionKeyDigestPositive() {
      $key = $this->db->initKey("test", "demo",
          base64_decode("put_option_policy_key_digest"), true);
+     $put_record = array("binA"=>10, "binB"=>20);
      $put_status = $this->db->put($key, array("binA"=>10, "binB"=>20), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+     $get_status = $this->db->get($key, $record, array());
+     if ($get_status !== Aerospike::OK) {
+         return $get_status;
+     }
+     $this->keys[] = $key;
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
@@ -2108,7 +2485,7 @@ class Put extends AerospikeTestCommon
          return $get_status;
      }
      $this->keys[] = $key;
-     if ($record['key']['key'] != 'policy_key_send_test') return Aerospike::ERR;
+     if ($record['key']['key'] != 'policy_key_send_test') return Aerospike::ERR_CLIENT;
      return $get_status;
  }
 /**

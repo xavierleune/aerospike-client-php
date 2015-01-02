@@ -288,7 +288,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
 
     if (NULL == as_query_init(&query, namespace_p, set_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initialize a query");
-        error_p->code = AEROSPIKE_ERR;
+        error_p->code = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -306,7 +306,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
 
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
        DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
-       error_p->code = AEROSPIKE_ERR;
+       error_p->code = AEROSPIKE_ERR_CLIENT;
        goto exit;
     }
 
@@ -351,31 +351,31 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
 
         if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_NS, query.ns, strlen(query.ns), 1)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get namespace");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
         if ( 0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_SET, query.set, strlen(query.set), 1)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get set");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
         if (0 != add_assoc_null(key_container_p, PHP_AS_KEY_DEFINE_FOR_KEY)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
         if (0 != add_assoc_null(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
         if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get a key");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
@@ -383,13 +383,13 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
 
         if (0 != add_assoc_null(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
       /*  if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
-            error_p->code = AEROSPIKE_ERR;
+            error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }*/
     }

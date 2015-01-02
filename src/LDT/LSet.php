@@ -66,9 +66,9 @@ class LSet extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lset', 'add', array($this->bin, $value));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lset', 'add', array($this->bin, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -80,9 +80,9 @@ class LSet extends LDT
      * @return int status code of the operation
      */
     public function addMany(array $values) {
-        $res = $this->db->apply($this->key, 'lset', 'add_all', array($this->bin, $values));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lset', 'add_all', array($this->bin, $values));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -102,14 +102,14 @@ class LSet extends LDT
             return $this->errorno;
         }
         $elements = array();
-        $res = $this->db->apply($this->key, 'lset', 'exists', array($this->bin, $value), $found);
-        $this->processStatusCode($res);
-        if ($res !== Aerospike::OK) {
+        $status = $this->db->apply($this->key, 'lset', 'exists', array($this->bin, $value), $found);
+        $this->processStatusCode($status);
+        if ($status !== Aerospike::OK) {
             $found = false;
         } else {
             $found = (boolean) $found;
         }
-        return $res;
+        return $this->errorno;
     }
 
     /**
@@ -127,9 +127,9 @@ class LSet extends LDT
             $this->error = self::MSG_TYPE_NOT_ATOMIC;
             return $this->errorno;
         }
-        $res = $this->db->apply($this->key, 'lset', 'remove', array($this->bin, $value));
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lset', 'remove', array($this->bin, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
     }
 
     /**
@@ -140,9 +140,9 @@ class LSet extends LDT
      */
     public function scan(&$elements) {
         $elements = array();
-        $res = $this->db->apply($this->key, 'lset', 'scan', array($this->bin), $elements);
-        $this->processStatusCode($res);
-        return $res;
+        $status = $this->db->apply($this->key, 'lset', 'scan', array($this->bin), $elements);
+        $this->processStatusCode($status);
+        return $status;
     }
 
     /**

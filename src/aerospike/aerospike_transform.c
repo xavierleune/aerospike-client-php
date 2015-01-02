@@ -2160,7 +2160,7 @@ aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
     as_status      status = AEROSPIKE_OK;
     
     if (!user_p || !config_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2186,12 +2186,12 @@ aerospike_transform_set_password_in_config(char *password_p, as_config *config_p
     as_status      status = AEROSPIKE_OK;
     
     if (!password_p || !config_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
     if (!as_password_get_constant_hash(password_p, config_p->password)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2329,7 +2329,7 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, /*a
     as_status      status = AEROSPIKE_OK;
 
     if (!ht_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2375,14 +2375,14 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
     } else if (addrport_transform_iter_map_p->transform_result_type == TRANSFORM_INTO_ZVAL) {
         set_as_config = false;
     } else {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
     if ((!addrport_transform_iter_map_p) || (!value_pp) ||
             (set_as_config && (!addrport_transform_iter_map_p->transform_result.as_config_p)) ||
             (set_as_config && (!addrport_transform_iter_map_p->transform_result.ip_port_p))) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2458,7 +2458,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
     bool                                    set_as_config = false;
     
     if (PHP_IS_NOT_ARRAY(key_data_type_u32) || (!data_p) || (!retdata_pp)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2472,7 +2472,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
         set_as_config = false;
         addrport_transform_iter_map_p.transform_result.ip_port_p = ip_port;
     } else {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2497,7 +2497,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
                     ip_port, strlen(ip_port), (void**)&tmp)) {
             if (0 != zend_hash_add((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
                         ip_port, strlen(ip_port), (void *) ip_port, strlen(ip_port), NULL)) {
-                status = AEROSPIKE_ERR;
+                status = AEROSPIKE_ERR_CLIENT;
                 goto exit;
             }
         }
@@ -2528,7 +2528,7 @@ aerospike_transform_iteratefor_addr_port(HashTable* ht_p, void* data_p)
     config_transform_iter_map.iter_count_u32 = 0;
 
     if ((!ht_p) || (!data_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2548,7 +2548,7 @@ aerospike_transform_iteratefor_addr_port(HashTable* ht_p, void* data_p)
     }
 
     if (0 == config_transform_iter_map.iter_count_u32) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2575,7 +2575,7 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, const char* names
     as_status      status = AEROSPIKE_OK;
 
     if ((!as_key_p) || (!namespace_p) || (!set_p) || (!key_pp)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2598,13 +2598,13 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, const char* names
                     strncpy((char *) digest, Z_STRVAL_PP(key_pp), strlen(Z_STRVAL_PP(key_pp)));
                     as_key_init_digest(as_key_p, namespace_p, set_p, digest);
                 } else {
-                    status = AEROSPIKE_ERR;
+                    status = AEROSPIKE_ERR_CLIENT;
                     goto exit;
                 }
             }
             break;
         default:
-            status = AEROSPIKE_ERR;
+            status = AEROSPIKE_ERR_CLIENT;
             break;
     }
 
@@ -2637,7 +2637,7 @@ aerospike_transform_putkey_callback(HashTable* ht_p,
     as_put_key_data_map*      as_put_key_data_map_p = (as_put_key_data_map *)(data_p);
 
     if (!as_put_key_data_map_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2685,7 +2685,7 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
     u_int64_t            index_u64 = 0;
 
     if ((!ht_p) || (!as_key_p) || (!as_key_p) || (!set_val_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2698,7 +2698,7 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
     }
 
     if (!(put_key_data_map.namespace_p) || !(put_key_data_map.set_p) || !(put_key_data_map.key_pp) || (!key_record_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -2783,7 +2783,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;
-    int                         gen_value = 0;
+    uint16_t                    gen_value = 0;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
@@ -2897,6 +2897,8 @@ exit:
  * @param reurn_value               Result of initkey
  * @param record_key_p              Key of a record
  * @param options_p                 The options array
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
@@ -2904,27 +2906,30 @@ exit:
 extern as_status
 aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
-        as_key *record_key_p, zval *options_p TSRMLS_DC)
+        as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC)
 {
     as_status       status = AEROSPIKE_OK;
 
     if (!ns_p || !set_p || !return_value) {
         DEBUG_PHP_EXT_DEBUG("Parameter error");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
     if (0 != add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_NS, ns_p, ns_p_length, 1)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get namespace");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
     if ( 0 != add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_SET, set_p, set_p_length, 1)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get set");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
     if (pk_p) {
+        /*
+         * pk_p != NULL in case of initKey().
+         */
         switch(Z_TYPE_P(pk_p)) {
             case IS_LONG:
                 if (!is_digest) {
@@ -2936,7 +2941,7 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
             case IS_STRING:
                 if (strlen(Z_STRVAL_P(pk_p)) == 0) {
                     DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-                    status = AEROSPIKE_ERR;
+                    status = AEROSPIKE_ERR_CLIENT;
                     goto exit;
                 }
                 if (!is_digest) {
@@ -2947,30 +2952,34 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
                 break;
             default:
                 DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
-                status = AEROSPIKE_ERR;
+                status = AEROSPIKE_ERR_CLIENT;
                 goto exit;
         }
     } else {
         /*
-         * pk_p == NULL in case of get().
+         * pk_p == NULL in case of get() or scan().
          */
 
         zval **key_policy_pp = NULL;
 
         if (!record_key_p) {
-            status = AEROSPIKE_ERR;
+            status = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
 
         if (options_p) {
+            /*
+             * Optionally NOT NULL in case of get().
+             * Always NULL in case of scan().
+             */
             zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
         }
 
-        if ((!record_key_p->valuep) || (!key_policy_pp) || (key_policy_pp &&
-                    Z_LVAL_PP(key_policy_pp) == POLICY_KEY_DIGEST)) {
+        if ((!record_key_p->valuep) || (get_flag && ((!key_policy_pp) || (key_policy_pp &&
+                    Z_LVAL_PP(key_policy_pp) == AS_POLICY_KEY_DIGEST)))) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
-                status = AEROSPIKE_ERR;
+                status = AEROSPIKE_ERR_CLIENT;
                 goto exit;
             } else {
                 goto exit;
@@ -2981,14 +2990,14 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
             case AS_STRING:
                 if (0 != add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, record_key_p->value.string.value, 1)) {
                     DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
-                    status = AEROSPIKE_ERR;
+                    status = AEROSPIKE_ERR_CLIENT;
                     goto exit;
                 }
                 break;
             case AS_INTEGER:
                 if (0 != add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, record_key_p->value.integer.value)) {
                     DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
-                    status = AEROSPIKE_ERR;
+                    status = AEROSPIKE_ERR_CLIENT;
                     goto exit;
                 }
                 break;
@@ -3026,27 +3035,30 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  * @param get_record_p              Record
  * @param record_key_p              Key of record
  * @param key_container_p           Key container
+ * @param options                   Optional parameters
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
 static as_status
-aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p TSRMLS_DC)
+aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status                  status = AEROSPIKE_OK;
     php_unserialize_data_t     var_hash;
     //int8_t*                    hex_str_p = NULL;
 
     if (!get_record_p || !record_key_p || !key_container_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
     if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
             record_key_p->set, strlen(record_key_p->set), NULL, false,
-            key_container_p, record_key_p, options_p TSRMLS_CC))) {
+            key_container_p, record_key_p, options_p, get_flag TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -3055,7 +3067,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
      */
     /*if (NULL == (hex_str_p = bin2hex(((as_key_digest(record_key_p))->value), AS_DIGEST_VALUE_SIZE))) {
         DEBUG_PHP_EXT_DEBUG("Unable to allocate memory for digest");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }*/
 
@@ -3063,7 +3075,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
                 ((char *)(as_key_digest(record_key_p))->value),
                 AS_DIGEST_VALUE_SIZE, 1)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -3092,18 +3104,18 @@ aerospike_get_record_metadata(as_record* get_record_p, zval* metadata_container_
 
     if (!get_record_p) {
         DEBUG_PHP_EXT_DEBUG("Incorrect Record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
     if (0 != add_assoc_long(metadata_container_p, PHP_AS_RECORD_DEFINE_FOR_TTL, get_record_p->ttl)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get time to live of a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
 
     }
     if (0 != add_assoc_long(metadata_container_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION, get_record_p->gen)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -3117,13 +3129,16 @@ exit:
  *
  * @param get_record_p              Record
  * @param record_key_p              Key of a record
- * @param outer_container_p         Return value 
+ * @param outer_container_p         Return value
+ * @param options                   Optional parameters
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
 extern as_status
-aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p, zval* options_p TSRMLS_DC)
+aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     zval*               metadata_container_p = NULL;
@@ -3132,15 +3147,14 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
 
     if (!get_record_p || !record_key_p || ! outer_container_p) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit; 
     }
 
     MAKE_STD_ZVAL(key_container_p);
     array_init(key_container_p);
-    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p, options_p TSRMLS_CC);
+    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
-        status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
         goto exit;
     }
@@ -3149,19 +3163,18 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
     array_init(metadata_container_p);
     status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
-        status = AEROSPIKE_ERR;
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
         goto exit;
     }
 
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 exit:
@@ -3217,7 +3230,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
     foreach_record_callback_udata.obj = aerospike_obj_p;
 
     if ((!as_object_p) || (!get_rec_key_p) || (!error_p) || (!outer_container_p)) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -3242,15 +3255,15 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p, options_p TSRMLS_CC))) {
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p, options_p, true TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p))    {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 

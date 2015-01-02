@@ -79,6 +79,19 @@
 
 /*
  *******************************************************************************************************
+ * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR SESSION HANDLER IF
+ * SPECIFIED, ELSE RETURN DEFAULTS.
+ *******************************************************************************************************
+ */
+#define SAVE_HANDLER_PHP_INI INI_STR("session.save_handler") ? INI_STR("session.save_handler") : NULL
+#define SAVE_PATH_PHP_INI INI_STR("session.save_path") ? INI_STR("session.save_path") : NULL
+#define CACHE_EXPIRE_PHP_INI INI_INT("session.cache_expire") ? INI_INT("session.cache_expire") * 60 : 0
+
+#define AEROSPIKE_SESSION "aerospike"
+#define AEROSPIKE_SESSION_LEN 9
+
+/* 
+ *******************************************************************************************************
  * MACROS FOR PREDICATE ARRAY KEYS.
  *******************************************************************************************************
  */
@@ -153,8 +166,24 @@ typedef struct list_map_static_pool {
  *******************************************************************************************************
  */
 typedef struct csdk_aerospike_obj {
+    /*
+     * as_p holds the reference of internal C SDK aerospike object
+     */
     aerospike *as_p;
+
+    /*
+     * ref_as_p indicates the no. of references for internal C
+     * SDK aerospike object being held by the various PHP userland Aerospike
+     * objects.
+     */
     int ref_as_p;
+
+    /*
+     * ref_hosts_entry indicates the no. of references for internal C
+     * SDK aerospike object being held by entries in aerospike global
+     * persistent_list hashtable.
+     */
+    int ref_hosts_entry;
 } aerospike_ref;
 
 /*
@@ -171,6 +200,17 @@ typedef struct Aerospike_object {
     void ***ts;
 #endif
 } Aerospike_object;
+
+/* 
+ *******************************************************************************************************
+ * Structure containing session info of Aerospike_object.
+ *******************************************************************************************************
+ */
+typedef struct aerospike_session_t {
+    Aerospike_object    *aerospike_obj_p;
+    char                ns_p[AS_NAMESPACE_MAX_SIZE];
+    char                set_p[AS_SET_MAX_SIZE];
+} aerospike_session;
 
 /*
  *******************************************************************************************************
@@ -285,10 +325,11 @@ aerospike_info_callback(const as_error* err, const as_node* node, char* request,
         char* response, void* udata);
 
 /*
+ *******************************************************************************************************
  * Need to re-direct the same to log function that we have written
  * if per Aerospike_obj has been decided then we have to pass the object
  * as well into the callback method
- *
+ *******************************************************************************************************
  */
 extern as_log_level   php_log_level_set;
 /*
@@ -398,7 +439,7 @@ do {                                                                            
  * @param msg                  The error message string to be set.
  *******************************************************************************************************
  */
-#define PHP_EXT_SET_AS_ERR(as_err_obj_p, code, msg)                     as_error_setall(as_err_obj_p, code, msg, __func__, __FILE__, __LINE__)
+#define PHP_EXT_SET_AS_ERR(as_err_obj_p, code, msg)   as_error_setall(as_err_obj_p, code, msg, __func__, __FILE__, __LINE__)
 
 /*
  *******************************************************************************************************
@@ -409,8 +450,6 @@ do {                                                                            
  *                                  read and set into the class member.
  *******************************************************************************************************
  */
-//#define PHP_EXT_SET_AS_ERR_IN_CLASS(aerospike_class_p, as_err_obj_p)    aerospike_helper_set_error(aerospike_class_p, getThis(), as_err_obj_p, false)
-//#define PHP_EXT_RESET_AS_ERR_IN_CLASS(aerospike_class_p)                aerospike_helper_set_error(aerospike_class_p, getThis(), NULL, true)
 
 #define PHP_EXT_SET_AS_ERR_IN_CLASS(as_err_obj_p) \
     memcpy(&(AEROSPIKE_G(error_g.error)), as_err_obj_p, sizeof(as_error)); \
@@ -453,7 +492,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
 extern as_status
 aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
-        as_key *record_key_p, zval *options_p TSRMLS_DC);
+        as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
 
 extern void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
         uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
@@ -509,11 +548,12 @@ aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
 extern as_status
 aerospike_get_key_meta_bins_of_record(as_record* get_record_p,
         as_key* record_key_p, zval* outer_container_p,
-        zval* options_p TSRMLS_DC);
+        zval* options_p, bool get_flag TSRMLS_DC);
 
 extern void
-get_generation_value(zval* options_p, int* generation_value_p,
+get_generation_value(zval* options_p, uint16_t* generation_value_p,
         as_error *error_p TSRMLS_DC);
+
 /*
  *******************************************************************************************************
  * Extern declarations of helper functions.
@@ -532,6 +572,11 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);
+
+extern as_status
+aerospike_helper_check_and_set_config_for_session(as_config *config_p,
+        char *save_path, aerospike_session *session_p,
+        as_error *error_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
