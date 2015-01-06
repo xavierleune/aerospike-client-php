@@ -92,10 +92,10 @@ $start = __LINE__;
 $total = 0;
 $not_centenarian = 0;
 $where = $db->predicateBetween("age", 0, 99);
-$status = $db->query("test", "characters", $where, function ($record) use (&$total, &$not_centenarian) {
+$status = $db->query("test", "characters", function ($record) use (&$total, &$not_centenarian) {
     $total += (int) $record['bins']['age'];
     $not_centenarian++;
-}, array("email", "age"));
+}, array("email", "age"), $where);
 if ($status == Aerospike::OK) {
     echo success();
     echo "\nThe average age of employees who aren't centenarians is ".round($total / $not_centenarian)."\n";
