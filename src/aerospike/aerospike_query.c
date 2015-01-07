@@ -39,7 +39,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
     zval**              bin_pp = NULL;
     zval**              val_pp = NULL;
 
-    if (predicate_ht_p) {
+    if (predicate_ht_p && (zend_hash_num_elements(predicate_ht_p) != 0)) {
         if ((!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
                 (!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
                 (!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))) {

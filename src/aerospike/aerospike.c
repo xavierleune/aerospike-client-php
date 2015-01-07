@@ -2132,20 +2132,20 @@ PHP_METHOD(Aerospike, predicateBetween)
  *******************************************************************************************************
  * Queries a secondary index on a set in the Aerospike database.
  * Method prototype for PHP userland:
- * public int Aerospike::query ( string $ns, string $set, callback
- * $record_cb [, array $select [, array $where [, array $options ]]] )
+ * public int Aerospike::query ( string $ns, string $set, array $where,
+ * callback $record_cb [, array $select [, array $options ]] )
  *
  * @param ns                The namespace
  * @param set               The set
- * @param record_cb         A callback function invoked for each record streaming back from
- *                          the server.
- * @param select            An array of bin names to be returned.
  * @param where             The predicate for the query, conforming to one of the following:
  *                          Associative Array:
  *                              bin => bin name
  *                              op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
  *                              val => scalar integer/string for OP_EQ or array($min, $max) for
  *                                     OP_BETWEEN
+ * @param record_cb         A callback function invoked for each record streaming back from
+ *                          the server.
+ * @param select            An array of bin names to be returned.
  * @param options           Options including Aerospike::OPT_READ_TIMEOUT.
  *******************************************************************************************************
  */
@@ -2185,9 +2185,9 @@ PHP_METHOD(Aerospike, query)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|a!a!a!",
-        &ns_p, &ns_p_length, &set_p, &set_p_length,
-        &fci, &fcc, &bins_p, &predicate_p, &options_p) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa!f|a!a!",
+        &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
+        &fci, &fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unable to parse parameters");
