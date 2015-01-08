@@ -720,7 +720,7 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
     strcpy(config_p->lua.system_path, LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config_p->lua.user_path, LUA_USER_PATH_PHP_INI);
 
-    if (SAVE_HANDLER_PHP_INI && (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN))) {
+    if (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
         if (!save_path) {
             ini_save_path = SAVE_PATH_PHP_INI;
         }

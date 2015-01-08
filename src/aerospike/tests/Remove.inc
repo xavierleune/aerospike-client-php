@@ -247,7 +247,7 @@ class Remove extends AerospikeTestCommon
      */
     function testKeyRemoveWithPolicyKeyDigest() {
          $key = $this->db->initKey("test", "demo",
-         base64_decode("removebin_option_policy_key_digest"), true);
+         base64_decode("removebin_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("bin1"=>"1"), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         $this->db->remove($key, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
@@ -525,7 +525,7 @@ class Remove extends AerospikeTestCommon
      */
     function testRemoveBinWithPolicyKeyDigest() {
          $key = $this->db->initKey("test", "demo",
-         base64_decode("removebin_option_policy_key_digest"), true);
+         base64_decode("removebin_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("bin1"=>"1"), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
 

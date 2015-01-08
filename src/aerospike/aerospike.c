@@ -501,7 +501,7 @@ PHP_METHOD(Aerospike, __construct)
     as_config_init(&config);
     strcpy(config.lua.system_path, ini_value = LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config.lua.user_path, ini_value = LUA_USER_PATH_PHP_INI);
-    aerospike_helper_check_and_configure_shm(&config);
+    aerospike_helper_check_and_configure_shm(&config TSRMLS_CC);
 
     /* check for hosts, user and pass within config*/
     transform_zval_config_into transform_zval_config_into_as_config;
