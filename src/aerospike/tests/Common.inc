@@ -191,8 +191,9 @@ abstract class AerospikeTestCommon extends ASTestFramework
     protected function ensureUdfModule($module_path, $module_alias) {
         if ($this->has_module($module_alias)) {
             return Aerospike::OK;
+        } else {
+            return $this->db->register($module_path, $module_alias);
         }
-        return Aerospike::ERR_UDF_NOT_FOUND;
     }
 
     private function has_module($module_alias) {

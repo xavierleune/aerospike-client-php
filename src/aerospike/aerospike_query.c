@@ -39,87 +39,88 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
     zval**              bin_pp = NULL;
     zval**              val_pp = NULL;
 
-    if ((!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
-        (!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
-        (!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))) {
-        DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Predicate is expected to include the keys 'bin','op', and 'val'.");
-        goto exit;
-    }
-
-    if ((FAILURE == zend_hash_find(predicate_ht_p, OP, sizeof(OP),
-                    (void **) &op_pp)) ||
-            (FAILURE == zend_hash_find(predicate_ht_p, BIN, sizeof(BIN),
-                             (void **) &bin_pp)) ||
-            (FAILURE == zend_hash_find(predicate_ht_p, VAL, sizeof(VAL),
-                             (void **) &val_pp))) {
-        DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Predicate is expected to include the keys 'bin','op', and 'val'.");
-        goto exit;
-    }
-
-    convert_to_string_ex(op_pp);
-    convert_to_string_ex(bin_pp);
-    if (strncmp(Z_STRVAL_PP(op_pp), "=", 1) == 0) {
-        switch(Z_TYPE_PP(val_pp)) {
-            case IS_STRING:
-                convert_to_string_ex(val_pp);
-                if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                        string_equals(Z_STRVAL_PP(val_pp)))) {
-                    DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
-                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                            "Unable to set query predicate");
-                }
-                break;
-            case IS_LONG:
-                convert_to_long_ex(val_pp);
-                if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                        integer_equals(Z_LVAL_PP(val_pp)))) {
-                    DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
-                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                            "Unable to set query predicate");
-                }
-                break;
-            default:
-                DEBUG_PHP_EXT_DEBUG("Predicate 'val' must be either string or integer.");
-                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                        "Predicate 'val' must be either string or integer.");
-                goto exit;
+    if (predicate_ht_p && (zend_hash_num_elements(predicate_ht_p) != 0)) {
+        if ((!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
+                (!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
+                (!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))) {
+            DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Predicate is expected to include the keys 'bin','op', and 'val'.");
+            goto exit;
         }
-    } else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0) {
-        bool between_unpacked = false;
-        if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
-            convert_to_array_ex(val_pp);
-            zval **min_pp;
-            zval **max_pp;
-            if ((zend_hash_index_find(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
-                (zend_hash_index_find(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)) {
-                convert_to_long_ex(min_pp);
-                convert_to_long_ex(max_pp);
-                if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
-                    between_unpacked = true;
+
+        if ((FAILURE == zend_hash_find(predicate_ht_p, OP, sizeof(OP),
+                        (void **) &op_pp)) ||
+                (FAILURE == zend_hash_find(predicate_ht_p, BIN, sizeof(BIN),
+                                           (void **) &bin_pp)) ||
+                (FAILURE == zend_hash_find(predicate_ht_p, VAL, sizeof(VAL),
+                                           (void **) &val_pp))) {
+            DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Predicate is expected to include the keys 'bin','op', and 'val'.");
+            goto exit;
+        }
+
+        convert_to_string_ex(op_pp);
+        convert_to_string_ex(bin_pp);
+        if (strncmp(Z_STRVAL_PP(op_pp), "=", 1) == 0) {
+            switch(Z_TYPE_PP(val_pp)) {
+                case IS_STRING:
+                    convert_to_string_ex(val_pp);
                     if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                integer_range(Z_LVAL_PP(min_pp),
-                                    Z_LVAL_PP(max_pp)))) {
+                                string_equals(Z_STRVAL_PP(val_pp)))) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                            "Unable to set query predicate");
+                                "Unable to set query predicate");
+                    }
+                    break;
+                case IS_LONG:
+                    convert_to_long_ex(val_pp);
+                    if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                integer_equals(Z_LVAL_PP(val_pp)))) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set query predicate");
+                    }
+                    break;
+                default:
+                    DEBUG_PHP_EXT_DEBUG("Predicate 'val' must be either string or integer.");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                            "Predicate 'val' must be either string or integer.");
+                    goto exit;
+            }
+        } else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0) {
+            bool between_unpacked = false;
+            if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
+                convert_to_array_ex(val_pp);
+                zval **min_pp;
+                zval **max_pp;
+                if ((zend_hash_index_find(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
+                        (zend_hash_index_find(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)) {
+                    convert_to_long_ex(min_pp);
+                    convert_to_long_ex(max_pp);
+                    if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
+                        between_unpacked = true;
+                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    integer_range(Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)))) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                    "Unable to set query predicate");
+                        }
                     }
                 }
             }
-        }
-        if (!between_unpacked) {
-            DEBUG_PHP_EXT_DEBUG("Predicate BETWEEN 'op' requires an array of (min,max) integers.");
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Predicate BETWEEN 'op' requires an array of (min,max) integers.");
+            if (!between_unpacked) {
+                DEBUG_PHP_EXT_DEBUG("Predicate BETWEEN 'op' requires an array of (min,max) integers.");
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                        "Predicate BETWEEN 'op' requires an array of (min,max) integers.");
+                goto exit;
+            }
+        } else {
+            DEBUG_PHP_EXT_DEBUG("Unsupported 'op' in predicate");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unsupported 'op' in predicate");
             goto exit;
         }
-    } else {
-        DEBUG_PHP_EXT_DEBUG("Unsupported 'op' in predicate");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unsupported 'op' in predicate");
-        goto exit;
     }
 
     if (module_p && function_p && (!as_query_apply(query_p, module_p,
@@ -177,7 +178,11 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 
     as_query_init(&query, namespace_p, set_p);
     is_init_query = true;
-    as_query_where_inita(&query, 1);
+
+    if (predicate_ht_p) {
+        as_query_where_inita(&query, 1);
+    }
+
     if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
                     set_p, predicate_ht_p, NULL, NULL, NULL TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to define scan");

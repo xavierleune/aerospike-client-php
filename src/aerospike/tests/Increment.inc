@@ -293,7 +293,7 @@ class Increment extends AerospikeTestCommon
     function testIncrementWithPolicyKeyDigest() {
         $gen_value = 10;
         $key = $this->db->initKey("test", "demo",
-         base64_decode("increment_option_policy_key_digest"), true);
+         base64_decode("increment_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("bin1"=>1), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         $this->db->increment($key, 'bin1', 4, 0, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));

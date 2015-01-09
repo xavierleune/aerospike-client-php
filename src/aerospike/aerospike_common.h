@@ -577,6 +577,13 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
         char *save_path, aerospike_session *session_p,
         as_error *error_p TSRMLS_DC);
 
+extern void
+aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC);
+
+extern as_status
+aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
+        as_error *error_p TSRMLS_DC);
+
 /*
  ******************************************************************************************************
  * Extern declarations of UDF functions.

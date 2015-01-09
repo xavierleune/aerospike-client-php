@@ -501,7 +501,7 @@ PHP_METHOD(Aerospike, __construct)
     as_config_init(&config);
     strcpy(config.lua.system_path, ini_value = LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config.lua.user_path, ini_value = LUA_USER_PATH_PHP_INI);
-    aerospike_helper_check_and_configure_shm(&config);
+    aerospike_helper_check_and_configure_shm(&config TSRMLS_CC);
 
     /* check for hosts, user and pass within config*/
     transform_zval_config_into transform_zval_config_into_as_config;
@@ -2132,8 +2132,8 @@ PHP_METHOD(Aerospike, predicateBetween)
  *******************************************************************************************************
  * Queries a secondary index on a set in the Aerospike database.
  * Method prototype for PHP userland:
- * public int Aerospike::query ( string $ns, string $set, array $where, callback
- * $record_cb [, array $select [, array $options ]] )
+ * public int Aerospike::query ( string $ns, string $set, array $where,
+ * callback $record_cb [, array $select [, array $options ]] )
  *
  * @param ns                The namespace
  * @param set               The set
@@ -2164,6 +2164,7 @@ PHP_METHOD(Aerospike, query)
     zend_fcall_info_cache   fcc = empty_fcall_info_cache;
     zval*                   bins_p = NULL;
     HashTable*              bins_ht_p = NULL;
+    HashTable*              predicate_ht_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
@@ -2184,7 +2185,7 @@ PHP_METHOD(Aerospike, query)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssaf|aa",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa!f|a!a!",
         &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
         &fci, &fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2199,13 +2200,6 @@ PHP_METHOD(Aerospike, query)
                 "Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
         goto exit;
     }
-    if (PHP_TYPE_ISNOTARR(predicate_p)) {
-        status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() expects parameter 3 to be an array.");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::query() expects parameter 3 to be an array.");
-        goto exit;
-    }
 
     userland_callback user_func;
     user_func.fci_p =  &fci;
@@ -2213,11 +2207,12 @@ PHP_METHOD(Aerospike, query)
     user_func.obj = aerospike_obj_p;
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
+    predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_query_run(aerospike_obj_p->as_ref_p->as_p,
                                           &error, ns_p, set_p, &user_func,
-                                          bins_ht_p, Z_ARRVAL_P(predicate_p),
+                                          bins_ht_p, predicate_ht_p,
                                           options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;

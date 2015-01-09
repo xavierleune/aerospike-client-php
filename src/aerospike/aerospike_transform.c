@@ -2885,6 +2885,24 @@ exit:
     return status;
 }
 
+/*
+ *******************************************************************************************************
+ * Function that returns no. of digits of a positive integer.
+ *******************************************************************************************************
+ */
+static int
+numPlaces (int num) {
+    int places = 1;
+    if (num < 0) {
+        return -1;
+    }
+    while (num > 9) {
+        num /= 10;
+        places++;
+    }
+    return places;
+}
+
 /* 
  *******************************************************************************************************
  * Creates php key(ns, set, pk) 
@@ -2937,6 +2955,11 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
                 if (!is_digest) {
                     add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_LVAL_P(pk_p));
                 } else {
+                    if (numPlaces(Z_LVAL_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
+                        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() digest max length exceeded");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    } 
                     add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_LVAL_P(pk_p));
                 }
                 break;
@@ -2949,6 +2972,11 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
                 if (!is_digest) {
                     add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_STRVAL_P(pk_p), 1);
                 } else {
+                    if (strlen(Z_STRVAL_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
+                        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() digest max length exceeded");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    }
                     add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_STRVAL_P(pk_p), 1);
                 }
                 break;

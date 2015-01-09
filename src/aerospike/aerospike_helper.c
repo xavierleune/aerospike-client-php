@@ -507,7 +507,7 @@ exit:
 }
 
 extern void
-aerospike_helper_check_and_configure_shm(as_config *config_p) {
+aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
     if (SHM_USE_PHP_INI) {
         config_p->use_shm = true;
         config_p->shm_max_nodes = (uint32_t) SHM_MAX_NODES_PHP_INI;
@@ -720,7 +720,7 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
     strcpy(config_p->lua.system_path, LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config_p->lua.user_path, LUA_USER_PATH_PHP_INI);
 
-    if (SAVE_HANDLER_PHP_INI && (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN))) {
+    if (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
         if (!save_path) {
             ini_save_path = SAVE_PATH_PHP_INI;
         }
