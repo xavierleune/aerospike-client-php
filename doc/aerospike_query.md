@@ -16,6 +16,8 @@ The bins returned can be filtered by passing an associative array of the *bins*
 needed, otherwise all bins in the record are returned (similar to a SELECT \*).
 Non-existent bins will appear in the *record* with a NULL value.
 
+To query **without a predicate** the value of the *where* must be an empty array.
+
 ## Parameters
 
 **ns** the namespace
@@ -28,6 +30,8 @@ Associative Array:
   bin => bin name
   op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
   val => scalar integer/string for OP_EQ or array($min, $max) for OP_BETWEEN
+
+or an empty array() for no predicate.
 ```
 
 **record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
