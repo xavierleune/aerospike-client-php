@@ -1,5 +1,5 @@
 --TEST--
-Query - Query call with where parameter missing
+Query - Query call with set parameter missing
 
 --FILE--
 <?php

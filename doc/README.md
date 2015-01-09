@@ -22,9 +22,6 @@ So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
 
 The *Large Data Type Methods* are implemented as a PHP library.
 
-Addition of the consistency policies, and improvements to createIndex() and
-register() are in-progress.
-
 We expect the specification of the PHP client to closely describe our next
 release, including the unimplemented methods.  However, it is possible that
 some changes to the client spec will occur.
