@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-require_once(realpath(__DIR__ . '/../examples_util.php'));
 
 function parse_args() {
     $shortopts  = "";
@@ -30,91 +29,73 @@ function parse_args() {
         "num-ops::",        /* Optionally number of read-write operations */
         "help",           /* Usage */
     );
+    global $argv;
     $options = getopt($shortopts, $longopts);
+    for ($i = 0; $i <= count($options); $i++) {
+        array_shift($argv);
+    }
+    $options['_args'] = $argv;
     return $options;
 }
 
 $args = parse_args();
 if (isset($args["help"])) {
-    echo "php read-write-mix.php [-hHOST] [-pPORT] [-wWRITE EVERY Nth RECORD] [-nRECORDS]\n";
+    echo "php rw-worker.php [-hHOST] [-pPORT] [-wWRITE EVERY Nth RECORD] [-nRECORDS] LOGFILE\n";
     echo " or\n";
-    echo "php read-write-mix.php [--host=HOST] [--port=PORT] [--write-every=WRITE EVERY Nth RECORD] [--num-ops=RECORDS]\n";
+    echo "php rw-worker.php [--host=HOST] [--port=PORT] [--write-every=WRITE EVERY Nth RECORD] [--num-ops=RECORDS] LOGFILE\n";
     exit(1);
 }
 $addr = (isset($args["h"])) ? (string) $args["h"] : ((isset($args["host"])) ? (string) $args["host"] : "localhost");
 $port = (isset($args["p"])) ? (integer) $args["p"] : ((isset($args["port"])) ? (string) $args["port"] : 3000);
 $total_ops = (isset($args["n"])) ? (integer) $args["n"] : ((isset($args["num-ops"])) ? (string) $args["num-ops"] : 100000);
 $write_every = (isset($args["w"])) ? (integer) $args["w"] : ((isset($args["write-every"])) ? (string) $args["write-every"] : 10);
+$log = $args["_args"][0];
+$pid = getmypid();
+echo "rw-worker.php launched with process ID $pid\n";
 
-echo colorize("Connecting to the host ≻", 'black', true);
 $config = array("hosts" => array(array("addr" => $addr, "port" => $port)));
 $db = new Aerospike($config, false);
 if (!$db->isConnected()) {
-    echo fail("Could not connect to host $addr:$port [{$db->errorno()}]: {$db->error()}");
+    file_put_contents($log, "$pid|0|0|0|0|0|0|0\n", FILE_APPEND);
     exit(1);
 }
-echo success();
 
-echo colorize("Clear out the record that may exist at test.performance with PK=1 ≻", 'black', true);
-$key = $db->initKey("test", "performance", "read-write");
-$res = $db->remove($key);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-
+$key = $db->initKey("test", "rw-performance", $pid);
+$writes = 0;
 $write_fails = 0;
-$writes = 1;
 $reads = 0;
 $read_fails = 0;
-$kv = array("v" => 1);
-echo colorize("Initialize the record used for the serial put/get performance test ≻", 'black', true);
 $begin = microtime(true);
+$kv = array('v'=>0);
 $res = $db->put($key, $kv);
-if ($res == Aerospike::OK) {
-    echo success();
-} else {
-    echo fail("Could not initialize the test bin [{$db->errorno()}]: {$db->error()}");
+if ($res !== Aerospike::OK) {
+    $end = microtime(true);
+    $delta = $end - $begin;
+    $tps = (1 / $delta);
+    file_put_contents($log, "$pid|1|$delta|$tps|0|0|1|1\n", FILE_APPEND);
     exit(2);
 }
+$writes++;
 
-echo colorize("Run the mixed read/write performance test ≻", 'black', true);
 for ($num_ops = 1; $num_ops < $total_ops; $num_ops++) {
     if (($num_ops % $write_every) == 0) {
-        $kv['v']++;
+        $kv['v'] = $num_ops;
         $res = $db->put($key, $kv);
         $writes++;
-        if ($res != Aerospike::OK) {
+        if ($res !== Aerospike::OK) {
             $write_fails++;
-            // roll back the test value
-            $kv['v']--;
         }
     } else {
         $res = $db->get($key, $r);
         $reads++;
-        if ($res != Aerospike::OK) {
-            $read_fails++;
-        } elseif ($r['bins']['v'] != $kv['v']) {
+        if ($res !== Aerospike::OK) {
             $read_fails++;
         }
     }
 }
 $end = microtime(true);
-if (($read_fails == 0) && ($write_fails == 0)) {
-    echo success();
-} else {
-    echo standard_fail($db);
-}
-
-echo colorize("$num_ops serial operations, $reads reads, $writes writes (every $write_every records)\n", 'green', true);
-$color = ($read_fails > 0) ? 'red' : 'green';
-echo colorize("Failed reads: $read_fails\n", $color, true);
-$color = ($write_fails > 0) ? 'red' : 'green';
-echo colorize("Failed writes: $write_fails\n", $color, true);
 $delta = $end - $begin;
 $tps = ($num_ops / $delta);
-echo colorize("Total time: {$delta}s TPS:$tps\n", 'purple', true);
-
+file_put_contents($log, "$pid|$num_ops|$delta|$tps|$reads|$read_fails|$writes|$write_fails\n", FILE_APPEND);
 $db->close();
 ?>

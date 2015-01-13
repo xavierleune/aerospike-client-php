@@ -1,6 +1,6 @@
 <?php
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ if (!$db->isConnected()) {
 }
 echo success();
 
-$key = $db->initKey("test", "write_perf", 0);
+$key = $db->initKey("test", "performance", "write");
 $write_fails = 0;
 $writes = 1;
 $kv = array("v" => 0);
