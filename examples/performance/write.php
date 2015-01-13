@@ -54,17 +54,17 @@ echo success();
 
 $key = $db->initKey("test", "performance", "write");
 $write_fails = 0;
-$writes = 1;
+$writes = 0;
 $kv = array("v" => 0);
 $begin = microtime(true);
 
 echo colorize("Write $total_ops records ≻", 'black', true);
-for ($num_ops = 1; $num_ops < $total_ops; $num_ops++) {
+for ($num_ops = 1; $num_ops <= $total_ops; $num_ops++) {
     $kv['v']++;
-    $key['key'] = $kv['v'];
+    $key['key'] = 'write-'.$kv['v'];
     $res = $db->put($key, $kv);
     $writes++;
-    if ($res != Aerospike::OK) {
+    if ($res !== Aerospike::OK) {
         $write_fails++;
         // roll back the test value
         $kv['v']--;
