@@ -8,6 +8,7 @@ Usage: rw-concurrent.sh [-c WORKERS] [-h HOST] [-p PORT] [-n TRANSACTIONS] [-w W
    -c WORKERS  the number of concurrent workers. default: 4
    -n NUM      the number of transactions per-worker. default: 50000
    -w RW-RATIO write every Nth transaction. default: 10 (for 9:1 rw ratio)
+Example: ./rw-concurrent.sh -h 192.168.119.3 -c 4 -n 50000 -w 10 run.log
 EOB
 }
 
@@ -41,6 +42,10 @@ log=$1
 if [ ! $log ]; then
     help
     exit 2
+fi
+
+if [ -f $log ]; then
+    rm $log && touch $log
 fi
 
 for((i=0; i<$concurrent; i++))

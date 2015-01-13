@@ -38,5 +38,5 @@ read-write ratio:
 
 ```bash
 chmod +x rw-concurrent.sh
-./rw-concurrent -h 192.168.119.3 -c 4 -n 50000 -w 10
+./rw-concurrent.sh -h 192.168.119.3 -c 4 -n 50000 -w 10 run.log
 ```
