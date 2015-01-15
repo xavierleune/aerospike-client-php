@@ -490,6 +490,31 @@ class Put extends AerospikeTestCommon
       }
       return $status;
   }
+  /**
+  * @test
+  * Put an empty PHP array into a bin
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testPutEmptyArrayIntoBin)
+  *
+  * @test_plans{1.1}
+  */
+  function testPutEmptyArrayIntoBin()
+  {
+      $key = array("ns"=>"test","set"=>"demo","key"=>"aerospike_issue_14");
+      $status = $this->db->put($key, array("array_bin"=>array()), 10);
+      $this->keys[] = $key;
+      if ($status !== Aerospike::OK) {
+          return $this->db->errorno();
+      }
+      return $status;
+  }
 /**
   * @test
   * Basic PUT Insert Map and List combine

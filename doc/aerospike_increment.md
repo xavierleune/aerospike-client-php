@@ -10,7 +10,9 @@ public int Aerospike::increment ( array $key, string $bin, int $offset [, int $i
 ```
 
 **Aerospike::increment()** will increment a *bin* containing a numeric value by the *offest* or
-set it to the *initial_value* if it does not exist.
+set it to the *initial_value* if it does not exist. Like other bin operations,
+increment() only works on existing records (i.e. ones that were previously created with a put()).
+
 
 ## Parameters
 

@@ -10,6 +10,8 @@ public int Aerospike::prepend ( array $key, string $bin, string $value [, array 
 ```
 
 **Aerospike::prepend()** will prepend a string to the string value in *bin*.
+Like other bin operations, prepend() only works on existing records
+(i.e. ones that were previously created with a put()).
 
 ## Parameters
 

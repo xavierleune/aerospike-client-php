@@ -568,11 +568,6 @@ do {                                                                           \
     uint key_iterator = 0;                                                     \
     hashtable = Z_ARRVAL_PP((zval**)value);                                    \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
-    if (zend_hash_num_elements(hashtable) == 0) {                              \
-        PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_ERR_PARAM,              \
-                "Got an empty array from PHP");                                \
-        goto label;                                                            \
-    }                                                                          \
     TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index, pointer,         \
             key_iterator)                                                      \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
