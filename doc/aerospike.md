@@ -108,7 +108,6 @@ class Aerospike
     // Bin specific:
     const ERR_BIN_NAME           ; // Name too long or exceeds the unique name quota for the namespace
     const ERR_BIN_NOT_FOUND      ;
-    const ERR_BIN_TYPE           ; // Bin modification failed due to value type
     const ERR_BIN_EXISTS         ; // Bin already exists
     const ERR_BIN_INCOMPATIBLE_TYPE;
     // Query and Scan operations:
