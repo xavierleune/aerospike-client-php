@@ -10,6 +10,9 @@ public int Aerospike::append ( array $key, string $bin, string $value [, array $
 ```
 
 **Aerospike::append()** will append a string to the string value in *bin*.
+Like other bin operations, append() only works on existing records
+(i.e. ones that were previously created with a put()).
+
 
 ## Parameters
 

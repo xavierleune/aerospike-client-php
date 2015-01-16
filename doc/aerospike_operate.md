@@ -13,6 +13,9 @@ public int Aerospike::operate ( array $key, array $operations [, array &$returne
 with a given *key*, with write operations happening before read ones.
 Non-existent bins being read will have a NULL value.
 
+Like other bin operations, operate() only works on existing records
+(i.e. ones that were previously created with a put()).
+
 ## Parameters
 
 **key** the key identifying the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].

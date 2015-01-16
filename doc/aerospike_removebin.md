@@ -10,7 +10,8 @@ public int Aerospike::removeBin ( array $key, array $bins [, array $options ] )
 ```
 
 **Aerospike::removeBin()** will remove the specified *bins* from the record* with
- a given *key*.
+ a given *key*. Like other bin operations, removeBin() only works on existing
+records (i.e. ones that were previously created with a put()).
 
 ## Parameters
 

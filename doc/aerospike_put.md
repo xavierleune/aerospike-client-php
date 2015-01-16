@@ -134,6 +134,6 @@ if ($res == Aerospike::OK) {
 We expect to see:
 
 ```
-The Aerospike server already has a record with the given key.
+The record has been written since we last read it.
 ```
 
