@@ -372,7 +372,8 @@ do {                                                                           \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
             EXPAND_CASE_PUT(level, method, action, NULL, key,                  \
-                    dataval, store, err, static_pool, label, -1);              \
+                    dataval, store, err, static_pool, label,                   \
+                    serializer_policy);                                        \
             EXPAND_CASE_PUT(level, method, action, OBJECT, key,                \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
@@ -638,8 +639,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
-    AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
-        serializer_policy, err TSRMLS_CC)
+    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
+            serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
@@ -688,8 +689,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool,       \
            serializer_policy, err)                                             \
-    AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool,                   \
-        serializer_policy, err TSRMLS_CC)
+    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+                    serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool,       \
             serializer_policy, err)                                            \
@@ -738,8 +739,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool,           \
            serializer_policy, err)                                             \
-    AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
-        serializer_policy, err TSRMLS_CC)
+    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+            serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array, static_pool,           \
            serializer_policy, err)                                             \

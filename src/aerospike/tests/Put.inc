@@ -2544,5 +2544,171 @@ function testMixedTypesWithDefaultSerializer()
      }
      return  $status;
  }*/
+    /**
+     * @test
+     * Try putting NULL record without any bins (example: [NULL])
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUTNoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testPutNullRecordNegative()
+    {
+        $key = array("ns"=>"test", "set"=>"demo",
+            "key"=>"test_null_record_negative");
+        $status = $this->db->put($key, array(NULL));
+        $this->keys[] = $key;
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Put NULL data within record (example: ['null_bin' => NULL])
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUTNoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testPutNullDataRecordPositive()
+    {
+        $key = array("ns"=>"test", "set"=>"demo",
+            "key"=>"test_null_data_record_positive");
+        $put_record = array('null_bin' => NULL);
+        $status = $this->db->put($key, $put_record);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $this->keys[] = $key;
+        $status = $this->db->get($key, $get_record);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_RECORD_NOT_FOUND;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Put NULL data within map (example: ['my_bin' => ['null_value' => NULL]])
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUTNoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testPutNullDataMapPositive()
+    {
+        $key = array("ns"=>"test", "set"=>"demo",
+            "key"=>"test_null_data_map_positive");
+        $put_record = array('my_bin' => array('null_data' => NULL));
+        $status = $this->db->put($key, $put_record);
+        $this->keys[] = $key;
+        $status = $this->db->get($key, $get_record);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_RECORD_NOT_FOUND;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Put NULL data within list (example: ['my_list' => [1, 'hello', NULL]])
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUTNoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testPutNullDataListPositive()
+    {
+        $key = array("ns"=>"test", "set"=>"demo",
+            "key"=>"test_null_data_list_positive");
+        $put_record = array('my_bin' => array(1, 'hello', NULL));
+        $status = $this->db->put($key, $put_record);
+        $this->keys[] = $key;
+        $status = $this->db->get($key, $get_record);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_RECORD_NOT_FOUND;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Put NULL data within mixed nested data (example: ['my_data' => [1, ['age' => 20,
+     *   'job' => NULL, 'salary'=> NULL,
+     *   'qualifications' => ['B.Tech', 'M.Tech', NULL]], 'hello', NULL]])
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUTNoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testPutNullDataMixedPositive()
+    {
+        $key = array("ns"=>"test", "set"=>"demo",
+            "key"=>"test_null_data_mixed_positive");
+        $put_record = array('my_data' => array(1, ['age' => 20,
+            'job' => NULL, 'salary' => NULL,
+            'qualifications' => ['B.Tech', 'M.Tech', NULL]],
+            'hello', NULL), 'no_data' => NULL); 
+        $status = $this->db->put($key, $put_record);
+        $this->keys[] = $key;
+        $status = $this->db->get($key, $get_record);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $comp_res = array_diff_assoc_recursive($put_record, $get_record["bins"]);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_RECORD_NOT_FOUND;
+        }
+        return $status;
+    }
 }
 ?>
