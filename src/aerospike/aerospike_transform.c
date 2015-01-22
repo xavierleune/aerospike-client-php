@@ -1564,8 +1564,8 @@ static void AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array,
 static void AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array,
         void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    if (!(as_record_set_nil((as_record *)(array),
-                    (const char *) Z_LVAL_PP((zval**) key)))) {
+    if (!as_record_set_nil((as_record *)array,
+                    (const char *) key)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to nil");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Unable to set record to nil");
