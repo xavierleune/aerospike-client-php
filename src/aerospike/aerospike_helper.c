@@ -628,8 +628,13 @@ parse_save_path(char *save_path, aerospike_session *session_p,
     char        *saved = NULL;
     char        port[INET_PORT];
     int16_t     iter_host = 0;
+    char        *copy = NULL;
     
-    tok = strtok_r(save_path, SAVE_PATH_DELIMITER, &saved);
+    copy = (char *) emalloc(strlen(save_path) + 1);
+    strncpy(copy, save_path, strlen(save_path) + 1);
+    
+    tok = strtok_r(copy, SAVE_PATH_DELIMITER, &saved);
+    
     if (tok == NULL) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Could not read SAVE_PATH settings");
@@ -664,7 +669,9 @@ parse_save_path(char *save_path, aerospike_session *session_p,
             }
         }
         trim_white_space(tok, strlen(tok) + 1);
-        config_p->hosts[iter_host].addr = tok;
+        char *addr = (char *) emalloc(strlen(tok) + 1);
+        strncpy(addr, tok, strlen(tok) + 1);
+        config_p->hosts[iter_host].addr = addr;
 
         tok = strtok_r(NULL, HOST_DELIMITER, &saved);
         if (tok == NULL) {
@@ -684,6 +691,9 @@ parse_save_path(char *save_path, aerospike_session *session_p,
     }
 
 exit:
+    if (copy) {
+        efree(copy);
+    }
     return error_p->code;
 }
 
@@ -710,7 +720,6 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
         char *save_path, aerospike_session *session_p,
         as_error *error_p TSRMLS_DC)
 {
-    char        *ini_save_path = NULL;
     char        *ip = NULL;
     uint16_t    port = 0;
 
@@ -722,7 +731,7 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
 
     if (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
         if (!save_path) {
-            ini_save_path = SAVE_PATH_PHP_INI;
+            save_path = SAVE_PATH_PHP_INI;
         }
 
         if (save_path) {
