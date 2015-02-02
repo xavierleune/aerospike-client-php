@@ -236,3 +236,5 @@ class Aerospike
 ### [Info Methods](apiref_info.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
 
+An overview of the development of the client is at the top level
+[README](README.md).
