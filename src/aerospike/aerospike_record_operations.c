@@ -38,7 +38,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 u_int64_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
-                                as_record* get_rec TSRMLS_DC)
+                                as_record** get_rec TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     as_val*             value_p = NULL;
@@ -54,10 +54,10 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             break;
         case AS_OPERATOR_INCR:
             if (AEROSPIKE_OK != (status = aerospike_key_select(as_object_p,
-                            error_p, NULL, as_key_p, select, &get_rec))) {
+                            error_p, NULL, as_key_p, select, get_rec))) {
                 goto exit;
             } else {
-                if (NULL != (value_p = (as_val *) as_record_get (get_rec, bin_name_p))) {
+                if (NULL != (value_p = (as_val *) as_record_get (*get_rec, bin_name_p))) {
                    if (AS_NIL == value_p->type) {
                        if (!as_operations_add_write_int64(ops, bin_name_p,
                                    initial_value)) {
@@ -264,7 +264,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
                                                       bin_name_p, str,
                                                       offset, initial_value,
                                                       time_to_live, operation,
-                                                      &ops, get_rec TSRMLS_CC))) {
+                                                      &ops, &get_rec TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
     }
@@ -321,6 +321,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     }
 
     foreach_hashtable(operations_array_p, pointer, operation) {
+        as_record *temp_rec = NULL;
 
         if (IS_ARRAY == Z_TYPE_PP(operation)) {
             each_operation_array_p = Z_ARRVAL_PP(operation);
@@ -361,9 +362,12 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
                             as_key_p, options_p, error_p, bin_name_p, str,
-                            offset, 0, 0, op, &ops, get_rec TSRMLS_CC))) {
+                            offset, 0, 0, op, &ops, &temp_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
+            }
+            if (temp_rec) {
+                as_record_destroy(temp_rec);
             }
         } else {
             status = AEROSPIKE_ERR;

@@ -146,6 +146,7 @@ static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
             DEBUG_PHP_EXT_DEBUG("Ref count is working");
             zend_hash_clean(AEROSPIKE_G(persistent_list_g));
             zend_hash_destroy(AEROSPIKE_G(persistent_list_g));
+            pefree(AEROSPIKE_G(persistent_list_g), 1);
             AEROSPIKE_G(persistent_list_g) = NULL;
             AEROSPIKE_G(persistent_ref_count) = 0;
         } else {
