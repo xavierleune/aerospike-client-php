@@ -8,7 +8,7 @@ public int Aerospike::__construct ( array $config [, boolean $persistent_connect
 
 ### [Aerospike::__destruct](aerospike_destruct.md)
 ```
-public void Aerospike::__destruct ( void )
+public Aerospike::__destruct ( void )
 ```
 
 ### [Aerospike::isConnected](aerospike_isconnected.md)
@@ -18,12 +18,12 @@ public boolean Aerospike::isConnected ( void )
 
 ### [Aerospike::close](aerospike_close.md)
 ```
-public void Aerospike::close ( void )
+public Aerospike::close ( void )
 ```
 
 ### [Aerospike::reconnect](aerospike_reconnect.md)
 ```
-public void Aerospike::reconnect ( void )
+public Aerospike::reconnect ( void )
 ```
 
 ## Example

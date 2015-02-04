@@ -6,10 +6,10 @@ Aerospike::__construct - constructs a new Aerospike object
 ## Description
 
 ```
-public int Aerospike::__construct ( array $config [, boolean $persistent_connection = true [, array $options]] )
+public Aerospike::__construct ( array $config [, boolean $persistent_connection = true [, array $options]] )
 ```
 
-**Aerospike::__construct()** will create an Aerospike object and connect to the
+**Aerospike::__construct()** constructs an Aerospike object and connects to the
 cluster defined in *config*.  The **Aerospike::isConnected()** method can be used
 to test whether the connection succeeded. If a config or connection error
 occured the **Aerospike::error()** and **Aerospike::errorno()** methods can be used

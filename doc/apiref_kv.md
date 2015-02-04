@@ -69,12 +69,12 @@ public int Aerospike::existsMany ( array $keys, array &$metadata [, array $optio
 
 ### [Aerospike::setSerializer](aerospike_setserializer.md)
 ```
-public static void Aerospike::setSerializer ( callback $serialize_cb )
+public static Aerospike::setSerializer ( callback $serialize_cb )
 ```
 
 ### [Aerospike::setDeserializer](aerospike_setdeserializer.md)
 ```
-public static void Aerospike::setDeserializer ( callback $unserialize_cb )
+public static Aerospike::setDeserializer ( callback $unserialize_cb )
 ```
 
 

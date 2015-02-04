@@ -6,7 +6,7 @@ Aerospike::setLogHandler - sets a handler for log events
 ## Description
 
 ```
-public static void Aerospike::setLogHandler ( callback $log_handler )
+public static Aerospike::setLogHandler ( callback $log_handler )
 ```
 
 **Aerospike::setLogHandler()** registers a callback method that will be triggered
