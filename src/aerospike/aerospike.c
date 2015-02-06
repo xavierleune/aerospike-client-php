@@ -306,7 +306,6 @@ static zend_function_entry Aerospike_class_functions[] =
      *  Key Value Store (KVS) APIs:
      ********************************************************************
      */
-    PHP_ME(Aerospike, add, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, append, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, exists, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, get, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
