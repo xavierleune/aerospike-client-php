@@ -107,7 +107,6 @@ PHP_METHOD(Aerospike, errorno);
  * Key Value Store (KVS) APIs:
  */
 
-PHP_METHOD(Aerospike, add);
 PHP_METHOD(Aerospike, append);
 PHP_METHOD(Aerospike, exists);
 PHP_METHOD(Aerospike, get);
