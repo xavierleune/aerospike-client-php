@@ -6,13 +6,11 @@ Aerospike::setLogHandler - sets a handler for log events
 ## Description
 
 ```
-public static Aerospike::setLogHandler ( callback $log_handler )
+public Aerospike::setLogHandler ( callback $log_handler )
 ```
 
 **Aerospike::setLogHandler()** registers a callback method that will be triggered
 whenever a logging event above the declared [log threshold](aerospike_setloglevel.md) occurs.
-This is a static method and the log handler is global across all instances of
-the Aerospike class.
 
 The callback method must follow the signature
 ```
