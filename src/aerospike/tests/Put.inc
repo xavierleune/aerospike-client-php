@@ -2437,6 +2437,7 @@ function testMixedTypesWithDefaultSerializer()
      $put_record = array("bin1"=>10);
      $put_status = $this->db->put($key, array("bin1"=>10), NULL,
          array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_REPLACE));
+     var_dump($this->db->error(), $this->db->errorno());
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }

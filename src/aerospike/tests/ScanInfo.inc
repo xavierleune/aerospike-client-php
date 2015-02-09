@@ -15,7 +15,7 @@ class ScanInfo extends AerospikeTestCommon
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
         }
-        $this->ensureUdfModule($this->db, "tests/lua/test_transform.lua", "test_transform.lua");
+        $this->ensureUdfModule("tests/lua/test_transform.lua", "test_transform.lua");
         $key = $this->db->initKey("test", "demo", "Get_key");
         $this->db->put($key,array("first_name"=>"john", "age"=>29));
         $this->keys[] = $key;

@@ -49,10 +49,10 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
     }
 
     if (AEROSPIKE_OK !=
-            (status = aerospike_index_create(as_object_p, error_p,
+            (status = aerospike_index_create_complex(as_object_p, error_p,
                                              &task, &info_policy, ns_p,
                                              set_p, bin_p, name_p,
-                                             type))) {
+                                             AS_INDEX_TYPE_DEFAULT, type))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     } else if (AEROSPIKE_OK !=

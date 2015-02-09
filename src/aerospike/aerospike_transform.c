@@ -3101,9 +3101,10 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
         goto exit;
     }*/
 
-    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST,
-                ((char *)(as_key_digest(record_key_p))->value),
-                AS_DIGEST_VALUE_SIZE, 1)) {
+    if (record_key_p->digest.init && (0 != add_assoc_stringl(key_container_p,
+                    PHP_AS_KEY_DEFINE_FOR_DIGEST,
+                    (char *) record_key_p->digest.value,
+                    AS_DIGEST_VALUE_SIZE, 1))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
         status = AEROSPIKE_ERR;
         goto exit;
@@ -3271,11 +3272,13 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    if (bins_p != NULL && (AEROSPIKE_OK != (status =
+    if (bins_p != NULL) {
+        if (AEROSPIKE_OK != (status =
                     aerospike_transform_filter_bins_exists(as_object_p,
                             Z_ARRVAL_P(bins_p), &get_record, error_p,
-                                    get_rec_key_p, &read_policy)))) {
-        goto exit;
+                                    get_rec_key_p, &read_policy))) {
+            goto exit;
+        }
     } else if (AEROSPIKE_OK != (status = aerospike_key_get(as_object_p, error_p,
                     &read_policy, get_rec_key_p, &get_record))) {
         goto exit;
