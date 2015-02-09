@@ -203,12 +203,10 @@ class Append  extends AerospikeTestCommon
     function testAppendWithGenEQPositive() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"];
-        var_dump("GEN: \n", $gen_value);
-        var_dump($this->db->append($this->keys[0], 'Greet', ' World',
+        $this->db->append($this->keys[0], 'Greet', ' World',
             array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ,
-            $gen_value+1))));
+            $gen_value+1)));
         $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
-        var_dump("RECORD: \n", $get_record);
         if("World_end World" != $get_record['bins']['Greet']) {
             return Aerospike::ERR_CLIENT;
         }
