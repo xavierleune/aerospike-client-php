@@ -89,6 +89,8 @@ aerospike_info_specific_host(aerospike* as_object_p,
 
     if (response_p != NULL) {
         ZVAL_STRINGL(response_str_p, response_p, strlen(response_p), 1);
+        free(response_p);
+        response_p = NULL;
     } else {
         ZVAL_STRINGL(response_str_p, "", 0, 1);
     }

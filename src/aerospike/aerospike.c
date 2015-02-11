@@ -1329,8 +1329,7 @@ PHP_METHOD(Aerospike, remove)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_record_operations_remove(aerospike_obj_p, &as_key_for_put_record, &error, options_p))) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to remove record");
-        DEBUG_PHP_EXT_ERROR("Unable to remove record");
+        DEBUG_PHP_EXT_ERROR("Unable to remove record: %s", error.message);
         goto exit;
     }
 

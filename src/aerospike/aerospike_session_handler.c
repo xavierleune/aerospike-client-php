@@ -292,6 +292,9 @@ exit:
         as_key_destroy(&key_get);
     }
 
+    if (record_p) {
+        as_record_destroy(record_p);
+    }
     return (error.code == AEROSPIKE_OK) ? SUCCESS : FAILURE;
 }
 
