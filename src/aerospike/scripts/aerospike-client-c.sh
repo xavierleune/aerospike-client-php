@@ -40,7 +40,7 @@ unset PKG_PATH
 detect_linux()
 {
   # check to see if `lsb_release` is available.
-  if [ ! -z "$(which lsb_release)" ]; then
+  if [ ! -z "$(which lsb_release 2> /dev/null)" ]; then
 
     # We have LSB, so use it.
     DIST_IDEN=$(lsb_release -is | tr '[:upper:]' '[:lower:]')

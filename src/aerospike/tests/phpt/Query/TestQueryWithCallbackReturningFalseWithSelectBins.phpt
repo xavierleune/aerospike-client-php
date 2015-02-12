@@ -5,7 +5,5 @@ Query - callback returning false with select bins in query
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithCallbackReturningFalseWithSelectBins");
---XFAIL--
-ERR_TIMEOUT
 --EXPECT--
-ERR_PARAM
+OK

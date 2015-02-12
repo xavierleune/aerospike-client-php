@@ -30,12 +30,11 @@ Full documentation of the Aerospike database is available at http://www.aerospik
 
     sudo yum groupinstall "Development Tools"
     sudo yum install openssl-devel
-    sudo yum install lua-devel # on Fedora 20+ use compat-lua-devel-5.1.5
     sudo yum install php-devel php-pear # unless PHP was manually installed
 
 ### Ubuntu and Debian (apt)
 
-    sudo apt-get install build-essential autoconf libssl-dev liblua5.1-dev
+    sudo apt-get install build-essential autoconf libssl-dev
     sudo apt-get install php5-dev php-pear # unless PHP was manually installed
 
 ### OS X
@@ -50,7 +49,6 @@ The dependencies can be installed through the OS X package manager [Homebrew](ht
     brew update && brew doctor
     brew install automake
     brew install openssl
-    brew install lua
 
 To switch PHP versions [see this gist](https://gist.github.com/rbotzer/198a04f2315e88c75322).
 

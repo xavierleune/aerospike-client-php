@@ -205,7 +205,7 @@ class Append  extends AerospikeTestCommon
         $gen_value = $metadata["generation"];
         $this->db->append($this->keys[0], 'Greet', ' World',
             array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ,
-            $gen_value+1)));
+            $gen_value)));
         $status = $this->db->get($this->keys[0], $get_record, array('Greet'));
         if("World_end World" != $get_record['bins']['Greet']) {
             return Aerospike::ERR_CLIENT;

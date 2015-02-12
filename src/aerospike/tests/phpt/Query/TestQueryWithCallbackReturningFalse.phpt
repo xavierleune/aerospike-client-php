@@ -5,7 +5,5 @@ Query - callback returning false
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Query", "testQueryWithCallbackReturningFalse");
---XFAIL--
-Fails with the message: ** ERROR: process timed out **
 --EXPECT--
-ERR_PARAM
+OK
