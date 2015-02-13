@@ -9,7 +9,7 @@ Aerospike::getKeyDigest - Helper which computes the digest that for a given key
 public string Aerospike::getKeyDigest ( string $ns, string $set, int|string $pk )
 ```
 
-**Aerospike::gettKeyDigest()** will return a string digest for the given key.
+**Aerospike::getKeyDigest()** will return a string digest for the given key.
 
 ## Parameters
 
