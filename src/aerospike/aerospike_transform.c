@@ -2885,6 +2885,29 @@ exit:
     return status;
 }
 
+extern as_status
+aerospike_get_key_digest(as_key *key_p, char *ns_p, char *set_p, zval *pk_p,
+        char **digest_pp TSRMLS_DC)
+{
+    as_status           status = AEROSPIKE_OK;
+
+    if (AEROSPIKE_OK != (status = aerospike_add_key_params(key_p, Z_TYPE_P(pk_p), ns_p, set_p, &pk_p, 0))) {
+        DEBUG_PHP_EXT_ERROR("Failed to initialize as_key");
+        goto exit;
+    }
+    
+    if (as_key_digest(key_p) && key_p->digest.init) {
+        *digest_pp = (char *) key_p->digest.value;
+    } else {
+        *digest_pp = NULL;
+        DEBUG_PHP_EXT_ERROR("Failed to compute digest");
+        status = AEROSPIKE_ERR_CLIENT;
+    }
+    
+exit:
+    return status;
+}
+
 /*
  *******************************************************************************************************
  * Function that returns no. of digits of a positive integer.

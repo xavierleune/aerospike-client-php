@@ -115,6 +115,7 @@ PHP_METHOD(Aerospike, getMetadata);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
 PHP_METHOD(Aerospike, initKey);
+PHP_METHOD(Aerospike, getKeyDigest);
 PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);

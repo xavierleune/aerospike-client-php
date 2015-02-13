@@ -313,6 +313,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, getMetadata, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, increment, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, initKey, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, getKeyDigest, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, operate, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
@@ -1717,6 +1718,44 @@ PHP_METHOD(Aerospike, initKey)
         zval_dtor(return_value);
         RETURN_NULL();
     }
+}
+/* }}} */
+
+/* {{{ proto string Aerospike::getKeyDigest( string ns, string set, int|string pk )
+   Helper which computes the digest that for a given key */
+PHP_METHOD(Aerospike, getKeyDigest)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    as_key                  key;
+    char                    *ns_p = NULL;
+    int                     ns_p_length = 0;
+    char                    *set_p = NULL;
+    int                     set_p_length = 0;
+    zval                    *pk_p = NULL;
+    char                    *digest_p = NULL;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length,
+                                         &set_p, &set_p_length, &pk_p)) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
+        DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1-2 to be non-empty strings and parameter 3 to be non-empty string/integer");
+        RETURN_NULL();
+    }
+
+    if (ns_p_length == 0 || set_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
+        DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1-2 to be non-empty strings and parameter 3 to be non-empty string/integer");
+        RETURN_NULL();
+    }
+
+    if (AEROSPIKE_OK != aerospike_get_key_digest(&key, ns_p, set_p, pk_p,
+                &digest_p TSRMLS_CC) || !digest_p) {
+        DEBUG_PHP_EXT_ERROR("getKeyDigest() function returned an error");
+        RETURN_NULL();
+    }
+
+    ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
+    as_key_destroy(&key);
 }
 /* }}} */
 

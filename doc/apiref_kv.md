@@ -6,6 +6,11 @@
 public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
 ```
 
+### [Aerospike::getKeyDigest](aerospike_getkeydigest.md)
+```
+public string getKeyDigest ( string $ns, string $set, int|string $pk )
+```
+
 ### [Aerospike::put](aerospike_put.md)
 ```
 public int Aerospike::put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
