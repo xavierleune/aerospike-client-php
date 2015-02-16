@@ -35,6 +35,7 @@ aerospike_info_specific_host(aerospike* as_object_p,
         as_error* error_p, char* request_str_p,
         zval* response_str_p, zval* host, zval* options_p TSRMLS_DC)
 {
+    as_status                   status = AEROSPIKE_OK;
     as_policy_info              info_policy;
     zval**                      host_name = NULL;
     zval**                      port = NULL;
@@ -78,21 +79,24 @@ aerospike_info_specific_host(aerospike* as_object_p,
         port_no = Z_LVAL_PP(port);
     }
 
-    if (AEROSPIKE_OK != aerospike_info_host(as_object_p, error_p, &info_policy,
+    if (AEROSPIKE_OK !=
+            (status = aerospike_info_host(as_object_p, error_p, &info_policy,
                 (const char *) address, (uint16_t) port_no, request_str_p,
-                &response_p)) {
+                &response_p))) {
             DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;
     }
 
     if (response_p != NULL) {
         ZVAL_STRINGL(response_str_p, response_p, strlen(response_p), 1);
+        free(response_p);
+        response_p = NULL;
     } else {
         ZVAL_STRINGL(response_str_p, "", 0, 1);
     }
 
 exit:
-    return error_p->code;
+    return status;
 }
 
 /*

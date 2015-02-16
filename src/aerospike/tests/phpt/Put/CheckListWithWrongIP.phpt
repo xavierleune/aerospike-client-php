@@ -5,5 +5,5 @@ Put - PUT List on Wrong IP
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Put", "testListWithWrongIP");
---EXPECT--
-ERR_SERVER
+--EXPECTREGEX--
+(ERR_SERVER|ERR_CLUSTER)

@@ -157,15 +157,15 @@ class Query extends AerospikeTestCommon
                     return Aerospike::ERR_CLIENT;
                 }
         };
-        $status = $this->db->query( "test", "demo", $where,
+        $status = $this->db->query("test", "demo", $where,
             $callback, array("first_name", "last_name"));
         $key = $this->db->initKey("test", "demo", "testing");
         $this->db->get($key, $record);
-        if(array_key_exists('bins',$record)) {
-        if(10 == $record['bins']['bin1']) {
-            $this->db->remove($key);
-            return Aerospike::OK;
-        }
+        if (array_key_exists('bins',$record)) {
+            if(10 == $record['bins']['bin1']) {
+                $this->db->remove($key);
+                return Aerospike::OK;
+            }
         } else {
             return Aerospike::ERR_RECORD_NOT_FOUND;
         }
@@ -217,6 +217,34 @@ class Query extends AerospikeTestCommon
             return Aerospike::ERR_RECORD_NOT_FOUND;
         }
         return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * Query with wrong bin name in where
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETTwoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testQueryWithWrongBinNameInWhere()
+    {
+        $total = 0;
+        $db= $this->db;
+        $where = $this->db->predicateBetween("agesdfasdfas", 30, 39);
+        $callback = function ($record) use (&$total, &$db) {
+            $total++;
+        };
+        $status=$this->db->query("test", "demo", $where,
+            $callback, array("age"));
+        return $status;
     }
     /**
      * @test
@@ -766,7 +794,7 @@ class Query extends AerospikeTestCommon
                                 $record["bins"]["email"] == "smith" ||
                                 $record["bins"]["email"] == "adam" ||
                                 $record["bins"]["email"] == "ellie") {
-                                    $count++;
+                                $count++;
                             }
                         }
                 } else {
@@ -777,10 +805,60 @@ class Query extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        if ($count != 4) {
+        if ($count < 4) {
             return (AEROSPIKE::ERR_PARAM);
         }
         return $status;
+    }
+
+    /**
+     * @test
+     * Query with callback returning false
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETTwoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testQueryWithCallbackReturningFalse()
+    {
+        $where = $this->db->predicateEquals("age", 29);
+        $callback =  function ($record) {
+            return false;
+        };
+        return ($this->db->query("test", "demo", $where,
+                $callback));
+    }
+
+    /**
+     * @test
+     * Query with callback returning false
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGETTwoParameter)
+     *
+     * @test_plans{1.1}
+     */
+    function testQueryWithCallbackReturningFalseWithSelectBins()
+    {
+        $where = $this->db->predicateEquals("age", 29);
+        $callback =  function ($record) {
+            return false;
+        };
+        return ($this->db->query("test", "demo", $where,
+                $callback, array("email", "age")));
     }
 }
 ?>

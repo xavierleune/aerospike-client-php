@@ -27,6 +27,7 @@ typedef struct Aerospike_Status {
  *******************************************************************************************************
  */
 AerospikeStatus aerospike_status[] = {
+  { AEROSPIKE_ERR_INVALID_HOST         ,   "ERR_INVALID_HOST"         }, 
   { AEROSPIKE_ERR_PARAM                ,   "ERR_PARAM"                },
   { AEROSPIKE_ERR_CLIENT               ,   "ERR_CLIENT"               },
   { AEROSPIKE_OK                       ,   "OK"                       },

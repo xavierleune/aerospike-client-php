@@ -179,6 +179,7 @@ class Aerospike
 
     // key-value methods
     public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
+    public string getKeyDigest ( string $ns, string $set, int|string $pk )
     public int put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
     public int get ( array $key, array &$record [, array $filter [, array $options ]] )
     public int exists ( array $key, array &$metadata [, array $options ] )

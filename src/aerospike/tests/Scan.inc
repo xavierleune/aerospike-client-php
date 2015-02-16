@@ -165,12 +165,12 @@ class Scan extends AerospikeTestCommon
             if (array_key_exists("account", $record["bins"]) &&
                 !is_null($record["bins"]["account"]))
                 echo $record["bins"]["email"]."\n";
-            if ((!strcmp($record["bins"]["email"], "smith")) ||
-                (!strcmp($record["bins"]["email"], "john"))) {
+            if (array_key_exists("email", $record["bins"]) && ((!strcmp($record["bins"]["email"], "smith")) ||
+                (!strcmp($record["bins"]["email"], "john")))) {
                     $processed++;
                 } else {
                     return Aerospike::ERR_CLIENT;
-            }
+                }
             if ($processed == 2) {
                 $key = $db->initKey("test", "demo", "testing");
                 $db->put($key, array("bin1"=>10));
