@@ -2393,7 +2393,7 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
             PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32 - 1)) {
         if (set_as_config) {
             AS_CONFIG_ITER_MAP_SET_ADDR(addrport_transform_iter_map_p,
-                    Z_STRVAL_PP(value_pp));
+                    pestrndup(Z_STRVAL_PP(value_pp), Z_STRLEN_PP(value_pp), 1));
         } else {
             strncpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
                     Z_STRVAL_PP(value_pp), strlen(Z_STRVAL_PP(value_pp)) + 1);
