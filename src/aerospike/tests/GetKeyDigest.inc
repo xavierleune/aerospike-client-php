@@ -33,7 +33,7 @@ class GetKeyDigest extends AerospikeTestCommon
     function testGetKeyDigestIntegerPositive() {
         $key = $this->db->initKey("test", "demo", 10000);
         $digest = $this->db->getKeyDigest("test", "demo", 10000);
-        $this->db->put($key, ['test-bin'=>'test-value']);
+        $this->db->put($key, array('test-bin'=>'test-value'));
         $this->keys[] = $key;
         $this->db->get($key, $rec);
         if (array_key_exists("key", $rec) && array_key_exists("digest",
@@ -62,7 +62,7 @@ class GetKeyDigest extends AerospikeTestCommon
     function testGetKeyDigestStringPositive() {
         $key = $this->db->initKey("test", "demo", "test-key");
         $digest = $this->db->getKeyDigest("test", "demo", "test-key");
-        $this->db->put($key, ['test-bin'=>'test-value']);
+        $this->db->put($key, array('test-bin'=>'test-value'));
         $this->keys[] = $key;
         $this->db->get($key, $rec);
         if (array_key_exists("key", $rec) && array_key_exists("digest",
@@ -135,7 +135,7 @@ class GetKeyDigest extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testGetKeyDigestListNegative() {
-        $digest = $this->db->getKeyDigest("test", "demo", [1,2,3]);
+        $digest = $this->db->getKeyDigest("test", "demo", array(1,2,3));
         if (!$digest) {
             return Aerospike::ERR_PARAM;
         }
@@ -158,8 +158,8 @@ class GetKeyDigest extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testGetKeyDigestMapNegative() {
-        $digest = $this->db->getKeyDigest("test", "demo", ["a" => 1, "b" => 2,
-            "c" => 3]);
+        $digest = $this->db->getKeyDigest("test", "demo", array("a" => 1, "b" => 2,
+            "c" => 3));
         if (!$digest) {
             return Aerospike::ERR_PARAM;
         }

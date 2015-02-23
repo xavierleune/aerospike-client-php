@@ -108,6 +108,10 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
             as_ref_p->ref_hosts_entry--;
         } else {
             if (as_ref_p->as_p) {
+                int iter_hosts = 0;
+                for (iter_hosts = 0; iter_hosts < as_ref_p->as_p->config.hosts_size; iter_hosts++) {
+                    pefree(as_ref_p->as_p->config.hosts[iter_hosts].addr, 1);
+                }
                 if (AEROSPIKE_OK != aerospike_close(as_ref_p->as_p, &error)) {
                     DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
                 }
@@ -393,6 +397,10 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
                     DEBUG_PHP_EXT_ERROR("Aerospike close returned error for a non-persistent Aerospike object");
                 }
                 intern_obj_p->as_ref_p->ref_as_p = 0;
+            }
+            int iter_hosts = 0;
+            for (iter_hosts = 0; iter_hosts < intern_obj_p->as_ref_p->as_p->config.hosts_size; iter_hosts++) {
+                pefree(intern_obj_p->as_ref_p->as_p->config.hosts[iter_hosts].addr, 1);
             }
             aerospike_destroy(intern_obj_p->as_ref_p->as_p);
             intern_obj_p->as_ref_p->as_p = NULL;

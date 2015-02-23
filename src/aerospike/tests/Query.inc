@@ -141,9 +141,10 @@ class Query extends AerospikeTestCommon
         $where = $this->db->predicateBetween("age", 30, 39);
         $total = 0;
         $in_thirties = 0;
-        $callback = function ($record) use (&$total, &$in_thirties) {
-            $key = $this->db->initKey("test", "demo", "testing");
-            $this->db->put($key, array("bin1"=>10));
+        $db = $this->db;
+        $callback = function ($record) use (&$total, &$in_thirties, &$db) {
+            $key = $db->initKey("test", "demo", "testing");
+            $db->put($key, array("bin1"=>10));
             if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {
                     if (array_key_exists("email", $record["bins"]) &&
