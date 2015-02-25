@@ -1100,17 +1100,13 @@ PHP_METHOD(Aerospike, getMany)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|za", &keys_p,
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a!a", &keys_p,
                 &records_p, &filter_bins_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for getMany");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for getMany");
         goto exit;
-    }
-
-    if (filter_bins_p && PHP_TYPE_ISNULL(filter_bins_p)) {
-        filter_bins_p = NULL;
     }
 
     zval_dtor(records_p);
