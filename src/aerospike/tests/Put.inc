@@ -2694,9 +2694,9 @@ function testMixedTypesWithDefaultSerializer()
     {
         $key = array("ns"=>"test", "set"=>"demo",
             "key"=>"test_null_data_mixed_positive");
-        $put_record = array('my_data' => array(1, ['age' => 20,
+        $put_record = array('my_data' => array(1, array('age' => 20,
             'job' => NULL, 'salary' => NULL,
-            'qualifications' => ['B.Tech', 'M.Tech', NULL]],
+            'qualifications' => array('B.Tech', 'M.Tech', NULL)),
             'hello', NULL), 'no_data' => NULL); 
         $status = $this->db->put($key, $put_record);
         $this->keys[] = $key;

@@ -1,7 +1,7 @@
 /*
  * src/aerospike/php_aerospike.h
  *
- * Copyright (C) 2014 Aerospike, Inc.
+ * Copyright (C) 2014-2105 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -107,7 +107,6 @@ PHP_METHOD(Aerospike, errorno);
  * Key Value Store (KVS) APIs:
  */
 
-PHP_METHOD(Aerospike, add);
 PHP_METHOD(Aerospike, append);
 PHP_METHOD(Aerospike, exists);
 PHP_METHOD(Aerospike, get);
@@ -116,6 +115,7 @@ PHP_METHOD(Aerospike, getMetadata);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
 PHP_METHOD(Aerospike, initKey);
+PHP_METHOD(Aerospike, getKeyDigest);
 PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);

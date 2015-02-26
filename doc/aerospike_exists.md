@@ -25,10 +25,9 @@ otherwise it will be NULL.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
-- **Aerospike::OPT_POLICY_RETRY**
-- **Aerospike::OPT_POLICY_KEY**
-- **Aerospike::OPT_POLICY_REPLICA**
-- **Aerospike::OPT_POLICY_CONSISTENCY**
+- **[Aerospike::OPT_POLICY_KEY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gaa9c8a79b2ab9d3812876c3ec5d1d50ec)**
+- **[Aerospike::OPT_POLICY_CONSISTENCY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#ga34dbe8d01c941be845145af643f9b5ab)**
+- **[Aerospike::OPT_POLICY_REPLICA](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gabce1fb468ee9cbfe54b7ab834cec79ab)**
 
 ## Return Values
 

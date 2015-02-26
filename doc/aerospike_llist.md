@@ -12,9 +12,13 @@ capable of growing the collection to virtually any size.
     public __construct ( Aerospike $db, array $key, string $bin )
     public int add ( int|string|array $value )
     public int addMany ( array $values )
+    public int update ( int|string|array $value )
+    public int updateMany ( array $values )
     public int find ( int|string $value, array &$elements )
     public int remove ( int|string $value )
-    public int scan ( array &$elements [, int|string $min = null [, int|string $max = null]] )
+    public int removeRange ( int|string $min, int|string $max )
+    public int removeMany ( array $values )
+    public int scan ( array &$elements [, int|string $min=null [, int|string $max=null [, string $module=null, string $function=null [, array $args=array()]]]] )
 
     // To be implemented:
     // public int filter ( string $module, string $function, array $args, array &$elements [, int|string $min = null [, int|string $max = null ]] )

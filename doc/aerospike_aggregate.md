@@ -147,4 +147,6 @@ array(5) {
 
 - [Aerospike::predicateEquals()](aerospike_predicateequals.md)
 - [Aerospike::predicateBetween()](aerospike_predicatebetween.md)
-
+- [Query](http://www.aerospike.com/docs/guide/query.html)
+- [Aggregations](http://www.aerospike.com/docs/guide/aggregation.html)
+- [Developing Stream UDFs](http://www.aerospike.com/docs/udf/developing_stream_udfs.html)

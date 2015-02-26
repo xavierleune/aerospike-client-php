@@ -6,7 +6,7 @@ Aerospike::setDeserializer - sets a deserialization handler for unsupported type
 ## Description
 
 ```
-public static void Aerospike::setDeserializer ( callback $unserialize_cb )
+public static Aerospike::setDeserializer ( callback $unserialize_cb )
 ```
 
 **Aerospike::setDeserializer()** registers a callback method that will be triggered

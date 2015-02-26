@@ -6,4 +6,4 @@ Operate with generation policy POLICY_GEN_EQ not equal
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Operate", "testOperateWithGenEQNotEqual");
 --EXPECT--
-ERR_CLIENT
+ERR_RECORD_GENERATION

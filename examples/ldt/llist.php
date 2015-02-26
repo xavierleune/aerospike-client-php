@@ -133,6 +133,19 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Update the LList element with 'key' 0 ≻", 'black', true);
+$start = __LINE__;
+$date = new DateTime();
+$date->setDate(2013, 7, 12);
+$rental_event = array('key' => 0, 'clientid' => 100100123, 'date' => $date->getTimestamp());
+$status = $rental_history->update($rental_event);
+if ($status === Aerospike::OK) {
+    echo success();
+} else {
+    echo standard_fail($rental_history);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 echo colorize("Counting the elements in the record's LList bin ≻", 'black', true);
 $start = __LINE__;
 $status = $rental_history->size($num_elements);
@@ -144,9 +157,9 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Get the elements in the record's LList bin ≻", 'black', true);
+echo colorize("Get the elements for keys 0-3 in the record's LList bin ≻", 'black', true);
 $start = __LINE__;
-$status = $rental_history->scan($elements);
+$status = $rental_history->scan($elements, 0, 3);
 if ($status === Aerospike::OK) {
     echo success();
     var_dump($elements);
@@ -168,7 +181,17 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 if (isset($args['c']) || isset($args['clean'])) {
     $start = __LINE__;
-    echo colorize("Removing the LDT ≻", 'black', true);
+    echo colorize("Removing a range of elements with key 0-5 from the LDT ≻", 'black', true);
+    $status = $rental_history->removeRange(0, 5);
+    if ($status === Aerospike::OK) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
+    if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+    $start = __LINE__;
+    echo colorize("Destroying the LDT ≻", 'black', true);
     $status = $rental_history->destroy();
     if ($status === Aerospike::OK) {
         echo success();

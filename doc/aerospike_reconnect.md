@@ -6,7 +6,7 @@ Aerospike::reconnect - Reconnect to the Aerospike DB
 ## Description
 
 ```
-public void Aerospike::reconnect ( void )
+public Aerospike::reconnect ( void )
 ```
 
 **Aerospike::reconnect()** will reconnect to the Aerospike DB cluster. The

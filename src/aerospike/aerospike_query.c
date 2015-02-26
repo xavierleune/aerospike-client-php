@@ -68,7 +68,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                 case IS_STRING:
                     convert_to_string_ex(val_pp);
                     if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                string_equals(Z_STRVAL_PP(val_pp)))) {
+                                as_equals(STRING, Z_STRVAL_PP(val_pp)))) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                 "Unable to set query predicate");
@@ -77,7 +77,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                 case IS_LONG:
                     convert_to_long_ex(val_pp);
                     if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                integer_equals(Z_LVAL_PP(val_pp)))) {
+                                as_equals(NUMERIC, Z_LVAL_PP(val_pp)))) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                 "Unable to set query predicate");
@@ -102,7 +102,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                     if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
                         between_unpacked = true;
                         if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    integer_range(Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)))) {
+                                    as_range(DEFAULT, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)))) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");

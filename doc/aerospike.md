@@ -165,20 +165,21 @@ class Aerospike
 
 
     // lifecycle and connection methods
-    public int __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
-    public void __destruct ( void )
+    public __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
+    public __destruct ( void )
     public boolean isConnected ( void )
-    public void close ( void )
-    public void reconnect ( void )
+    public close ( void )
+    public reconnect ( void )
 
     // error handling methods
     public string error ( void )
     public int errorno ( void )
-    public void setLogLevel ( int $log_level )
-    public void setLogHandler ( callback $log_handler )
+    public setLogLevel ( int $log_level )
+    public setLogHandler ( callback $log_handler )
 
     // key-value methods
     public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
+    public string getKeyDigest ( string $ns, string $set, int|string $pk )
     public int put ( array $key, array $bins [, int $ttl = 0 [, array $options ]] )
     public int get ( array $key, array &$record [, array $filter [, array $options ]] )
     public int exists ( array $key, array &$metadata [, array $options ] )
@@ -191,8 +192,8 @@ class Aerospike
     public int operate ( array $key, array $operations [, array &$returned ] )
 
     // unsupported type handler methods
-    public static void setSerializer ( callback $serialize_cb )
-    public static void setDeserializer ( callback $unserialize_cb )
+    public static setSerializer ( callback $serialize_cb )
+    public static setDeserializer ( callback $unserialize_cb )
 
     // batch operation methods
     public int getMany ( array $keys, array &$records [, array $filter [, array $options]] )
@@ -236,3 +237,5 @@ class Aerospike
 ### [Info Methods](apiref_info.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
 
+An overview of the development of the client is at the top level
+[README](README.md).

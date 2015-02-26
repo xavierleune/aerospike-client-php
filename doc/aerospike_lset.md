@@ -1,5 +1,5 @@
 
-# The Aerospike Large Set class
+# The Aerospike Large Set class (deprecated)
 
 Large Set (lset) is a large data type optimized for storing unique values
 and checking the existance of a value in the set. Large sets are suited for

@@ -25,14 +25,14 @@ array keys and values. This behavior can be modified using the
 
 **ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 
-**options** including
-- **Aerospike::OPT_POLICY_KEY**
-- **Aerospike::OPT_WRITE_TIMEOUT**
-- **Aerospike::OPT_POLICY_EXISTS**
-- **Aerospike::OPT_POLICY_RETRY**
+**[options](aerospike.md)** including
 - **Aerospike::OPT_SERIALIZER**.
-- **Aerospike::OPT_POLICY_GEN**
-- **Aerospike::OPT_POLICY_COMMIT_LEVEL**
+- **Aerospike::OPT_WRITE_TIMEOUT**
+- **[Aerospike::OPT_POLICY_RETRY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gaa9730980a8b0eda8ab936a48009a6718)**
+- **[Aerospike::OPT_POLICY_KEY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gaa9c8a79b2ab9d3812876c3ec5d1d50ec)**
+- **[Aerospike::OPT_POLICY_GEN](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#ga38c1a40903e463e5d0af0141e8c64061)**
+- **[Aerospike::OPT_POLICY_EXISTS](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#ga50b94613bcf416c9c2691c9831b89238)**
+- **[Aerospike::OPT_POLICY_COMMIT_LEVEL](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#ga17faf52aeb845998e14ba0f3745e8f23)**
 
 ## Return Values
 
@@ -137,3 +137,8 @@ We expect to see:
 The record has been written since we last read it.
 ```
 
+## See Also
+
+- [Aerospike Data Model](http://www.aerospike.com/docs/architecture/data-model.html)
+- [Key-Value Store](http://www.aerospike.com/docs/guide/kvs.html)
+- [Glossary](http://www.aerospike.com/docs/guide/glossary.html)

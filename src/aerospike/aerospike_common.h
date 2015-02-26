@@ -489,6 +489,10 @@ aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
                                zval* bins_p TSRMLS_DC);
 
 extern as_status
+aerospike_get_key_digest(as_key *key_p, char *ns_p, char *set_p,
+        zval *pk_p, char **digest_pp TSRMLS_DC);
+
+extern as_status
 aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
         as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);

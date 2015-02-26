@@ -1,7 +1,7 @@
 /*
  * src/aerospike/aerospike.c
  *
- * Copyright (C) 2014 Aerospike, Inc.
+ * Copyright (C) 2014-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -108,6 +108,10 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
             as_ref_p->ref_hosts_entry--;
         } else {
             if (as_ref_p->as_p) {
+                int iter_hosts = 0;
+                for (iter_hosts = 0; iter_hosts < as_ref_p->as_p->config.hosts_size; iter_hosts++) {
+                    pefree((char *) as_ref_p->as_p->config.hosts[iter_hosts].addr, 1);
+                }
                 if (AEROSPIKE_OK != aerospike_close(as_ref_p->as_p, &error)) {
                     DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
                 }
@@ -146,6 +150,7 @@ static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
             DEBUG_PHP_EXT_DEBUG("Ref count is working");
             zend_hash_clean(AEROSPIKE_G(persistent_list_g));
             zend_hash_destroy(AEROSPIKE_G(persistent_list_g));
+            pefree(AEROSPIKE_G(persistent_list_g), 1);
             AEROSPIKE_G(persistent_list_g) = NULL;
             AEROSPIKE_G(persistent_ref_count) = 0;
         } else {
@@ -305,7 +310,6 @@ static zend_function_entry Aerospike_class_functions[] =
      *  Key Value Store (KVS) APIs:
      ********************************************************************
      */
-    PHP_ME(Aerospike, add, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, append, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, exists, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, get, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
@@ -313,6 +317,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, getMetadata, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, increment, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, initKey, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, getKeyDigest, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, operate, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
@@ -393,6 +398,10 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
                 }
                 intern_obj_p->as_ref_p->ref_as_p = 0;
             }
+            int iter_hosts = 0;
+            for (iter_hosts = 0; iter_hosts < intern_obj_p->as_ref_p->as_p->config.hosts_size; iter_hosts++) {
+                pefree((char *) intern_obj_p->as_ref_p->as_p->config.hosts[iter_hosts].addr, 1);
+            }
             aerospike_destroy(intern_obj_p->as_ref_p->as_p);
             intern_obj_p->as_ref_p->as_p = NULL;
             if (intern_obj_p->as_ref_p) {
@@ -448,15 +457,9 @@ static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
  *  Lifecycle APIs:
  ********************************************************************
  */
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::__construct()
- *******************************************************************************************************
- * Constructs a new Aerospike object.
- * Method prototype for PHP userland:
- * public int Aerospike::__construct ( array $config [, string $persistence_alias [, array $options]] )
- *******************************************************************************************************
- */
+
+/* {{{ proto Aerospike::__construct(array config [, bool persistent_connection=true [, array options]]))
+   Creates a new Aerospike object, with optional persistent connection control */
 PHP_METHOD(Aerospike, __construct)
 {
     zval*                  config_p = NULL;
@@ -547,16 +550,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::__destruct()
- *******************************************************************************************************
- * Perform Aerospike object finalization.
- * Method prototype for PHP userland:
- * public void Aerospike::__destruct ( void )
- *******************************************************************************************************
- */
+/* {{{ proto Aerospike::__destruct( void )
+   Finalizes the Aerospike object */
 PHP_METHOD(Aerospike, __destruct)
 {
     as_status              status = AEROSPIKE_OK;
@@ -574,16 +571,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::isConnected()
- *******************************************************************************************************
- * Tests the connection to the Aerospike DB.
- * Method prototype for PHP userland:
- * public boolean Aerospike::isConnected ( void )
- *******************************************************************************************************
- */
+/* {{{ proto bool Aerospike::isConnected( void )
+   Tests whether the connection to the cluster was established */
 PHP_METHOD(Aerospike, isConnected)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -600,16 +591,10 @@ PHP_METHOD(Aerospike, isConnected)
         RETURN_FALSE;
     }
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::__close()
- *******************************************************************************************************
- * Close all connections to the Aerospike DB.
- * Method prototype for PHP userland:
- * public void Aerospike::close ( void )
- *******************************************************************************************************
- */
+/* {{{ proto Aerospike::close( void )
+   Closes all connections to the cluster */
 PHP_METHOD(Aerospike, close)
 {
     as_status              status = AEROSPIKE_OK;
@@ -658,16 +643,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::reconnect()
- *******************************************************************************************************
- * Reconnect to the Aerospike DB.
- * Method prototype for PHP userland:
- * public void Aerospike::reconnect ( void )
- *******************************************************************************************************
- */
+/* {{{ proto Aerospike::reconnect( void )
+   Closes then reopens all connections to the cluster */
 PHP_METHOD(Aerospike, reconnect)
 {
     as_status              status = AEROSPIKE_OK;
@@ -712,21 +691,16 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
+
 /*
  *******************************************************************************************************
  *  Key Value Store (KVS) APIs:
  *******************************************************************************************************
  */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::get()
- *******************************************************************************************************
- * Gets a record from the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::get ( array $key, array $record [, array $filter [,array $options]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::get( array key, array record [, array filter [,array options]] )
+   Reads a record from the cluster */
 PHP_METHOD(Aerospike, get)
 {
     as_status              status = AEROSPIKE_OK;
@@ -808,16 +782,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::put()
- *******************************************************************************************************
- * Writes a record to the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::put ( array $key, array $record [, int $ttl = 0 [, array $options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::put( array key, array record [, int ttl=0 [, array options ]] )
+   Writes a record to the cluster */
 PHP_METHOD(Aerospike, put)
 {
     as_status              status = AEROSPIKE_OK;
@@ -882,16 +850,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::getNodes()
- *******************************************************************************************************
- * Get the addresses of the cluster nodes
- * Method prototype for PHP userland:
- * public array Aerospike::getNodes ( void )
- *******************************************************************************************************
- */
+/* {{{ proto array Aerospike::getNodes( void )
+   Gets the host information of the cluster nodes */
 PHP_METHOD(Aerospike, getNodes)
 {
     as_status              status = AEROSPIKE_OK;
@@ -931,16 +893,10 @@ exit:
         RETURN_NULL();
     }
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::info()
- *******************************************************************************************************
- * Send an Info request to an Aerospike cluster.
- * Method prototype for PHP userland:
- * public int Aerospike::info ( string $request, string &$response [, array $host [, array options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::info( string request, string &response [, array host [, array options ]] )
+   Sends an info command to a cluster node */
 PHP_METHOD(Aerospike, info)
 {
     as_status              status = AEROSPIKE_OK;
@@ -996,16 +952,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::infoMany()
- *******************************************************************************************************
- * Aerospike::info - send an info request to multiple cluster nodes.
- * Method prototype for PHP userland:
- * public array Aerospike::infoMany ( string $request [, array $config [, array options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto array Aerospike::infoMany( string request, [, array config [, array options ]] )
+   Sends an info command to several or all cluster nodes */
 PHP_METHOD(Aerospike, infoMany)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1063,39 +1013,10 @@ exit:
         RETURN_NULL();
     }
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::add()
- * Add integer bin values to existing bin values.
- *******************************************************************************************************
- */
-PHP_METHOD(Aerospike, add)
-{
-    zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-
-    /*** TO BE IMPLEMENTED ***/
-
-    RETURN_TRUE;
-}
-
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::existsMany()
- *******************************************************************************************************
- * Appends a string to the string value in a bin.
- * Method prototype for PHP userland:
- * public int Aerospike::existsMany ( array $keys, array &$metadata
- * [, array $options] )
- *
- * @param $keys             An array of initialized keys, Each An array
- *                          with keys ['ns', 'set', 'key'] or
- *                          ['ns', 'set', 'digest'] 
- * @param metadata          Filled by an array of metadata
- * @param options           Optional parameter.           
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::existsMany( array keys, array &metadata [, array options] )
+   Returns metadata for a batch of records with NULL for non-existent ones */
 PHP_METHOD(Aerospike, existsMany)
 {
     as_status               status = AEROSPIKE_OK;
@@ -1150,16 +1071,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::getMany()
- *******************************************************************************************************
- * Aerospike::getMany - gets a batch of record from the Aerospike database
- * Method prototype for PHP userland:
- * public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::getMany( array keys, array &records [, array filter [, array options ]] )
+   Returns a batch of records from the cluster */
 PHP_METHOD(Aerospike, getMany)
 {
     as_status               status = AEROSPIKE_OK;
@@ -1185,17 +1100,13 @@ PHP_METHOD(Aerospike, getMany)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|za", &keys_p,
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a!a", &keys_p,
                 &records_p, &filter_bins_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for getMany");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for getMany");
         goto exit;
-    }
-
-    if (filter_bins_p && PHP_TYPE_ISNULL(filter_bins_p)) {
-        filter_bins_p = NULL;
     }
 
     zval_dtor(records_p);
@@ -1212,16 +1123,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::operate()
- *******************************************************************************************************
- * Perform multiple operations on a record
- * Method prototype for PHP userland:
- * public int Aerospike::operate ( array $key, array $operations [,array &$returned [,array $options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::operate( array key, array operations [,array &returned [,array options ]] )
+   Performs multiple operation on a record */
 PHP_METHOD(Aerospike, operate)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1298,15 +1203,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::append()
- *******************************************************************************************************
- * Appends a string to the string value in a bin.
- * Method prototype for PHP userland:
- * public int Aerospike::append ( array $key, string $bin, string $value [,array $options ] )
- *******************************************************************************************************
- */
+/* }}} */
+
+/* {{{ proto int Aerospike::append( array key, string bin, string value [,array options ] )
+   Appends a string to an existing bin's string value */
 PHP_METHOD(Aerospike, append)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1385,17 +1285,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::remove()
- *******************************************************************************************************
- * Removes a record from the Aerospike database
- * Method prototype for PHP userland:
- * public int Aerospike::remove ( array $key [, array $options ] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::remove( array key [, array options ] )
+   Removes a record from the cluster */
 PHP_METHOD(Aerospike, remove)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1441,8 +1334,7 @@ PHP_METHOD(Aerospike, remove)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_record_operations_remove(aerospike_obj_p, &as_key_for_put_record, &error, options_p))) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to remove record");
-        DEBUG_PHP_EXT_ERROR("Unable to remove record");
+        DEBUG_PHP_EXT_ERROR("Unable to remove record: %s", error.message);
         goto exit;
     }
 
@@ -1454,16 +1346,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::exists()
- *******************************************************************************************************
- * Check if a record exists in the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::exists ( array $key, array $metadata [, array $options] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::exists( array key, array &metadata [, array options] )
+   Returns a record's metadata */
 PHP_METHOD(Aerospike, exists)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1504,16 +1390,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::getMetadata
- *******************************************************************************************************
- * Check if a record exists in the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::getMetadata ( array $key, array $metadata [, array $options ] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::getMetadata( array key, array &metadata [, array options] )
+   Returns a record's metadata */
 PHP_METHOD(Aerospike, getMetadata)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1555,16 +1435,8 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::getHeader()
- *******************************************************************************************************
- * Read record generation and expiration for specified key(s) in one batch call.
- * Method prototype for PHP userland:
- *******************************************************************************************************
- */
 PHP_METHOD(Aerospike, getHeader)
 {
     zval *object = getThis();
@@ -1575,15 +1447,8 @@ PHP_METHOD(Aerospike, getHeader)
     RETURN_TRUE;
 }
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::prepend()
- *******************************************************************************************************
- * Prepends a string to the string value in a bin.
- * Method prototype for PHP userland:
- * public int Aerospike::prepend ( array $key, string $bin, string $value [,array $options ] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::prepend( array key, string bin, string value [, array options ] )
+   Prepends a string to an existing bin's string value */
 PHP_METHOD(Aerospike, prepend)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1662,16 +1527,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- **************************************************************************************************************************
- * PHP Method:  Aerospike::increment()
- **************************************************************************************************************************
- * Increments a numeric value in a bin.
- * Method prototype for PHP userland:
- * public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
- **************************************************************************************************************************
- */
+/* {{{ proto int Aerospike::increment ( array key, string bin, int offset [, int initial_value=0 [, array options ]] )
+   Increments an existing bin's numeric value */
 PHP_METHOD(Aerospike, increment)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1750,16 +1609,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::touch()
- *******************************************************************************************************
- * Touch a record in the Aerospike DB
- * Method prototype for PHP userland:
- * public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::touch( array key, int ttl=0 [, array options ] )
+   Touch a record, incrementing its generation and resetting its time-to-live */
 PHP_METHOD(Aerospike, touch)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1833,26 +1686,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::initKey()
- *******************************************************************************************************
- * Helper method for building the key array
- * Method prototype for PHP userland:
- * public array Aerospike::initKey ( string $ns, string $set, int|string $pk [,
- *                                   boolean $digest = false ])
- *
- * @param ns                The namespace
- * @param set               The name of set within the namespace
- * @param pk                It can be primary key or digest value
- *                          that identifies the record uniquely.
- * @param digest            It can be true or false.
- *                          false - Indicates pk contains primary key(default)
- *                          true - Indicates pk contains digest value.
- *
- *******************************************************************************************************
- */
+/* {{{ proto array Aerospike::initKey( string ns, string set, int|string pk [, bool digest=false ])
+   Helper which builds the key array that is needed for read/write operations */
 PHP_METHOD(Aerospike, initKey)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1882,21 +1719,52 @@ PHP_METHOD(Aerospike, initKey)
     if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p,
                 is_digest, return_value, NULL, NULL, false TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
-        zval_dtor(return_value); 
+        zval_dtor(return_value);
         RETURN_NULL();
     }
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::setDeserializer
- *******************************************************************************************************
- * Sets a php userland callback for deserialization
- * of datatypes which are not supported by aerospike db
- * Method prototype for PHP userland:
- * public static void Aerospike::setDeserializer ( callback $unserialize_cb )
- *******************************************************************************************************
- */
+/* {{{ proto string Aerospike::getKeyDigest( string ns, string set, int|string pk )
+   Helper which computes the digest that for a given key */
+PHP_METHOD(Aerospike, getKeyDigest)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    as_key                  key;
+    char                    *ns_p = NULL;
+    int                     ns_p_length = 0;
+    char                    *set_p = NULL;
+    int                     set_p_length = 0;
+    zval                    *pk_p = NULL;
+    char                    *digest_p = NULL;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length,
+                                         &set_p, &set_p_length, &pk_p)) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
+        DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1-2 to be non-empty strings and parameter 3 to be non-empty string/integer");
+        RETURN_NULL();
+    }
+
+    if (ns_p_length == 0 || set_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
+        DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1-2 to be non-empty strings and parameter 3 to be non-empty string/integer");
+        RETURN_NULL();
+    }
+
+    if (AEROSPIKE_OK != aerospike_get_key_digest(&key, ns_p, set_p, pk_p,
+                &digest_p TSRMLS_CC) || !digest_p) {
+        DEBUG_PHP_EXT_ERROR("getKeyDigest() function returned an error");
+        RETURN_NULL();
+    }
+
+    ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
+    as_key_destroy(&key);
+}
+/* }}} */
+
+/* {{{ proto static Aerospike::setDeserializer( callback unserialize_cb )
+   Sets a userland method as responsible for deserializing bin values */
 PHP_METHOD(Aerospike, setDeserializer)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1918,17 +1786,10 @@ PHP_METHOD(Aerospike, setDeserializer)
     Z_ADDREF_P(user_deserializer_call_info.function_name);
     RETURN_TRUE;
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::setSerializer()
- *******************************************************************************************************
- * Sets a php userland callback for serialization
- * of datatypes which are not supported by aerospike db
- * Method prototype for PHP userland:
- * public static void Aerospike::setSerializer ( callback $serialize_cb )
- *******************************************************************************************************
- */
+/* {{{ proto static Aerospike::setSerializer( callback serialize_cb )
+   Sets a userland method as responsible for serializing bin values */
 PHP_METHOD(Aerospike, setSerializer)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1956,16 +1817,10 @@ PHP_METHOD(Aerospike, setSerializer)
     Z_ADDREF_P(user_serializer_call_info.function_name);
     RETURN_TRUE;
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::removeBin()
- *******************************************************************************************************
- * Removes a bin from a record.
- * Method prototype for PHP userland:
- * public int Aerospike::removeBin ( array $key, array $bins [, array $options ])
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::removeBin( array key, array bins [, array options ])
+   Removes a bin from a record */
 PHP_METHOD(Aerospike, removeBin)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2025,6 +1880,7 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
 /*
  *******************************************************************************************************
@@ -2032,16 +1888,8 @@ exit:
  *******************************************************************************************************
  */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::predicateEquals()
- *******************************************************************************************************
- *
- * Method prototype for PHP userland:
- * Helper method for building an equals WHERE predicate.
- * public array Aerospike::predicateEquals ( string $bin, int|string $val )
- *******************************************************************************************************
- */
+/* {{{ proto array Aerospike::predicateEquals( string bin, int|string val )
+   Helper which builds the 'WHERE EQUALS' predicate */
 PHP_METHOD(Aerospike, predicateEquals)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2087,16 +1935,10 @@ PHP_METHOD(Aerospike, predicateEquals)
             RETURN_NULL();
     }
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::predicateBetween()
- *******************************************************************************************************
- * Helper method for building the between WHERE predicate.
- * Method prototype for PHP userland:
- * public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
- *******************************************************************************************************
- */
+/* {{{ proto array Aerospike::predicateBetween( string bin, int min, int max )
+   Helper which builds the 'WHERE BETWEEN' predicate */
 PHP_METHOD(Aerospike, predicateBetween)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2125,30 +1967,10 @@ PHP_METHOD(Aerospike, predicateBetween)
     add_next_index_long(minmax_arr, max_p);
     add_assoc_zval(return_value, VAL, minmax_arr);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::query()
- *******************************************************************************************************
- * Queries a secondary index on a set in the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::query ( string $ns, string $set, array $where,
- * callback $record_cb [, array $select [, array $options ]] )
- *
- * @param ns                The namespace
- * @param set               The set
- * @param where             The predicate for the query, conforming to one of the following:
- *                          Associative Array:
- *                              bin => bin name
- *                              op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
- *                              val => scalar integer/string for OP_EQ or array($min, $max) for
- *                                     OP_BETWEEN
- * @param record_cb         A callback function invoked for each record streaming back from
- *                          the server.
- * @param select            An array of bin names to be returned.
- * @param options           Options including Aerospike::OPT_READ_TIMEOUT.
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::query( string ns, string set, array where, callback record_cb [, array select [, array options ]] )
+   Queries a secondary index on a set for records matching the where predicate  */
 PHP_METHOD(Aerospike, query)
 {
     as_status               status = AEROSPIKE_OK;
@@ -2223,37 +2045,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::aggregate()
- *******************************************************************************************************
- * Applies a stream UDF to a secondary index query.
- * Method prototype for PHP userland:
- * public int Aerospike::aggregate ( string $ns, string $set, array $where, string $module,
- * string $function, array $args, mixed &$returned [, array $options ] )
- *
- * @param ns                The namespace
- * @param set               The set
- * @param where             The predicate for the query, conforming to one of the following:
- *                          Associative Array:
- *                              bin => bin name
- *                              op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
- *                              val => scalar integer/string for OP_EQ or array($min, $max) for
- *                                     OP_BETWEEN
- * @param module            The name of the UDF module registered against the Aerospike DB.
- * @param function          The name of the function to be applied to the records.
- * @param args              An array of arguments for the UDF.
- * @param returned          The aggregated return value to be populated by this
- *                          method.
- * @param options           Options including Aerospike::OPT_WRITE_TIMEOUT and
- *                          Aerospike::OPT_READ_TIMEOUT.
- * @return                  Returns an integer status code. Compare to the Aerospike class status
- *                          constants.  When non-zero the Aerospike::error() and
- *                          Aerospike::errorno() methods can be used.
- *
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::aggregate( string ns, string set, array where, string module, string function, array args, mixed &returned [, array options ] )
+   Applies a stream UDF to the records matching a query and aggregates the results  */
 PHP_METHOD(Aerospike, aggregate)
 {
     as_status               status = AEROSPIKE_OK;
@@ -2371,36 +2166,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::scan()
- *******************************************************************************************************
- * Scans a set in the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::scan ( string $ns, string $set, callback $record_cb [,
- *      array $select [, array $options ]] )
- *
- * @param ns                The namespace
- * @param set               The set to be scanned
- * @param record_cb         A callback function invoked for each record streaming back from
- *                          the server.
- * @param bins              An array of bin names to be returned.
- * @param percent           The percentage of data to scan.
- * @param scan_priority     The priority of the scan.
- * @param concurrent        Whether to scan all nodes in parallel.
- * @param no_bins           Whether to return only metabins and exclude bins.
- * @param options           Options including 
- *                          Aerospike::OPT_READ_TIMEOUT
- *                          Aerospike::OPT_SCAN_PRIORITY
- *                          Aerospike::OPT_SCAN_PERCENTAGE of the records in the set to return
- *                          Aerospike::OPT_SCAN_CONCURRENTLY whether to run the scan in parallel
- *                          Aerospike::OPT_SCAN_NOBINS whether to not retrieve bins for
- *                          the records
- * @return                  Returns an integer status code.  Compare to the Aerospike class status
- *                          constants.  When non-zero the Aerospike::error() and
- *                          Aerospike::errorno() methods can be used.
- *******************************************************************************************************
- */
+/* }}} */
+
+/* {{{ proto int Aerospike::scan( string ns, string set, callback record_cb [, array select [, array options ]] )
+   Returns all the records in a set to a callback method  */
 PHP_METHOD(Aerospike, scan)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2473,36 +2242,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::scanApply()
- *******************************************************************************************************
- * Initiates a background read/write scan by applying a record UDF to each record being scanned.
- * Method prototype for PHP userland:
- * public int Aerospike::scanApply ( string $ns, string $set, string $module,
- *          string $function, array $args, int &$scan_id [, array $options ] )
- *
- * @param ns                The namespace
- * @param set               The set to be scanned
- * @param module            The name of the UDF module registered against the Aerospike DB.
- * @param function          The name of the function to be applied to the records.
- * @param args              An array of arguments for the UDF.
- * @param scan_id           Scan_id filled by an integer handle for the initiated background scan
- * @param options           Options including
- *                          Aerospike::OPT_WRITE_TIMEOUT 
- *                          Aerospike::OPT_SCAN_PRIORITY The priority of the scan.
- *                          Aerospike::OPT_SCAN_PERCENTAGE of the records in the set to return
- *                          Aerospike::OPT_SCAN_CONCURRENTLY whether to run the
- *                          scan in parallel
- *                          Aerospike::OPT_SCAN_NOBINS whether to not retrieve
- *                          bins for the records
- * @return                  Returns an integer status code.  Compare to the Aerospike class status
- *                          constants.  When non-zero the **Aerospike::error()** and
- *                          Aerospike::errorno() methods can be used.
- *
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::scanApply( string ns, string set, string module, string function, array args, int &scan_id [, array options ] )
+   Applies a record UDF to each record of a set using a background scan  */
 PHP_METHOD(Aerospike, scanApply)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2611,34 +2354,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::scanInfo()
- *******************************************************************************************************
- * Check the progress of background scan running on the database.
- * Method prototype for PHP userland:
- * public int Aerospike::scanInfo ( integer $scan_id, array &$info [, array
- *                                  $options ] )
- *
- * @param scan_id           The scan id
- * @param info              The status of the background scan returned as an associative array
- *                          conforming to the following:
- *                          Associative Array:
- *                              progress_pct => percentage progress
- *                              records_scanned => no. of records scanned
- *                              status => one of Aerospike::SCAN_STATUS_UNDEF,
- *                                        Aerospike::SCAN_STATUS_INPROGRESS,
- *                                        Aerospike::SCAN_STATUS_ABORTED,
- *                                        Aerospike::SCAN_STATUS_COMPLETED
- *
- * @param options           Options including Aerospike::OPT_WRITE_TIMEOUT and
- *                          Aerospike::OPT_READ_TIMEOUT.
- * @return                  Returns an integer status code.  Compare to the Aerospike class
- *                          status constants.  When non-zero the Aerospike::error() and
- *                          Aerospike::errorno() methods can be used.
- ******************************************************************************************************
- */
+/* {{{ proto int Aerospike::scanInfo ( int scan_id, array &info [, array $options ] )
+   Gets the status of a background scan triggered by scanApply()  */
 PHP_METHOD(Aerospike, scanInfo)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2700,23 +2419,16 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
+
 /*
  *******************************************************************************************************
  *  User Defined Function (UDF) APIs:
  *******************************************************************************************************
  */
 
-/*
- *******************************************************************************************************
- * PHP Method : Aerospike::register()
- *******************************************************************************************************
- * Registers a UDF module with the Aerospike DB.
- * Method prototype for PHP userland:
- * public int Aerospike::register ( string $path, string $module [, int
- *                                  $language = Aerospike::UDF_TYPE_LUA [, array
- *                                  $options]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::register( string path, string module [, int language=Aerospike::UDF_TYPE_LUA [, array options ]] )
+   Registers a UDF module with the cluster  */
 PHP_METHOD(Aerospike, register)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2788,16 +2500,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method : Aerospike::deregister()
- *******************************************************************************************************
- * Removes a UDF module from the Aerospike DB.
- * Method prototype for PHP userland:
- * public int Aerospike::deregister ( string $module [, array $options ])
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::deregister( string module [, array options ] )
+   Removes a UDF module from the cluster  */
 PHP_METHOD(Aerospike, deregister)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2859,17 +2565,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method : Aerospike::apply()
- *******************************************************************************************************
- * Applies UDF on record in the Aerospike DB.
- * Method prototype for PHP userland:
- * public int Aerospike::apply ( array $key, string $module, string $function [,
- *                               array $args [, mixed &$returned  [, array $options ]]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::apply( array key, string module, string function[, array args [, mixed &returned [, array options ]]] )
+   Applies a UDF to a record  */
 PHP_METHOD(Aerospike, apply)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2990,17 +2689,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method : Aerospike::listRegistered()
- *******************************************************************************************************
- * Lists the UDF modules registered with the server.
- * Method prototype for PHP userland:
- * public int Aerospike::listRegistered ( array &$modules [, int $language [,
- *                                        array $options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::listRegistered( array &modules [, int language [, array options ]] )
+   Lists the UDF modules registered with the cluster */
 PHP_METHOD(Aerospike, listRegistered)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3058,18 +2750,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method : Aerospike::getRegistered()
- *******************************************************************************************************
- * Get the code for a UDF module registered with the server.
- * Method prototype for PHP userland:
- * public int Aerospike::getRegistered ( string $module, string &$code [, int
- *                                       $language = Aerospike::UDF_TYPE_LUA
- *                                       [, array $options ]] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::getRegistered( string module, string &code [, int language=Aerospike::UDF_TYPE_LUA [, array options ]] )
+   Gets the code for a UDF module registered with the cluster */
 PHP_METHOD(Aerospike, getRegistered)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3139,6 +2823,7 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
 /*
  *******************************************************************************************************
@@ -3146,16 +2831,8 @@ exit:
  *******************************************************************************************************
  */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::createIndex()
- *******************************************************************************************************
- * Creates a secondary index on a bin in the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name
- * [, array $options ] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::createIndex( string ns, string set, string bin, int type, string name [, array options ] )
+   Creates a secondary index on a bin of a specified set */
 PHP_METHOD(Aerospike, createIndex)
 {
     as_status               status = AEROSPIKE_OK;
@@ -3225,16 +2902,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::dropIndex()
- *******************************************************************************************************
- * Drops a secondary index on a bin in the Aerospike database.
- * Method prototype for PHP userland:
- * public int Aerospike::dropIndex ( string $ns, string $name [, array $options ] )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::dropIndex( string ns, string name [, array options ] )
+   Drops a secondary index from a specified set */
 PHP_METHOD(Aerospike, dropIndex)
 {
     as_status               status = AEROSPIKE_OK;
@@ -3298,14 +2969,7 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
-
-/*** TBD ***/
-
-/*
- *******************************************************************************************************
- *  Large Data Type (LDT) APIs:
- *******************************************************************************************************
- */
+/* }}} */
 
 /*
  *******************************************************************************************************
@@ -3313,15 +2977,8 @@ exit:
  *******************************************************************************************************
  */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::setLogLevel()
- *******************************************************************************************************
- * Sets the logging threshold of the Aerospike object.
- * Method prototype for PHP userland:
- * public void Aerospike::setLogLevel ( int $log_level )
- *******************************************************************************************************
- */
+/* {{{ proto Aerospike::setLogLevel( int log_level )
+   Sets the logging threshold of the Aerospike client */
 PHP_METHOD(Aerospike, setLogLevel)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3361,18 +3018,10 @@ exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::setLogHandler()
- *******************************************************************************************************
- * Sets a handler for log events.
- * Method prototype for PHP userland:
- * public static void Aerospike::setLogHandler ( callback $log_handler )
- * where callback must follow the signature:
- * public function log_handler ( int $level, string $file, string $function, int $line )
- *******************************************************************************************************
- */
+/* {{{ proto Aerospike::setLogHandler( callback log_handler )
+   Sets a handler for log events of the Aerospike client */
 PHP_METHOD(Aerospike, setLogHandler)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -3409,6 +3058,7 @@ PHP_METHOD(Aerospike, setLogHandler)
     PHP_EXT_RESET_AS_ERR_IN_CLASS();
     RETURN_TRUE;
 }
+/* }}} */
 
 /*
  *******************************************************************************************************
@@ -3416,35 +3066,23 @@ PHP_METHOD(Aerospike, setLogHandler)
  *******************************************************************************************************
  */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::error()
- *******************************************************************************************************
- * Display an error message associated with the last operation
- * Method prototype for PHP userland:
- * public string Aerospike::error ( void )
- *******************************************************************************************************
- */
+/* {{{ proto string Aerospike::error ( void )
+   Displays the error message associated with the last operation */
 PHP_METHOD(Aerospike, error)
 {
     char *error_msg = Z_STRVAL_P(zend_read_property(Aerospike_ce, getThis(), "error", strlen("error"), 1 TSRMLS_CC));
     RETURN_STRINGL(error_msg, strlen(error_msg), 1);
 }
+/* }}} */
 
-/*
- *******************************************************************************************************
- * PHP Method:  Aerospike::errorno()
- *******************************************************************************************************
- * Display an error code associated with the last operation.
- * Method prototype for PHP userland:
- * public int Aerospike::errorno ( void )
- *******************************************************************************************************
- */
+/* {{{ proto int Aerospike::errorno ( void )
+   Displays the status code associated with the last operation */
 PHP_METHOD(Aerospike, errorno)
 {
     int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1 TSRMLS_CC));
     RETURN_LONG(error_code);
 }
+/* }}} */
 
 /*
  ********************************************************************
