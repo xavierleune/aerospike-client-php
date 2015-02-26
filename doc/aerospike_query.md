@@ -116,5 +116,6 @@ The average age of employees in their thirties is 34
 
 - [Aerospike::predicateEquals()](aerospike_predicateequals.md)
 - [Aerospike::predicateBetween()](aerospike_predicatebetween.md)
-- [Aerospike::scan()](aerospike_scan.md)
+- [Query](http://www.aerospike.com/docs/guide/query.html)
+- [Managing Queries](http://www.aerospike.com/docs/operations/manage/queries/index.html)
 

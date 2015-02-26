@@ -10,7 +10,7 @@ before_install:
 - ./.travis/start-aerospike.sh
 - cp .travis/slacktee.conf ~/.slacktee
 install:
-- sudo apt-get install autoconf libssl-dev liblua5.1-dev
+- sudo apt-get install autoconf libssl-dev
 script:
 - cd src/aerospike
 - ./build.sh

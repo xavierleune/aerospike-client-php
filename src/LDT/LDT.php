@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2014 Aerospike, Inc.
+ * Copyright 2013-2015 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2014 Aerospike, Inc.
+ * @copyright  Copyright 2013-2015 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       http://www.aerospike.com/docs/guide/ldt.html
  * @filesource
@@ -216,7 +216,7 @@ abstract class LDT
         $this->module = $this->getModuleName();
         $this->db = $db;
         if (!$db->isConnected()) {
-            if ($db->errorno() != Aerospike::OK) {
+            if ($db->errorno() !== Aerospike::OK) {
                 $this->errorno = $db->errorno();
                 $this->error = $db->error();
             } else {
@@ -326,7 +326,7 @@ abstract class LDT
             $rhs = strrpos($this->db->error(), ':LDT');
             $lhs = strrpos($this->db->error(), ': ');
             if ($rhs !== false && $lhs !== false) {
-                $this->errorno = substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2)));
+                $this->errorno = (int) substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2)));
                 $this->error = substr($this->db->error(), $rhs + 1);
                 return true;
             }

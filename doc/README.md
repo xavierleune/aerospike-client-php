@@ -1,6 +1,16 @@
 
 # Overview
 
+The Aerospike <a href="http://www.aerospike.com/docs/architecture/clients.html"
+target="_doc">PHP client</> enables your PHP application to work with an
+<a href="http://www.aerospike.com/docs/architecture/distribution.html"
+target="_doc">Aerospike cluster</a> as its
+<a href="http://www.aerospike.com/docs/guide/kvs.html" target="_doc">key-value store</a>.
+
+The <a href="http://www.aerospike.com/docs/architecture/data-model.html" target="_doc">Data Model</a>
+document gives further details on how data is organized in the cluster.
+
+## Client API
 The Aerospike PHP client API is described in the following sections:
 
 ### [Runtime Configuration](aerospike_config.md)
@@ -81,3 +91,7 @@ $client->setDeserializer(function ($val) {
 });
 ```
 
+## Further Reading
+
+- [How does the Aerospike client find a node](https://discuss.aerospike.com/t/how-does-aerospike-client-find-a-node/706)
+- [How would hash collisions be handled](https://discuss.aerospike.com/t/what-will-aerospike-do-if-hash-collision-for-a-key/779)

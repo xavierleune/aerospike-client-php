@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2014 Aerospike, Inc.
+ * Copyright 2013-2015 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2014 Aerospike, Inc.
+ * @copyright  Copyright 2013-2015 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       http://www.aerospike.com/docs/guide/lset.html
  * @filesource
+ * @deprecated
  */
 namespace Aerospike\LDT;
 use Aerospike;
@@ -33,6 +34,7 @@ use Aerospike;
  * @subpackage LDT
  * @link       http://www.aerospike.com/docs/guide/lset.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
+ * @deprecated
  */
 class LSet extends LDT
 {
@@ -47,6 +49,7 @@ class LSet extends LDT
      * @param array $key initialized with Aerospike::initKey()
      * @param string $bin name
      * @see LDT::__construct()
+     * @deprecated
      */
     public function __construct(Aerospike $db, array $key, $bin) {
         parent::__construct($db, $key, $bin, LDT::LSET);

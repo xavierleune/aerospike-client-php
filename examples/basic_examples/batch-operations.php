@@ -66,7 +66,7 @@ foreach ($characters as $id => $character) {
     $new_key = "key{$id}";
     var_dump($new_key);
     $$new_key = $db->initKey("test", "characters", $id);
-    $db->put($$new_key, array("name" => $character));
+    $db->put($$new_key, array("id" => $id, "name" => $character));
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
@@ -84,7 +84,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Getting the inserted records ≻", 'black', true);
 $start = __LINE__;
-$res = $db->getMany($keys, $records);
+$res = $db->getMany($keys, $records, array('name'));
 if ($res == AEROSPIKE::OK) {
     echo success();
     var_dump($records);

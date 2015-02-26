@@ -1,6 +1,11 @@
 
 # Key-Value Methods
 
+### [Aerospike::getKeyDigest](aerospike_getkeydigest.md)
+```
+public string Aerospike::getKeyDigest (string $ns, string $set, string|int $pk)
+```
+
 ### [Aerospike::initKey](aerospike_initkey.md)
 ```
 public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )

@@ -1,15 +1,17 @@
 
 # Aerospike::getKeyDigest
 
-Aerospike::getKeyDigest - Helper which computes the digest that for a given key
+Aerospike::getKeyDigest - helper method for building the key array
 
 ## Description
 
 ```
-public string Aerospike::getKeyDigest ( string $ns, string $set, int|string $pk )
+public string Aerospike::getKeyDigest (string $ns, string $set, string|int $pk)
 ```
 
-**Aerospike::getKeyDigest()** will return a string digest for the given key.
+**Aerospike::getKeyDigest()** will return the RIPEMD-160 digest corresponding to
+the hash of the key tuple. The digest is used to uniquely identify the record in
+the cluster.
 
 ## Parameters
 
@@ -17,15 +19,15 @@ public string Aerospike::getKeyDigest ( string $ns, string $set, int|string $pk 
 
 **set** the name of the set within the namespace
 
-**pk** the primary key or digest value that identifies the record
+**pk** the primary key that identifies the record in the application
 
-## Return Values
+## Return Value
 
-Returns a string digest or *NULL* on failure.
+The RIPEMD-160 digest, stored as a binary string.
 
 ## Examples
 
-### Initializing a digest
+### Initializing a key
 ```php
 <?php
 
@@ -36,8 +38,9 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$digest = $db->getKeyDigest("test", "users", 1234);
-var_dump($digest);
+$digest = $db->getKeyDigest("test", "users", 1);
+$key = $db->initKey("test", "users", $digest, true);
+var_dump($digest, $key);
 
 ?>
 ```
@@ -45,6 +48,14 @@ var_dump($digest);
 We expect to see:
 
 ```
-string(20) "M�v2Kp���
+string(20) "9!?@%??;???Wp?'??Ag"
+array(3) {
+  ["ns"]=>
+  string(4) "test"
+  ["set"]=>
+  string(5) "users"
+  ["digest"]=>
+  string(20) "9!?@%??;???Wp?'??Ag"
+}
 ```
 
