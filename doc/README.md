@@ -2,7 +2,7 @@
 # Overview
 
 The Aerospike <a href="http://www.aerospike.com/docs/architecture/clients.html"
-target="_doc">PHP client</> enables your PHP application to work with an
+target="_doc">PHP client</a> enables your PHP application to work with an
 <a href="http://www.aerospike.com/docs/architecture/distribution.html"
 target="_doc">Aerospike cluster</a> as its
 <a href="http://www.aerospike.com/docs/guide/kvs.html" target="_doc">key-value store</a>.

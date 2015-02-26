@@ -82,7 +82,7 @@ if ($res == AEROSPIKE::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Getting the inserted records ≻", 'black', true);
+echo colorize("Getting 'name' bins of the inserted records ≻", 'black', true);
 $start = __LINE__;
 $res = $db->getMany($keys, $records, array('name'));
 if ($res == AEROSPIKE::OK) {
