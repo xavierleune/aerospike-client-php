@@ -18,10 +18,7 @@ capable of growing the collection to virtually any size.
     public int remove ( int|string $value )
     public int removeRange ( int|string $min, int|string $max )
     public int removeMany ( array $values )
-    public int scan ( array &$elements [, int|string $min=null [, int|string $max=null [, string $module=null, string $function=null [, array $args=array()]]]] )
-
-    // To be implemented:
-    // public int filter ( string $module, string $function, array $args, array &$elements [, int|string $min = null [, int|string $max = null ]] )
+    public int scan ( array &$elements [, int|string $min=null [, int|string $max=null [, string $module=null [, string $function=null [, array $args=array()]]]]] )
 
     /* Inherited Methods */
     public boolean isLDT ( void )
