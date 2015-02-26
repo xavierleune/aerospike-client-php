@@ -15,15 +15,15 @@ class GetMany extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $key = $this->db->initKey("test", "demo", "getMany1");
-        $put_record1 = array("binA"=>10);
+        $put_record1 = array("binA"=>10, "binB"=>20, "binC"=>30);
         $this->db->put($key, $put_record1);
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "getMany2");
-        $put_record2 = array("binB"=>20);
+        $put_record2 = array("binA"=>40, "binB"=>50, "binC"=>60);
         $this->db->put($key, $put_record2);
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "getMany3");
-        $put_record3 = array("binC"=>30);
+        $put_record3 = array("binA"=>70, "binB"=>80, "binC"=>90);
         $this->db->put($key, $put_record3);
         $this->keys[] = $key;
         $this->put_records = array($put_record1, $put_record2, $put_record3);
@@ -59,12 +59,6 @@ class GetMany extends AerospikeTestCommon
 
         $i = 0;
         foreach ($records as $records_key=>$value) {
-            if ($i == 3 && $value) {
-                return Aerospike::ERR_CLIENT;
-            } else {
-                return Aerospike::OK;
-            }
-
             if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
                 (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
                 (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
@@ -118,7 +112,6 @@ class GetMany extends AerospikeTestCommon
             } else {
                 continue;
             }
-
             if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
                 (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
                 (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
@@ -223,11 +216,6 @@ class GetMany extends AerospikeTestCommon
 
         $i = 0;
         foreach ($records as $records_key=>$value) {
-            if ($i == 3 && $value) {
-                return Aerospike::ERR_CLIENT;
-            } else {
-                return Aerospike::OK;
-            }
             if ((!strcmp($my_keys[$i]["key"], $records_key)) &&
                 (!strcmp($my_keys[$i]["ns"], $value["key"]["ns"])) &&
                 (!strcmp($my_keys[$i]["set"], $value["key"]["set"]))) {
@@ -244,6 +232,171 @@ class GetMany extends AerospikeTestCommon
         return $status;
     }
 
+    /**
+     * @test
+     * Basic getMany operation with filter bins but without options.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testGetManyPositiveWithFilterBins() {
+        $status = $this->db->getMany($this->keys, $records, ["binA", "binC"]);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($records)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i=0;
+        foreach ($records as $records_key=>$value) {
+            if ((!strcmp($this->keys[$i]["key"], $records_key)) &&
+                (!strcmp($this->keys[$i]["ns"], $value["key"]["ns"])) &&
+                (!strcmp($this->keys[$i]["set"], $value["key"]["set"])) &&
+                count($value["bins"]) == 2) {
+                $result = array_diff_assoc_recursive($this->put_records[$i],
+                    $value["bins"]);
+                if (!array_key_exists("binB", $result) || empty($result)) {
+                    return Aerospike::ERR_CLIENT;
+                }
+            } else {
+                return Aerospike::ERR_CLIENT;
+            }
+            $i++;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Basic getMany operation with filter bins and options.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testGetManyPositiveWithFilterBinsAndOptions() {
+        $status = $this->db->getMany($this->keys, $records, ["binA", "binC"],
+            array(Aerospike::OPT_READ_TIMEOUT=>3000));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($records)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i=0;
+        foreach ($records as $records_key=>$value) {
+            if ((!strcmp($this->keys[$i]["key"], $records_key)) &&
+                (!strcmp($this->keys[$i]["ns"], $value["key"]["ns"])) &&
+                (!strcmp($this->keys[$i]["set"], $value["key"]["set"])) &&
+                count($value["bins"]) == 2) {
+                $result = array_diff_assoc_recursive($this->put_records[$i],
+                    $value["bins"]);
+                if (!array_key_exists("binB", $result) || empty($result)) {
+                    return Aerospike::ERR_CLIENT;
+                }
+            } else {
+                return Aerospike::ERR_CLIENT;
+            }
+            $i++;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Basic getMany operation with empty filter bins.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testGetManyPositiveWithEmptyFilterBins() {
+        $status = $this->db->getMany($this->keys, $records, []);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($records)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i=0;
+        foreach ($records as $records_key=>$value) {
+            if ((!strcmp($this->keys[$i]["key"], $records_key)) &&
+                (!strcmp($this->keys[$i]["ns"], $value["key"]["ns"])) &&
+                (!strcmp($this->keys[$i]["set"], $value["key"]["set"]))) {
+                $result = array_diff_assoc_recursive($this->put_records[$i],
+                    $value["bins"]);
+                if (!empty($result)) {
+                    return Aerospike::ERR_CLIENT;
+                }
+            } else {
+                return Aerospike::ERR_CLIENT;
+            }
+            $i++;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * Basic getMany operation with invalid bin in filter bins.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testGetManyPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testGetManyPositiveWithInvalidFilterBins() {
+        $status = $this->db->getMany($this->keys, $records, ["INVALID_BIN"]);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (empty($records)) {
+            return Aerospike::ERR_CLIENT;
+        }
+
+        $i=0;
+        foreach ($records as $records_key=>$value) {
+            if (strcmp($this->keys[$i]["key"], $records_key) ||
+                strcmp($this->keys[$i]["ns"], $value["key"]["ns"]) ||
+                strcmp($this->keys[$i]["set"], $value["key"]["set"]) ||
+                count($value["bins"]) != 0) {
+                return Aerospike::ERR_CLIENT;
+            }
+            $i++;
+        }
+        return $status;
+    }
     /**
      * @test
      * Basic getMany operation with empty key array.
