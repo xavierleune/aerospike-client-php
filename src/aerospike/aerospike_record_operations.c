@@ -18,9 +18,8 @@
  *                              with the encountered error if any.
  * @param bin_name_p            The bin name to perform operation upon.
  * @param str                   The string to be appended in case of operation: append.
- * @param offset                The offset to be incremented by in case of operation: increment.
- * @param initial_value         The initial value to be set if record is absent
- *                              in case of operation: increment.
+ * @param offset                The offset to be incremented by in case of operation: increment,
+ *                              or to be initialized if record/bin does not already exist.
  * @param time_to_live          The ttl for the record in case of operation: touch.
  * @param operation             The operation type.
  *
@@ -34,7 +33,6 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 char* bin_name_p,
                                 char* str,
                                 u_int64_t offset,
-                                u_int64_t initial_value,
                                 u_int64_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
@@ -46,48 +44,55 @@ aerospike_record_operations_ops(aerospike* as_object_p,
 
     switch (operation) {
         case AS_OPERATOR_APPEND:
-            as_operations_add_append_str(ops, bin_name_p, str);
+            if (!as_operations_add_append_str(ops, bin_name_p, str)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to append");
+                DEBUG_PHP_EXT_DEBUG("Unable to append");
+                goto exit;
+            }
             break;
         case AS_OPERATOR_PREPEND:
-            as_operations_add_prepend_str(ops, bin_name_p, str);
+            if (!as_operations_add_prepend_str(ops, bin_name_p, str)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to prepend");
+                DEBUG_PHP_EXT_DEBUG("Unable to prepend");
+                goto exit;
+            }
             break;
         case AS_OPERATOR_INCR:
-            if (AEROSPIKE_OK != aerospike_key_select(as_object_p,
-                            error_p, NULL, as_key_p, select, get_rec)) {
+            if (!as_operations_add_incr(ops, bin_name_p, offset)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to increment");
+                DEBUG_PHP_EXT_DEBUG("Unable to increment");
                 goto exit;
-            } else {
-                if (NULL != (value_p = (as_val *) as_record_get (*get_rec, bin_name_p))) {
-                   if (AS_NIL == value_p->type) {
-                       if (!as_operations_add_write_int64(ops, bin_name_p,
-                                   initial_value)) {
-                           PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to add write operation");
-                           DEBUG_PHP_EXT_DEBUG("Unable to add write operation");
-                           goto exit;
-                       }
-                   } else {
-                       as_operations_add_incr(ops, bin_name_p, offset);
-                   }
-                } else {
-                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to increment");
-                    DEBUG_PHP_EXT_DEBUG("Unable to increment");
-                    goto exit;
-                }
             }
             break;
         case AS_OPERATOR_TOUCH:
             ops->ttl = time_to_live;
-            as_operations_add_touch(ops);
+            if (!as_operations_add_touch(ops)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to touch");
+                DEBUG_PHP_EXT_DEBUG("Unable to touch");
+                goto exit;
+            }
             break;
-
         case AS_OPERATOR_READ:
-            as_operations_add_read(ops, bin_name_p);
+            if (!as_operations_add_read(ops, bin_name_p)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to read");
+                DEBUG_PHP_EXT_DEBUG("Unable to read");
+                goto exit;
+            }
             break;
 
         case AS_OPERATOR_WRITE:
             if (str) {
-                as_operations_add_write_str(ops, bin_name_p, str);
+                if (!as_operations_add_write_str(ops, bin_name_p, str)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
+                    DEBUG_PHP_EXT_DEBUG("Unable to write");
+                    goto exit;
+                }
             } else {
-                as_operations_add_write_int64(ops, bin_name_p, offset);
+                if (!as_operations_add_write_int64(ops, bin_name_p, offset)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
+                    DEBUG_PHP_EXT_DEBUG("Unable to write");
+                    goto exit;
+                }
             }
             break;
 
@@ -230,7 +235,6 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
                                 char* bin_name_p,
                                 char* str,
                                 u_int64_t offset,
-                                u_int64_t initial_value,
                                 u_int64_t time_to_live,
                                 u_int64_t operation)
 {
@@ -254,8 +258,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
     if (AEROSPIKE_OK != aerospike_record_operations_ops(as_object_p, as_key_p,
                                                       options_p, error_p,
                                                       bin_name_p, str,
-                                                      offset, initial_value,
-                                                      time_to_live, operation,
+                                                      offset, time_to_live, operation,
                                                       &ops, &get_rec TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
@@ -352,7 +355,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
                             as_key_p, options_p, error_p, bin_name_p, str,
-                            offset, 0, 0, op, &ops, &temp_rec TSRMLS_CC))) {
+                            offset, 0, op, &ops, &temp_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
             }

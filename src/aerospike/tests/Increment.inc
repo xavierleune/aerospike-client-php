@@ -31,7 +31,7 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementByOffsetValue() {
-        $this->db->increment($this->keys[0], 'bin1', 4, 0);
+        $this->db->increment($this->keys[0], 'bin1', 4);
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         if(5 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -54,7 +54,7 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementByOffsetValueWithPolicy() {
-        $this->db->increment($this->keys[0], 'bin1', 4, 0,
+        $this->db->increment($this->keys[0], 'bin1', 4,
             array(Aerospike::OPT_WRITE_TIMEOUT=>1000,
             Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST,
             Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
@@ -80,7 +80,7 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementByOffsetValueUseInitialValue() {
-        $this->db->increment($this->keys[0], 'bin3', 4, 2,
+        $this->db->increment($this->keys[0], 'bin3', 2,
             array(Aerospike::OPT_WRITE_TIMEOUT=>1000));
         $status = $this->db->get($this->keys[0], $get_record, array('bin3'));
         if(2 != $get_record['bins']['bin3']) {
@@ -105,9 +105,15 @@ class Increment extends AerospikeTestCommon
      */
     function testBinIncrementKeyNotExist() {
         $key1 = array("ns" => "test", "set" => "demo", "key" => "----ssss----");
-        return $this->db->increment($key1, 'bin1', 4, 0,
+        $this->db->increment($key1, 'bin1', 4,
             array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_ONCE,
             Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $this->keys[] = $key1;
+        $status = $this->db->get($key1, $get_record, array('bin1'));
+        if(4 != $get_record['bins']['bin1']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
     /**
      * @test
@@ -125,7 +131,12 @@ class Increment extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinIncrementBinNotExist() {
-        return $this->db->increment($this->keys[0], 'abc', 4);
+        $this->db->increment($this->keys[0], 'abc', 4);
+        $status = $this->db->get($this->keys[0], $get_record, array('abc'));
+        if(4 != $get_record['bins']['abc']) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
     }
     /**
      * @test
@@ -169,7 +180,7 @@ class Increment extends AerospikeTestCommon
     function testIncrementWithGenGTPositive() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"] + 10;
-        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $this->db->increment($this->keys[0], 'bin1', 4, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         if(5 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -194,7 +205,7 @@ class Increment extends AerospikeTestCommon
     function testIncrementWithGenGTLesser() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"];
-        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
+        $this->db->increment($this->keys[0], 'bin1', 4, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         if(1 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -219,7 +230,7 @@ class Increment extends AerospikeTestCommon
     function testIncrementWithGenEQPositive() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"];
-        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $this->db->increment($this->keys[0], 'bin1', 4, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         if(5 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -244,7 +255,7 @@ class Increment extends AerospikeTestCommon
     function testIncrementWithGenEQNotEqual() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"] + 5;
-        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
+        $this->db->increment($this->keys[0], 'bin1', 4, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         if(1 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -268,7 +279,7 @@ class Increment extends AerospikeTestCommon
      */
     function testIncrementWithGenEQIgnore() {
         $gen_value = 10;
-        $this->db->increment($this->keys[0], 'bin1', 4, 0, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
+        $this->db->increment($this->keys[0], 'bin1', 4, array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_IGNORE, $gen_value)));
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         if(5 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -296,7 +307,7 @@ class Increment extends AerospikeTestCommon
          base64_decode("increment_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("bin1"=>1), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
-        $this->db->increment($key, 'bin1', 4, 0, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+        $this->db->increment($key, 'bin1', 4, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         $status = $this->db->get($key, $get_record, array('bin1'));
         if(5 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
@@ -323,7 +334,7 @@ class Increment extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", 1);
         $put_status = $this->db->put($key, array("bin1"=>1), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
-        $this->db->increment($key, 'bin1', 4, 0, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+        $this->db->increment($key, 'bin1', 4, array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
         $status = $this->db->get($key, $get_record, array('bin1'));
         if(5 != $get_record['bins']['bin1']) {
             return Aerospike::ERR_CLIENT;
