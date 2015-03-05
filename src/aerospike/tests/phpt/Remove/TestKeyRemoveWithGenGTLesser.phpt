@@ -6,4 +6,4 @@ KeyRemove with generation policy POLICY_GEN_GT and generation value.
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Remove", "testKeyRemoveWithGenGTLesser");
 --EXPECT--
-OK
+ERR_RECORD_GENERATION
