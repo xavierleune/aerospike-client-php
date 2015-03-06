@@ -10,7 +10,10 @@ public int Aerospike::increment ( array $key, string $bin, int $offset [, array 
 ```
 
 **Aerospike::increment()** will increment a *bin* containing a numeric value by the *offset* or
-set this as the initial value if the record/bin does not exist.
+set it as the initial value if the record/bin does not exist.
+
+If a record with the given key does not exist it will be initialized with one
+bin named *bin* set to the integer value *offset* (the so-called 'upsert').
 
 
 ## Parameters

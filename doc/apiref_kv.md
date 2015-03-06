@@ -49,7 +49,7 @@ public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
 
 ### [Aerospike::increment](aerospike_increment.md)
 ```
-public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, array $options ] )
 ```
 
 ### [Aerospike::append](aerospike_append.md)
