@@ -85,6 +85,10 @@ abstract class LDT
      */
     const ERR_DELETE                = 1405;
     /**
+     * General input parameter error
+     */
+    const ERR_LDT_INPUT_PARM        = 1409;
+    /**
      * LDT type mismatched for the bin
      */
     const ERR_TYPE_MISMATCH         = 1410;
@@ -160,6 +164,24 @@ abstract class LDT
      * Error while updating the top record
      */
     const ERR_TOPREC_CREATE         = 1428;
+    /**
+     * The filter function name was invalid
+     */
+    const ERR_LDT_FILTER_FUNCTION_BAD       = 1430;
+    /**
+     * The filter function could not be found
+     */
+    const ERR_LDT_FILTER_FUNCTION_NOT_FOUND = 1431;
+    /**
+     * Invalid function used to extract a unique value from a complex object
+     */
+    const ERR_LDT_KEY_FUNCTION_BAD          = 1432;
+    /**
+     * Could not find the 'key function' or the input given
+     * to the default key function is invalid. For complex types the form
+     * array('key'=> _value_) is expected.
+     */
+    const ERR_LDT_KEY_FUNCTION_NOT_FOUND    = 1433;
 
     /**
      * The key for the record containing the LDT

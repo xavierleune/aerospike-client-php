@@ -1271,7 +1271,6 @@ PHP_METHOD(Aerospike, append)
                     append_str_p,
                     0,
                     0,
-                    0,
                     AS_OPERATOR_APPEND))) {
         DEBUG_PHP_EXT_ERROR("Append function returned an error");
         goto exit;
@@ -1513,7 +1512,6 @@ PHP_METHOD(Aerospike, prepend)
                     prepend_str_p,
                     0,
                     0,
-                    0,
                     AS_OPERATOR_PREPEND))) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
@@ -1529,7 +1527,7 @@ exit:
 }
 /* }}} */
 
-/* {{{ proto int Aerospike::increment ( array key, string bin, int offset [, int initial_value=0 [, array options ]] )
+/* {{{ proto int Aerospike::increment ( array key, string bin, int offset [, array options ] )
    Increments an existing bin's numeric value */
 PHP_METHOD(Aerospike, increment)
 {
@@ -1543,7 +1541,6 @@ PHP_METHOD(Aerospike, increment)
     char*                  bin_name_p;
     int                    bin_name_len;
     long                   offset = 0;
-    long                   initial_value = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
@@ -1560,9 +1557,9 @@ PHP_METHOD(Aerospike, increment)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|la",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
-                &offset, &initial_value, &options_p) == FAILURE) {
+                &offset, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for increment function");
@@ -1594,7 +1591,6 @@ PHP_METHOD(Aerospike, increment)
                     bin_name_p,
                     NULL,
                     offset,
-                    initial_value,
                     0,
                     AS_OPERATOR_INCR))) {
         DEBUG_PHP_EXT_ERROR("Increment function returned an error");
@@ -1670,7 +1666,6 @@ PHP_METHOD(Aerospike, touch)
                     &error,
                     NULL,
                     NULL,
-                    0,
                     0,
                     time_to_live,
                     AS_OPERATOR_TOUCH))) {
