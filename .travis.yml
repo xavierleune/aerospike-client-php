@@ -34,6 +34,7 @@ notifications:
       secure: R6iFduoL5HSUx634xGgNe4Rz4arm3M5oRoA2mJF7v5B0TO01jkac+Kpr5M30dUL1neHOBo1S446H9kI3M1QnfBxJLlBZST5P0xaJ1DsuLuN9FPs/h+0/gLZvATfCkjeJvZVKL8MyG/FwOuV18ciZ+XCg85qwJXqqvdahBk2S9TY=
   email:
     - qe-notices@aerospike.com
+    - qe-notices-clients@aerospike.com
 env:
   global:
   - secure: fJ2nIo5OYkrOFQFo/TXCqiyLXABuhYmLO8037ALplv3JbEZLMI7/NtZptKop+YZVO/HQ2jolWRVeKrXDY6ZDjdnI67hk+FSeIdhviNeWOoWEUt1Yk+YE6lLSFgtgZ0gI11hHrqqU9uzZ1h4MgkPpMPbA85O6RFWLrvjE9fcHLR4=
