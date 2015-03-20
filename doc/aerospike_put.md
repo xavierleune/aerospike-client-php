@@ -17,6 +17,10 @@ By default the **Aerospike::put()** method behaves in a set-and-replace mode sim
 array keys and values. This behavior can be modified using the
 *options* parameter.
 
+**Note:** a binary-string which includes a null-byte will get truncated at the
+position of the **\0** character. For more information and a workaround see
+[Handling Unsupported Types](https://github.com/aerospike/aerospike-client-php/blob/master/doc/README.md#handling-unsupported-types).
+
 ## Parameters
 
 **key** the key under which to store the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
