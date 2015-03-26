@@ -214,7 +214,15 @@
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
             zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len,   \
-                    &index, 0, &pointer);
+                    &index, 0, &pointer);                                      \
+            if ((char*)key == NULL) {                                          \
+                err->code = AEROSPIKE_ERR_CLIENT;                              \
+                goto label;                                                    \
+            }                                                                  \
+            if (key_len > AS_BIN_NAME_MAX_LEN) {                               \
+                err->code = AEROSPIKE_ERR_BIN_NAME;                            \
+                goto label;                                                    \
+            }
 
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
         err, label)                                                            \

@@ -13,7 +13,9 @@ class Employee
 class Put extends AerospikeTestCommon
 {
     protected function setUp() {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        #$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $config = array("hosts"=>array(array("addr"=>"172.20.25.160",
+            "port"=>3000)));
         $this->db = new Aerospike($config);
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
@@ -2709,6 +2711,31 @@ function testMixedTypesWithDefaultSerializer()
             return Aerospike::ERR_RECORD_NOT_FOUND;
         }
         return $status;
+    }
+
+    /**
+     * @test
+     * Basic PUT with bin name exceeding 14 characters limit.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testPUT)
+     *
+     * @test_plans{1.1}
+     */
+    function testPutBinNameExceedingMaxlimit()
+    {
+        $key = $this->db->initKey("test", "demo", "put_test");
+        $status = $this->db->put($key,array("bin1aaaaaghjklu"=>"Hello World"));
+        $this->keys[] = $key;
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
     }
 }
 ?>
