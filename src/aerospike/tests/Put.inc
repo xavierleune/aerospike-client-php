@@ -13,9 +13,7 @@ class Employee
 class Put extends AerospikeTestCommon
 {
     protected function setUp() {
-        #$config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $config = array("hosts"=>array(array("addr"=>"172.20.25.160",
-            "port"=>3000)));
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $this->db = new Aerospike($config);
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
