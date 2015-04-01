@@ -87,7 +87,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_DEFAULT, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
@@ -473,6 +473,7 @@ PHP_METHOD(Aerospike, __construct)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     persistent_list =      (AEROSPIKE_G(persistent_list_g));
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
@@ -1716,7 +1717,7 @@ PHP_METHOD(Aerospike, initKey)
 
     array_init(return_value);
 
-    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p,
+    if (AEROSPIKE_OK != aerospike_init_php_key(NULL, ns_p, ns_p_length, set_p, set_p_length, pk_p,
                 is_digest, return_value, NULL, NULL, false TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
         zval_dtor(return_value);
