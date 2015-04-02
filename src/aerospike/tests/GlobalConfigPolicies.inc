@@ -114,12 +114,13 @@ class GlobalConfigPolicies extends AerospikeTestCommon
     function testMethodOverridesDefaultsKey()
     {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $this->db = new Aerospike($config, true);
-        $key = $this->db->initKey("test", "demo", "put_key");
-        $status = $this->db->put($key, array("bin1"=>"Hello World"), 15,
+        $db = new Aerospike($config, true);
+        $key = $db->initKey("test", "demo", "put_key");
+        $status = $db->put($key, array("bin1"=>"Hello World"), 15,
             array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
         $this->keys[] = $key;
-        $status = $this->db->get($key, $returned);
+        $status = $db->get($key, $returned);
+        $db->close();
         if($returned['key']['key'] == "put_key")
             return Aerospike::OK;
         return Aerospike::ERR_CLIENT;
@@ -167,10 +168,11 @@ class GlobalConfigPolicies extends AerospikeTestCommon
     function testMethodOverridesDefaultsExists()
     {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $this->db = new Aerospike($config, true);
-        $key = $this->db->initKey("test", "demo", "put_key_update");
-        $status = $this->db->put($key, array("bin1"=>"Hello World"), 15,
+        $db = new Aerospike($config, true);
+        $key = $db->initKey("test", "demo", "put_key_update");
+        $status = $db->put($key, array("bin1"=>"Hello World"), 15,
             array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_UPDATE));
+        $db->close();
         return $status;
     }
     /**
@@ -219,16 +221,15 @@ class GlobalConfigPolicies extends AerospikeTestCommon
     function testMethodOverridesGlobalKeyUDF()
     {
         $key = $this->db->initKey("test","demo", "udf_integer");
-        if ($this->db->isConnected()) {
-            $status = $this->db->put($key,array("bin1"=>10));
-        } else {
-            $this->db->close();
-            return($this->db->errorno());
+        $status = $this->db->put($key,array("bin1"=>10));
+        if ($status != AEROSPIKE::OK) {
+            return($status);
         }
         $returned = "aa";
         $udf_apply_status = $this->db->apply($key, "module",
             "bin_udf_operation_integer", array("bin1", 2, 20),
             $returned, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+        $this->keys[] = $key;
         if ($status != Aerospike::OK) {
             return ($this->db->errorno());
         }
@@ -268,6 +269,7 @@ class GlobalConfigPolicies extends AerospikeTestCommon
         if ($status != AEROSPIKE::OK) {
             return $status;
         }
+        $this->keys[] = $key;
         $status = $this->db->get($key, $get_record, array('Greet'),
             array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         if ($status != AEROSPIKE::OK) {
@@ -296,14 +298,15 @@ class GlobalConfigPolicies extends AerospikeTestCommon
     function testINIOverridesDefaultsKey()
     {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
-        $this->db = new Aerospike($config, true);
-        $key = $this->db->initKey("test", "demo", "key_ini_put");
-        $status = $this->db->put($key,array("bin1"=>"Hello Wo"));
+        $db = new Aerospike($config, true);
+        $key = $db->initKey("test", "demo", "key_ini_put");
+        $status = $db->put($key,array("bin1"=>"Hello Wo"));
         if ($status != AEROSPIKE::OK) {
             return $status;
         }
         $this->keys[] = $key;
-        $status = $this->db->get($key, $returned);
+        $status = $db->get($key, $returned);
+        $db->close();
         if ($status != AEROSPIKE::OK) {
             return $status;
         }

@@ -151,7 +151,7 @@ exit:
  *
  *******************************************************************************************************
  */
-extern void
+static  void
 set_policy_ex(as_config *as_config_p,
               as_policy_read *read_policy_p,
               as_policy_write *write_policy_p,
@@ -825,7 +825,7 @@ set_general_policies(as_config *as_config_p,
         goto exit;
     }
 
-    set_config_policies(as_config_p, options_p, error_p);
+    set_config_policies(as_config_p, options_p, error_p TSRMLS_CC);
 
 exit:
     return;
