@@ -25,7 +25,7 @@ to the following structure:
 ```
 Write Operation:
   op => Aerospike::OPERATOR_WRITE
-  bin => bin name
+  bin => bin name (cannot be longer than 14 characters)
   val => the value to store in the bin
 
 Increment Operation:

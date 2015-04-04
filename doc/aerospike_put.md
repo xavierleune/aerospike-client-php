@@ -21,7 +21,7 @@ array keys and values. This behavior can be modified using the
 
 **key** the key under which to store the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**bins** the array of bin names and values to write.
+**bins** the array of bin names and values to write. **Bin names cannot be longer than 14 characters.**
 
 **ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 
