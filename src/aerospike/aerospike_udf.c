@@ -38,8 +38,9 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL,
-            NULL, NULL, options_p, error_p TSRMLS_CC);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL,
+            NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -132,8 +133,9 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p,
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL,
-            NULL, NULL, options_p, error_p TSRMLS_CC);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL,
+            NULL, NULL, NULL, &info_policy,NULL, NULL, NULL,
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -182,7 +184,8 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     as_policy_apply             apply_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy_udf_apply(&apply_policy, options_p, error_p TSRMLS_CC);
+    set_policy_udf_apply(&aerospike_obj_p->as_ref_p->as_p->config, &apply_policy,
+            options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -252,8 +255,9 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL,
-            NULL, options_p, error_p TSRMLS_CC);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL,
+            NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
+            options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -315,8 +319,9 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
     as_policy_info          info_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL,
-            NULL, options_p, error_p TSRMLS_CC);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL,
+            NULL, NULL, &info_policy, NULL, NULL, NULL, options_p,
+            error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

@@ -291,7 +291,7 @@ class GetMany extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testGetManyPositiveWithFilterBinsAndOptions() {
-        $status = $this->db->getMany($this->keys, $records, ["binA", "binC"],
+        $status = $this->db->getMany($this->keys, $records, array("binA", "binC"),
             array(Aerospike::OPT_READ_TIMEOUT=>3000));
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
@@ -335,7 +335,7 @@ class GetMany extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testGetManyPositiveWithEmptyFilterBins() {
-        $status = $this->db->getMany($this->keys, $records, []);
+        $status = $this->db->getMany($this->keys, $records, array());
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }
@@ -377,7 +377,7 @@ class GetMany extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testGetManyPositiveWithInvalidFilterBins() {
-        $status = $this->db->getMany($this->keys, $records, ["INVALID_BIN"]);
+        $status = $this->db->getMany($this->keys, $records, array("INVALID_BIN"));
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }

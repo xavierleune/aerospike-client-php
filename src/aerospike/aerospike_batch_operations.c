@@ -168,7 +168,8 @@ aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p
         goto exit;
     }
 
-    set_policy_batch(&batch_policy, options_p, error_p TSRMLS_CC);
+    set_policy_batch(&as_object_p->config, &batch_policy, options_p,
+            error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -283,7 +284,7 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
             goto cleanup;
         }
 
-        if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record((as_record *) &results[i].record,
+        if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record(NULL, (as_record *) &results[i].record,
                     (as_key *) results[i].key, record_p, NULL, false TSRMLS_CC)) {
             PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR,
                     "Unable to get metadata of a record");
@@ -364,7 +365,7 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    set_policy_batch(&batch_policy, options_p, error_p TSRMLS_CC);
+    set_policy_batch(&as_object_p->config, &batch_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

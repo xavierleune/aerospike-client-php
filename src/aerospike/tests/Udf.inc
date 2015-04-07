@@ -240,7 +240,7 @@ class Udf extends AerospikeTestCommon
             return($this->db->errorno());
         }
         $returned = "aa";
-        $udf_apply_status = $this->db->apply($key, "module",
+        $status = $this->db->apply($key, "module",
             "bin_udf_operation_integer", array("bin1", 2, 20), $returned,
             array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
         if ($status != Aerospike::OK) {

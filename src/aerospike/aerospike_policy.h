@@ -113,7 +113,8 @@ AerospikeConstants aerospike_constants[] = {
  *******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p,
+set_policy(as_config* as_config_p,
+           as_policy_read *read_policy_p,
            as_policy_write *write_policy_p,
            as_policy_operate *operate_policy_p,
            as_policy_remove *remove_policy_p,
@@ -130,23 +131,25 @@ set_general_policies(as_config* as_config_p,
                      as_error *error_p TSRMLS_DC);
 
 extern void
-set_policy_scan(as_policy_scan *scan_policy_p,
+set_policy_scan(as_config* as_config_p,
+        as_policy_scan *scan_policy_p,
         uint32_t *serializer_policy_p,
         as_scan *as_scan_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 
 extern void
-set_policy_batch(as_policy_batch *batch_policy_p,
+set_policy_batch(as_config* as_config_p,
+        as_policy_batch *batch_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 
 extern void
-set_policy_udf_apply(as_policy_apply *apply_policy_p,
+set_policy_udf_apply(as_config* as_config_p,
+        as_policy_apply *apply_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 
 extern as_status
 declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC);
-
 #endif /* end of __AEROSPIKE_POLICY_H__ */
