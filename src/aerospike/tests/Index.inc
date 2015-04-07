@@ -176,6 +176,29 @@ class Index extends AerospikeTestCommon
             return $this->db->errorno();
         }
     }
+    /**
+     * @test
+     * Basic index create and drop operation on string bin with set as NULL
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testCreateIndexIntegerBinPositive)
+     *
+     * @test_plans{1.1}
+     */
+    function testCreateAndDropIndexStringSetNull() {
+        if (Aerospike::OK == $this->db->createIndex("test", NULL, "bin1",
+            Aerospike::INDEX_TYPE_STRING, "bin1_string_index")) {
+            return($this->db->dropIndex("test", "bin1_string_index"));
+        } else {
+            return $this->db->errorno();
+        }
+    }
 
     /**
      * @test
