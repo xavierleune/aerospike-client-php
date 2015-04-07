@@ -5,11 +5,6 @@ require_once 'Common.inc';
  *Basic Put tests
 */
 
-class Employee
-{
-    public $desg = 'Manager';
-}
-
 class GlobalConfigPolicies extends AerospikeTestCommon
 {
     protected function setUp() {
@@ -221,22 +216,34 @@ class GlobalConfigPolicies extends AerospikeTestCommon
     function testMethodOverridesGlobalKeyUDF()
     {
         $key = $this->db->initKey("test","demo", "udf_integer");
-        $status = $this->db->put($key,array("bin1"=>10));
+        $status = $this->db->put($key,array("bin1"=>10), NULL, array(Aerospike::OPT_POLICY_EXISTS=>Aerospike::POLICY_EXISTS_IGNORE,
+		Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         if ($status != AEROSPIKE::OK) {
             return($status);
         }
+	$status = $this->db->get($key, $returned, NULL,  array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
+	if ($status != AEROSPIKE::OK) {
+            return($status);
+	}
+	if ($returned['key']['key'] != NULL) {
+	    return Aerospike::ERR_CLIENT; 
+	}
         $returned = "aa";
         $udf_apply_status = $this->db->apply($key, "module",
             "bin_udf_operation_integer", array("bin1", 2, 20),
-            $returned, array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+            $returned, array(Aerospike::OPT_WRITE_TIMEOUT => 2000, Aerospike::OPT_POLICY_KEY=> Aerospike::POLICY_KEY_SEND));
         $this->keys[] = $key;
-        if ($status != Aerospike::OK) {
+        if ($udf_apply_status != Aerospike::OK) {
             return ($this->db->errorno());
         }
-        if ($returned !== 32) {
-            return "Value returned from apply() is not int(32)";
-        }
 
+	$status = $this->db->get($key, $returned, NULL,  array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_SEND));
+	if ($status != AEROSPIKE::OK) {
+            return($status);
+	}
+	if ($returned['key']['key'] != "udf_integer") {
+	    return Aerospike::ERR_CLIENT; 
+	}
         $code = array();
         $status = $this->db->getRegistered("module.lua", $code,
             Aerospike::UDF_TYPE_LUA, array(Aerospike::OPT_READ_TIMEOUT => 2000));

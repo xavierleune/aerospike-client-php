@@ -458,6 +458,8 @@ set_policy_ex(as_config *as_config_p,
                         operate_policy_p->key = Z_LVAL_PP(options_value);
                     } else if (remove_policy_p) {
                         remove_policy_p->key = Z_LVAL_PP(options_value);
+                    } else if (apply_policy_p) {
+                        apply_policy_p->key = Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
