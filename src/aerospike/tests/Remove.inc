@@ -99,16 +99,9 @@ class Remove extends AerospikeTestCommon
     function testKeyRemoveWithGenGTLesser() {
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"];
-        $check = array("bin1"=>"1");
-        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT, $gen_value)));
-        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
-        $comp_res = array_diff_assoc_recursive($get_record, $check);
-        if (!empty($comp_res)) {
-            return Aerospike::ERR_CLIENT;
-        }
-        else {
-            return AEROSPIKE::OK;
-        }
+        return ($this->db->remove($this->keys[0],
+            array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_GT,
+            $gen_value))));
     }
     /**
      * @test
@@ -175,15 +168,9 @@ class Remove extends AerospikeTestCommon
         $exists_status = $this->db->exists($this->keys[0], $metadata);
         $gen_value = $metadata["generation"] + 5;
         $check = array("bin1"=>"1");
-        $this->db->remove($this->keys[0], array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ, $gen_value)));
-        $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
-        $comp_res = array_diff_assoc_recursive($get_record, $check);
-        if (!empty($comp_res)) {
-            return Aerospike::ERR_CLIENT;
-        }
-        else {
-            return AEROSPIKE::OK;
-        }
+        return ($this->db->remove($this->keys[0],
+            array(Aerospike::OPT_POLICY_GEN=>array(Aerospike::POLICY_GEN_EQ,
+            $gen_value))));
     }
     /**
      * @test

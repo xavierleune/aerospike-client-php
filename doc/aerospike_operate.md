@@ -13,6 +13,10 @@ public int Aerospike::operate ( array $key, array $operations [, array &$returne
 with a given *key*, with write operations happening before read ones.
 Non-existent bins being read will have a NULL value.
 
+Currently only a call to operate() can include only one write operation per-bin.
+For example, you cannot both append and prepend to the same bin, in the same
+call.
+
 Like other bin operations, operate() only works on existing records
 (i.e. ones that were previously created with a put()).
 
@@ -25,7 +29,7 @@ to the following structure:
 ```
 Write Operation:
   op => Aerospike::OPERATOR_WRITE
-  bin => bin name
+  bin => bin name (cannot be longer than 14 characters)
   val => the value to store in the bin
 
 Increment Operation:

@@ -6,4 +6,4 @@ Increment - bin value by offset key not exist
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Increment", "testBinIncrementKeyNotExist");
 --EXPECT--
-ERR_RECORD_NOT_FOUND
+OK

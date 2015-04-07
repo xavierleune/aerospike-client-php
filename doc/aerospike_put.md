@@ -25,7 +25,7 @@ position of the **\0** character. For more information and a workaround see
 
 **key** the key under which to store the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**bins** the array of bin names and values to write.
+**bins** the array of bin names and values to write. **Bin names cannot be longer than 14 characters.** Binary data containing the null byte (**\0**) may get truncated. See the [README](https://github.com/aerospike/aerospike-client-php/blob/master/doc/README.md#handling-unsupported-types) for more details and a workaround.
 
 **ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 

@@ -6,12 +6,14 @@ Aerospike::increment - increments a numeric value in a bin
 ## Description
 
 ```
-public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, array $options ] )
 ```
 
-**Aerospike::increment()** will increment a *bin* containing a numeric value by the *offest* or
-set it to the *initial_value* if it does not exist. Like other bin operations,
-increment() only works on existing records (i.e. ones that were previously created with a put()).
+**Aerospike::increment()** will increment a *bin* containing a numeric value by the *offset* or
+set it as the initial value if the record/bin does not exist.
+
+If a record with the given key does not exist it will be initialized with one
+bin named *bin* set to the integer value *offset* (the so-called 'upsert').
 
 
 ## Parameters
@@ -21,8 +23,6 @@ increment() only works on existing records (i.e. ones that were previously creat
 **bin** the name of the bin in which we have a numeric value.
 
 **offset** the integer by which to increment the value in the bin.
-
-**initial_value** the integer to set in the bin if it is empty
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
