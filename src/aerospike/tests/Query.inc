@@ -475,12 +475,15 @@ class Query extends AerospikeTestCommon
         $status = $this->db->query("test", NULL, $where, $callback,
             array("email", "age"));
         $key = $this->db->initKey("test", "demo", "testing");
-        $this->db->get($key, $record);
-		if(array_key_exists('bins',$record)) {
-        if(10 == $record['bins']['bin1']) {
-            $this->db->remove($key);
-            return Aerospike::OK;
-        }
+		$this->db->get($key, $record);
+		if($status == 0) {
+			if(array_key_exists('bins',$record)) {
+        		if(10 == $record['bins']['bin1']) {
+            			$this->db->remove($key);
+            			return Aerospike::OK;
+        		}
+			}
+			return Aerospike::OK;
 		}
         return Aerospike::ERR_CLIENT;
         /*if ($status != Aerospike::OK) {
