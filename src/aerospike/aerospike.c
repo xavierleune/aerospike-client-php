@@ -130,10 +130,12 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
     }
 }
 
+/* Triggered at the beginning of a thread */
 static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     DEBUG_PHP_EXT_DEBUG("In ctor");
     pthread_rwlock_init(&AEROSPIKE_G(aerospike_mutex), NULL);
+    pthread_rwlock_init(&AEROSPIKE_G(query_cb_mutex), NULL);
     if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
         AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
         zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &aerospike_check_close_and_destroy, 1);
@@ -143,6 +145,7 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
     }
 }
 
+/* Triggered at the end of a thread */
 static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     if (globals->persistent_list_g) {
@@ -1969,21 +1972,20 @@ PHP_METHOD(Aerospike, predicateBetween)
    Queries a secondary index on a set for records matching the where predicate  */
 PHP_METHOD(Aerospike, query)
 {
-    as_status               status = AEROSPIKE_OK;
-    as_error                error;
-    char*                   ns_p = NULL;
-    int                     ns_p_length = 0;
-    char*                   set_p = NULL;
-    int                     set_p_length = 0;
-    zval*                   predicate_p = NULL;
-    char*                   bin_name = NULL;
-    zval*                   options_p = NULL;
-    zend_fcall_info         fci = empty_fcall_info;
-    zend_fcall_info_cache   fcc = empty_fcall_info_cache;
-    zval*                   bins_p = NULL;
-    HashTable*              bins_ht_p = NULL;
-    HashTable*              predicate_ht_p = NULL;
-    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    as_status                   status = AEROSPIKE_OK;
+    as_error                    error;
+    char*                       ns_p = NULL;
+    int                         ns_p_length = 0;
+    char*                       set_p = NULL;
+    int                         set_p_length = 0;
+    zval*                       predicate_p = NULL;
+    char*                       bin_name = NULL;
+    zval*                       options_p = NULL;
+    zval*                       bins_p = NULL;
+    HashTable*                  bins_ht_p = NULL;
+    HashTable*                  predicate_ht_p = NULL;
+    Aerospike_object*           aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    userland_callback           user_func = {0};
 
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
@@ -2005,7 +2007,7 @@ PHP_METHOD(Aerospike, query)
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa!f|a!a!",
         &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
-        &fci, &fcc, &bins_p, &options_p) == FAILURE) {
+        &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unable to parse parameters");
@@ -2019,10 +2021,8 @@ PHP_METHOD(Aerospike, query)
         goto exit;
     }
 
-    userland_callback user_func;
-    user_func.fci_p =  &fci;
-    user_func.fcc_p = &fcc;
     user_func.obj = aerospike_obj_p;
+    TSRMLS_SET_CTX(user_func.ts);
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
     predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
@@ -2168,20 +2168,19 @@ exit:
    Returns all the records in a set to a callback method  */
 PHP_METHOD(Aerospike, scan)
 {
-    as_status              status = AEROSPIKE_OK;
-    as_error               error;
-    int                    e_level = 0;
-    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    char                   *ns_p = NULL;
-    int                    ns_p_length = 0;
-    char                   *set_p = NULL;
-    int                    set_p_length = 0;
-    char                   *bin_name = NULL;
-    zend_fcall_info        fci = empty_fcall_info;
-    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
-    zval                   *bins_p = NULL;
-    zval                   *options_p = NULL;
-    HashTable*             bins_ht_p = NULL;
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    int                     e_level = 0;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    char                    *ns_p = NULL;
+    int                     ns_p_length = 0;
+    char                    *set_p = NULL;
+    int                     set_p_length = 0;
+    char                    *bin_name = NULL;
+    zval                    *bins_p = NULL;
+    zval                    *options_p = NULL;
+    HashTable*              bins_ht_p = NULL;
+    userland_callback       user_func = {0};
 
     /*
      * initialized to 'no error' (status AEROSPIKE_OK, empty message)
@@ -2204,7 +2203,7 @@ PHP_METHOD(Aerospike, scan)
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|aza",
         &ns_p, &ns_p_length, &set_p, &set_p_length,
-        &fci, &fcc, &bins_p, &options_p) == FAILURE) {
+        &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
@@ -2218,10 +2217,8 @@ PHP_METHOD(Aerospike, scan)
         goto exit;
     }
 
-    userland_callback user_func;
-    user_func.fci_p =  &fci;
-    user_func.fcc_p = &fcc;
     user_func.obj = aerospike_obj_p;
+    TSRMLS_SET_CTX(user_func.ts);
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
 
