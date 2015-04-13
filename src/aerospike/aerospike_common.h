@@ -97,6 +97,7 @@
 #define BIN "bin"
 #define OP "op"
 #define VAL "val"
+#define INDEX_TYPE "index_type"
 
 /*
  *******************************************************************************************************
@@ -658,8 +659,8 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
  */
 extern as_status
 aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
-        char* ns_p, char* set_p, char* bin_p, uint32_t type,
-        char *name_p, zval* options_p TSRMLS_DC);
+        char* ns_p, char* set_p, char* bin_p, char *name_p,
+		uint32_t type, uint32_t datatype, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,

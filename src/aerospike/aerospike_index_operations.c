@@ -17,17 +17,18 @@
  *                              created.
  * @param set_p                 The set name for which index is to be created.
  * @param bin_p                 The bin name for which index is to be created.
- * @param type                  The type of the index to be created.
  * @param name_p                The index name for which index is to be
  *                              created.
+ * @param index_type            The type of the index to be created.
+ * @param datatype              The data type of index, string or integer.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  *
  *******************************************************************************************************
  */
 extern as_status
 aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
-        char* ns_p, char* set_p, char* bin_p, uint32_t type,
-        char *name_p, zval* options_p TSRMLS_DC)
+        char* ns_p, char* set_p, char* bin_p, char *name_p,
+		uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_info              info_policy;
@@ -52,7 +53,7 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
             (status = aerospike_index_create_complex(as_object_p, error_p,
                                              &task, &info_policy, ns_p,
                                              set_p, bin_p, name_p,
-                                             AS_INDEX_TYPE_DEFAULT, type))) {
+                                             index_type, datatype))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     } else if (AEROSPIKE_OK !=

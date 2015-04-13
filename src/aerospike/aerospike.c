@@ -341,6 +341,7 @@ static zend_function_entry Aerospike_class_functions[] =
      ********************************************************************
      */
     PHP_ME(Aerospike, createIndex, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, addIndex, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, dropIndex, NULL, ZEND_ACC_PUBLIC)
 
     /*
@@ -350,6 +351,8 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, predicateBetween, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateContains, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateContainsRange, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, aggregate, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
@@ -1965,6 +1968,143 @@ PHP_METHOD(Aerospike, predicateBetween)
 }
 /* }}} */
 
+/* {{{ proto array Aerospike::predicateContains( string bin, int index_type, int|string val )
+   Helper which builds the 'WHERE CONTAINS' predicate */
+PHP_METHOD(Aerospike, predicateContains)
+{
+    as_status              status = AEROSPIKE_OK;
+    char                   *bin_name_p  =  NULL;
+    int                    bin_name_len = 0;
+    long                   index_type;
+    zval                   *val_p = NULL;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slz",
+                &bin_name_p, &bin_name_len, &index_type, &val_p)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateContains");
+        RETURN_NULL();
+    }
+    if (bin_name_len == 0) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 1 to be a non-empty string.");
+        RETURN_NULL();
+    }
+
+    if (PHP_TYPE_ISNULL(val_p) || (Z_TYPE_P(val_p) == IS_ARRAY)) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_long(return_value, INDEX_TYPE, index_type);
+    add_assoc_stringl(return_value, OP, "CONTAINS", sizeof("CONTAINS") - 1, 1);
+	/*
+	 * Add index type.
+	 */
+    switch(Z_TYPE_P(val_p)) {
+        case IS_LONG:
+            add_assoc_long(return_value, VAL, Z_LVAL_P(val_p));
+            break;
+        case IS_STRING:
+            if (strlen(Z_STRVAL_P(val_p)) == 0) {
+                zval_dtor(return_value);
+                DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
+                RETURN_NULL();
+            }
+            add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
+            break;
+        default:
+            zval_dtor(return_value);
+            DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
+            RETURN_NULL();
+    }
+}
+/* }}} */
+
+/* {{{ proto array Aerospike::predicateContainsRange( string bin, int index_type,
+ * int min, int max )
+   Helper which builds the 'WHERE RANGE' predicate */
+PHP_METHOD(Aerospike, predicateContainsRange)
+{
+    as_status              status = AEROSPIKE_OK;
+    char                   *bin_name_p  =  NULL;
+    int                    bin_name_len = 0;
+    long                   index_type;
+    zval                   *min_p = NULL;
+    zval                   *max_p = NULL;
+    zval                   *minmax_arr = NULL;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slzz",
+                &bin_name_p, &bin_name_len, &index_type, &min_p, &max_p)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateContainsRange");
+        RETURN_NULL();
+    }
+    if (bin_name_len == 0) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 1 to be a non-empty string.");
+        RETURN_NULL();
+    }
+
+    if (PHP_TYPE_ISNULL(min_p)) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+        RETURN_NULL();
+    }
+
+    if (PHP_TYPE_ISNULL(max_p)) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_long(return_value, INDEX_TYPE, index_type);
+    add_assoc_stringl(return_value, OP, "RANGE", sizeof("RANGE") - 1, 1);
+    MAKE_STD_ZVAL(minmax_arr);
+    array_init_size(minmax_arr, 2);
+	/*
+	 * Range min value
+	 */
+    switch(Z_TYPE_P(min_p)) {
+        case IS_LONG:
+			add_next_index_long(minmax_arr, Z_LVAL_P(min_p));
+            break;
+        case IS_STRING:
+            if (strlen(Z_STRVAL_P(min_p)) == 0) {
+                zval_dtor(return_value);
+                DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+                RETURN_NULL();
+            }
+			add_next_index_string(minmax_arr, Z_STRVAL_P(min_p), 1);
+            break;
+        default:
+            zval_ptr_dtor(&minmax_arr);
+            zval_dtor(return_value);
+            DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+            RETURN_NULL();
+    }
+	/*
+	 * Range max value
+	 */
+    switch(Z_TYPE_P(max_p)) {
+        case IS_LONG:
+			add_next_index_long(minmax_arr, Z_LVAL_P(max_p));
+            break;
+        case IS_STRING:
+            if (strlen(Z_STRVAL_P(min_p)) == 0) {
+                zval_dtor(return_value);
+                DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+                RETURN_NULL();
+            }
+			add_next_index_string(minmax_arr, Z_STRVAL_P(max_p), 1);
+            break;
+        default:
+            zval_ptr_dtor(&minmax_arr);
+            zval_dtor(return_value);
+            DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
+            RETURN_NULL();
+    }
+    add_assoc_zval(return_value, VAL, minmax_arr);
+}
+/* }}} */
+
 /* {{{ proto int Aerospike::query( string ns, string set, array where, callback record_cb [, array select [, array options ]] )
    Queries a secondary index on a set for records matching the where predicate  */
 PHP_METHOD(Aerospike, query)
@@ -2887,9 +3027,86 @@ PHP_METHOD(Aerospike, createIndex)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_index_create_php(aerospike_obj_p->as_ref_p->as_p,
-                                             &error, ns_p, set_p, bin_p, type,
-                                             name_p, options_p TSRMLS_CC))) {
+                                             &error, ns_p, set_p, bin_p, name_p,
+                                             AS_INDEX_TYPE_DEFAULT, type,
+                                             options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("createIndex() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::addIndex( string ns, string set, string bin, string name,
+ * int index_type, int data_type [, array options ] )
+   Creates a secondary index on a bin of a specified set */
+PHP_METHOD(Aerospike, addIndex)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char                    *ns_p = NULL;
+    int                     ns_p_length = 0;
+    char                    *set_p = NULL;
+    int                     set_p_length = 0;
+    char                    *bin_p = NULL;
+    int                     bin_p_length = 0;
+    long                    index_type = -1;
+    long                    datatype = -1;
+    char                    *name_p = NULL;
+    int                     name_p_length = 0;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "addIndex: Connection not established");
+        DEBUG_PHP_EXT_ERROR("addIndex: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssssll|z",
+                &ns_p, &ns_p_length, &set_p, &set_p_length, &bin_p,
+                &bin_p_length, &name_p, &name_p_length, &index_type,
+				&datatype, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for addIndex()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for addIndex()");
+        goto exit;
+    }
+
+    if (ns_p_length == 0 || set_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::addIndex() expects parameters 1-3 and 5 to be non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::addIndex() expects parameters 1-3 and 5 to be non-empty strings");
+        goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for addIndex function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for addIndex function not proper");
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_index_create_php(aerospike_obj_p->as_ref_p->as_p,
+                                             &error, ns_p, set_p, bin_p, name_p,
+                                             index_type, datatype, options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("addIndex() function returned an error");
         goto exit;
     }
 

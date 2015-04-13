@@ -33,6 +33,12 @@ typedef struct Aerospike_General_String_Constants {
 static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
     { AS_INDEX_STRING,      "INDEX_TYPE_STRING"  },
     { AS_INDEX_NUMERIC,     "INDEX_TYPE_INTEGER" },
+    { AS_INDEX_STRING,      "INDEX_STRING"       },
+    { AS_INDEX_NUMERIC,     "INDEX_NUMERIC"      },
+    { AS_INDEX_TYPE_DEFAULT,"INDEX_TYPE_DEFAULT" },
+    { AS_INDEX_TYPE_LIST,   "INDEX_TYPE_LIST"    },
+    { AS_INDEX_TYPE_MAPKEYS,"INDEX_TYPE_MAPKEYS" },
+    { AS_INDEX_TYPE_MAPVALUES,"INDEX_TYPE_MAPVALUES" },
     { AS_OPERATOR_WRITE,    "OPERATOR_WRITE"     },
     { AS_OPERATOR_READ,     "OPERATOR_READ"      },
     { AS_OPERATOR_INCR,     "OPERATOR_INCR"      },
@@ -48,7 +54,9 @@ static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
  */
 static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
     { "=",         "OP_EQ"  },
-    { "BETWEEN",   "OP_BETWEEN" }
+    { "BETWEEN",   "OP_BETWEEN" },
+    { "CONTAINS",   "OP_CONTAINS" },
+    { "RANGE",   "OP_RANGE" }
 };
 
 #define AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE (sizeof(aerospike_general_long_constants)/sizeof(AerospikeGeneralLongConstants))
