@@ -2012,9 +2012,9 @@ PHP_METHOD(Aerospike, query)
     }
     if (ns_p_length == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::query() expects namespace to be a non-empty string.");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
+                "Aerospike::query() expects namespace to be a non-empty string.");
         goto exit;
     }
 
@@ -2201,19 +2201,19 @@ PHP_METHOD(Aerospike, scan)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|aza",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!f|aza",
         &ns_p, &ns_p_length, &set_p, &set_p_length,
         &fci, &fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
         goto exit;
     }
 
-    if (ns_p_length == 0 || set_p_length == 0) {
+    if (ns_p_length == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects parameter 1 & 2 to be a non-empty strings.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() expects namespace to be a non-empty string.");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects namespace to be a non-empty string.");
         goto exit;
     }
 

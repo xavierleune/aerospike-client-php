@@ -101,6 +101,54 @@ class Scan extends AerospikeTestCommon
     }
     /**
      * @test
+     * Scan with correct arguments and set NULL
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testScanWithCorrectArgumentsAndSetNull)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanWithCorrectArgumentsAndSetNull()
+    {
+        $processed = 0;
+        $db= $this->db;
+        $status = $this->db->scan( "test", null, function ($record) use (&$processed, &$db) {
+            if ((strcmp("test", $record["key"]["ns"]) == 0) && (strcmp("demo",
+                $record["key"]["set"]) == 0)) {
+                    if ($processed < 2) {
+                        if (array_key_exists("email", $record["bins"]) &&
+                            !is_null($record["bins"]["email"])) {
+                                if ((!strcmp($record["bins"]["email"], "smith")) ||
+                                    (!strcmp($record["bins"]["email"], "john"))) {
+                                        $processed++;
+                                    }
+                            }
+                    }
+                    if ($processed == 2) {
+                        $key = $db->initKey("test", "demo", "testing");
+                        $db->put($key, array("bin1"=>10));
+                        return Aerospike::OK;
+                    }
+                } else {
+                    return(AEROSPIKE::ERR);
+                }
+        }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
+        $key = $this->db->initKey("test", "demo", "testing");
+        $this->db->get($key, $record);
+        if(10 == $record['bins']['bin1']) {
+            $this->db->remove($key);
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
      * Basic SCAN Check incorrect name of bins
      *
      * @pre
