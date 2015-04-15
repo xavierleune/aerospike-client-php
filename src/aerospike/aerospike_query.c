@@ -163,7 +163,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
     bool                is_init_query = false;
     as_policy_query     query_policy;
 
-    if ((!as_object_p) || (!error_p) || (!namespace_p) || (!set_p)) {
+    if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate query");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate query");
         goto exit;

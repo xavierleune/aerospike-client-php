@@ -45,7 +45,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
     as_policy_scan      scan_policy;
     uint32_t            serializer_policy = -1;
 
-    if ((!as_object_p) || (!error_p) || (!namespace_p) || (!set_p)) {
+    if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate scan");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate scan");
         goto exit;
