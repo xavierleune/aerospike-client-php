@@ -120,6 +120,27 @@ class LList extends LDT
     }
 
     /**
+     * Finds whether any elements match the given value in the LList.
+     * Atomic elements (integer, string) will be directly compared. In complex
+     * types (array) the value of a key named 'key' is used for comparison.
+     *
+     * @param int|string $value
+     * @param boolean $res
+     * @return int status code of the operation
+     */
+    public function exists($value, &$res) {
+        if (!is_string($value) && !is_int($value) && !is_array($value)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $status = $this->db->apply($this->key, 'llist', 'exists', array($this->bin, $value), $res);
+        $res = (bool) $res;
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
      * Finds the elements matching the given value in the LList.
      * Atomic elements (integer, string) will be directly compared. In complex
      * types (array) the value of a key named 'key' is used for comparison.
@@ -136,6 +157,44 @@ class LList extends LDT
         }
         $elements = array();
         $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Finds the first N elements in the LList.
+     *
+     * @param int $count
+     * @param array $elements matched
+     * @return int status code of the operation
+     */
+    public function find_first($count, &$elements) {
+        if (!is_int($count)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $elements = array();
+        $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Finds the lasst N elements in the LList.
+     *
+     * @param int $count
+     * @param array $elements matched
+     * @return int status code of the operation
+     */
+    public function find_last($count, &$elements) {
+        if (!is_int($count)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $elements = array();
+        $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -237,6 +296,29 @@ class LList extends LDT
      */
     public function removeMany(array $values) {
         $status = $this->db->apply($this->key, 'llist', 'remove_all', array($this->bin, $values));
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Retrieves the LDT configuration data.
+     *
+     * @param array $config
+     * @return int status code of the operation
+     */
+    public function exists(&$config) {
+        $config = array();
+        $status = $this->db->apply($this->key, 'llist', 'config', array($this->bin), $config);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * @param int $size
+     * @return int status code of the operation
+     */
+    public function setPageSize($size) {
+        $status = $this->db->apply($this->key, 'llist', 'setPageSize', array($this->bin, $size));
         $this->processStatusCode($status);
         return $this->errorno;
     }
