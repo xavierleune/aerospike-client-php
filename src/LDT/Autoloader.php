@@ -45,8 +45,10 @@ class Autoloader
      */
     public static function load($class_name)
     {
-        $parts = explode('Aerospike\\LDT\\', $class_name);
-        require __DIR__. DIRECTORY_SEPARATOR. $parts[1]. '.php';
+        $parts = explode('\\', $class_name);
+        if ($parts[0] == "Aerospike" && $parts[1] == "LDT") {
+            require __DIR__. DIRECTORY_SEPARATOR. $parts[2]. '.php';
+        }
     }
 }
 
