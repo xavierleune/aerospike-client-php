@@ -78,21 +78,21 @@ int persist;
 extern ps_module ps_mod_aerospike;
 
 PHP_INI_BEGIN()
-   STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.connect_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, connect_timeout, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.read_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, read_timeout, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.write_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, write_timeout, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_DEFAULT, PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.connect_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, connect_timeout, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.read_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, read_timeout, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.write_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, write_timeout, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_DEFAULT, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/opt/aerospike/client-php/sys-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/opt/aerospike/client-php/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -130,10 +130,12 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
     }
 }
 
+/* Triggered at the beginning of a thread */
 static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     DEBUG_PHP_EXT_DEBUG("In ctor");
     pthread_rwlock_init(&AEROSPIKE_G(aerospike_mutex), NULL);
+    pthread_rwlock_init(&AEROSPIKE_G(query_cb_mutex), NULL);
     if ((!(AEROSPIKE_G(persistent_list_g))) || (AEROSPIKE_G(persistent_ref_count) < 1)) {
         AEROSPIKE_G(persistent_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
         zend_hash_init(AEROSPIKE_G(persistent_list_g), 1000, NULL, &aerospike_check_close_and_destroy, 1);
@@ -143,6 +145,7 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
     }
 }
 
+/* Triggered at the end of a thread */
 static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
 {
     if (globals->persistent_list_g) {
@@ -473,6 +476,7 @@ PHP_METHOD(Aerospike, __construct)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     persistent_list =      (AEROSPIKE_G(persistent_list_g));
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
@@ -1711,7 +1715,7 @@ PHP_METHOD(Aerospike, initKey)
 
     array_init(return_value);
 
-    if (AEROSPIKE_OK != aerospike_init_php_key(ns_p, ns_p_length, set_p, set_p_length, pk_p,
+    if (AEROSPIKE_OK != aerospike_init_php_key(NULL, ns_p, ns_p_length, set_p, set_p_length, pk_p,
                 is_digest, return_value, NULL, NULL, false TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("initkey() function returned an error");
         zval_dtor(return_value);
@@ -1968,21 +1972,20 @@ PHP_METHOD(Aerospike, predicateBetween)
    Queries a secondary index on a set for records matching the where predicate  */
 PHP_METHOD(Aerospike, query)
 {
-    as_status               status = AEROSPIKE_OK;
-    as_error                error;
-    char*                   ns_p = NULL;
-    int                     ns_p_length = 0;
-    char*                   set_p = NULL;
-    int                     set_p_length = 0;
-    zval*                   predicate_p = NULL;
-    char*                   bin_name = NULL;
-    zval*                   options_p = NULL;
-    zend_fcall_info         fci = empty_fcall_info;
-    zend_fcall_info_cache   fcc = empty_fcall_info_cache;
-    zval*                   bins_p = NULL;
-    HashTable*              bins_ht_p = NULL;
-    HashTable*              predicate_ht_p = NULL;
-    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    as_status                   status = AEROSPIKE_OK;
+    as_error                    error;
+    char*                       ns_p = NULL;
+    int                         ns_p_length = 0;
+    char*                       set_p = NULL;
+    int                         set_p_length = 0;
+    zval*                       predicate_p = NULL;
+    char*                       bin_name = NULL;
+    zval*                       options_p = NULL;
+    zval*                       bins_p = NULL;
+    HashTable*                  bins_ht_p = NULL;
+    HashTable*                  predicate_ht_p = NULL;
+    Aerospike_object*           aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    userland_callback           user_func = {0};
 
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
@@ -2002,26 +2005,24 @@ PHP_METHOD(Aerospike, query)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa!f|a!a!",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!f|a!a!",
         &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
-        &fci, &fcc, &bins_p, &options_p) == FAILURE) {
+        &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unable to parse parameters");
         goto exit;
     }
-    if (ns_p_length == 0 || set_p_length == 0) {
+    if (ns_p_length == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::query() expects namespace to be a non-empty string.");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::query() expects parameter 1 & 2 to be a non-empty strings.");
+                "Aerospike::query() expects namespace to be a non-empty string.");
         goto exit;
     }
 
-    userland_callback user_func;
-    user_func.fci_p =  &fci;
-    user_func.fcc_p = &fcc;
     user_func.obj = aerospike_obj_p;
+    TSRMLS_SET_CTX(user_func.ts);
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
     predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
@@ -2167,20 +2168,19 @@ exit:
    Returns all the records in a set to a callback method  */
 PHP_METHOD(Aerospike, scan)
 {
-    as_status              status = AEROSPIKE_OK;
-    as_error               error;
-    int                    e_level = 0;
-    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    char                   *ns_p = NULL;
-    int                    ns_p_length = 0;
-    char                   *set_p = NULL;
-    int                    set_p_length = 0;
-    char                   *bin_name = NULL;
-    zend_fcall_info        fci = empty_fcall_info;
-    zend_fcall_info_cache  fcc = empty_fcall_info_cache;
-    zval                   *bins_p = NULL;
-    zval                   *options_p = NULL;
-    HashTable*             bins_ht_p = NULL;
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    int                     e_level = 0;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    char                    *ns_p = NULL;
+    int                     ns_p_length = 0;
+    char                    *set_p = NULL;
+    int                     set_p_length = 0;
+    char                    *bin_name = NULL;
+    zval                    *bins_p = NULL;
+    zval                    *options_p = NULL;
+    HashTable*              bins_ht_p = NULL;
+    userland_callback       user_func = {0};
 
     /*
      * initialized to 'no error' (status AEROSPIKE_OK, empty message)
@@ -2201,26 +2201,24 @@ PHP_METHOD(Aerospike, scan)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssf|aza",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!f|aza",
         &ns_p, &ns_p_length, &set_p, &set_p_length,
-        &fci, &fcc, &bins_p, &options_p) == FAILURE) {
+        &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
         goto exit;
     }
 
-    if (ns_p_length == 0 || set_p_length == 0) {
+    if (ns_p_length == 0) {
         status = AEROSPIKE_ERR_PARAM;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects parameter 1 & 2 to be a non-empty strings.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::scan() expects namespace to be a non-empty string.");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() expects namespace to be a non-empty string.");
         goto exit;
     }
 
-    userland_callback user_func;
-    user_func.fci_p =  &fci;
-    user_func.fcc_p = &fcc;
     user_func.obj = aerospike_obj_p;
+    TSRMLS_SET_CTX(user_func.ts);
 
     bins_ht_p = (bins_p ? Z_ARRVAL_P(bins_p) : NULL);
 
@@ -2859,7 +2857,7 @@ PHP_METHOD(Aerospike, createIndex)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssls|z",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!sls|z",
                 &ns_p, &ns_p_length, &set_p, &set_p_length, &bin_p,
                 &bin_p_length, &type, &name_p, &name_p_length, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2869,11 +2867,11 @@ PHP_METHOD(Aerospike, createIndex)
         goto exit;
     }
 
-    if (ns_p_length == 0 || set_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
+    if (ns_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::createIndex() expects parameters 1-3 and 5 to be non-empty strings");
-        DEBUG_PHP_EXT_ERROR("Aerospike::createIndex() expects parameters 1-3 and 5 to be non-empty strings");
+                "Aerospike::createIndex() expects parameters 1,3 and 5 to be non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::createIndex() expects parameters 1,3 and 5 to be non-empty strings");
         goto exit;
     }
 

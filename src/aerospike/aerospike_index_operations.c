@@ -33,8 +33,8 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
     as_policy_info              info_policy;
     as_index_task               task;
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
-            options_p, error_p TSRMLS_CC);
+    set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+            NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -87,8 +87,8 @@ aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
     as_status                   status = AEROSPIKE_OK;
     as_policy_info              info_policy;
 
-    set_policy(NULL, NULL, NULL, NULL, &info_policy, NULL, NULL, NULL,
-            options_p, error_p TSRMLS_CC);
+    set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+            NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");

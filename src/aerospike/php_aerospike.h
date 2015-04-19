@@ -60,6 +60,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     HashTable *persistent_list_g;
     int persistent_ref_count;
     pthread_rwlock_t aerospike_mutex;
+    pthread_rwlock_t query_cb_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 ZEND_EXTERN_MODULE_GLOBALS(aerospike);

@@ -38,15 +38,26 @@ some changes to the client spec will occur.
 
 ## Persistent Connections
 
-Initializing the C-client to connect to a specified cluster is a costly operation, so ideally the C-client should be reused for the multiple requests made against the same PHP process (as is the case for mod_php and fastCGI).
+Initializing the C-client to connect to a specified cluster is a costly
+operation, so ideally the C-client should be reused for the multiple requests
+made against the same PHP process (as is the case for mod_php and fastCGI).
 
-The PHP developer can determine whether the Aerospike class constructor will use persistent connections or not by way of an optional boolean argument.  After the first time Aerospike::__construct() is called within the process, the extension will attempt to reuse the persistent connection.
+The PHP developer can determine whether the Aerospike class constructor will
+use persistent connections or not by way of an optional boolean argument.
+After the first time Aerospike::__construct() is called within the process, the
+extension will attempt to reuse the persistent connection.
 
-When persistent connections are used the methods _reconnect()_ and _close()_ do not actually close the connection.  Those methods only apply to instances of class Aerospike which use non-persistent connections.
+When persistent connections are used the methods _reconnect()_ and _close()_ do
+not actually close the connection.  Those methods only apply to instances of
+class Aerospike which use non-persistent connections.
 
 ## Halting a Stream
 
-Halting a _query()_ or _scan()_ result stream can be done by returning (an explicit) boolean **false** from the callback.  The extension will capture the return value from the registered PHP callback, and pass it to the C-client.  The C-client will then close the sockets to the nodes involved in streaming results, effectively halting it.
+Halting a _query()_ or _scan()_ result stream can be done by returning (an
+explicit) boolean **false** from the callback.  The extension will capture the
+return value from the registered PHP callback, and pass it to the C-client.
+The C-client will then close the sockets to the nodes involved in streaming
+results, effectively halting it.
 
 ## Handling Unsupported Types
 
@@ -62,33 +73,47 @@ See: [as_bytes.h](https://github.com/aerospike/aerospike-common/blob/master/src/
  - if it’s a AS\_BYTES\_PHP use the PHP unserialize function
  - if it’s a AS\_BYTES\_BLOB and the user registered a callback with Aerospike::setDeserializer() call that function, otherwise place it in a PHP string
 
-**There is a known problem** with PHP binary-strings and the default serializer
-, because those may include
-a null-byte (**\0**) anywhere in the string, not just at its end. One source for
-such a crazy looking string is PHP's serialize() function. When you try to
-serialize an object of a user-defined class the data gets delimited with a
-null-byte. This is a terrifically short-sighted hack, but then ugly hacks are
-seemingly a badge of courage in the PHP internals :grimacing:
-
-So, if the binary-string does not include a null-byte at an odd position it will
-get cast to an as\_string on writes and back to a PHP string on reads. If it
-does contain a null-byte in an unfortunate position the string will get
-truncated if you are using the (default) SERIALIZER\_PHP value for
-OPT\_SERIALIZER. The workaround is to register your own serializer and
-deserializer, which safely convert all data to and from an as\_bytes with type
-AS\_BYTES\_BLOB.
+**Warning:** Strings in PHP are a binary-safe structure that allows for the
+null-byte (**\0**) to be stored inside the string, not just at its end.
+Binary-strings with this characteristic are created by calling functions such
+as serialize() and gzdeflate(). As a result, the Aerospike client may truncate
+the resulting strings. On the Aerospike server, strings are a data type that can
+be queried using a secondary index, while bytes are a data type that is only
+used for storage. The developer should wrap binary-string with an object to
+distinguish them. This allows the serializer to behave in the correct manner.
 
 ### Example:
 
 ```php
-ini_set('aerospike.serializer','user');
-$client = new aerospike($config);
-$client->setSerializer(function ($val) {
-    return serialize($val);
-});
-$client->setDeserializer(function ($val) {
-    return unserialize($val);
-});
+require('autoload.php');
+$client = new Aerospike(['hosts'=>[['addr'=>'127.0.0.1', 'port'=>3000]]]);
+
+$str = 'Glagnar\'s Human Rinds, "It\'s a bunch\'a munch\'a crunch\'a human!';
+$deflated = new \Aerospike\Bytes(gzdeflate($str));
+$wrapped = new \Aerospike\Bytes("trunc\0ated");
+
+$key = $client->initKey('test', 'demo', 'wrapped-bytes');
+$status = $client->put($key, ['unwrapped'=>"trunc\0ated", 'wrapped'=> $wrapped, 'deflated' => $deflated]);
+if ($status !== Aerospike::OK) {
+    die($client->error());
+}
+$client->get($key, $record);
+$wrapped = \Aerospike\Bytes::unwrap($record['bins']['wrapped']);
+$deflated = $record['bins']['deflated'];
+$inflated = gzinflate($deflated->s);
+echo "$inflated\n";
+echo "wrapped binary-string: ";
+var_dump($wrapped);
+$unwrapped = $record['bins']['unwrapped'];
+echo "The binary-string that was given to put() without a wrapper: $unwrapped\n";
+
+$client->close();
+```
+Outputs:
+```
+Glagnar's Human Rinds, "It's a bunch'a munch'a crunch'a human!
+wrapped binary-string: string(10) "truncated"
+The binary-string that was given to put() without a wrapper: trunc
 ```
 
 ## Further Reading

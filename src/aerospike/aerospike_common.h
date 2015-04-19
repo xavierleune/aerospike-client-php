@@ -274,9 +274,12 @@ extern uint32_t              is_user_deserializer_registered;
  ****************************************************************************
  */
 typedef struct _userland_callback {
-    zend_fcall_info *fci_p;
-    zend_fcall_info_cache *fcc_p;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcc;
     Aerospike_object *obj;
+#ifdef ZTS
+    void ***ts;
+#endif
 } userland_callback;
 
 /*
@@ -493,7 +496,7 @@ aerospike_get_key_digest(as_key *key_p, char *ns_p, char *set_p,
         zval *pk_p, char **digest_pp TSRMLS_DC);
 
 extern as_status
-aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
+aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
         as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
 
@@ -548,7 +551,8 @@ aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
                               as_error *error_p);
 
 extern as_status
-aerospike_get_key_meta_bins_of_record(as_record* get_record_p,
+aerospike_get_key_meta_bins_of_record(as_config *as_config_p,
+        as_record* get_record_p,
         as_key* record_key_p, zval* outer_container_p,
         zval* options_p, bool get_flag TSRMLS_DC);
 
@@ -702,10 +706,10 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* as_error_p
  ******************************************************************************************************
  */
 extern void
-set_policy(as_policy_read *read_policy_p, as_policy_write *write_policy_p,
-        as_policy_operate *operate_policy_p, as_policy_remove *remove_policy_p,
-        as_policy_info *info_policy_p, as_policy_scan *scan_policy_p,
-        as_policy_query *query_policy_p, uint32_t *serializer_policy_p,
-        zval *options_p, as_error *error_p TSRMLS_DC);
+set_policy(as_config* as_config_p, as_policy_read *read_policy_p,
+        as_policy_write *write_policy_p, as_policy_operate *operate_policy_p,
+        as_policy_remove *remove_policy_p, as_policy_info *info_policy_p,
+        as_policy_scan *scan_policy_p, as_policy_query *query_policy_p,
+        uint32_t *serializer_policy_p, zval *options_p, as_error *error_p TSRMLS_DC);
 
 #endif

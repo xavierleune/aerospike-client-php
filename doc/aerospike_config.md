@@ -5,7 +5,6 @@ The following configuration options in php.ini
 
 | Name  | Default  |
 |:------|:---------:|
-| aerospike.nesting_depth |  3  |
 | aerospike.connect_timeout | 1000 |
 | aerospike.read_timeout | 1000 |
 | aerospike.write_timeout | 1000 |
@@ -19,9 +18,6 @@ The following configuration options in php.ini
 | aerospike.shm.takeover_threshold_sec | 30 |
 
 Here is a description of the configuration directives:
-
-**aerospike.nesting_depth integer**
-    The allowed nesting depth in associative arrays for write operations
 
 **aerospike.connect_timeout integer**
     The connection timeout in milliseconds
@@ -59,3 +55,4 @@ Here is a description of the configuration directives:
 ## See Also
 
 ### [Aerospike Class](aerospike.md)
+### [Aerospike Session Handler](aerospike_sessions.md)

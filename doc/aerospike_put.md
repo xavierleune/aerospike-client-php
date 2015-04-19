@@ -17,11 +17,16 @@ By default the **Aerospike::put()** method behaves in a set-and-replace mode sim
 array keys and values. This behavior can be modified using the
 *options* parameter.
 
+**Note:** a binary-string which includes a null-byte will get truncated at the
+position of the **\0** character if it is not wrapped. For more information and
+the workaround see
+[Handling Unsupported Types](https://github.com/aerospike/aerospike-client-php/blob/master/doc/README.md#handling-unsupported-types).
+
 ## Parameters
 
 **key** the key under which to store the record. An array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**bins** the array of bin names and values to write. **Bin names cannot be longer than 14 characters.**
+**bins** the array of bin names and values to write. **Bin names cannot be longer than 14 characters.** Binary data containing the null byte (**\0**) may get truncated. See the [README](https://github.com/aerospike/aerospike-client-php/blob/master/doc/README.md#handling-unsupported-types) for more details and a workaround.
 
 **ttl** the [time-to-live](http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl) in seconds for the record.
 
@@ -48,30 +53,30 @@ constants.  When non-zero the **Aerospike::error()** and
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$client = new Aerospike($config);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
+$key = $client->initKey("test", "users", 1234);
 $bins = array("email" => "hey@example.com", "name" => "Hey There");
 // will ensure a record exists at the given key with the specified bins
-$status = $db->put($key, $bins);
+$status = $client->put($key, $bins);
 if ($status == Aerospike::OK) {
     echo "Record written.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 // Updating the record
 $bins = array("name" => "You There", "age" => 33);
 // will update the name bin, and create a new 'age' bin
-$status = $db->put($key, $bins);
+$status = $client->put($key, $bins);
 if ($status == Aerospike::OK) {
     echo "Record updated.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>
@@ -91,14 +96,14 @@ Record updated.
 
 // This time we expect an error due to the record already existing (assuming we
 // already ran Example #1)
-$status = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
+$status = $client->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
 
 if ($status == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($status == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 ?>
 ```
@@ -116,17 +121,17 @@ The Aerospike server already has a record with the given key.
 <?php
 
 // Get the record metadata and note its generation
-$db->exists($key, $metadata);
+$client->exists($key, $metadata);
 $gen = $metadata['generation'];
 $gen_policy = array(Aerospike::POLICY_GEN_EQ, $gen);
-$res = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_GEN => $gen_policy));
+$res = $client->put($key, $bins, 0, array(Aerospike::OPT_POLICY_GEN => $gen_policy));
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($res == Aerospike::ERR_RECORD_GENERATION) {
     echo "The record has been written since we last read it.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 ?>
 ```
@@ -135,6 +140,36 @@ We expect to see:
 
 ```
 The record has been written since we last read it.
+```
+
+### Example #4 Handling binary strings:
+
+```php
+<?php
+$str = 'Glagnar\'s Human Rinds, "It\'s a bunch\'a munch\'a crunch\'a human!';
+$deflated = new \Aerospike\Bytes(gzdeflate($str));
+$wrapped = new \Aerospike\Bytes("trunc\0ated");
+
+$key = $client->initKey('test', 'demo', 'wrapped-bytes');
+$status = $client->put($key, ['unwrapped'=>"trunc\0ated", 'wrapped'=> $wrapped, 'deflated' => $deflated]);
+if ($status !== Aerospike::OK) {
+    die($client->error());
+}
+$client->get($key, $record);
+$wrapped = \Aerospike\Bytes::unwrap($record['bins']['wrapped']);
+$deflated = $record['bins']['deflated'];
+$inflated = gzinflate($deflated->s);
+echo "$inflated\n";
+echo "wrapped binary-string: ";
+var_dump($wrapped);
+$unwrapped = $record['bins']['unwrapped'];
+echo "The binary-string that was given to put() without a wrapper: $unwrapped\n";
+```
+We expect to see:
+```
+Glagnar's Human Rinds, "It's a bunch'a munch'a crunch'a human!
+wrapped binary-string: string(10) "truncated"
+The binary-string that was given to put() without a wrapper: trunc
 ```
 
 ## See Also

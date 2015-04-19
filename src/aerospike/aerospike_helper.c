@@ -394,21 +394,22 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool)
  * @return true if callback is successful; else false.
  *******************************************************************************************************
  */
+
 extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 {
     as_status               status = AEROSPIKE_OK;
     as_error                error;
-    userland_callback       *user_func_p;
-    zend_fcall_info         *fci_p = NULL;
-    zend_fcall_info_cache   *fcc_p = NULL;
     zval                    *record_p = NULL;
     zval                    **args[1];
     zval                    *retval = NULL;
     bool                    do_continue = true;
     foreach_callback_udata  foreach_record_callback_udata;
     zval                    *outer_container_p = NULL;
-    TSRMLS_FETCH();
+    userland_callback       *user_func_p = (userland_callback *) udata;
+
+    TSRMLS_FETCH_FROM_CTX(user_func_p->ts);
+
     if (!p_val) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
         return true;
@@ -419,6 +420,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return true;
     }
 
+    pthread_rwlock_wrlock(&AEROSPIKE_G(query_cb_mutex));
     MAKE_STD_ZVAL(record_p);
     array_init(record_p);
 
@@ -428,17 +430,19 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         &foreach_record_callback_udata)) {
         DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
         zval_ptr_dtor(&record_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
     MAKE_STD_ZVAL(outer_container_p);
     array_init(outer_container_p);
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec,
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
                     &(current_as_rec->key), outer_container_p, NULL, false TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
@@ -446,23 +450,24 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
     /*
      * Call the userland function with the array representing the record.
      */
-    user_func_p = (userland_callback *) udata;
-    fci_p = user_func_p->fci_p;
-    fcc_p = user_func_p->fcc_p;
+
     args[0] = &outer_container_p;
-    fci_p->param_count = 1;
-    fci_p->params = args;
-    fci_p->retval_ptr_ptr = &retval;
-    if (zend_call_function(fci_p, fcc_p TSRMLS_CC) == FAILURE) {
+    user_func_p->fci.param_count = 1;
+    user_func_p->fci.params = args;
+    user_func_p->fci.retval_ptr_ptr = &retval;
+
+    if (zend_call_function(&user_func_p->fci, &user_func_p->fcc TSRMLS_CC) == FAILURE) {
         DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "stream callback could not invoke userland function.");
         zval_ptr_dtor(&outer_container_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
@@ -476,6 +481,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         }
         zval_ptr_dtor(&retval);
     }
+    pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
     return do_continue;
 }
 

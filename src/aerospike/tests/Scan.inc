@@ -101,6 +101,32 @@ class Scan extends AerospikeTestCommon
     }
     /**
      * @test
+     * Scan with correct arguments and set NULL
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testScanWithCorrectArgumentsAndSetNull)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanWithCorrectArgumentsAndSetNull()
+    {
+        $processed = 0;
+        $status = $this->db->scan( "test", null, function ($record) use (&$processed, &$db) {
+            $processed++;
+        }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>0));
+        if ($status !== Aerospike::OK || $processed < 1) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return Aerospike::OK;
+    }
+    /**
+     * @test
      * Basic SCAN Check incorrect name of bins
      *
      * @pre

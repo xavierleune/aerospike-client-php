@@ -302,11 +302,10 @@ abstract class LDT
      *
      * @param int $num_elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function getCapacity(&$num_elements) {
-        $status = $this->db->apply($this->key, $this->module, 'get_capacity', array($this->bin), $num_elements);
-        $this->processStatusCode($status);
-        return $status;
+        return LDT::OK;
     }
 
     /**
@@ -314,11 +313,10 @@ abstract class LDT
      *
      * @param int $num_elements
      * @return int status code of the operation
+     * @deprecated
      */
     public function setCapacity($num_elements) {
-        $status = $this->db->apply($this->key, $this->module, 'set_capacity', array($this->bin, $num_elements));
-        $this->processStatusCode($status);
-        return $status;
+        return LDT::OK;
     }
 
     /**
