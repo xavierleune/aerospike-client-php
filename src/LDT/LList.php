@@ -303,10 +303,10 @@ class LList extends LDT
     /**
      * Retrieves the LDT configuration data.
      *
-     * @param array $config
+     * @param array $config will be updated with the configuration data
      * @return int status code of the operation
      */
-    public function exists(&$config) {
+    public function config(&$config) {
         $config = array();
         $status = $this->db->apply($this->key, 'llist', 'config', array($this->bin), $config);
         $this->processStatusCode($status);
@@ -314,6 +314,7 @@ class LList extends LDT
     }
 
     /**
+     * Not fully implemented yet.
      * @param int $size
      * @return int status code of the operation
      */
