@@ -2167,7 +2167,7 @@ aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
     /*
      * TODO: Uncomment below line to set the user_p in config_p
      */
-    /*AS_CONFIG_SET_USER(config_p, user_p);*/
+    AS_CONFIG_SET_USER(config_p, user_p);
 
 exit:
     return status;
@@ -2187,15 +2187,25 @@ static as_status
 aerospike_transform_set_password_in_config(char *password_p, as_config *config_p)
 {
     as_status      status = AEROSPIKE_OK;
-    
+
     if (!password_p || !config_p) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
-    /*
-     * TODO: Uncomment below line to set the password_p in config_p
-     */
+
     /*AS_CONFIG_SET_PASSWORD(config_p, password_p);*/
+
+    /*
+     * as_config_set_user sets user and hashed password in config_p.
+     * Previously, we used to set plain password in config_p->password,
+     * however, it is not going to work. So, while parsing config options,
+     * user and password are fetched.
+     * In case of user, we are storing it in config_p first and later in case of
+     * password i.e. here, we are calling as_config_set_user to set previous user
+     * and hashed password in config_p.
+     *
+     */
+    as_config_set_user( config_p, (char *)config_p->user, password_p );
 
 exit:
     return status;
