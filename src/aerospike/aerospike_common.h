@@ -313,6 +313,8 @@ typedef union _transform_result {
 typedef struct _transform_zval_config_into {
     enum config_transform_result_type       transform_result_type;
     transform_result_t                      transform_result;
+    char                                    user[AS_USER_SIZE];
+    char                                    pass[AS_PASSWORD_HASH_SIZE];
 } transform_zval_config_into;
 
 extern bool
