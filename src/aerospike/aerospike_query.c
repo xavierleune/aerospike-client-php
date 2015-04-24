@@ -50,14 +50,12 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
             goto exit;
         }
 
-        if ((FAILURE == zend_hash_find(predicate_ht_p, OP, sizeof(OP),
+        if (    (FAILURE == zend_hash_find(predicate_ht_p, OP, sizeof(OP),
                         (void **) &op_pp)) ||
                 (FAILURE == zend_hash_find(predicate_ht_p, BIN, sizeof(BIN),
                                            (void **) &bin_pp)) ||
                 (FAILURE == zend_hash_find(predicate_ht_p, VAL, sizeof(VAL),
-                                           (void **) &val_pp)) || 
-				(FAILURE == zend_hash_find(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-                                           (void **) &index_type_pp))) {
+                                           (void **) &val_pp))) {
             DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', 'val'.");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Predicate is expected to include the keys 'bin','op', 'val'.");
@@ -66,7 +64,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 
         convert_to_string_ex(op_pp);
         convert_to_string_ex(bin_pp);
-        convert_to_string_ex(index_type_pp);
+        //convert_to_string_ex(index_type_pp);
         if (strncmp(Z_STRVAL_PP(op_pp), "=", 1) == 0) {
             switch(Z_TYPE_PP(val_pp)) {
                 case IS_STRING:
@@ -121,6 +119,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                 goto exit;
             }
         } else if (strncmp(Z_STRVAL_PP(op_pp), "CONTAINS", 8) == 0) {
+            if ((FAILURE == zend_hash_find(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+                                           (void **) &index_type_pp))) {
+                DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Predicate is expected to include 'index_type'.");
+                goto exit;
+            }
             convert_to_long_ex(index_type_pp);
             switch(Z_TYPE_PP(val_pp)) {
                 case IS_STRING:
@@ -134,54 +139,54 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                         }
                     } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
                         if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-									as_contains(MAPKEYS , STRING, Z_STRVAL_PP(val_pp)))) {
-							DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                                    as_contains(MAPKEYS , STRING, Z_STRVAL_PP(val_pp)))) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
-				    } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
-						if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-									as_contains(LIST , STRING, Z_STRVAL_PP(val_pp)))) {
-							DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                    } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
+                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(LIST , STRING, Z_STRVAL_PP(val_pp)))) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
-					} else {
-						DEBUG_PHP_EXT_DEBUG("Index type is invalid.");
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Index type is invalid.");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-								"Index type is invalid.");
+                                "Index type is invalid.");
                         goto exit;
-					}
+                    }
                     break;
                 case IS_LONG:
                     convert_to_long_ex(val_pp);
-					if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
-						if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-									as_contains(MAPVALUES , NUMERIC, Z_LVAL_PP(val_pp)))) {
-							DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
-                            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-									"Unable to set query predicate");
-						}
-				    } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
-						if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-									as_contains(MAPKEYS , NUMERIC, Z_LVAL_PP(val_pp)))) {
-							DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                    if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
+                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(MAPVALUES , NUMERIC, Z_LVAL_PP(val_pp)))) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
-				    } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
-						if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-									as_contains(LIST , NUMERIC, Z_LVAL_PP(val_pp)))) {
-							DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                    } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
+                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(MAPKEYS , NUMERIC, Z_LVAL_PP(val_pp)))) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
-					} else {
-						DEBUG_PHP_EXT_DEBUG("Index type is invalid.");
+                    } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
+                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(LIST , NUMERIC, Z_LVAL_PP(val_pp)))) {
+                            DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                    "Unable to set query predicate");
+                        }
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Index type is invalid.");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-								"Index type is invalid.");
+                                "Index type is invalid.");
                         goto exit;
-					}
+                    }
                     break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Predicate 'val' must be either string or integer.");
@@ -190,10 +195,17 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                     goto exit;
             }
         } else if (strncmp(Z_STRVAL_PP(op_pp), "RANGE", 5) == 0) {
+            if ((FAILURE == zend_hash_find(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+                                           (void **) &index_type_pp))) {
+                DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "Predicate is expected to include 'index_type'.");
+                goto exit;
+            }
             bool between_unpacked = false;
             if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
                 convert_to_array_ex(val_pp);
-				convert_to_long_ex(index_type_pp);
+                convert_to_long_ex(index_type_pp);
                 zval **min_pp;
                 zval **max_pp;
                 if ((zend_hash_index_find(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
@@ -202,36 +214,36 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                     convert_to_long_ex(max_pp);
                     if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
                         between_unpacked = true;
-						if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
-							if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-										as_range(MAPVALUES, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
-										AS_INDEX_TYPE_MAPVALUES)) {
-								DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                        if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
+                            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                        as_range(MAPVALUES, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
+                                        AS_INDEX_TYPE_MAPVALUES)) {
+                                DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-										"Unable to set query predicate");
-							}
-						} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
-							if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-										as_range(MAPKEYS, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
-										AS_INDEX_TYPE_MAPVALUES)) {
-								DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                                        "Unable to set query predicate");
+                            }
+                        } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
+                            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                        as_range(MAPKEYS, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
+                                        AS_INDEX_TYPE_MAPVALUES)) {
+                                DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-										"Unable to set query predicate");
-							}
-						} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
-							if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-										as_range(LIST, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
-										AS_INDEX_TYPE_MAPVALUES)) {
-								DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                                        "Unable to set query predicate");
+                            }
+                        } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
+                            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                        as_range(LIST, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
+                                        AS_INDEX_TYPE_MAPVALUES)) {
+                                DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-										"Unable to set query predicate");
-							}
-						} else {
-							DEBUG_PHP_EXT_DEBUG("Index type is invalid.");
+                                        "Unable to set query predicate");
+                            }
+                        } else {
+                            DEBUG_PHP_EXT_DEBUG("Index type is invalid.");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-									"Index type is invalid.");
-							goto exit;
-						}
+                                    "Index type is invalid.");
+                            goto exit;
+                        }
                     }
                 }
             }
@@ -241,7 +253,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                         "Predicate BETWEEN 'op' requires an array of (min,max) integers.");
                 goto exit;
             }
-		} else {
+        } else {
             DEBUG_PHP_EXT_DEBUG("Unsupported 'op' in predicate");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unsupported 'op' in predicate");
             goto exit;
@@ -288,7 +300,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
     bool                is_init_query = false;
     as_policy_query     query_policy;
 
-    if ((!as_object_p) || (!error_p) || (!namespace_p) || (!set_p)) {
+    if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate query");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate query");
         goto exit;

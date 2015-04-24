@@ -275,9 +275,12 @@ extern uint32_t              is_user_deserializer_registered;
  ****************************************************************************
  */
 typedef struct _userland_callback {
-    zend_fcall_info *fci_p;
-    zend_fcall_info_cache *fcc_p;
+    zend_fcall_info fci;
+    zend_fcall_info_cache fcc;
     Aerospike_object *obj;
+#ifdef ZTS
+    void ***ts;
+#endif
 } userland_callback;
 
 /*

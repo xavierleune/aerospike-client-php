@@ -62,6 +62,7 @@ class LMap extends LDT
      * @param int|string $key
      * @param int|string|array $value
      * @return int status code of the operation
+     * @deprecated
      */
     public function put($key, $value) {
         if (!is_string($key) && !is_int($key)) {
@@ -87,6 +88,7 @@ class LMap extends LDT
      * @param array $key_values
      * @return int status code of the operation
      * @see put
+     * @deprecated
      */
     public function putMany(array $key_values) {
         $status = $this->db->apply($this->key, 'lmap', 'put_all', array($this->bin, $key_values));
@@ -100,6 +102,7 @@ class LMap extends LDT
      * @param int|string $key
      * @param array $element matched
      * @return int status code of the operation
+     * @deprecated
      */
     public function get($key, &$element) {
         if (!is_string($key) && !is_int($key)) {
@@ -118,6 +121,7 @@ class LMap extends LDT
      *
      * @param int|string $key
      * @return int status code of the operation
+     * @deprecated
      */
     public function remove($key) {
         if (!is_string($key) && !is_int($key)) {
@@ -135,6 +139,7 @@ class LMap extends LDT
      *
      * @param array $elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function scan(&$elements) {
         $elements = array();
@@ -155,6 +160,7 @@ class LMap extends LDT
      * @param array $args passed to the UDF
      * @param array $elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function filter($module, $function, array $args, array &$elements) {
         $this->error = "Method not implemented";

@@ -28,7 +28,7 @@
 extern as_status
 aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
         char* ns_p, char* set_p, char* bin_p, char *name_p,
-		uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
+        uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
 {
     as_status                   status = AEROSPIKE_OK;
     as_policy_info              info_policy;

@@ -61,6 +61,7 @@ class LStack extends LDT
      *
      * @param int|string|array $value
      * @return int status code of the operation
+     * @deprecated
      */
     public function push($value) {
         if (!is_string($value) && !is_int($value) && !is_array($value)) {
@@ -81,6 +82,7 @@ class LStack extends LDT
      * @param array $values
      * @return int status code of the operation
      * @see push
+     * @deprecated
      */
     public function pushMany(array $values) {
         $status = $this->db->apply($this->key, 'lstack', 'push_all', array($this->bin, $values));
@@ -94,6 +96,7 @@ class LStack extends LDT
      * @param int $num of elements to peek at from the top of stack.
      * @param array $elements matched
      * @return int status code of the operation
+     * @deprecated
      */
     public function peek($num, &$elements) {
         if (!is_int($num)) {
@@ -113,6 +116,7 @@ class LStack extends LDT
      * @todo To be implemented.
      * @param int|string|array $element
      * @return int status code of the operation
+     * @deprecated
      */
     public function pop(&$element) {
         $this->error = "Method not implemented";
@@ -126,6 +130,7 @@ class LStack extends LDT
      * @todo To be implemented.
      * @param array $elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function scan(&$elements) {
         $this->error = "Method not implemented";
@@ -145,6 +150,7 @@ class LStack extends LDT
      * @param array $args passed to the UDF
      * @param array $elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function filter($module, $function, array $args, array &$elements) {
         $this->error = "Method not implemented";
