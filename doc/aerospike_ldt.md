@@ -73,8 +73,6 @@ abstract \Aerospike\LDT
     public int errorno ( void )
     public int size ( int &$num_elements )
     public int destroy ( void )
-    public int getCapacity ( int &$num_elements )
-    public int setCapacity ( int $num_elements )
 
     // Not yet implemented:
     // public int getType ( void )
