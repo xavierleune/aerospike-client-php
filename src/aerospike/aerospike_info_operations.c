@@ -426,6 +426,8 @@ aerospike_info_request_multiple_nodes(aerospike* as_object_p,
         transform_zval_config_into transform_zval_config_into_zval;
         transform_zval_config_into_zval.transform_result.host_lookup_p = host_lookup_p;
         transform_zval_config_into_zval.transform_result_type = TRANSFORM_INTO_ZVAL;
+        memset( transform_zval_config_into_zval.user, '\0', AS_USER_SIZE);
+        memset( transform_zval_config_into_zval.pass, '\0', AS_PASSWORD_HASH_SIZE );
 
         if (AEROSPIKE_OK !=
                 (error_p->code =

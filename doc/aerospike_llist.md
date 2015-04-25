@@ -14,11 +14,15 @@ capable of growing the collection to virtually any size.
     public int addMany ( array $values )
     public int update ( int|string|array $value )
     public int updateMany ( array $values )
+    public int exists ( int|string $value, boolean &$res )
     public int find ( int|string $value, array &$elements )
+    public int find_first ( int $count, array &$elements )
+    public int find_last ( int $count, array &$elements )
     public int remove ( int|string $value )
     public int removeRange ( int|string $min, int|string $max )
     public int removeMany ( array $values )
     public int scan ( array &$elements [, int|string $min=null [, int|string $max=null [, string $module=null [, string $function=null [, array $args=array()]]]]] )
+    public int config ( array &$config )
 
     /* Inherited Methods */
     public boolean isLDT ( void )
