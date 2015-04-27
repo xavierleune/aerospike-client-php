@@ -2140,8 +2140,8 @@ do {                                                                            
 } while(0)    
 
 #define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val)  map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port = val
-#define AS_CONFIG_SET_USER(as_config_p, val)     strncpy(as_config_p->user, val, strlen(val))
-#define AS_CONFIG_SET_PASSWORD(as_config_p, val) strncpy(as_config_p->password, val, strlen(val))
+#define AS_CONFIG_SET_USER(global_user_p, val)   strncpy(global_user_p, val, strlen(val))
+#define AS_CONFIG_SET_PASSWORD(global_password_p, val) strncpy(global_password_p, val, strlen(val))
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port)
 
@@ -2156,18 +2156,16 @@ do {                                                                            
  *******************************************************************************************************
  */
 static as_status
-aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
+aerospike_transform_set_user_in_config(char *user_p, char *global_user_p)
 {
     as_status      status = AEROSPIKE_OK;
-    
-    if (!user_p || !config_p) {
+
+    if (!user_p && global_user_p) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
-    /*
-     * TODO: Uncomment below line to set the user_p in config_p
-     */
-    /*AS_CONFIG_SET_USER(config_p, user_p);*/
+
+    AS_CONFIG_SET_USER(global_user_p, user_p);
 
 exit:
     return status;
@@ -2184,18 +2182,16 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_transform_set_password_in_config(char *password_p, as_config *config_p)
+aerospike_transform_set_password_in_config(char *password_p, char *global_password_p)
 {
     as_status      status = AEROSPIKE_OK;
-    
-    if (!password_p || !config_p) {
+
+    if (!password_p && global_password_p) {
         status = AEROSPIKE_ERR;
         goto exit;
     }
-    /*
-     * TODO: Uncomment below line to set the password_p in config_p
-     */
-    /*AS_CONFIG_SET_PASSWORD(config_p, password_p);*/
+
+    AS_CONFIG_SET_PASSWORD(global_password_p, password_p);
 
 exit:
     return status;
@@ -2289,7 +2285,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
             key_p, key_len_u32 -1)) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
                 status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(value_pp),
-                        (((transform_zval_config_into *) data_p)->transform_result).as_config_p);
+                        ((transform_zval_config_into *) data_p)->user);
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping users as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
@@ -2299,7 +2295,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
             PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
                 status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(value_pp),
-                        (((transform_zval_config_into *) data_p)->transform_result).as_config_p);
+                        ((transform_zval_config_into *) data_p)->pass);
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping password as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
@@ -2341,6 +2337,12 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, /*a
                                 config_p))) {
         goto exit;
     }
+
+    /* Check and set user credentials */
+    char *user = ((transform_zval_config_into *)config_p)->user;
+    char *pass = ((transform_zval_config_into *)config_p)->pass;
+
+    as_config_set_user( ((transform_zval_config_into *)config_p)->transform_result.as_config_p, user, pass);
 
 exit:
     return status;

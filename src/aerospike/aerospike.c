@@ -516,6 +516,8 @@ PHP_METHOD(Aerospike, __construct)
     /* check for hosts, user and pass within config*/
     transform_zval_config_into transform_zval_config_into_as_config;
     transform_zval_config_into_as_config.transform_result.as_config_p = &config;
+    memset( transform_zval_config_into_as_config.user, '\0', AS_USER_SIZE);
+    memset( transform_zval_config_into_as_config.pass, '\0', AS_PASSWORD_HASH_SIZE );
     transform_zval_config_into_as_config.transform_result_type = TRANSFORM_INTO_AS_CONFIG;
 
     if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),

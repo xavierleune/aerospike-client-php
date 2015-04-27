@@ -219,7 +219,7 @@
                 err->code = AEROSPIKE_ERR_CLIENT;                              \
                 goto label;                                                    \
             }                                                                  \
-            if (key_len > AS_BIN_NAME_MAX_LEN) {                               \
+            if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                               \
                 err->code = AEROSPIKE_ERR_BIN_NAME;                            \
                 goto label;                                                    \
             }
