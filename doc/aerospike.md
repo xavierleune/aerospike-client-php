@@ -146,6 +146,8 @@ class Aerospike
     // Query Predicate Operators
     const string OP_EQ = '=';
     const string OP_BETWEEN = 'BETWEEN';
+    const string OP_CONTAINS = 'CONTAINS';
+    const string OP_RANGE = 'RANGE';
 
     // Multi-operation operators map to the C client
     //  src/include/aerospike/as_operations.h
@@ -159,10 +161,14 @@ class Aerospike
     // UDF types
     const UDF_TYPE_LUA;
 
-    // bin types
-    const INDEX_TYPE_STRING;
-    const INDEX_TYPE_INTEGER;
-
+    // index types
+    const INDEX_TYPE_DEFAULT;   // index records where the bin contains an atomic (string, integer) type
+    const INDEX_TYPE_LIST;      // index records where the bin contains a list
+    const INDEX_TYPE_MAPKEYS;   // index the keys of records whose specified bin is a map
+    const INDEX_TYPE_MAPVALUES; // index the values of records whose specified bin is a map
+    // data type
+    const INDEX_STRING;  // if the index type is matched, regard values of type string
+    const INDEX_NUMERIC; // if the index type is matched, regard values of type integer
 
     // lifecycle and connection methods
     public __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )

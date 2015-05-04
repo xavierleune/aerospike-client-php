@@ -22,7 +22,7 @@ a namespace *ns*, *set* and *bin* with a specified *name*.
 
 **name** the name of the index
 
-**index_type** one of *Aerospike::INDEX_TYPE_\**
+**index_type** one of *Aerospike::INDEX_TYPE_\** .
 
 **data_type** one of *Aerospike::INDEX_NUMERIC* and *Aerospike::INDEX_STRING*
 
@@ -56,12 +56,10 @@ else if ($status == Aerospike::ERR_INDEX_FOUND) {
     echo "[{$db->errorno()}] ".$db->error();
 }
 
+$db->addIndex("test", "user", "movies", "user_movie_titles_idx", Aerospike::INDEX_TYPE_MAPKEYS, Aerospike::INDEX_STRING);
+$db->addIndex("test", "user", "movies", "user_movie_views_idx", Aerospike::INDEX_TYPE_MAPVALUES, Aerospike::INDEX_NUMERIC);
+$db->addIndex("test", "user", "aliases", "user_aliases_idx", Aerospike::INDEX_TYPE_LIST, Aerospike::INDEX_STRING);
+
 ?>
-```
-
-We expect to see:
-
-```
-Index user_email_idx created on test.user.email
 ```
 

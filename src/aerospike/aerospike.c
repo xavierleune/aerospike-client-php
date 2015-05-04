@@ -1708,13 +1708,13 @@ PHP_METHOD(Aerospike, initKey)
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz|b", &ns_p, &ns_p_length,
                                          &set_p, &set_p_length, &pk_p, &is_digest)) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
-        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1,3 to be a non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1,3 to be non-empty strings");
         RETURN_NULL();
     }
-    if (ns_p_length == 0 || set_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1-3 to be a non-empty strings");
-        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
+    if (ns_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1,3 to be a non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1,3 to be non-empty strings");
         RETURN_NULL();
     }
 
@@ -1750,9 +1750,9 @@ PHP_METHOD(Aerospike, getKeyDigest)
         RETURN_NULL();
     }
 
-    if (ns_p_length == 0 || set_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
-        DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1-2 to be non-empty strings and parameter 3 to be non-empty string/integer");
+    if (ns_p_length == 0 || PHP_TYPE_ISNULL(pk_p)) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1 to be a non-empty string and parameter 3 to be non-empty string/integer");
+        DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1 to be non-empty string and parameter 3 to be non-empty string/integer");
         RETURN_NULL();
     }
 
@@ -3086,11 +3086,11 @@ PHP_METHOD(Aerospike, addIndex)
         goto exit;
     }
 
-    if (ns_p_length == 0 || set_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
+    if (ns_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::addIndex() expects parameters 1-3 and 5 to be non-empty strings");
-        DEBUG_PHP_EXT_ERROR("Aerospike::addIndex() expects parameters 1-3 and 5 to be non-empty strings");
+                "Aerospike::addIndex() expects parameters 1,3 and 5 to be non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::addIndex() expects parameters 1,3 and 5 to be non-empty strings");
         goto exit;
     }
 

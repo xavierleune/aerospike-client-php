@@ -89,7 +89,7 @@ class Query extends AerospikeTestCommon
         $this->ensureIndex('test', 'demo', 'mapval_str', 'index_mapval_string', Aerospike::INDEX_TYPE_MAPVALUES,
             Aerospike::INDEX_STRING);
 
-        $this->ensureIndex('test', NULL, 'age_null', 'demo_age_null_idx', Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
+        $this->ensureIndex('test', NULL, 'age', 'test_null_age_idx', Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
     }
 
     /**
@@ -516,7 +516,7 @@ class Query extends AerospikeTestCommon
      */
     function testQueryWithCorrectArgumentsAndSetNull()
     {
-        $where = $this->db->predicateBetween("age_null", 30, 39);
+        $where = $this->db->predicateBetween("age", 30, 39);
         $total = 0;
         $db= $this->db;
         $in_thirties = 0;
@@ -534,8 +534,10 @@ class Query extends AerospikeTestCommon
                 }
             }
         };
-        $status = $this->db->query("test", NULL, $where, $callback,
-            array("email", "age"));
+        $status = $this->db->query("test", NULL, $where, $callback, array("email", "age"));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
         $key = $this->db->initKey("test", "demo", "testing");
         $this->db->get($key, $record);
         if($status == 0) {
@@ -548,10 +550,6 @@ class Query extends AerospikeTestCommon
             return Aerospike::OK;
         }
         return Aerospike::ERR_CLIENT;
-        /*if ($status != Aerospike::OK) {
-            return $this->db->errorno();
-        }
-        return $status;*/
     }
     /**
      * @test
