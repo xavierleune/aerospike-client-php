@@ -220,8 +220,7 @@
                 goto label;                                                    \
             }                                                                  \
             if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
-                err->code = AEROSPIKE_ERR_BIN_NAME;                            \
-                PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR, "Bin name longer than 14 chars");   \
+                PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
             }
 
