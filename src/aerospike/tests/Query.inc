@@ -1071,15 +1071,15 @@ class Query extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testQueryIndexOnListNumericPredicateContainsRange)
+     * Variants: OO (testQueryIndexOnListNumericPredicateRange)
      *
      * @test_plans{1.1}
      */
-    function testQueryIndexOnListNumericPredicateContainsRange()
+    function testQueryIndexOnListNumericPredicateRange()
     {
         $total_records = 0;
         $db= $this->db;
-        $where = $this->db->predicateContainsRange("numbers", Aerospike::INDEX_TYPE_LIST, 3, 5);
+        $where = $this->db->predicateRange("numbers", Aerospike::INDEX_TYPE_LIST, 3, 5);
         $callback = function ($record) use (&$total_records) {
             if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {
@@ -1192,15 +1192,15 @@ class Query extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testQueryIndexOnMapKeysNumericPredicateContainsRange)
+     * Variants: OO (testQueryIndexOnMapKeysNumericPredicateRange)
      *
      * @test_plans{1.1}
      */
-    function testQueryIndexOnMapKeysNumericPredicateContainsRange()
+    function testQueryIndexOnMapKeysNumericPredicateRange()
     {
         $total_records = 0;
         $db= $this->db;
-        $where = $this->db->predicateContainsRange("map_numeric", Aerospike::INDEX_TYPE_MAPKEYS, 15, 20);
+        $where = $this->db->predicateRange("map_numeric", Aerospike::INDEX_TYPE_MAPKEYS, 15, 20);
         $callback = function ($record) use (&$total_records) {
             if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {
@@ -1315,15 +1315,15 @@ class Query extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testQueryIndexOnMapValuesNumericPredicateContainsRange)
+     * Variants: OO (testQueryIndexOnMapValuesNumericPredicateRange)
      *
      * @test_plans{1.1}
      */
-    function testQueryIndexOnMapValuesNumericPredicateContainsRange()
+    function testQueryIndexOnMapValuesNumericPredicateRange()
     {
         $total_records = 0;
         $db= $this->db;
-        $where = $this->db->predicateContainsRange("mapval_num", Aerospike::INDEX_TYPE_MAPVALUES, 22, 44);
+        $where = $this->db->predicateRange("mapval_num", Aerospike::INDEX_TYPE_MAPVALUES, 22, 44);
         $callback = function ($record) use (&$total_records) {
             if (strcmp("test", $record["key"]["ns"]) == 0 && strcmp("demo",
                 $record["key"]["set"]) == 0) {

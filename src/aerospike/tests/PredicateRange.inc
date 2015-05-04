@@ -5,7 +5,7 @@ require_once 'Common.inc';
  *Basic Get tests
  */
 
-class PredicateContainsRange extends AerospikeTestCommon
+class PredicateRange extends AerospikeTestCommon
 {
     private $bin;
 
@@ -33,14 +33,14 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeNoParameter)
+     * Variants: OO (testPredicateRangeNoParameter)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeNoParameter()
+    function testPredicateRangeNoParameter()
     {
         try {
-            $this->db->PredicateContainsRange();
+            $this->db->PredicateRange();
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
@@ -57,13 +57,13 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeMinValIsArray)
+     * Variants: OO (testPredicateRangeMinValIsArray)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeMinValIsArray()
+    function testPredicateRangeMinValIsArray()
     {
-		$predicate = $this->db->PredicateContainsRange('numeric_list',
+		$predicate = $this->db->PredicateRange('numeric_list',
 			Aerospike::INDEX_TYPE_LIST, array(), 25);
 		if (!$predicate) {
 			return Aerospike::ERR_PARAM;
@@ -81,13 +81,13 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeMaxValIsNULL)
+     * Variants: OO (testPredicateRangeMaxValIsNULL)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeMaxValIsNULL()
+    function testPredicateRangeMaxValIsNULL()
     {
-		$predicate = $this->db->PredicateContainsRange('numeric_list', Aerospike::INDEX_TYPE_LIST, 2, NULL);
+		$predicate = $this->db->PredicateRange('numeric_list', Aerospike::INDEX_TYPE_LIST, 2, NULL);
 		if (!$predicate) {
 			return Aerospike::ERR_PARAM;
 		}
@@ -104,13 +104,13 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeIntegerValue)
+     * Variants: OO (testPredicateRangeIntegerValue)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeIntegerValue()
+    function testPredicateRangeIntegerValue()
     {
-		$predicate = $this->db->PredicateContainsRange('numeric_list', Aerospike::INDEX_TYPE_LIST, 1, 4);
+		$predicate = $this->db->PredicateRange('numeric_list', Aerospike::INDEX_TYPE_LIST, 1, 4);
 		if (!$predicate) {
 			return Aerospike::ERR_PARAM;
 		}
@@ -127,13 +127,13 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeStringValue)
+     * Variants: OO (testPredicateRangeStringValue)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeStringValue()
+    function testPredicateRangeStringValue()
     {
-		$predicate = $this->db->PredicateContainsRange('string_list', Aerospike::INDEX_TYPE_LIST, 'b', 'd');
+		$predicate = $this->db->PredicateRange('string_list', Aerospike::INDEX_TYPE_LIST, 'b', 'd');
 		if (!$predicate) {
 			return Aerospike::ERR_PARAM;
 		}
@@ -150,14 +150,14 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeIndexTypeString)
+     * Variants: OO (testPredicateRangeIndexTypeString)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeIndexTypeString()
+    function testPredicateRangeIndexTypeString()
 	{
 		try {
-			$predicate = $this->db->PredicateContainsRange('string_list', 'abcde', 'c', 'd');
+			$predicate = $this->db->PredicateRange('string_list', 'abcde', 'c', 'd');
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
@@ -174,14 +174,14 @@ class PredicateContainsRange extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testPredicateContainsRangeBinNameInteger)
+     * Variants: OO (testPredicateRangeBinNameInteger)
      *
      * @test_plans{1.1}
      */
-    function testPredicateContainsRangeBinNameInteger()
+    function testPredicateRangeBinNameInteger()
 	{
 		try {
-			$predicate = $this->db->PredicateContainsRange(12, 'abcde', 'c', 'd');
+			$predicate = $this->db->PredicateRange(12, 'abcde', 'c', 'd');
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }

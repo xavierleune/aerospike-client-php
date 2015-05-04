@@ -4,6 +4,6 @@ PredicateContains - Predicate without any parameter.
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Query", "testQueryIndexOnListNumericPredicateContainsRange");
+aerospike_phpt_runtest("Query", "testQueryIndexOnListNumericPredicateRange");
 --EXPECT--
 OK

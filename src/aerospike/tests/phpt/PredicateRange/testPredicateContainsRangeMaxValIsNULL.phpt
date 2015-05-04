@@ -4,7 +4,7 @@ PredicateBetween - predicate between has array parameter
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("PredicateContainsRange", "testPredicateContainsRangeMaxValIsNULL");
+aerospike_phpt_runtest("PredicateRange", "testPredicateRangeMaxValIsNULL");
 --EXPECT--
 ERR_PARAM
 

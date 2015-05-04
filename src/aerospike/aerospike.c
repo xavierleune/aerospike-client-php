@@ -355,7 +355,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, predicateBetween, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, predicateEquals, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, predicateContains, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Aerospike, predicateContainsRange, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateRange, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Aerospike, query, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, aggregate, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
@@ -2025,10 +2025,10 @@ PHP_METHOD(Aerospike, predicateContains)
 }
 /* }}} */
 
-/* {{{ proto array Aerospike::predicateContainsRange( string bin, int index_type,
+/* {{{ proto array Aerospike::predicateRange( string bin, int index_type,
  * int min, int max )
    Helper which builds the 'WHERE RANGE' predicate */
-PHP_METHOD(Aerospike, predicateContainsRange)
+PHP_METHOD(Aerospike, predicateRange)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
@@ -2040,21 +2040,21 @@ PHP_METHOD(Aerospike, predicateContainsRange)
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slzz",
                 &bin_name_p, &bin_name_len, &index_type, &min_p, &max_p)) {
-        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateContainsRange");
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateRange");
         RETURN_NULL();
     }
     if (bin_name_len == 0) {
-        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 1 to be a non-empty string.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 1 to be a non-empty string.");
         RETURN_NULL();
     }
 
     if (PHP_TYPE_ISNULL(min_p)) {
-        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
         RETURN_NULL();
     }
 
     if (PHP_TYPE_ISNULL(max_p)) {
-        DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
         RETURN_NULL();
     }
 
@@ -2074,7 +2074,7 @@ PHP_METHOD(Aerospike, predicateContainsRange)
         case IS_STRING:
             if (strlen(Z_STRVAL_P(min_p)) == 0) {
                 zval_dtor(return_value);
-                DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+                DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
             add_next_index_string(minmax_arr, Z_STRVAL_P(min_p), 1);
@@ -2082,7 +2082,7 @@ PHP_METHOD(Aerospike, predicateContainsRange)
         default:
             zval_ptr_dtor(&minmax_arr);
             zval_dtor(return_value);
-            DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+            DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
             RETURN_NULL();
     }
     /*
@@ -2095,7 +2095,7 @@ PHP_METHOD(Aerospike, predicateContainsRange)
         case IS_STRING:
             if (strlen(Z_STRVAL_P(min_p)) == 0) {
                 zval_dtor(return_value);
-                DEBUG_PHP_EXT_ERROR("Aerospike::predicateContainsRange() expects parameter 3 to be a non-empty string or an integer.");
+                DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
             add_next_index_string(minmax_arr, Z_STRVAL_P(max_p), 1);
