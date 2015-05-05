@@ -496,6 +496,9 @@ PHP_METHOD(Aerospike, __construct)
 
     aerospike_obj_p->is_persistent = persistent_connection;
 
+    /* Initializing serializer option to invalid value */
+    aerospike_obj_p->serializer_opt = -1;
+
     if (PHP_TYPE_ISNOTARR(config_p) ||
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
@@ -503,6 +506,7 @@ PHP_METHOD(Aerospike, __construct)
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for construct not proper");
         goto exit;
     }
+
 
     /* configuration */
     as_config_init(&config);
@@ -526,7 +530,7 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* check and set config policies */
-    set_general_policies(&config, options_p, &error TSRMLS_CC);
+    set_general_policies(&config, options_p, &error, &aerospike_obj_p->serializer_opt TSRMLS_CC);
     if (AEROSPIKE_OK != (error.code)) {
         status = error.code;
         DEBUG_PHP_EXT_ERROR("Unable to set policies");
@@ -843,7 +847,7 @@ PHP_METHOD(Aerospike, put)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p->as_ref_p->as_p,
-                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p TSRMLS_CC))) {
+                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
     }
@@ -2155,7 +2159,7 @@ PHP_METHOD(Aerospike, aggregate)
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                                returned_p, options_p TSRMLS_CC))) {
+                                                returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("aggregate returned an error");
         goto exit;
     }
@@ -2227,7 +2231,7 @@ PHP_METHOD(Aerospike, scan)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
                                      &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, options_p TSRMLS_CC))) {
+                                     bins_ht_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -2340,7 +2344,7 @@ PHP_METHOD(Aerospike, scanApply)
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                scan_id_p, options_p, true TSRMLS_CC))) {
+                                                scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }

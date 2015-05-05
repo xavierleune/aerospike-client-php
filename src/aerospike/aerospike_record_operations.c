@@ -242,6 +242,11 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
     as_record*          get_rec = NULL;
     aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
     as_policy_operate   operate_policy;
+    /*
+     * TODO: serializer_policy is not used right now.
+     * Need to pass on serializer_policy to aerospike_record_operations_ops
+     * in case of write operation, to write bytes to the database.
+     */
     uint32_t            serializer_policy;
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);

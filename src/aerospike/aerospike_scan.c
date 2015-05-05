@@ -38,12 +38,12 @@
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        zval* options_p TSRMLS_DC)
+        zval* options_p, int8_t* serializer_policy_p TSRMLS_DC)
 {
     as_scan             scan;
     as_scan*            scan_p = NULL;
     as_policy_scan      scan_policy;
-    uint32_t            serializer_policy = -1;
+    int8_t              serializer_policy = *serializer_policy_p;
 
     if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate scan");
@@ -59,7 +59,6 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 
     set_policy_scan(&as_object_p->config, &scan_policy, &serializer_policy,
             scan_p, options_p, error_p TSRMLS_CC);
-    
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -124,12 +123,13 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, zval* options_p, bool block TSRMLS_DC)
+        char* set_p, zval* scan_id_p, zval* options_p, bool block,
+        int8_t* serializer_policy_p TSRMLS_DC)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    uint32_t                    serializer_policy = -1;
+    int8_t                      serializer_policy = *serializer_policy_p;
     as_policy_scan              scan_policy;
     as_policy_info              info_policy;
     as_scan                     scan;
