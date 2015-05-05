@@ -220,9 +220,11 @@ class Aerospike
     public int scan ( string $ns, string $set, callback $record_cb [, array $select [, array $options ]] )
     public array predicateEquals ( string $bin, int|string $val )
     public array predicateBetween ( string $bin, int $min, int $max )
+    public array predicateContains ( string $bin, int $index_type, int|string $val )
+    public array predicateRange ( string $bin, int $index_type, int $min, int $max )
 
     // admin methods
-    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name [, array $options ] )
+    public int addIndex ( string $ns, string $set, string $bin, string $name, int $index_type, int $data_type [, array $options ] )
     public int dropIndex ( string $ns, string $name [, array $options ] )
 
     // info methods

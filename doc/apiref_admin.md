@@ -1,7 +1,12 @@
 
 # Admin Methods
 
-### [Aerospike::createIndex](aerospike_createindex.md)
+### [Aerospike::addIndex](aerospike_addindex.md)
+```
+public int Aerospike::addIndex ( string $ns, string $set, string $bin, string $name, int $index_type, int $data_type [, array $options ] )
+```
+
+### [Aerospike::createIndex](aerospike_createindex.md) **(deprecated)**
 ```
 public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $type, string $name )
 ```
@@ -23,7 +28,7 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$status = $db->createIndex("test", "user", "email", Aerospike::INDEX_TYPE_STRING, "user_email_idx");
+$status = $db->addIndex("test", "user", "email", "user_email_idx", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_STRING);
 if ($status == Aerospike::OK) {
     echo "Index user_email_idx created on test.user.email\n";
 else if ($status == Aerospike::ERR_INDEX_FOUND) {

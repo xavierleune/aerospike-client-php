@@ -34,17 +34,18 @@ Associative Array:
 or an empty array() for no predicate.
 ```
 
-**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
-
-**select** an array of bin names which are the subset to be returned.
-
 *examples:*
 ```
 array("bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo")
 array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
 array("bin"=>"movies", "op"=>Aerospike::OP_CONTAINS, "val"=>"12 Monkeys")
-array("bin"=>"movies", "op"=>Aerospike::OP_RANG, "val"=>array(10,1000))
+array("bin"=>"movies", "op"=>Aerospike::OP_RANGE, "val"=>array(10,1000))
+array() // no predicate
 ```
+
+**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
+
+**select** an array of bin names which are the subset to be returned.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
