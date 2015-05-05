@@ -1,5 +1,5 @@
 
-# The Aerospike Large Stack class
+# The Aerospike Large Stack class (deprecated)
 
 Large Stack (lstack) is a large data type optimized for stack-based operations,
 such as push and peek. The lstack provides the ability to continously grow a

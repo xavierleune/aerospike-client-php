@@ -268,7 +268,7 @@ class Prepend extends AerospikeTestCommon
     function testPrependWithPolicyKeyDigest() {
         $gen_value = 10;
         $key = $this->db->initKey("test", "demo",
-         base64_decode("prepend_option_policy_key_digest"), true);
+         base64_decode("prepend_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("Greet"=>"World_end"), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
         $this->db->prepend($key, 'Greet', 'Hello ', array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));

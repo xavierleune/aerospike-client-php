@@ -83,5 +83,55 @@ class InitKey extends AerospikeTestCommon
             return Aerospike::OK;
         }
     }
+
+    /**
+     * @test
+     * Basic initKey with digest
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testSetValueInt)
+     *
+     * @test_plans{1.1}
+     */
+    function testInitKeyDigest() {
+        $key = $this->db->initKey("test", "demo",
+            base64_decode("test_init_key"), true);
+        if (!$key) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
+        }
+    }
+
+    /**
+     * @test
+     * Basic initKey with digest exceeding max length
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testSetValueInt)
+     *
+     * @test_plans{1.1}
+     */
+    function testInitKeyDigestExceedingMaxLen() {
+        $key = $this->db->initKey("test", "demo",
+            base64_decode("test_init_key_with_exceeding_max_length"), true);
+        if (!$key) {
+            return Aerospike::ERR_CLIENT;
+        } else {
+            return Aerospike::OK;
+        }
+    }
 }
 ?>

@@ -1565,8 +1565,8 @@ static void AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array,
 static void AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array,
         void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    if (!(as_record_set_nil((as_record *)(array),
-                    (const char *) Z_LVAL_PP((zval**) key)))) {
+    if (!as_record_set_nil((as_record *)array,
+                    (const char *) key)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to nil");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
                 "Unable to set record to nil");
@@ -2141,6 +2141,8 @@ do {                                                                            
 } while(0)    
 
 #define AS_CONFIG_ITER_MAP_SET_PORT(map_p, val)  map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port = val
+#define AS_CONFIG_SET_USER(global_user_p, val)   strncpy(global_user_p, val, strlen(val))
+#define AS_CONFIG_SET_PASSWORD(global_password_p, val) strncpy(global_password_p, val, strlen(val))
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port)
 
@@ -2155,16 +2157,16 @@ do {                                                                            
  *******************************************************************************************************
  */
 static as_status
-aerospike_transform_set_user_in_config(char *user_p, as_config *config_p)
+aerospike_transform_set_user_in_config(char *user_p, char *global_user_p)
 {
     as_status      status = AEROSPIKE_OK;
-    
-    if (!user_p || !config_p) {
-        status = AEROSPIKE_ERR_CLIENT;
+
+    if (!user_p && global_user_p) {
+        status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    strncpy(config_p->user, user_p, strlen(user_p));
+    AS_CONFIG_SET_USER(global_user_p, user_p);
 
 exit:
     return status;
@@ -2181,19 +2183,16 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_transform_set_password_in_config(char *password_p, as_config *config_p)
+aerospike_transform_set_password_in_config(char *password_p, char *global_password_p)
 {
     as_status      status = AEROSPIKE_OK;
-    
-    if (!password_p || !config_p) {
-        status = AEROSPIKE_ERR_CLIENT;
+
+    if (!password_p && global_password_p) {
+        status = AEROSPIKE_ERR;
         goto exit;
     }
 
-    if (!as_password_get_constant_hash(password_p, config_p->password)) {
-        status = AEROSPIKE_ERR_CLIENT;
-        goto exit;
-    }
+    AS_CONFIG_SET_PASSWORD(global_password_p, password_p);
 
 exit:
     return status;
@@ -2287,7 +2286,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
             key_p, key_len_u32 -1)) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
                 status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(value_pp),
-                        (((transform_zval_config_into *) data_p)->transform_result).as_config_p);
+                        ((transform_zval_config_into *) data_p)->user);
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping users as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
@@ -2297,7 +2296,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
             PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
                 status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(value_pp),
-                        (((transform_zval_config_into *) data_p)->transform_result).as_config_p);
+                        ((transform_zval_config_into *) data_p)->pass);
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping password as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
@@ -2339,6 +2338,12 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, /*a
                                 config_p))) {
         goto exit;
     }
+
+    /* Check and set user credentials */
+    char *user = ((transform_zval_config_into *)config_p)->user;
+    char *pass = ((transform_zval_config_into *)config_p)->pass;
+
+    as_config_set_user( ((transform_zval_config_into *)config_p)->transform_result.as_config_p, user, pass);
 
 exit:
     return status;
@@ -2391,7 +2396,7 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
             PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32 - 1)) {
         if (set_as_config) {
             AS_CONFIG_ITER_MAP_SET_ADDR(addrport_transform_iter_map_p,
-                    Z_STRVAL_PP(value_pp));
+                    pestrndup(Z_STRVAL_PP(value_pp), Z_STRLEN_PP(value_pp), 1));
         } else {
             strncpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
                     Z_STRVAL_PP(value_pp), strlen(Z_STRVAL_PP(value_pp)) + 1);
@@ -2794,8 +2799,9 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_PP(record_pp)));
     init_record = 1;
 
-    set_policy_write(&write_policy, &serializer_policy, options_p,
-            error_p TSRMLS_CC);
+    set_policy(&as_object_p->config, NULL, &write_policy, NULL, NULL, NULL, NULL, NULL,
+            &serializer_policy, options_p, error_p TSRMLS_CC);
+
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -2883,7 +2889,48 @@ exit:
     return status;
 }
 
+extern as_status
+aerospike_get_key_digest(as_key *key_p, char *ns_p, char *set_p, zval *pk_p,
+        char **digest_pp TSRMLS_DC)
+{
+    as_status           status = AEROSPIKE_OK;
+
+    if (AEROSPIKE_OK != (status = aerospike_add_key_params(key_p, Z_TYPE_P(pk_p), ns_p, set_p, &pk_p, 0))) {
+        DEBUG_PHP_EXT_ERROR("Failed to initialize as_key");
+        goto exit;
+    }
+    
+    if (as_key_digest(key_p) && key_p->digest.init) {
+        *digest_pp = (char *) key_p->digest.value;
+    } else {
+        *digest_pp = NULL;
+        DEBUG_PHP_EXT_ERROR("Failed to compute digest");
+        status = AEROSPIKE_ERR_CLIENT;
+    }
+    
+exit:
+    return status;
+}
+
 /*
+ *******************************************************************************************************
+ * Function that returns no. of digits of a positive integer.
+ *******************************************************************************************************
+ */
+static int
+numPlaces (int num) {
+    int places = 1;
+    if (num < 0) {
+        return -1;
+    }
+    while (num > 9) {
+        num /= 10;
+        places++;
+    }
+    return places;
+}
+
+/* 
  *******************************************************************************************************
  * Creates php key(ns, set, pk) 
  *
@@ -2904,10 +2951,11 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
+aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, char *set_p,
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
         as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC)
 {
+    zval *number_zval = NULL;
     as_status       status = AEROSPIKE_OK;
 
     if (!ns_p || !set_p || !return_value) {
@@ -2935,6 +2983,11 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
                 if (!is_digest) {
                     add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_LVAL_P(pk_p));
                 } else {
+                    if (numPlaces(Z_LVAL_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
+                        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() digest max length exceeded");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    } 
                     add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_LVAL_P(pk_p));
                 }
                 break;
@@ -2947,6 +3000,11 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
                 if (!is_digest) {
                     add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_STRVAL_P(pk_p), 1);
                 } else {
+                    if (strlen(Z_STRVAL_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
+                        DEBUG_PHP_EXT_ERROR("Aerospike::initKey() digest max length exceeded");
+                        status = AEROSPIKE_ERR;
+                        goto exit;
+                    }
                     add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_STRVAL_P(pk_p), 1);
                 }
                 break;
@@ -2973,6 +3031,16 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
              * Always NULL in case of scan().
              */
             zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
+        } else {
+            /*
+             * Options not given, Then copy
+             * it from as_config.
+             */
+            if (as_config_p) {
+            MAKE_STD_ZVAL(number_zval);
+            ZVAL_LONG(number_zval, as_config_p->policies.read.key);
+            key_policy_pp = &number_zval;
+            }
         }
 
         if ((!record_key_p->valuep) || (get_flag && ((!key_policy_pp) || (key_policy_pp &&
@@ -2985,7 +3053,6 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
                 goto exit;
             }
         }
-
         switch (((as_val*)(record_key_p->valuep))->type) {
             case AS_STRING:
                 if (0 != add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, record_key_p->value.string.value, 1)) {
@@ -3007,6 +3074,10 @@ aerospike_init_php_key(char *ns_p, long ns_p_length, char *set_p,
     }
 
 exit:
+    if (number_zval) {
+        zval_ptr_dtor(&number_zval);
+    }
+
     return status;
 }
 
@@ -3043,7 +3114,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  *******************************************************************************************************
  */
 static as_status
-aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
+aerospike_get_record_key_digest(as_config *as_config_p, as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status                  status = AEROSPIKE_OK;
     php_unserialize_data_t     var_hash;
@@ -3054,7 +3125,7 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_init_php_key(record_key_p->ns, strlen(record_key_p->ns),
+    if (AEROSPIKE_OK != (status = aerospike_init_php_key(as_config_p, record_key_p->ns, strlen(record_key_p->ns),
             record_key_p->set, strlen(record_key_p->set), NULL, false,
             key_container_p, record_key_p, options_p, get_flag TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
@@ -3071,9 +3142,10 @@ aerospike_get_record_key_digest(as_record* get_record_p, as_key *record_key_p, z
         goto exit;
     }*/
 
-    if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST,
-                ((char *)(as_key_digest(record_key_p))->value),
-                AS_DIGEST_VALUE_SIZE, 1)) {
+    if (record_key_p->digest.init && (0 != add_assoc_stringl(key_container_p,
+                    PHP_AS_KEY_DEFINE_FOR_DIGEST,
+                    (char *) record_key_p->digest.value,
+                    AS_DIGEST_VALUE_SIZE, 1))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get digest of a key");
         status = AEROSPIKE_ERR_CLIENT;
         goto exit;
@@ -3138,7 +3210,8 @@ exit:
  *******************************************************************************************************
  */
 extern as_status
-aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_key_p, zval* outer_container_p, zval* options_p, bool get_flag TSRMLS_DC)
+aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_record_p,
+        as_key* record_key_p, zval* outer_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     zval*               metadata_container_p = NULL;
@@ -3153,7 +3226,7 @@ aerospike_get_key_meta_bins_of_record(as_record* get_record_p, as_key* record_ke
 
     MAKE_STD_ZVAL(key_container_p);
     array_init(key_container_p);
-    status = aerospike_get_record_key_digest(get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
+    status = aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
         goto exit;
@@ -3234,17 +3307,20 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    set_policy_read(&read_policy, options_p, error_p TSRMLS_CC);
+    set_policy(&as_object_p->config, &read_policy, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = (error_p->code))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
 
-    if (bins_p != NULL && (AEROSPIKE_OK != (status =
+    if (bins_p != NULL) {
+        if (AEROSPIKE_OK != (status =
                     aerospike_transform_filter_bins_exists(as_object_p,
                             Z_ARRVAL_P(bins_p), &get_record, error_p,
-                                    get_rec_key_p, &read_policy)))) {
-        goto exit;
+                                    get_rec_key_p, &read_policy))) {
+            goto exit;
+        }
     } else if (AEROSPIKE_OK != (status = aerospike_key_get(as_object_p, error_p,
                     &read_policy, get_rec_key_p, &get_record))) {
         goto exit;
@@ -3255,7 +3331,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(get_record, get_rec_key_p, outer_container_p, options_p, true TSRMLS_CC))) {
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(&as_object_p->config, get_record, get_rec_key_p, outer_container_p, options_p, true TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
         status = AEROSPIKE_ERR_CLIENT;
         goto exit;

@@ -2,31 +2,9 @@
 #define __AEROSPIKE_GENERAL_CONSTANTS_H__
 
 #include "aerospike/aerospike_index.h"
+#include "aerospike/as_operations.h"
 #define MAX_GENERAL_CONSTANT_STR_SIZE 512
 
-/*
- *******************************************************************************************************
- * Enum for PHP client's index constant values.
- *******************************************************************************************************
- */
-enum Aerospike_index_constants {
-    INDEX_TYPE_STRING = AS_INDEX_STRING,     /* Secondary index on a string bin */
-    INDEX_TYPE_INTEGER = AS_INDEX_NUMERIC    /* Secondary index on an integer bin */
-};
-
-/*
- *******************************************************************************************************
- * Enum for PHP client's operate constant values.
- *******************************************************************************************************
- */
-enum Aerospike_operate_constants {
-    OPERATOR_WRITE   = 0,
-    OPERATOR_READ    = 1,
-    OPERATOR_INCR    = 2,
-    OPERATOR_PREPEND = 4,
-    OPERATOR_APPEND  = 5,
-    OPERATOR_TOUCH   = 8,
-};
 /*
  *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike General Long constants.
@@ -53,14 +31,20 @@ typedef struct Aerospike_General_String_Constants {
  *******************************************************************************************************
  */
 static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
-    { INDEX_TYPE_STRING,    "INDEX_TYPE_STRING"  },
-    { INDEX_TYPE_INTEGER,   "INDEX_TYPE_INTEGER" },
-    { OPERATOR_WRITE,       "OPERATOR_WRITE" },
-    { OPERATOR_READ,        "OPERATOR_READ" },
-    { OPERATOR_INCR,        "OPERATOR_INCR" },
-    { OPERATOR_PREPEND,     "OPERATOR_PREPEND" },
-    { OPERATOR_APPEND,      "OPERATOR_APPEND" },
-    { OPERATOR_TOUCH,       "OPERATOR_TOUCH" }
+    { AS_INDEX_STRING,      "INDEX_TYPE_STRING"  },
+    { AS_INDEX_NUMERIC,     "INDEX_TYPE_INTEGER" },
+    { AS_INDEX_STRING,      "INDEX_STRING"       },
+    { AS_INDEX_NUMERIC,     "INDEX_NUMERIC"      },
+    { AS_INDEX_TYPE_DEFAULT,"INDEX_TYPE_DEFAULT" },
+    { AS_INDEX_TYPE_LIST,   "INDEX_TYPE_LIST"    },
+    { AS_INDEX_TYPE_MAPKEYS,"INDEX_TYPE_MAPKEYS" },
+    { AS_INDEX_TYPE_MAPVALUES,"INDEX_TYPE_MAPVALUES" },
+    { AS_OPERATOR_WRITE,    "OPERATOR_WRITE"     },
+    { AS_OPERATOR_READ,     "OPERATOR_READ"      },
+    { AS_OPERATOR_INCR,     "OPERATOR_INCR"      },
+    { AS_OPERATOR_PREPEND,  "OPERATOR_PREPEND"   },
+    { AS_OPERATOR_APPEND,   "OPERATOR_APPEND"    },
+    { AS_OPERATOR_TOUCH,    "OPERATOR_TOUCH"     }
 };
 
 /*
@@ -70,7 +54,9 @@ static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
  */
 static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
     { "=",         "OP_EQ"  },
-    { "BETWEEN",   "OP_BETWEEN" }
+    { "BETWEEN",   "OP_BETWEEN" },
+    { "CONTAINS",   "OP_CONTAINS" },
+    { "RANGE",   "OP_RANGE" }
 };
 
 #define AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE (sizeof(aerospike_general_long_constants)/sizeof(AerospikeGeneralLongConstants))

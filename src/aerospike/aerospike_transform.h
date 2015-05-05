@@ -214,7 +214,15 @@
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
             zend_hash_get_current_key_ex(hashtable, (char **)&key, &key_len,   \
-                    &index, 0, &pointer);
+                    &index, 0, &pointer);                                      \
+            if ((char*)key == NULL) {                                          \
+                err->code = AEROSPIKE_ERR_CLIENT;                              \
+                goto label;                                                    \
+            }                                                                  \
+            if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
+                PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
+                goto label;                                                    \
+            }
 
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
         err, label)                                                            \
@@ -372,7 +380,8 @@ do {                                                                           \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
             EXPAND_CASE_PUT(level, method, action, NULL, key,                  \
-                    dataval, store, err, static_pool, label, -1);              \
+                    dataval, store, err, static_pool, label,                   \
+                    serializer_policy);                                        \
             EXPAND_CASE_PUT(level, method, action, OBJECT, key,                \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
@@ -568,11 +577,6 @@ do {                                                                           \
     uint key_iterator = 0;                                                     \
     hashtable = Z_ARRVAL_PP((zval**)value);                                    \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
-    if (zend_hash_num_elements(hashtable) == 0) {                              \
-        PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_ERR_PARAM,              \
-                "Got an empty array from PHP");                                \
-        goto label;                                                            \
-    }                                                                          \
     TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index, pointer,         \
             key_iterator)                                                      \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
@@ -643,8 +647,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
-    AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
-        serializer_policy, err TSRMLS_CC)
+    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
+            serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
@@ -693,8 +697,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_NULL(key, value, array, static_pool,       \
            serializer_policy, err)                                             \
-    AS_DEFAULT_PUT_ASSOC_NIL(key, value, array, static_pool,                   \
-        serializer_policy, err TSRMLS_CC)
+    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+                    serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_LONG(key, value, array, static_pool,       \
             serializer_policy, err)                                            \
@@ -743,8 +747,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_MAP_PUT_ASSOC_NULL(key, value, array, static_pool,           \
            serializer_policy, err)                                             \
-    AS_SET_ERROR_CASE(key, value, array, static_pool,                          \
-        serializer_policy, err TSRMLS_CC)
+    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+            serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_PUT_ASSOC_LONG(key, value, array, static_pool,           \
            serializer_policy, err)                                             \

@@ -6,7 +6,7 @@ Aerospike::setSerializer - sets a serialization handler for unsupported types
 ## Description
 
 ```
-public static void Aerospike::setSerializer ( callback $serialize_cb )
+public static Aerospike::setSerializer ( callback $serialize_cb )
 ```
 
 **Aerospike::setSerializer()** registers a callback method that will be triggered

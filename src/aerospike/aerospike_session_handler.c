@@ -7,6 +7,7 @@
 #include "php_aerospike.h"
 #include "ext/session/php_session.h"
 #include "aerospike/aerospike.h"
+#include "aerospike/aerospike_key.h"
 #include "aerospike/as_config.h"
 #include "aerospike_common.h"
 
@@ -144,6 +145,7 @@ PS_OPEN_FUNC(aerospike)
     as_config               config;
     aerospike_session*      session_p = NULL;
     HashTable*              persistent_list = AEROSPIKE_G(persistent_list_g);
+    int                     iter_host = 0;
 
     DEBUG_PHP_EXT_INFO("In PS_OPEN_FUNC");
 
@@ -183,6 +185,15 @@ PS_OPEN_FUNC(aerospike)
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Unable to connect to server");
         DEBUG_PHP_EXT_WARNING("Unable to connect to server");
         goto exit;
+    }
+
+    /* Addr of hosts has been malloced within parse_save_path() function of
+     * aerospike_helper.c
+     * We free the addr's here.
+     */
+
+    for (iter_host = 0; iter_host < config.hosts_size; iter_host++) {
+        efree((char *) config.hosts[iter_host].addr);
     }
 
     /* connection is established, set the connection flag now */
@@ -281,6 +292,9 @@ exit:
         as_key_destroy(&key_get);
     }
 
+    if (record_p) {
+        as_record_destroy(record_p);
+    }
     return (error.code == AEROSPIKE_OK) ? SUCCESS : FAILURE;
 }
 

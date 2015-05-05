@@ -1,9 +1,19 @@
 
 # Key-Value Methods
 
+### [Aerospike::getKeyDigest](aerospike_getkeydigest.md)
+```
+public string Aerospike::getKeyDigest (string $ns, string $set, string|int $pk)
+```
+
 ### [Aerospike::initKey](aerospike_initkey.md)
 ```
 public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
+```
+
+### [Aerospike::getKeyDigest](aerospike_getkeydigest.md)
+```
+public string getKeyDigest ( string $ns, string $set, int|string $pk )
 ```
 
 ### [Aerospike::put](aerospike_put.md)
@@ -39,7 +49,7 @@ public int Aerospike::touch ( array $key, int $ttl = 0 [, array $options ] )
 
 ### [Aerospike::increment](aerospike_increment.md)
 ```
-public int Aerospike::increment ( array $key, string $bin, int $offset [, int $initial_value = 0 [, array $options ]] )
+public int Aerospike::increment ( array $key, string $bin, int $offset [, array $options ] )
 ```
 
 ### [Aerospike::append](aerospike_append.md)
@@ -69,12 +79,12 @@ public int Aerospike::existsMany ( array $keys, array &$metadata [, array $optio
 
 ### [Aerospike::setSerializer](aerospike_setserializer.md)
 ```
-public static void Aerospike::setSerializer ( callback $serialize_cb )
+public static Aerospike::setSerializer ( callback $serialize_cb )
 ```
 
 ### [Aerospike::setDeserializer](aerospike_setdeserializer.md)
 ```
-public static void Aerospike::setDeserializer ( callback $unserialize_cb )
+public static Aerospike::setDeserializer ( callback $unserialize_cb )
 ```
 
 

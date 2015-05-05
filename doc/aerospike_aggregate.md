@@ -17,6 +17,11 @@ those, such as in the case the UDF does not specify a reducer and there are
 multiple nodes in the cluster (each sending back the result of its own
 aggregation).
 
+**Note** that modules containing stream UDFs need to also be
+copied to the path described in `aerospike.udf.lua_user_path`, as the last reduce
+iteration is run locally on the client (after reducing on all the nodes of the
+cluster).
+
 Currently the only UDF language supported is Lua.  See the
 [UDF Developer Guide](http://www.aerospike.com/docs/udf/udf_guide.html) on the Aerospike website.
 
@@ -147,4 +152,6 @@ array(5) {
 
 - [Aerospike::predicateEquals()](aerospike_predicateequals.md)
 - [Aerospike::predicateBetween()](aerospike_predicatebetween.md)
-
+- [Query](http://www.aerospike.com/docs/guide/query.html)
+- [Aggregations](http://www.aerospike.com/docs/guide/aggregation.html)
+- [Developing Stream UDFs](http://www.aerospike.com/docs/udf/developing_stream_udfs.html)

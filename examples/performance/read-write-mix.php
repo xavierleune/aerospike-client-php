@@ -1,6 +1,6 @@
 <?php
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ if (!$db->isConnected()) {
 echo success();
 
 echo colorize("Clear out the record that may exist at test.performance with PK=1 ≻", 'black', true);
-$key = $db->initKey("test", "performance", 1);
+$key = $db->initKey("test", "performance", "read-write");
 $res = $db->remove($key);
 if ($res == Aerospike::OK) {
     echo success();

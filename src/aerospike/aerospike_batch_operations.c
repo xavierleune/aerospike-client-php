@@ -168,7 +168,8 @@ aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p
         goto exit;
     }
 
-    set_policy_batch(&batch_policy, options_p, error_p TSRMLS_CC);
+    set_policy_batch(&as_object_p->config, &batch_policy, options_p,
+            error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -210,7 +211,7 @@ exit:
 }
 
 static as_status
-process_filer_bins(HashTable *bins_array_p, char **select_p TSRMLS_DC)
+process_filer_bins(HashTable *bins_array_p, const char **select_p TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
     HashPosition        pointer; 
@@ -283,7 +284,7 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
             goto cleanup;
         }
 
-        if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record((as_record *) &results[i].record,
+        if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record(NULL, (as_record *) &results[i].record,
                     (as_key *) results[i].key, record_p, NULL, false TSRMLS_CC)) {
             PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_CLIENT,
                     "Unable to get metadata of a record");
@@ -358,27 +359,17 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
     foreach_callback_udata              batch_get_callback_udata;
     int                                 filter_bins_count = 0;
 
-/*    if (filter_bins_p) {
-        filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
-    }
-
-    char*                       select_p[filter_bins_count];*/
-
     if (!(as_object_p) || !(keys_p) || !(records_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate batch get");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate batch get");
         goto exit;
     }
 
-    set_policy_batch(&batch_policy, options_p, error_p TSRMLS_CC);
+    set_policy_batch(&as_object_p->config, &batch_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
-
-    /*if (filter_bins_p) {
-        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
-    }*/
 
     if (Z_TYPE_P(keys_p) == IS_ARRAY) {
         keys_ht_p = Z_ARRVAL_P(keys_p);
@@ -405,10 +396,20 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
     }
 
     batch_get_callback_udata.udata_p = records_p;
-    //batch_get_callback_udata.select_p = select_p;
     batch_get_callback_udata.error_p = error_p;
 
-    if (AEROSPIKE_OK != aerospike_batch_get(as_object_p, error_p, &batch_policy,
+    if (filter_bins_p) {
+        filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
+        const char*                       select_p[filter_bins_count];
+        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
+        if (AEROSPIKE_OK != aerospike_batch_get_bins(as_object_p, error_p, &batch_policy,
+                    &batch, select_p, filter_bins_count,
+                    (aerospike_batch_read_callback) batch_get_cb,
+                    &batch_get_callback_udata)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get batch records");
+            goto exit;
+        }
+    } else if (AEROSPIKE_OK != aerospike_batch_get(as_object_p, error_p, &batch_policy,
                 &batch, (aerospike_batch_read_callback) batch_get_cb,
                 &batch_get_callback_udata)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get batch records");

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2014 Aerospike, Inc.
+ * Copyright 2013-2015 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2014 Aerospike, Inc.
+ * @copyright  Copyright 2013-2015 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       http://www.aerospike.com/docs/guide/ldt.html
  * @filesource
@@ -84,6 +84,10 @@ abstract class LDT
      * Generic error for delete op
      */
     const ERR_DELETE                = 1405;
+    /**
+     * General input parameter error
+     */
+    const ERR_LDT_INPUT_PARM        = 1409;
     /**
      * LDT type mismatched for the bin
      */
@@ -160,6 +164,24 @@ abstract class LDT
      * Error while updating the top record
      */
     const ERR_TOPREC_CREATE         = 1428;
+    /**
+     * The filter function name was invalid
+     */
+    const ERR_LDT_FILTER_FUNCTION_BAD       = 1430;
+    /**
+     * The filter function could not be found
+     */
+    const ERR_LDT_FILTER_FUNCTION_NOT_FOUND = 1431;
+    /**
+     * Invalid function used to extract a unique value from a complex object
+     */
+    const ERR_LDT_KEY_FUNCTION_BAD          = 1432;
+    /**
+     * Could not find the 'key function' or the input given
+     * to the default key function is invalid. For complex types the form
+     * array('key'=> _value_) is expected.
+     */
+    const ERR_LDT_KEY_FUNCTION_NOT_FOUND    = 1433;
 
     /**
      * The key for the record containing the LDT
@@ -216,7 +238,7 @@ abstract class LDT
         $this->module = $this->getModuleName();
         $this->db = $db;
         if (!$db->isConnected()) {
-            if ($db->errorno() != Aerospike::OK) {
+            if ($db->errorno() !== Aerospike::OK) {
                 $this->errorno = $db->errorno();
                 $this->error = $db->error();
             } else {
@@ -280,11 +302,10 @@ abstract class LDT
      *
      * @param int $num_elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function getCapacity(&$num_elements) {
-        $status = $this->db->apply($this->key, $this->module, 'get_capacity', array($this->bin), $num_elements);
-        $this->processStatusCode($status);
-        return $status;
+        return LDT::OK;
     }
 
     /**
@@ -292,11 +313,10 @@ abstract class LDT
      *
      * @param int $num_elements
      * @return int status code of the operation
+     * @deprecated
      */
     public function setCapacity($num_elements) {
-        $status = $this->db->apply($this->key, $this->module, 'set_capacity', array($this->bin, $num_elements));
-        $this->processStatusCode($status);
-        return $status;
+        return LDT::OK;
     }
 
     /**
@@ -326,7 +346,7 @@ abstract class LDT
             $rhs = strrpos($this->db->error(), ':LDT');
             $lhs = strrpos($this->db->error(), ': ');
             if ($rhs !== false && $lhs !== false) {
-                $this->errorno = substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2)));
+                $this->errorno = (int) substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2)));
                 $this->error = substr($this->db->error(), $rhs + 1);
                 return true;
             }

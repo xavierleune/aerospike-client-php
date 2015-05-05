@@ -431,6 +431,39 @@ class Get extends AerospikeTestCommon
       }
       return $status;
   }
+  /**
+  * @test
+  * Get a bin with an empty map and verify it converts to an empty PHP array
+  *
+  * @pre
+  * Connect using aerospike object to the specified node
+  *
+  * @post
+  * newly initialized Aerospike objects
+  *
+  * @remark
+  * Variants: OO (testEmptyMapToEmptyArray)
+  *
+  * @test_plans{1.1}
+  */
+  function testEmptyMapToEmptyArray()
+  {
+      $key = array("ns"=>"test","set"=>"demo","key"=>"aerospike_issue_14");
+      $status = $this->db->put($key, array("array_bin"=>array()), 10);
+      $this->keys[] = $key;
+      if ($status !== Aerospike::OK) {
+          return $this->db->errorno();
+      }
+      $status = $this->db->get($key, $get_rec);
+      if ($status !== Aerospike::OK) {
+          return $status;
+      }
+      if ($get_rec['bins']['array_bin'] !== array()) {
+          var_dump($get_rec['bins']['array_bin']);
+          return Aerospike::ERR;
+      }
+      return Aerospike::OK;
+  }
 /**
   * @test
   * Basic Get Map and List combine from single bin

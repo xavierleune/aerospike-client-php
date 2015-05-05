@@ -34,4 +34,4 @@ function array_diff_assoc_recursive($array1, $array2) {
     }
     return $difference;
 }
-
+?>

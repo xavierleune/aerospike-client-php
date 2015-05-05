@@ -4,7 +4,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/dt/aerospike/aerospike-client-php.svg)
 [![License](https://img.shields.io/packagist/l/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/l/aerospike/aerospike-client-php.svg)
 
-The Aerospike PHP Client works with PHP 5.3, 5.4, 5.5, and 5.6.
+The Aerospike PHP Client works with PHP 5.3.3+, 5.4, 5.5, and 5.6.
 
 The PHP extension was tested to build on 64-bit
 
@@ -30,12 +30,11 @@ Full documentation of the Aerospike database is available at http://www.aerospik
 
     sudo yum groupinstall "Development Tools"
     sudo yum install openssl-devel
-    sudo yum install lua-devel # on Fedora 20+ use compat-lua-devel-5.1.5
     sudo yum install php-devel php-pear # unless PHP was manually installed
 
 ### Ubuntu and Debian (apt)
 
-    sudo apt-get install build-essential autoconf libssl-dev liblua5.1-dev
+    sudo apt-get install build-essential autoconf libssl-dev
     sudo apt-get install php5-dev php-pear # unless PHP was manually installed
 
 ### OS X
@@ -50,11 +49,11 @@ The dependencies can be installed through the OS X package manager [Homebrew](ht
     brew update && brew doctor
     brew install automake
     brew install openssl
-    brew install lua
 
 To switch PHP versions [see this gist](https://gist.github.com/rbotzer/198a04f2315e88c75322).
 
 ## Installation
+
 ### Building with Composer
 
 Using [Composer](https://getcomposer.org/) you can download and build the PHP
@@ -75,11 +74,6 @@ from Github, then run the `build.sh` script in the `src/aerospike/` directory.
 
 This will download the Aerospike C client SDK if necessary into
 `src/aerospike-client-c/`, and initiate `make`.
-
-To grab the latest release of the C client SDK (rather than the specified
-version) modify the `AEROSPIKE_C_CLIENT` variable of `build.sh` to
-*latest*. You may need to remove the `src/aerospike-client-c`
-directory before running `build.sh` once more.
 
 ## Installing the PHP Extension
 

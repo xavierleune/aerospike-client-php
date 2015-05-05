@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2014 Aerospike, Inc.
+ * Copyright 2013-2015 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2014 Aerospike, Inc.
+ * @copyright  Copyright 2013-2015 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       http://www.aerospike.com/docs/guide/lstack.html
  * @filesource
+ * @deprecated
  */
 namespace Aerospike\LDT;
 use Aerospike;
@@ -34,6 +35,7 @@ use Aerospike;
  * @link       http://www.aerospike.com/docs/guide/lstack.html
  * @link       http://www.aerospike.com/docs/guide/data-types.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
+ * @deprecated
  */
 class LStack extends LDT
 {
@@ -48,6 +50,7 @@ class LStack extends LDT
      * @param array $key initialized with Aerospike::initKey()
      * @param string $bin name
      * @see LDT::__construct()
+     * @deprecated
      */
     public function __construct(Aerospike $db, array $key, $bin) {
         parent::__construct($db, $key, $bin, LDT::LSTACK);
@@ -58,6 +61,7 @@ class LStack extends LDT
      *
      * @param int|string|array $value
      * @return int status code of the operation
+     * @deprecated
      */
     public function push($value) {
         if (!is_string($value) && !is_int($value) && !is_array($value)) {
@@ -78,6 +82,7 @@ class LStack extends LDT
      * @param array $values
      * @return int status code of the operation
      * @see push
+     * @deprecated
      */
     public function pushMany(array $values) {
         $status = $this->db->apply($this->key, 'lstack', 'push_all', array($this->bin, $values));
@@ -91,6 +96,7 @@ class LStack extends LDT
      * @param int $num of elements to peek at from the top of stack.
      * @param array $elements matched
      * @return int status code of the operation
+     * @deprecated
      */
     public function peek($num, &$elements) {
         if (!is_int($num)) {
@@ -110,6 +116,7 @@ class LStack extends LDT
      * @todo To be implemented.
      * @param int|string|array $element
      * @return int status code of the operation
+     * @deprecated
      */
     public function pop(&$element) {
         $this->error = "Method not implemented";
@@ -123,6 +130,7 @@ class LStack extends LDT
      * @todo To be implemented.
      * @param array $elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function scan(&$elements) {
         $this->error = "Method not implemented";
@@ -142,6 +150,7 @@ class LStack extends LDT
      * @param array $args passed to the UDF
      * @param array $elements returned
      * @return int status code of the operation
+     * @deprecated
      */
     public function filter($module, $function, array $args, array &$elements) {
         $this->error = "Method not implemented";

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2014 Aerospike, Inc.
+ * Copyright 2013-2015 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2014 Aerospike, Inc.
+ * @copyright  Copyright 2013-2015 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       http://www.aerospike.com/docs/guide/llist.html
  * @filesource
@@ -87,6 +87,60 @@ class LList extends LDT
     }
 
     /**
+     * Inserts a new element into the LList or replaces the matching one.
+     * The elements must be consistently the same type
+     * (string, integer, array).
+     *
+     * @param int|string|array $value
+     * @return int status code of the operation
+     */
+    public function update($value) {
+        if (!is_string($value) && !is_int($value) && !is_array($value)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $status = $this->db->apply($this->key, 'llist', 'update', array($this->bin, $value));
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Updates several elements in the LList, the plural of update().
+     * The elements updated must be consistently the same type
+     * (string, integer, array).
+     *
+     * @param array $values
+     * @return int status code of the operation
+     */
+    public function updateMany(array $values) {
+        $status = $this->db->apply($this->key, 'llist', 'update_all', array($this->bin, $values));
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Finds whether any elements match the given value in the LList.
+     * Atomic elements (integer, string) will be directly compared. In complex
+     * types (array) the value of a key named 'key' is used for comparison.
+     *
+     * @param int|string $value
+     * @param boolean $res
+     * @return int status code of the operation
+     */
+    public function exists($value, &$res) {
+        if (!is_string($value) && !is_int($value) && !is_array($value)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $status = $this->db->apply($this->key, 'llist', 'exists', array($this->bin, $value), $res);
+        $res = (bool) $res;
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
      * Finds the elements matching the given value in the LList.
      * Atomic elements (integer, string) will be directly compared. In complex
      * types (array) the value of a key named 'key' is used for comparison.
@@ -103,6 +157,86 @@ class LList extends LDT
         }
         $elements = array();
         $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Finds the first N elements in the LList.
+     *
+     * @param int $count
+     * @param array $elements matched
+     * @return int status code of the operation
+     */
+    public function find_first($count, &$elements) {
+        if (!is_int($count)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $elements = array();
+        $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Finds the lasst N elements in the LList.
+     *
+     * @param int $count
+     * @param array $elements matched
+     * @return int status code of the operation
+     */
+    public function find_last($count, &$elements) {
+        if (!is_int($count)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $elements = array();
+        $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Returns the elements in LList, optionally a range between $min and $max.
+     *
+     * A null $min gets all elements less than or equal to $max.
+     * A null $max gets all elements greater than or equal to $min.
+     * If both $min and $max are null all elements in the LList are returned.
+     * Atomic elements (integer, string) will be directly compared. In complex
+     * types (array) the value of a key named 'key' is used in the comparison.
+     *
+     * An optional UDF filter function can be applied to the elements found.
+     * The filter function returns nil to filter out the element, otherwise it
+     * may transform the element before returning it.
+     *
+     * @param array $elements returned
+     * @param int|string|null $min
+     * @param int|string|null $max
+     * @param string|null $module the name of the UDF module containing the optional filter function
+     * @param string|null $function name of the UDF filter function to apply
+     * @param array $args passed to the filter function
+     * @return int status code of the operation
+     */
+    public function scan(&$elements, $min=null, $max=null, $module=null, $function=null, array $args=array()) {
+        $elements = array();
+        if (is_null($min) && is_null($max)) {
+            if (!is_null($module) && !is_null($function)) {
+                $status = $this->db->apply($this->key, 'llist', 'filter', array($this->bin, $module, $function, $args), $elements);
+            } else {
+                $status = $this->db->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
+            }
+        } else {
+            if ((!is_string($min) && !is_int($min) && !is_null($min)) ||
+                (!is_string($max) && !is_int($max) && !is_null($max))) {
+                $this->errorno = self::ERR_INPUT_PARAM;
+                $this->error = self::MSG_RANGE_TYPE_INVALID;
+                return $this->errorno;
+            }
+            $status = $this->db->apply($this->key, 'llist', 'range', array($this->bin, $min, $max, $module, $function, $args), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -128,51 +262,65 @@ class LList extends LDT
     }
 
     /**
-     * Returns the elements in the range between $min and $max the LList.
+     * Find and remove the elements from the LList matching a given range.
+     * Atomic elements (integer, string) will be directly compared. In complex
+     * types (array) the value of a key named 'key' is used to identify the
+     * elements which are to be removed.
+     *
      * A null $min gets all elements less than or equal to $max.
      * A null $max gets all elements greater than or equal to $min.
-     * If both $min and $max are null all elements in the LList are returned.
      *
-     * @param array $elements returned
-     * @param int|string $min
-     * @param int|string $max
+     * @param int|string|null $min
+     * @param int|string|null $max
      * @return int status code of the operation
      */
-    public function scan(&$elements, $min=null, $max=null) {
-        $elements = array();
-        if (is_null($min) && is_null($max)) {
-            $status = $this->db->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
-        } else {
-            if ((!is_string($min) && !is_int($min) && !is_null($min)) ||
-                (!is_string($max) && !is_int($max) && !is_null($max))) {
-                $this->errorno = self::ERR_INPUT_PARAM;
-                $this->error = self::MSG_RANGE_TYPE_INVALID;
-                return $this->errorno;
-            }
-            $status = $this->db->apply($this->key, 'llist', 'range', array($this->bin, $min, $max), $elements);
+    public function removeRange($min=null, $max=null) {
+        if ((!is_string($min) && !is_int($min) && !is_null($min)) ||
+            (!is_string($max) && !is_int($max) && !is_null($max))) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_RANGE_TYPE_INVALID;
+            return $this->errorno;
         }
+        $status = $this->db->apply($this->key, 'llist', 'remove_range', array($this->bin, $min, $max));
         $this->processStatusCode($status);
         return $this->errorno;
     }
 
     /**
-     * Scan the LList for elements and apply a UDF to the ones found.
-     * If the UDF returns null the element will be filtered out of the results.
-     * Otherwise, the UDF may transform the value of the element prior to
-     * returning it to the result set.
+     * Removes several elements in the LList, the plural of remove().
+     * The elements removed must be consistently the same type
+     * (string, integer, array).
      *
-     * @todo To be implemented.
-     * @param string $module name of the UDF library
-     * @param string $function name of the UDF
-     * @param array $args passed to the UDF
-     * @param array $elements returned
-     * @param int|string $min optionally find a range of elements to apply the UDF to
-     * @param int|string $max
+     * @param array $values
      * @return int status code of the operation
      */
-    public function filter($module, $function, array $args, array &$elements, $min=null, $max=null) {
-        $this->error = "Method not implemented";
-        $this->errorno = self::ERR_LDT;
+    public function removeMany(array $values) {
+        $status = $this->db->apply($this->key, 'llist', 'remove_all', array($this->bin, $values));
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Retrieves the LDT configuration data.
+     *
+     * @param array $config will be updated with the configuration data
+     * @return int status code of the operation
+     */
+    public function config(&$config) {
+        $config = array();
+        $status = $this->db->apply($this->key, 'llist', 'config', array($this->bin), $config);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Not fully implemented yet.
+     * @param int $size
+     * @return int status code of the operation
+     */
+    public function setPageSize($size) {
+        $status = $this->db->apply($this->key, 'llist', 'setPageSize', array($this->bin, $size));
+        $this->processStatusCode($status);
         return $this->errorno;
     }
 

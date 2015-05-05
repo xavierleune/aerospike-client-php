@@ -1,6 +1,6 @@
 <?php
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Writing a record in test.characters with PK=1234 ≻", 'black', true);
 $start = __LINE__;
-$key = $db->initKey("test", "characters", 1234);
+$digest = $db->getKeyDigest("test", "characters", 1234);
+$key = $db->initKey("test", "characters", $digest, true);
 $put_vals = array("email" => "freudian.circuits@hal-inst.org", "name" => "Perceptron");
 $status = $db->put($key, $put_vals);
 if ($status == Aerospike::OK) {

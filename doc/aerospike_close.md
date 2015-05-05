@@ -6,7 +6,7 @@ Aerospike::close - Close all connections to the Aerospike DB
 ## Description
 
 ```
-public void Aerospike::close ( void )
+public Aerospike::close ( void )
 ```
 
 **Aerospike::close()** will disconnect from the Aerospike DB cluster.

@@ -1,7 +1,7 @@
 /*
  * src/aerospike/php_aerospike.h
  *
- * Copyright (C) 2014 Aerospike, Inc.
+ * Copyright (C) 2014-2105 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -60,6 +60,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     HashTable *persistent_list_g;
     int persistent_ref_count;
     pthread_rwlock_t aerospike_mutex;
+    pthread_rwlock_t query_cb_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 ZEND_EXTERN_MODULE_GLOBALS(aerospike);
@@ -107,7 +108,6 @@ PHP_METHOD(Aerospike, errorno);
  * Key Value Store (KVS) APIs:
  */
 
-PHP_METHOD(Aerospike, add);
 PHP_METHOD(Aerospike, append);
 PHP_METHOD(Aerospike, exists);
 PHP_METHOD(Aerospike, get);
@@ -116,6 +116,7 @@ PHP_METHOD(Aerospike, getMetadata);
 PHP_METHOD(Aerospike, getHeader);
 PHP_METHOD(Aerospike, getHeaderMany);
 PHP_METHOD(Aerospike, initKey);
+PHP_METHOD(Aerospike, getKeyDigest);
 PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, prepend);
@@ -138,6 +139,7 @@ PHP_METHOD(Aerospike, setLogHandler);
  */
 
 PHP_METHOD(Aerospike, createIndex);
+PHP_METHOD(Aerospike, addIndex);
 PHP_METHOD(Aerospike, dropIndex);
 
 /*
@@ -146,6 +148,8 @@ PHP_METHOD(Aerospike, dropIndex);
 
 PHP_METHOD(Aerospike, predicateBetween);
 PHP_METHOD(Aerospike, predicateEquals);
+PHP_METHOD(Aerospike, predicateContains);
+PHP_METHOD(Aerospike, predicateRange);
 PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, aggregate);
 PHP_METHOD(Aerospike, scan);
@@ -176,7 +180,6 @@ PHP_METHOD(Aerospike, dropUser);
 PHP_METHOD(Aerospike, changePassword);
 PHP_METHOD(Aerospike, grantRoles);
 PHP_METHOD(Aerospike, revokeRoles);
-PHP_METHOD(Aerospike, replaceRoles);
 PHP_METHOD(Aerospike, queryUser);
 PHP_METHOD(Aerospike, queryUsers);
 

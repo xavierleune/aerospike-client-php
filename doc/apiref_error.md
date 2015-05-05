@@ -16,12 +16,12 @@ the client and server error codes defined in the C client (in as_status.h).
 
 ### [Aerospike::setLogLevel](aerospike_setloglevel.md)
 ```
-public static void Aerospike::setLogLevel ( int $log_level )
+public static Aerospike::setLogLevel ( int $log_level )
 ```
 
 ### [Aerospike::setLogHandler](aerospike_setloghandler.md)
 ```
-public static void Aerospike::setLogHandler ( callback $log_handler )
+public static Aerospike::setLogHandler ( callback $log_handler )
 ```
 
 ## Example

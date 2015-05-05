@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2014 Aerospike, Inc.
+ * Copyright 2014-2015 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,10 @@ class Autoloader
      */
     public static function load($class_name)
     {
-        $parts = explode('Aerospike\\LDT\\', $class_name);
-        require __DIR__. DIRECTORY_SEPARATOR. $parts[1]. '.php';
+        $parts = explode('\\', $class_name);
+        if ($parts[0] == "Aerospike" && $parts[1] == "LDT") {
+            require __DIR__. DIRECTORY_SEPARATOR. $parts[2]. '.php';
+        }
     }
 }
 

@@ -9,6 +9,9 @@ Common functionality is provided by the abstract class **AerospikeLDT**.
 For each LDT type there is a matching concrete subclass:
 
 * [\Aerospike\LDT\LList](aerospike_llist.md) - The Aerospike [Large Ordered List](http://www.aerospike.com/docs/guide/llist.html) class
+
+The following LDT types have been [deprecated](https://discuss.aerospike.com/t/aerospike-server-ce-3-5-2-february-13-2015/975),
+with their functionality rolled into LList.
 * [\Aerospike\LDT\LSet](aerospike_lset.md) - The Aerospike [Large Set](http://www.aerospike.com/docs/guide/lset.html) class
 * [\Aerospike\LDT\LMap](aerospike_lmap.md) - The Aerospike [Large Map](http://www.aerospike.com/docs/guide/lmap.html) class
 * [\Aerospike\LDT\LStack](aerospike_lstack.md) - The Aerospike [Large Stack](http://www.aerospike.com/docs/guide/lstack.html) class
@@ -70,8 +73,6 @@ abstract \Aerospike\LDT
     public int errorno ( void )
     public int size ( int &$num_elements )
     public int destroy ( void )
-    public int getCapacity ( int &$num_elements )
-    public int setCapacity ( int $num_elements )
 
     // Not yet implemented:
     // public int getType ( void )

@@ -498,7 +498,7 @@ class Operate  extends AerospikeTestCommon
     function testOperateWithPolicyKeyDigest() {
         $check = array("first_name" => "Mr John");
         $key = $this->db->initKey("test", "demo",
-         base64_decode("operate_option_policy_key_digest"), true);
+         base64_decode("operate_policy_key_digest"), true);
         $put_status = $this->db->put($key, array("first_name"=>"John", "last_name"=>"Smith", "age"=>25), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
 

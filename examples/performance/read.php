@@ -1,6 +1,6 @@
 <?php
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,19 +52,22 @@ if (!$db->isConnected()) {
 }
 echo success();
 
-echo colorize("Assuming that write.php was run before to create $total_ops records in test.write_perf\n", 'black', false);
-$key = $db->initKey("test", "write_perf", 0);
+echo colorize("Assuming that write.php was run before to create $total_ops records in test.performance\n", 'black', false);
+$key = $db->initKey("test", "performance", "write");
+$v = 0;
 $reads = 0;
 $read_fails = 0;
 $begin = microtime(true);
 
 echo colorize("Read $total_ops records ≻", 'black', true);
-for ($num_ops = 1; $num_ops < $total_ops; $num_ops++) {
-    $key['key']++;
+for ($num_ops = 1; $num_ops <= $total_ops; $num_ops++) {
+    $v++;
+    $key['key'] = 'write-'.$v;
     $res = $db->get($key, $record);
     $reads++;
-    if ($res != Aerospike::OK) {
+    if ($res !== Aerospike::OK) {
         $read_fails++;
+        $v--;
     }
 }
 $end = microtime(true);

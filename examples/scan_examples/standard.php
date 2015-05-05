@@ -1,6 +1,6 @@
 <?php
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,13 +78,29 @@ if ($status == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Scanning records ≻", 'black', true);
+echo colorize("Scanning records in test.users ≻", 'black', true);
 $start = __LINE__;
 $status = $db->scan("test", "users", function ($record) {
     if (array_key_exists('email', $record['bins']) && !is_null($record['bins']['email']) &&
         array_key_exists('name', $record['bins']) && !is_null($record['bins']['name']))
     {
         echo "\nName: " . $record['bins']['name'] . "\nEmail:" . $record['bins']['email'];
+    }
+});
+if ($status != AEROSPIKE::OK) {
+    echo standard_fail($db);
+} else {
+    echo success();
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Scanning records in the entire test namespace (base64-encoded digest) ≻", 'black', true);
+$start = __LINE__;
+$status = $db->scan("test", null, function ($record) {
+    if (array_key_exists('email', $record['bins']) && !is_null($record['bins']['email']) &&
+        array_key_exists('name', $record['bins']) && !is_null($record['bins']['name']))
+    {
+        echo "\n({$record['key']['ns']},{$record['key']['set']},".base64_encode($record['key']['digest']).")";
     }
 });
 if ($status != AEROSPIKE::OK) {

@@ -65,10 +65,11 @@ class AerospikeSession extends AerospikeTestCommon
         $grades = array("mathematics" => "AA",
             "data-structures" => "A",
             "operating-systems" => "AA");
+        $same_grades = array_diff_assoc_recursive($_SESSION["grades"], $grades);
         if (isset($_SESSION["username"]) && strcmp($_SESSION["username"], "test-student") == 0 &&
             isset($_SESSION["age"]) && $_SESSION["age"] == 20 &&
             isset($_SESSION["grades"]) &&
-            empty(array_diff_assoc_recursive($_SESSION["grades"], $grades))) {
+            empty($same_grades)) {
             return Aerospike::OK;
         } else {
             return Aerospike::ERR_CLIENT;

@@ -394,21 +394,22 @@ aerospike_helper_free_static_pool(as_static_pool *static_pool)
  * @return true if callback is successful; else false.
  *******************************************************************************************************
  */
+
 extern bool
 aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 {
     as_status               status = AEROSPIKE_OK;
     as_error                error;
-    userland_callback       *user_func_p;
-    zend_fcall_info         *fci_p = NULL;
-    zend_fcall_info_cache   *fcc_p = NULL;
     zval                    *record_p = NULL;
     zval                    **args[1];
     zval                    *retval = NULL;
     bool                    do_continue = true;
     foreach_callback_udata  foreach_record_callback_udata;
     zval                    *outer_container_p = NULL;
-    TSRMLS_FETCH();
+    userland_callback       *user_func_p = (userland_callback *) udata;
+
+    TSRMLS_FETCH_FROM_CTX(user_func_p->ts);
+
     if (!p_val) {
         DEBUG_PHP_EXT_INFO("callback is null; stream complete.");
         return true;
@@ -419,6 +420,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return true;
     }
 
+    pthread_rwlock_wrlock(&AEROSPIKE_G(query_cb_mutex));
     MAKE_STD_ZVAL(record_p);
     array_init(record_p);
 
@@ -428,17 +430,19 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         &foreach_record_callback_udata)) {
         DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
         zval_ptr_dtor(&record_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
     MAKE_STD_ZVAL(outer_container_p);
     array_init(outer_container_p);
 
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(current_as_rec,
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
                     &(current_as_rec->key), outer_container_p, NULL, false TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
@@ -446,23 +450,24 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
     /*
      * Call the userland function with the array representing the record.
      */
-    user_func_p = (userland_callback *) udata;
-    fci_p = user_func_p->fci_p;
-    fcc_p = user_func_p->fcc_p;
+
     args[0] = &outer_container_p;
-    fci_p->param_count = 1;
-    fci_p->params = args;
-    fci_p->retval_ptr_ptr = &retval;
-    if (zend_call_function(fci_p, fcc_p TSRMLS_CC) == FAILURE) {
+    user_func_p->fci.param_count = 1;
+    user_func_p->fci.params = args;
+    user_func_p->fci.retval_ptr_ptr = &retval;
+
+    if (zend_call_function(&user_func_p->fci, &user_func_p->fcc TSRMLS_CC) == FAILURE) {
         DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "stream callback could not invoke userland function.");
         zval_ptr_dtor(&outer_container_p);
+        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
         return true;
     }
 
@@ -476,6 +481,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         }
         zval_ptr_dtor(&retval);
     }
+    pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
     return do_continue;
 }
 
@@ -507,7 +513,7 @@ exit:
 }
 
 extern void
-aerospike_helper_check_and_configure_shm(as_config *config_p) {
+aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
     if (SHM_USE_PHP_INI) {
         config_p->use_shm = true;
         config_p->shm_max_nodes = (uint32_t) SHM_MAX_NODES_PHP_INI;
@@ -628,8 +634,13 @@ parse_save_path(char *save_path, aerospike_session *session_p,
     char        *saved = NULL;
     char        port[INET_PORT];
     int16_t     iter_host = 0;
+    char        *copy = NULL;
     
-    tok = strtok_r(save_path, SAVE_PATH_DELIMITER, &saved);
+    copy = (char *) emalloc(strlen(save_path) + 1);
+    strncpy(copy, save_path, strlen(save_path) + 1);
+    
+    tok = strtok_r(copy, SAVE_PATH_DELIMITER, &saved);
+    
     if (tok == NULL) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Could not read SAVE_PATH settings");
@@ -664,7 +675,9 @@ parse_save_path(char *save_path, aerospike_session *session_p,
             }
         }
         trim_white_space(tok, strlen(tok) + 1);
-        config_p->hosts[iter_host].addr = tok;
+        char *addr = (char *) emalloc(strlen(tok) + 1);
+        strncpy(addr, tok, strlen(tok) + 1);
+        config_p->hosts[iter_host].addr = addr;
 
         tok = strtok_r(NULL, HOST_DELIMITER, &saved);
         if (tok == NULL) {
@@ -684,6 +697,9 @@ parse_save_path(char *save_path, aerospike_session *session_p,
     }
 
 exit:
+    if (copy) {
+        efree(copy);
+    }
     return error_p->code;
 }
 
@@ -710,7 +726,6 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
         char *save_path, aerospike_session *session_p,
         as_error *error_p TSRMLS_DC)
 {
-    char        *ini_save_path = NULL;
     char        *ip = NULL;
     uint16_t    port = 0;
 
@@ -720,9 +735,9 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
     strcpy(config_p->lua.system_path, LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config_p->lua.user_path, LUA_USER_PATH_PHP_INI);
 
-    if (SAVE_HANDLER_PHP_INI && (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN))) {
+    if (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
         if (!save_path) {
-            ini_save_path = SAVE_PATH_PHP_INI;
+            save_path = SAVE_PATH_PHP_INI;
         }
 
         if (save_path) {

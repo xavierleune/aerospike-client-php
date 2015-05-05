@@ -1,5 +1,5 @@
 
-# The Aerospike Large Map class
+# The Aerospike Large Map class (deprecated)
 
 Large Map (lmap) is a large data type that employs the standard "key/value"
 map functionality. It is optimized for complex values where the key may be an

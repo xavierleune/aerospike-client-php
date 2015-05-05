@@ -1,6 +1,6 @@
 #! /bin/bash
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ unset PKG_PATH
 detect_linux()
 {
   # check to see if `lsb_release` is available.
-  if [ ! -z "$(which lsb_release)" ]; then
+  if [ ! -z "$(which lsb_release 2> /dev/null)" ]; then
 
     # We have LSB, so use it.
     DIST_IDEN=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
@@ -72,7 +72,29 @@ detect_linux()
     esac
   fi
 
-  # Ok, no LSB, so check for /etc/issue
+  # No LSB, so use rpm to find if this is a CentOS-like release
+  if [ ! -z "$(which rpm)" ]; then
+      rel_pkg=$(rpm -qa '(redhat|sl|slf|centos|oraclelinux)-release(|-server|-workstation|-client|-computenode)')
+      if [ $rel_pkg ]; then
+          vers=`rpm -q --queryformat '%{VERSION}' ${rel_pkg}`
+          case ${vers} in
+
+              "6" )
+                  echo "el6" "rpm"
+                  return 0
+                  ;;
+
+              "7" )
+                  # modify this once we have a el7 rpm
+                  echo "el6" "rpm"
+                  return 0
+                  ;;
+
+          esac
+      fi
+  fi
+
+  # Ok, check for /etc/issue
   if [ -f /etc/issue ]; then
     dist=$(cat /etc/issue | tr '[:upper:]' '[:lower:]')
     case ${dist} in

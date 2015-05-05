@@ -35,10 +35,10 @@ Array:
 **select** an array of bin names which are the subset to be returned.
 
 **[options](aerospike.md)** including
-- **Aerospike::OPT_POLICY_KEY**
 - **Aerospike::OPT_READ_TIMEOUT**
-- **Aerospike::OPT_POLICY_REPLICA**
-- **Aerospike::OPT_POLICY_CONSISTENCY**
+- **[Aerospike::OPT_POLICY_KEY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gaa9c8a79b2ab9d3812876c3ec5d1d50ec)**
+- **[Aerospike::OPT_POLICY_CONSISTENCY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#ga34dbe8d01c941be845145af643f9b5ab)**
+- **[Aerospike::OPT_POLICY_REPLICA](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gabce1fb468ee9cbfe54b7ab834cec79ab)**
 
 ## Return Values
 
@@ -161,5 +161,6 @@ array(3) {
 
 ## See Also
 
-- [Glossary](http://www.aerospike.com/docs/guide/glossary.html)
 - [Aerospike Data Model](http://www.aerospike.com/docs/architecture/data-model.html)
+- [Key-Value Store](http://www.aerospike.com/docs/guide/kvs.html)
+- [Glossary](http://www.aerospike.com/docs/guide/glossary.html)

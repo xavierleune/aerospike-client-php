@@ -1,6 +1,6 @@
 <?php
 ################################################################################
-# Copyright 2013-2014 Aerospike, Inc.
+# Copyright 2013-2015 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Creating a secondary index on the 'age' bin of test.characters ≻", 'black', true);
 $start = __LINE__;
-$status = $db->createIndex("test", "characters", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
+$status = $db->addIndex("test", "characters", "age", "test_character_age_idx", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
 if ($status == Aerospike::OK) {
     echo success();
 } else {
