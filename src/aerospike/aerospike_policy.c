@@ -379,9 +379,9 @@ set_policy_ex(as_config *as_config_p,
                     break;
                 case OPT_SERIALIZER:
                     if ((!serializer_policy_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SERIALIZER");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                                "Unable to set policy: Invalid Value for OPT_POLICY_RETRY");
+                                "Unable to set policy: Invalid Value for OPT_SERIALIZER");
                         goto exit;
                     }
                     *serializer_policy_p = Z_LVAL_PP(options_value);
@@ -650,11 +650,12 @@ set_policy_batch(as_config *as_config_p,
 extern void
 set_policy_udf_apply(as_config *as_config_p,
         as_policy_apply *apply_policy_p,
+        uint32_t *serializer_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            NULL, NULL, NULL, apply_policy_p, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, NULL, NULL, apply_policy_p, options_p, error_p TSRMLS_CC);
 }
 
 /*

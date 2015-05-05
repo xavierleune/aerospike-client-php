@@ -184,7 +184,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
     as_policy_apply             apply_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
-    set_policy_udf_apply(&aerospike_obj_p->as_ref_p->as_p->config, &apply_policy,
+    set_policy_udf_apply(&aerospike_obj_p->as_ref_p->as_p->config, &apply_policy, &serializer_policy,
             options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {

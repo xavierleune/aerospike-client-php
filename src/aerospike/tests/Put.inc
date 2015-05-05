@@ -2729,7 +2729,7 @@ function testMixedTypesWithDefaultSerializer()
     function testPutBinNameExceedingMaxlimit()
     {
         $key = $this->db->initKey("test", "demo", "put_test");
-        $status = $this->db->put($key,array("bin1aaaaaghjklu"=>"Hello World"));
+        $status = $this->db->put($key,  array("bin456789012345"=>"Hello World"));
         $this->keys[] = $key;
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();

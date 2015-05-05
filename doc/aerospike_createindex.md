@@ -1,5 +1,5 @@
 
-# Aerospike::createIndex
+# Aerospike::createIndex (deprecated)
 
 Aerospike::createIndex - creates a secondary index on a bin
 
@@ -11,6 +11,9 @@ public int Aerospike::createIndex ( string $ns, string $set, string $bin, int $t
 
 **Aerospike::createIndex()** will create a secondary index of a given *type* on
 a namespace, *set* and *bin* with a specified *name*.
+
+**Deprecated** in favor of [addIndex()](aerospike_addindex.md). Will be removed
+with client release 3.4.0.
 
 ## Parameters
 
@@ -62,4 +65,8 @@ We expect to see:
 ```
 Index user_email_id created on test.user.email
 ```
+
+## See Also
+
+### [addIndex()](aerospike_addindex.md)
 

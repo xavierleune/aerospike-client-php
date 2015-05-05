@@ -139,6 +139,7 @@ PHP_METHOD(Aerospike, setLogHandler);
  */
 
 PHP_METHOD(Aerospike, createIndex);
+PHP_METHOD(Aerospike, addIndex);
 PHP_METHOD(Aerospike, dropIndex);
 
 /*
@@ -147,6 +148,8 @@ PHP_METHOD(Aerospike, dropIndex);
 
 PHP_METHOD(Aerospike, predicateBetween);
 PHP_METHOD(Aerospike, predicateEquals);
+PHP_METHOD(Aerospike, predicateContains);
+PHP_METHOD(Aerospike, predicateRange);
 PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, aggregate);
 PHP_METHOD(Aerospike, scan);

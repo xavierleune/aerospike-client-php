@@ -28,21 +28,24 @@ To query **without a predicate** the value of the *where* must be an empty array
 ```
 Associative Array:
   bin => bin name
-  op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
+  op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN, Aerospike::OP_CONTAINS, Aerospike::OP_RANGE
   val => scalar integer/string for OP_EQ or array($min, $max) for OP_BETWEEN
 
 or an empty array() for no predicate.
 ```
 
-**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
-
-**select** an array of bin names which are the subset to be returned.
-
 *examples:*
 ```
 array("bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo")
 array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
+array("bin"=>"movies", "op"=>Aerospike::OP_CONTAINS, "val"=>"12 Monkeys")
+array("bin"=>"movies", "op"=>Aerospike::OP_RANGE, "val"=>array(10,1000))
+array() // no predicate
 ```
+
+**record_cb** a callback function invoked for each [record](aerospike_get.md#parameters) streaming back from the server.
+
+**select** an array of bin names which are the subset to be returned.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
@@ -115,7 +118,9 @@ The average age of employees in their thirties is 34
 ## See Also
 
 - [Aerospike::predicateEquals()](aerospike_predicateequals.md)
+- [Aerospike::predicateContains()](aerospike_predicatecontains.md)
 - [Aerospike::predicateBetween()](aerospike_predicatebetween.md)
+- [Aerospike::predicateRange()](aerospike_predicaterange.md)
 - [Query](http://www.aerospike.com/docs/guide/query.html)
 - [Managing Queries](http://www.aerospike.com/docs/operations/manage/queries/index.html)
 

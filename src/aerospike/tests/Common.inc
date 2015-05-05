@@ -177,13 +177,13 @@ abstract class AerospikeTestCommon extends ASTestFramework
         return true;
     }
 
-    protected function ensureIndex($ns, $set, $bin, $index_name, $index_type) {
+    protected function ensureIndex($ns, $set, $bin, $index_name, $index_type, $index_dtype) {
         $host1 = array('addr' => AEROSPIKE_CONFIG_NAME, 'port' => AEROSPIKE_CONFIG_PORT);
         $status = $this->db->info("sindex/$ns/$index_name", $response, $host1);
         if ($status !== Aerospike::OK) {
-            return $this->db->createIndex($ns, $set, $bin, $index_type, $index_name);
+            return $this->db->addIndex($ns, $set, $bin, $index_name, $index_type, $index_dtype);
         } else if (strrpos($response, 'NO INDEX') !== false) {
-            return $this->db->createIndex($ns, $set, $bin, $index_type, $index_name);
+            return $this->db->addIndex($ns, $set, $bin, $index_name, $index_type, $index_dtype);
         }
         return Aerospike::OK;
     }
@@ -203,6 +203,12 @@ abstract class AerospikeTestCommon extends ASTestFramework
             if ($module['name'] == $module_alias) return true;
         }
         return false;
+    }
+
+    protected function ensureServerBuild($expected_version, $operator){
+        $this->db->info( "info", $current_build, $this->test_host );
+        var_dump($current_build);
+        return version_compare( $current_build, $expected_version, $operator );
     }
 
     public function error() { return $this->db->error(); }
