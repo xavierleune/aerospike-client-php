@@ -21,6 +21,16 @@ public array Aerospike::predicateEquals ( string $bin, int|string $val )
 public array Aerospike::predicateBetween ( string $bin, int $min, int $max )
 ```
 
+### [Aerospike::predicateContains](aerospike_predicatecontains.md)
+```
+public array Aerospike::predicateContains ( string $bin, int $index_type, int|string $val )
+```
+
+### [Aerospike::predicateRange](aerospike_predicaterange.md)
+```
+public array Aerospike::predicateRange ( string $bin, int $index_type, int $min, int $max )
+```
+
 ## Example
 
 ```php

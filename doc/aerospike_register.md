@@ -10,7 +10,10 @@ public int Aerospike::register ( string $path, string $module [, int $language =
 ```
 
 **Aerospike::register()** will register a UDF module named *module* with the
-Aerospike DB.
+Aerospike DB. **Note** that modules containing stream UDFs need to also be
+copied to the path described in `aerospike.udf.lua_user_path`, as the last reduce
+iteration is run locally on the client (after reducing on all the nodes of the
+cluster).
 
 Currently the only UDF *language* supported is Lua.  See the
 [UDF Developer Guide](http://www.aerospike.com/docs/udf/udf_guide.html) on the Aerospike website.
