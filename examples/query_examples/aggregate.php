@@ -76,7 +76,7 @@ echo colorize($lua, 'purple', false);
 
 echo colorize("Creating a secondary index on the 'age' bin of test.characters ≻", 'black', true);
 $start = __LINE__;
-$status = $db->createIndex("test", "characters", "age", Aerospike::INDEX_TYPE_INTEGER, "age_index");
+$status = $db->addIndex("test", "characters", "age", "age_index", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
 if ($status == Aerospike::OK) {
     echo success();
 } else {

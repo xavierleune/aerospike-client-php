@@ -26,7 +26,8 @@ class Aggregate extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", "Get_key3");
         $this->db->put($key,array("first_name"=>"ellie", "age"=>32));
         $this->keys[] = $key;
-        $this->ensureIndex('test', 'demo', 'age', 'demo_age_idx', Aerospike::INDEX_TYPE_INTEGER);
+
+        $this->ensureIndex('test', 'demo', 'age', 'demo_age_idx', Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
     }
 
     /**
