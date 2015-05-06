@@ -207,7 +207,7 @@ aerospike_record_initialization(aerospike* as_object_p,
                                 zval* options_p,
                                 as_error* error_p,
                                 as_policy_operate* operate_policy,
-                                uint32_t* serializer_policy TSRMLS_DC)
+                                int8_t* serializer_policy TSRMLS_DC)
 {
     as_policy_operate_init(operate_policy);
 
@@ -247,7 +247,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
      * Need to pass on serializer_policy to aerospike_record_operations_ops
      * in case of write operation, to write bytes to the database.
      */
-    uint32_t            serializer_policy;
+    int8_t            serializer_policy;
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
     as_operations_inita(&ops, 1);
@@ -302,7 +302,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     int                         offset = 0;
     int                         op;
     zval**                      each_operation;
-    uint32_t                    serializer_policy;
+    int8_t                      serializer_policy;
     foreach_callback_udata      foreach_record_callback_udata;
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);

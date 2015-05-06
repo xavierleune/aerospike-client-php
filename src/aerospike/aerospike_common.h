@@ -612,7 +612,7 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p, as_error* error_p,
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* as_key_p,
         as_error* error_p, char* module_p, char* function_p, zval** args_pp,
-        zval* return_value_p, zval* options_p);
+        zval* return_value_p, zval* options_p, int8_t* serializer_policy_p);
 
 extern as_status
 aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,

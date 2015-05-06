@@ -2816,7 +2816,8 @@ PHP_METHOD(Aerospike, apply)
             (status = aerospike_udf_apply(aerospike_obj_p, 
                                           &as_key_for_apply_udf, &error,
                                           module_p, function_name_p, &args_p,
-                                          return_value_of_udf_p, options_p))) {
+                                          return_value_of_udf_p, options_p,
+                                          &aerospike_obj_p->serializer_opt))) {
         DEBUG_PHP_EXT_ERROR("apply function returned an error");
         goto exit;
     }

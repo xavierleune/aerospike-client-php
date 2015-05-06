@@ -393,7 +393,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    int8_t                      serializer_policy = *serializer_policy_p;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_policy_query             query_policy;
     as_query                    query;
     bool                        is_init_query = false;

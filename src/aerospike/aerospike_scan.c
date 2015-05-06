@@ -43,7 +43,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
     as_scan             scan;
     as_scan*            scan_p = NULL;
     as_policy_scan      scan_policy;
-    int8_t              serializer_policy = *serializer_policy_p;
+    int8_t              serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
 
     if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate scan");
@@ -129,7 +129,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    int8_t                      serializer_policy = *serializer_policy_p;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_policy_scan              scan_policy;
     as_policy_info              info_policy;
     as_scan                     scan;

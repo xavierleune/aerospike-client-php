@@ -148,7 +148,7 @@ set_policy_batch(as_config* as_config_p,
 extern void
 set_policy_udf_apply(as_config* as_config_p,
         as_policy_apply *apply_policy_p,
-        uint32_t *serializer_policy_p,
+        int8_t *serializer_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 

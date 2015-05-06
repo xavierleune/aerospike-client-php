@@ -2784,7 +2784,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
                                  int8_t* serializer_policy_p TSRMLS_DC)
 {
     as_policy_write             write_policy;
-    int8_t                      serializer_policy = *serializer_policy_p;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;
