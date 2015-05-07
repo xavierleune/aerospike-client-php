@@ -379,6 +379,8 @@ exit:
  * @param return_value_p            The return value of aggregation to be
  *                                  populated by this method.
  * @param options_p                 The optional policy.
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject structure.
+ *                                  Either an INI read value or value from user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************

@@ -2770,6 +2770,8 @@ exit:
  * @param error_p                   The C client's as_error to be set to the encountered error.
  * @param ttl_u64                   The ttl to be set for C client's as_record.
  * @param options_p                 The optional parameters to Aerospike::put()
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject. Either from 
+ *                                  INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************

@@ -31,6 +31,8 @@
  * @param concurrent                Whether to scan all nodes in parallel.
  * @param no_bins                   Whether to return only metadata (and no bins).
  * @param options_p                 The optional policy.
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject structure.
+ *                                  Value read from either INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
@@ -116,6 +118,8 @@ exit:
  * @param block                     Whether to block the scan API until the scan
  *                                  job is completed or make an asynchronous call
  *                                  to scan and return ID.
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject structur
+ *                                  Value read from either INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************

@@ -665,10 +665,13 @@ set_policy_udf_apply(as_config *as_config_p,
  * Function for checking and setting the default aerospike policies by reading
  * from php.ini entries if configured by user, else the global defaults.
  *
- * @param as_config_p                   The as_config object to be passed in case of connect.
+ * @param as_config_p           The as_config object to be passed in case of connect.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
+ * @param serializer_opt        The serializer option to be set in AerospikeObject structure.
+ *                              Value will be read from INI and then from user's option array
+ *                              if provided.
  *
  *******************************************************************************************************
  */
@@ -719,7 +722,7 @@ set_config_policies(as_config *as_config_p,
 
     SERIALIZER_PHP_INI(ini_value);
 
-    if (ini_value && serializer_opt){
+    if (serializer_opt){
         *serializer_opt = ini_value;
     }
 
@@ -850,6 +853,9 @@ exit:
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
+ * @param serializer_opt        The serializer option to be set in AerospikeObject structure.
+ *                              Value will be read from INI and then from user's option array
+ *                              if provided.
  *
  *******************************************************************************************************
  */
