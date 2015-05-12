@@ -761,4 +761,28 @@ aerospike_security_operations_query_user(aerospike* as_object_p, as_error *error
 extern as_status
 aerospike_security_operations_query_users(aerospike* as_object_p, as_error *error_p,
         zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_create_role(aerospike* as_object_p, as_error *error_p,
+        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_drop_user(aerospike* as_object_p,
+        as_error *error_p, char* role_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_grant_privileges(aerospike* as_object_p, as_error *error_p,
+        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_revoke_privileges(aerospike* as_object_p, as_error *error_p,
+        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error_p,
+        char* role_p, zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
+        zval* roles_p, zval* options_p TSRMLS_DC);
 #endif

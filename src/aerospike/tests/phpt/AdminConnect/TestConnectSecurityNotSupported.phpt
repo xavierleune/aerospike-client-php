@@ -10,5 +10,5 @@ aerospike_phpt_skipif("AdminConnect", "testConnectSecurityNotSupported");
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("AdminConnect", "testConnectSecurityNotSupported");
---EXPECT--
-ERR_SECURITY_NOT_SUPPORTED
+--EXPECTREGEX--
+(ERR_SECURITY_NOT_SUPPORTED|ERR_CLIENT)

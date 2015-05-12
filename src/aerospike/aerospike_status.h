@@ -80,7 +80,8 @@ AerospikeStatus aerospike_status[] = {
   { AEROSPIKE_INVALID_ROLE                  ,   "ERR_INVALID_ROLE"                    },
   { AEROSPIKE_INVALID_PRIVILEGE             ,   "ERR_INVALID_PRIVILEGE"               },
   { AEROSPIKE_NOT_AUTHENTICATED             ,   "ERR_NOT_AUTHENTICATED"               },
-  { AEROSPIKE_ROLE_VIOLATION                ,   "ERR_ROLE_VIOLATION"                  }
+  { AEROSPIKE_ROLE_VIOLATION                ,   "ERR_ROLE_VIOLATION"                  },
+  { AEROSPIKE_ROLE_ALREADY_EXISTS			, 	"ERR_ROLE_ALREADY_EXISTS"			  },
 };
 
 #define AEROSPIKE_STATUS_ARR_SIZE (sizeof(aerospike_status)/sizeof(AerospikeStatus))

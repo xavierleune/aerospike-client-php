@@ -10,5 +10,5 @@ aerospike_phpt_skipif("AdminConnect", "testConnectInvalidPassword");
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("AdminConnect", "testConnectInvalidPassword");
---EXPECT--
-ERR_INVALID_PASSWORD
+--EXPECTREGEX--
+(ERR_INVALID_PASSWORD|ERR_CLIENT)

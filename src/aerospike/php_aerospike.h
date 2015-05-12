@@ -183,6 +183,12 @@ PHP_METHOD(Aerospike, revokeRoles);
 PHP_METHOD(Aerospike, queryUser);
 PHP_METHOD(Aerospike, queryUsers);
 
+PHP_METHOD(Aerospike, createRole);
+PHP_METHOD(Aerospike, dropRole);
+PHP_METHOD(Aerospike, grantPrivileges);
+PHP_METHOD(Aerospike, revokePrivileges);
+PHP_METHOD(Aerospike, queryRole);
+PHP_METHOD(Aerospike, queryRoles);
 /*
  * TBD
  * Large Data Type (LDT) APIs:

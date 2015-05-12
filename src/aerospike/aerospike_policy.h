@@ -2,6 +2,7 @@
 #define __AEROSPIKE_POLICY_H__
 
 #include "aerospike/as_scan.h"
+#include "aerospike/as_admin.h"
 /*
  *******************************************************************************************************
  * Enum for PHP client's optional policy constant keys. (OPT_*)
@@ -105,7 +106,13 @@ AerospikeConstants aerospike_constants[] = {
     { AS_POLICY_CONSISTENCY_LEVEL_ONE       ,   "POLICY_CONSISTENCY_ONE"            },
     { AS_POLICY_CONSISTENCY_LEVEL_ALL       ,   "POLICY_CONSISTENCY_ALL"            },
     { AS_POLICY_COMMIT_LEVEL_ALL            ,   "POLICY_COMMIT_LEVEL_ALL"           },
-    { AS_POLICY_COMMIT_LEVEL_MASTER         ,   "POLICY_COMMIT_LEVEL_MASTER"        }
+    { AS_POLICY_COMMIT_LEVEL_MASTER         ,   "POLICY_COMMIT_LEVEL_MASTER"        },
+	{ AS_PRIVILEGE_USER_ADMIN               ,   "USER_ADMIN" },
+    { AS_PRIVILEGE_SYS_ADMIN                ,   "SYS_ADMIN" },
+    { AS_PRIVILEGE_READ                     ,   "READ"},
+    { AS_PRIVILEGE_READ_WRITE               ,   "READ_WRITE"},
+    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "READ_WRITE_UDF"},
+    { AS_PRIVILEGE_DATA_ADMIN               ,   "DATA_ADMIN"}
 };
 /*
  *******************************************************************************************************

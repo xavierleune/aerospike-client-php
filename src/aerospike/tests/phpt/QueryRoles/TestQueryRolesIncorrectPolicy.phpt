@@ -1,14 +1,14 @@
 --TEST--
-Create user - create user with invalid role
+Query roles - query all roles incorrect policy
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("CreateUser", "testCreateUserInvalidRole");
+aerospike_phpt_skipif("QueryRoles", "testQueryRolesIncorrectPolicy");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("CreateUser", "testCreateUserInvalidRole");
+aerospike_phpt_runtest("QueryRoles", "testQueryRolesIncorrectPolicy");
 --EXPECT--
-ERR_INVALID_ROLE
+ERR_CLIENT

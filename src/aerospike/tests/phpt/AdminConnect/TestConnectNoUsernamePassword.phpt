@@ -10,5 +10,5 @@ aerospike_phpt_skipif("AdminConnect", "testConnectNoUsernamePassword");
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("AdminConnect", "testConnectNoUsernamePassword");
---EXPECT--
-ERR_NOT_AUTHENTICATED
+--EXPECTREGEX--
+(ERR_NOT_AUTHENTICATED|ERR_CLIENT)

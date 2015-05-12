@@ -1,14 +1,14 @@
 --TEST--
-GrantRoles - grant roles invalid role list
+Create role - create role existing role
 
 --SKIPIF--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("GrantRoles", "testGrantRolesInvalidRoleList");
+aerospike_phpt_skipif("CreateRole", "testCreateRoleExistingRole");
 
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("GrantRoles", "testGrantRolesInvalidRoleList");
+aerospike_phpt_runtest("CreateRole", "testCreateRoleExistingRole");
 --EXPECT--
-ERR_INVALID_ROLE
+ERR_ROLE_ALREADY_EXISTS

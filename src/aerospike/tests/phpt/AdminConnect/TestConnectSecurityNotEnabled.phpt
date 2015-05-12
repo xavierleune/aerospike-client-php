@@ -10,5 +10,5 @@ aerospike_phpt_skipif("AdminConnect", "testConnectSecurityNotEnabled");
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("AdminConnect", "testConnectSecurityNotEnabled");
---EXPECT--
-ERR_SECURITY_NOT_ENABLED
+--EXPECTREGEX--
+(ERR_SECURITY_NOT_ENABLED|ERR_CLIENT)
