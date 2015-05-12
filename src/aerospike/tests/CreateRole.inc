@@ -11,8 +11,6 @@ class CreateRole extends AerospikeTestCommon
     }
 
     protected function tearDown() {
-        $this->db->dropUser("createuser-example");
-        $this->db->dropUser("createuser2");
         $this->db->close();
     }
     /**
