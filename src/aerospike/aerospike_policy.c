@@ -15,7 +15,22 @@
 #define WRITE_TIMEOUT_PHP_INI INI_STR("aerospike.write_timeout") ? (uint32_t) atoi(INI_STR("aerospike.write_timeout")) : 0
 #define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
-#define SERIALIZER_PHP_INI INI_STR("aerospike.serializer") ? (uint32_t) atoi(INI_STR("aerospike.serializer")) : 0
+#define SERIALIZER_PHP_INI(serializer_ini)                     \
+    char * serializer_str = INI_STR("aerospike.serializer");   \
+    if (!serializer_str) {                                     \
+        serializer_ini = SERIALIZER_NONE;                      \
+    } else if (!strncmp(serializer_str, "none", 4)) {          \
+        serializer_ini = SERIALIZER_NONE;                      \
+    } else if (!strncmp(serializer_str, "php", 3)) {           \
+        serializer_ini = SERIALIZER_PHP;                       \
+    } else if (!strncmp(serializer_str, "json", 4)) {          \
+        serializer_ini = SERIALIZER_JSON;                      \
+    } else if (!strncmp(serializer_str, "user", 4)) {          \
+        serializer_ini = SERIALIZER_USER;                      \
+    } else {                                                   \
+        serializer_ini = SERIALIZER_NONE;                      \
+    }                                                          \
+
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 #define GEN_POLICY_PHP_INI INI_STR("aerospike.key_gen") ? (uint32_t) atoi(INI_STR("aerospike.key_gen")) : 0
 
@@ -160,14 +175,14 @@ set_policy_ex(as_config *as_config_p,
               as_policy_info *info_policy_p,
               as_policy_scan *scan_policy_p,
               as_policy_query *query_policy_p,
-              uint32_t *serializer_policy_p,
+              int8_t *serializer_policy_p,
               as_scan* as_scan_p,
               as_policy_batch *batch_policy_p,
               as_policy_apply *apply_policy_p,
               zval *options_p,
               as_error *error_p TSRMLS_DC)
 {
-    int16_t             serializer_flag = 0;
+    //int16_t             serializer_flag = 0;
 
     if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
@@ -372,7 +387,7 @@ set_policy_ex(as_config *as_config_p,
                         goto exit;
                     }
                     *serializer_policy_p = Z_LVAL_PP(options_value);
-                    serializer_flag = 1;
+                    //serializer_flag = 1;
                     break;
                 case OPT_SCAN_PRIORITY:
                     if (info_policy_p) {
@@ -554,11 +569,15 @@ set_policy_ex(as_config *as_config_p,
         }
     }
 
+    /*
     if (serializer_flag == 0) {
-        if (serializer_policy_p && SERIALIZER_PHP_INI) {
-            *serializer_policy_p = SERIALIZER_PHP_INI;
+        int8_t serializer_int = 0;
+        SERIALIZER_PHP_INI(serializer_int);
+        if (serializer_policy_p) {
+            *serializer_policy_p = serializer_int;
         }
     }
+    */
 
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 exit:
@@ -599,7 +618,7 @@ set_policy(as_config *as_config_p,
            as_policy_info *info_policy_p,
            as_policy_scan *scan_policy_p,
            as_policy_query *query_policy_p,
-           uint32_t *serializer_policy_p,
+           int8_t *serializer_policy_p,
            zval *options_p,
            as_error *error_p TSRMLS_DC)
 {
@@ -611,7 +630,7 @@ set_policy(as_config *as_config_p,
 extern void
 set_policy_scan(as_config *as_config_p,
         as_policy_scan *scan_policy_p,
-        uint32_t *serializer_policy_p,
+        int8_t *serializer_policy_p,
         as_scan *as_scan_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC)
@@ -633,7 +652,7 @@ set_policy_batch(as_config *as_config_p,
 extern void
 set_policy_udf_apply(as_config *as_config_p,
         as_policy_apply *apply_policy_p,
-        uint32_t *serializer_policy_p,
+        int8_t *serializer_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC)
 {
@@ -646,10 +665,13 @@ set_policy_udf_apply(as_config *as_config_p,
  * Function for checking and setting the default aerospike policies by reading
  * from php.ini entries if configured by user, else the global defaults.
  *
- * @param as_config_p                   The as_config object to be passed in case of connect.
+ * @param as_config_p           The as_config object to be passed in case of connect.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
+ * @param serializer_opt        The serializer option to be set in AerospikeObject structure.
+ *                              Value will be read from INI and then from user's option array
+ *                              if provided.
  *
  *******************************************************************************************************
  */
@@ -657,16 +679,17 @@ set_policy_udf_apply(as_config *as_config_p,
 void
 set_config_policies(as_config *as_config_p,
         zval *options_p,
-        as_error *error_p TSRMLS_DC)
+        as_error *error_p,
+        int8_t *serializer_opt TSRMLS_DC)
 {
     /*
      * Copy INI values to global_config_policy
      */
 
-    uint32_t ini_value = 0;
+    int32_t ini_value = 0;
 
     ini_value = READ_TIMEOUT_PHP_INI;
-    if (ini_value) {
+    if (ini_value && as_config_p) {
         as_config_p->policies.read.timeout = ini_value;
         as_config_p->policies.info.timeout = ini_value;
         as_config_p->policies.batch.timeout = ini_value;
@@ -674,15 +697,16 @@ set_config_policies(as_config *as_config_p,
         as_config_p->policies.query.timeout = ini_value;
     }
 
-    if (KEY_POLICY_PHP_INI) {
-        as_config_p->policies.read.key = KEY_POLICY_PHP_INI;
-        as_config_p->policies.write.key = KEY_POLICY_PHP_INI;
-        as_config_p->policies.operate.key = KEY_POLICY_PHP_INI;
-        as_config_p->policies.remove.key = KEY_POLICY_PHP_INI;
+    ini_value = KEY_POLICY_PHP_INI;
+    if (ini_value && as_config_p) {
+        as_config_p->policies.read.key = ini_value;
+        as_config_p->policies.write.key = ini_value;
+        as_config_p->policies.operate.key = ini_value;
+        as_config_p->policies.remove.key = ini_value;
     }
 
     ini_value = WRITE_TIMEOUT_PHP_INI;
-    if (ini_value) {
+    if (ini_value && as_config_p) {
         as_config_p->policies.write.timeout = ini_value;
         as_config_p->policies.operate.timeout = ini_value;
         as_config_p->policies.remove.timeout = ini_value;
@@ -694,6 +718,12 @@ set_config_policies(as_config *as_config_p,
 
     if (ini_value && as_config_p) {
         as_config_p->conn_timeout_ms = ini_value;
+    }
+
+    SERIALIZER_PHP_INI(ini_value);
+
+    if (serializer_opt){
+        *serializer_opt = ini_value;
     }
 
     if (options_p != NULL) {
@@ -714,7 +744,7 @@ set_config_policies(as_config *as_config_p,
                         "Unable to set policy: Invalid Policy Constant Key");
                 goto exit;
             }
-            
+
             switch((int) options_index) {
                 case OPT_CONNECT_TIMEOUT:
                     if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
@@ -797,6 +827,15 @@ set_config_policies(as_config *as_config_p,
                     }
                     as_config_p->policies.commit_level = (uint32_t) Z_LVAL_PP(options_value);
                     break;
+                 case OPT_SERIALIZER:
+                    if ((!serializer_opt) && (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SERIALIZER");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+                                "Unable to set policy: Invalid Value for OPT_SERIALIZER");
+                        goto exit;
+                    }
+                    *serializer_opt = (int8_t)Z_LVAL_PP(options_value);
+                    break;
             }
         }
     }
@@ -814,13 +853,17 @@ exit:
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
+ * @param serializer_opt        The serializer option to be set in AerospikeObject structure.
+ *                              Value will be read from INI and then from user's option array
+ *                              if provided.
  *
  *******************************************************************************************************
  */
 extern void
 set_general_policies(as_config *as_config_p,
                      zval *options_p,
-                     as_error *error_p TSRMLS_DC)
+                     as_error *error_p,
+                     int8_t *serializer_opt TSRMLS_DC)
 {
     if (!as_config_p) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid as_config");
@@ -828,7 +871,7 @@ set_general_policies(as_config *as_config_p,
         goto exit;
     }
 
-    set_config_policies(as_config_p, options_p, error_p TSRMLS_CC);
+    set_config_policies(as_config_p, options_p, error_p, serializer_opt TSRMLS_CC);
 
 exit:
     return;

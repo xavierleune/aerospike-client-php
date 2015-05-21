@@ -27,13 +27,13 @@
  *******************************************************************************************************
  */
 void AS_DEFAULT_PUT(void *key, void *value, as_record *record,
-                    void *static_pool, uint32_t serializer_policy,
+                    void *static_pool, int8_t serializer_policy,
                     as_error *error_p TSRMLS_DC);
 void AS_LIST_PUT(void *key, void *value, void *store,
-                 void *static_pool, uint32_t serializer_policy,
+                 void *static_pool, int8_t serializer_policy,
                  as_error *error_p TSRMLS_DC);
 void AS_MAP_PUT(void *key, void *value, void *store,
-                void *static_pool, uint32_t serializer_policy,
+                void *static_pool, int8_t serializer_policy,
                 as_error *error_p TSRMLS_DC);
 bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
@@ -1434,7 +1434,7 @@ exit:
  */
 
 static void AS_SET_ERROR_CASE(void* key, void* value, void* array,
-                              void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+                              void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Error");
 }
@@ -1454,7 +1454,7 @@ static void AS_SET_ERROR_CASE(void* key, void* value, void* array,
  *******************************************************************************************************
  */
 static void AS_LIST_PUT_APPEND_INT64(void* key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != (error_p->code =
                 as_arraylist_append_int64((as_arraylist *) array,
@@ -1485,7 +1485,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != (error_p->code =
                 as_arraylist_append_str((as_arraylist *) array,
@@ -1516,7 +1516,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_LIST_PUT(key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
@@ -1536,7 +1536,7 @@ static void AS_LIST_PUT_APPEND_LIST(void *key, void *value, void *array,
  *******************************************************************************************************
  */
 static void AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_MAP_PUT(key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
@@ -1562,7 +1562,7 @@ static void AS_LIST_PUT_APPEND_MAP(void *key, void *value, void *array,
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_NIL(void* key, void* value, void* array,
-        void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!as_record_set_nil((as_record *)array,
                     (const char *) key)) {
@@ -1592,7 +1592,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value,
-        void* array, void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void* array, void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
@@ -1630,7 +1630,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array,
-        void* static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_int64((as_record *)array, (const char*)key,
                     (int64_t) Z_LVAL_PP((zval**) value)))) {
@@ -1660,7 +1660,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_str((as_record *)array, (const char*)key,
                     (char *) Z_STRVAL_PP((zval**) value)))) {
@@ -1690,7 +1690,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_LIST_PUT(key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
@@ -1710,7 +1710,7 @@ static void AS_DEFAULT_PUT_ASSOC_LIST(void *key, void *value, void *array,
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_MAP_PUT(key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
@@ -1736,7 +1736,7 @@ static void AS_DEFAULT_PUT_ASSOC_MAP(void *key, void *value, void *array,
  *******************************************************************************************************
  */
 static void AS_MAP_PUT_ASSOC_INT64(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_integer  *map_int;
     GET_INT_POOL(map_int, static_pool, error_p, exit);
@@ -1769,7 +1769,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_string   *map_str;
     GET_STR_POOL(map_str, static_pool, error_p, exit);
@@ -1802,7 +1802,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_MAP_PUT(key, value, store, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
@@ -1822,7 +1822,7 @@ static void AS_MAP_PUT_ASSOC_MAP(void *key, void *value, void *store,
  *******************************************************************************************************
  */
 static void AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_LIST_PUT(key, value, store, static_pool, serializer_policy, error_p TSRMLS_CC);
 }
@@ -1842,7 +1842,7 @@ static void AS_MAP_PUT_ASSOC_LIST(void *key, void *value, void *store,
  *******************************************************************************************************
  */
 static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
@@ -1867,17 +1867,17 @@ exit:
 }
 
 static void AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 static void AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 static void AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 static void AS_DEFAULT_PUT_ASSOC_BYTES(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 static void AS_LIST_PUT_APPEND_BYTES(void *key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC);
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 
 /*
  *******************************************************************************************************
@@ -1900,7 +1900,7 @@ static void AS_LIST_PUT_APPEND_BYTES(void *key, void *value, void *array,
  *******************************************************************************************************
  */
 void AS_DEFAULT_PUT(void *key, void *value, as_record *record_p, void *static_pool,
-        uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(error_p, static_pool,
             key, ((zval**)value), record_p, exit, serializer_policy);
@@ -1923,7 +1923,7 @@ exit:
  *******************************************************************************************************
  */
 extern void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
-        uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(error_p, static_pool,
             key, ((zval**)value), store, exit, serializer_policy);
@@ -1946,7 +1946,7 @@ exit:
  *******************************************************************************************************
  */
 void AS_MAP_PUT(void *key, void *value, void *store, void *static_pool,
-        uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_val *map_key = NULL;
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(error_p, static_pool,
@@ -1970,7 +1970,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_DEFAULT_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_PROCESS_ARRAY(DEFAULT, ASSOC, exit, key, value, store,
             error_p, static_pool, serializer_policy);
@@ -1993,7 +1993,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_MAP_PUT_ASSOC_ARRAY(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_PROCESS_ARRAY(MAP, ASSOC, exit, key, value, store,
             error_p, static_pool, serializer_policy);
@@ -2016,7 +2016,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_PROCESS_ARRAY(LIST, APPEND, exit, key, value, store,
             error_p, static_pool, serializer_policy);
@@ -2039,7 +2039,7 @@ exit:
  *******************************************************************************************************
  */
 static void AS_LIST_PUT_APPEND_BYTES(void* key, void *value, void *array,
-        void *static_pool, uint32_t serializer_policy, as_error *error_p TSRMLS_DC)
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
@@ -2742,7 +2742,7 @@ static void
 aerospike_transform_iterate_records(zval **record_pp,
                                     as_record* as_record_p,
                                     as_static_pool* static_pool,
-                                    uint32_t serializer_policy,
+                                    int8_t serializer_policy,
                                     as_error *error_p TSRMLS_DC)
 {
     char*              key = NULL;
@@ -2770,6 +2770,8 @@ exit:
  * @param error_p                   The C client's as_error to be set to the encountered error.
  * @param ttl_u64                   The ttl to be set for C client's as_record.
  * @param options_p                 The optional parameters to Aerospike::put()
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject. Either from 
+ *                                  INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
@@ -2780,10 +2782,11 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
                                  as_key* as_key_p,
                                  as_error *error_p,
                                  u_int32_t ttl_u32,
-                                 zval* options_p TSRMLS_DC)
+                                 zval* options_p,
+                                 int8_t* serializer_policy_p TSRMLS_DC)
 {
     as_policy_write             write_policy;
-    uint32_t                    serializer_policy = -1;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_static_pool              static_pool = {0};
     as_record                   record;
     int16_t                     init_record = 0;

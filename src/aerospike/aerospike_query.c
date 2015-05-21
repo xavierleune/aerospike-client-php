@@ -379,6 +379,8 @@ exit:
  * @param return_value_p            The return value of aggregation to be
  *                                  populated by this method.
  * @param options_p                 The optional policy.
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject structure.
+ *                                  Either an INI read value or value from user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
@@ -388,12 +390,12 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* outer_container_p,
-        zval* options_p TSRMLS_DC)
+        zval* options_p, int8_t* serializer_policy_p  TSRMLS_DC)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    uint32_t                    serializer_policy = -1;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_policy_query             query_policy;
     as_query                    query;
     bool                        is_init_query = false;
@@ -412,7 +414,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, NULL, NULL, &query_policy,
-            &serializer_policy, options_p, error_p TSRMLS_CC);
+        &serializer_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;

@@ -173,14 +173,14 @@ exit:
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         as_key* as_key_p, as_error* error_p, char* module_p, char* function_p,
-        zval** args_pp, zval* return_value_p, zval* options_p)
+        zval** args_pp, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
     as_val*                     udf_result_p = NULL;
     foreach_callback_udata      udf_result_callback_udata;
-    uint32_t                    serializer_policy = -1;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_policy_apply             apply_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
