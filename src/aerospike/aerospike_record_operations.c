@@ -33,7 +33,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 char* bin_name_p,
                                 char* str,
                                 u_int64_t offset,
-                                u_int64_t time_to_live,
+                                u_int32_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
                                 as_record** get_rec TSRMLS_DC)
@@ -303,6 +303,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     int                         op;
     zval**                      each_operation;
     int8_t                      serializer_policy;
+    uint32_t                    ttl;
     foreach_callback_udata      foreach_record_callback_udata;
 
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
@@ -326,6 +327,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             str = NULL;
             offset = 0;
             op = 0;
+            ttl = 0;
             bin_name_p = NULL;
             foreach_hashtable(each_operation_array_p, each_pointer, each_operation) {
                 uint options_key_len;
@@ -352,15 +354,19 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                             status = AEROSPIKE_ERR;
                             goto exit;
                         }
+                    } else if (!strcmp(options_key, "ttl") && (IS_LONG == Z_TYPE_PP(each_operation))) {
+                        ttl = (uint32_t) Z_LVAL_PP(each_operation);
                     } else {
                         status = AEROSPIKE_ERR;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set Operate: Invalid Optiopns Key");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set Operate: Invalid Options Key");
                         goto exit;
                     }
                 }
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
                             as_key_p, options_p, error_p, bin_name_p, str,
-                            offset, 0, op, &ops, &temp_rec TSRMLS_CC))) {
+                            offset, ttl, op, &ops, &temp_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
             }
