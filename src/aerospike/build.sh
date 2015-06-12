@@ -106,8 +106,9 @@ if [ $OS = "Darwin" ] ; then
 else
     LDFLAGS="-Wl,-Bstatic -L$CLIENTREPO_3X/lib -laerospike -Wl,-Bdynamic"
     # Find and link to libcrypto (provided by OpenSSL)
-    ec=`ls /usr/local/lib/libcrypto.a || ls /usr/local/lib/libcrypto.so`
-    if [ $? -eq 0 ] ; then
+    if [ -e /usr/lib64/libcrypto.so  ] || [ -e /usr/lib64/libcrypto.a ]; then
+        LIBCRYPTO="-L/usr/lib64 -lcrypto"
+    elif [ -e /usr/local/lib/libcrypto.a ] || [ -e /usr/local/lib/libcrypto.so ]; then
         LIBCRYPTO="-L/usr/local/lib -lcrypto"
     else
         ec=`ls /usr/local/ssl/lib/libcrypto.a || ls /usr/local/ssl/lib/libcrypto.so`
