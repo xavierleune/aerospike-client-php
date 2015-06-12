@@ -1930,12 +1930,12 @@ PHP_METHOD(Aerospike, predicateEquals)
             add_assoc_long(return_value, VAL, Z_LVAL_P(val_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(val_p)) == 0) {
+            if (Z_STRLEN_P(val_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
+            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
             break;
         default:
             zval_dtor(return_value);
@@ -2014,12 +2014,12 @@ PHP_METHOD(Aerospike, predicateContains)
             add_assoc_long(return_value, VAL, Z_LVAL_P(val_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(val_p)) == 0) {
+            if (Z_STRLEN_P(val_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
+            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
             break;
         default:
             zval_dtor(return_value);
@@ -2076,7 +2076,7 @@ PHP_METHOD(Aerospike, predicateRange)
             add_next_index_long(minmax_arr, Z_LVAL_P(min_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(min_p)) == 0) {
+            if (Z_STRLEN_P(min_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
@@ -2097,7 +2097,7 @@ PHP_METHOD(Aerospike, predicateRange)
             add_next_index_long(minmax_arr, Z_LVAL_P(max_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(min_p)) == 0) {
+            if (Z_STRLEN_P(min_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();

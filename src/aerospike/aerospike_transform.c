@@ -2397,8 +2397,8 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
             AS_CONFIG_ITER_MAP_SET_ADDR(addrport_transform_iter_map_p,
                     pestrndup(Z_STRVAL_PP(value_pp), Z_STRLEN_PP(value_pp), 1));
         } else {
-            strncpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
-                    Z_STRVAL_PP(value_pp), strlen(Z_STRVAL_PP(value_pp)) + 1);
+            memcpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
+                    Z_STRVAL_PP(value_pp), Z_STRLEN_PP(value_pp) + 1);
         }
     } else if (PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT,
@@ -2597,9 +2597,9 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, const char* names
             if (!is_digest) {
                 as_key_init_str(as_key_p, namespace_p, set_p, Z_STRVAL_PP(key_pp));
             } else {
-                if (strlen(Z_STRVAL_PP(key_pp))) {
+                if (Z_STRLEN_PP(key_pp)) {
                     as_digest_value digest = {0};
-                    strncpy((char *) digest, Z_STRVAL_PP(key_pp), strlen(Z_STRVAL_PP(key_pp)));
+                    memcpy((char *) digest, Z_STRVAL_PP(key_pp), Z_STRLEN_PP(key_pp));
                     as_key_init_digest(as_key_p, namespace_p, set_p, digest);
                 } else {
                     status = AEROSPIKE_ERR;
@@ -2994,20 +2994,22 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
                 }
                 break;
             case IS_STRING:
-                if (strlen(Z_STRVAL_P(pk_p)) == 0) {
+                if ((Z_STRLEN_P(pk_p)) == 0) {
                     DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1-3 to be non-empty strings");
                     status = AEROSPIKE_ERR;
                     goto exit;
                 }
                 if (!is_digest) {
-                    add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, Z_STRVAL_P(pk_p), 1);
+                    add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, 
+                            Z_STRVAL_P(pk_p), Z_STRLEN_P(pk_p), 1);
                 } else {
-                    if (strlen(Z_STRVAL_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
+                    if ((Z_STRLEN_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
                         DEBUG_PHP_EXT_ERROR("Aerospike::initKey() digest max length exceeded");
                         status = AEROSPIKE_ERR;
                         goto exit;
                     }
-                    add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_STRVAL_P(pk_p), 1);
+                    add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST,
+                            Z_STRVAL_P(pk_p), AS_DIGEST_VALUE_SIZE, 1);
                 }
                 break;
             default:
@@ -3057,7 +3059,8 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
         }
         switch (((as_val*)(record_key_p->valuep))->type) {
             case AS_STRING:
-                if (0 != add_assoc_string(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, record_key_p->value.string.value, 1)) {
+                if (0 != add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_KEY,
+                            record_key_p->value.string.value, strlen(record_key_p->value.string.value), 1)) {
                     DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
                     status = AEROSPIKE_ERR;
                     goto exit;

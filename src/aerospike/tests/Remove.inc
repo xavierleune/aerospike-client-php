@@ -38,8 +38,57 @@ class Remove extends AerospikeTestCommon
         $status = $this->db->get($this->keys[0], $get_record, array('bin1'));
         return $status;
     }
+
     /**
      * @test
+     * 
+     * Tests Remove record by Digest.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testKeyRemove)
+     *
+     * @test_plans{1.1}
+     */
+    function testRemoveByDigest() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config);
+        if (!$db->isConnected()) {
+            return $db->errorno();
+        }
+
+        for ($i = 0; $i < 1000; $i++) {
+            $key = $db->initKey("test", "demo", $i);
+            $db->put($key, array("email"=>$i));
+        }
+
+        $digests = array();
+        $status = $db->scan('test','demo', function ($record) use (&$digests, &$db) {
+            $digests[] = $record["key"]["digest"];
+        });
+        $keys = array();
+        $i = 0;
+        foreach ($digests as $digest) {
+            $keys[] = $db->initKey ('test', 'demo', $digest, true);
+            $db->remove($keys[$i]);
+            $i++;
+        }
+        foreach ($keys as $key) {
+            if (Aerospike::OK == $db->exists($key, $metadata)) {
+                $db->close();
+                return Aerospike::ERR_CLIENT;
+            }
+        }
+        $db->close();
+        return Aerospike::OK;
+}
+/**
+ * @test
      * Basic key remove operation with policy
      *
      * @pre
