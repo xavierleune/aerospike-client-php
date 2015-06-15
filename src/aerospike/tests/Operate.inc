@@ -566,5 +566,57 @@ class Operate  extends AerospikeTestCommon
             }
         }
     }
+
+    /**
+     * @test
+     * Basic operate with ttl value set
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized ttl value for record
+     *
+     */
+    function testOperateWithTTLPositive() {
+        $operations = array(array("op" => Aerospike::OPERATOR_TOUCH, "ttl" => 400));
+        $status = $this->db->operate($this->keys[0], $operations, $returned);
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        }
+
+        $status = $this->db->exists($this->keys[0], $metadata);
+        if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+        }
+        if ($metadata["ttl"] == 400) {
+            return Aerospike::OK;
+        } else {
+            return Aerospike::ERR_CLIENT;
+        }
+    }
+
+
+    /**
+     * @test
+     * Basic operate with ttl value set
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized ttl value for record
+     *
+     */
+    function testOperateWithTTLString() {
+        $operations = array(array("op" => Aerospike::OPERATOR_TOUCH, "ttl" => "fail"));
+        $status = $this->db->operate($this->keys[0], $operations, $returned);
+        //var_dump($this->db->errorno());
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        } else {
+            return Aerospike::OK;
+        }
+    }
 }
 ?>
