@@ -80,6 +80,44 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
         read = (int) fread(buff_p, 1, LUA_FILE_BUFFER_FRAME, file_p);
     }
 
+    char *udf_path = LUA_USER_PATH_PHP_INI;
+    char copy_filepath[AS_CONFIG_PATH_MAX_LEN] = {0};
+    uint32_t user_path_len = strlen(udf_path);
+
+    memcpy(copy_filepath, udf_path, user_path_len);
+
+    if(udf_path[user_path_len - 1] != '/') {
+        memcpy(copy_filepath + user_path_len, "/", 1);
+    }
+
+    char *filename = strrchr(path_p, '/');
+    if(!filename) {
+        filename = path_p;
+    } else if(filename[0] == '/') {
+        filename = filename + 1;
+    }
+
+    memcpy(copy_filepath + user_path_len + 1, filename, strlen(filename));
+
+    FILE *fileW_p = NULL;
+    fileW_p = fopen(copy_filepath, "r");
+    if(!fileW_p && errno == ENOENT) {  
+        fileW_p = fopen(copy_filepath, "w");
+        if (!fileW_p) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
+                    "Cannot create script file");
+            DEBUG_PHP_EXT_DEBUG("Cannot create script file");
+            goto exit;
+        }
+
+        if (0 >= (int) fwrite(bytes_p, size, 1, fileW_p)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
+                    "unable to write to script file");
+            DEBUG_PHP_EXT_DEBUG("unable to write to script file");
+            goto exit;
+        }
+    }
+
     as_bytes_init_wrap(&udf_content, bytes_p, size, false);
     udf_content_p = &udf_content;
     /*
@@ -104,6 +142,10 @@ exit:
 
     if (bytes_p) {
         efree(bytes_p);
+    }
+
+    if (fileW_p) {
+        fclose(fileW_p);
     }
 
     if (udf_content_p) {
