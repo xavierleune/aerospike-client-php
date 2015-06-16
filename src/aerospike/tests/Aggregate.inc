@@ -65,6 +65,43 @@ class Aggregate extends AerospikeTestCommon
                     }
             }
     }
+
+    /**
+     * @test
+     * Scan Aggregate - empty predicate
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testScanAggregation)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanAggregation()
+    {
+        return Aerospike::ERR; // wait on AER-3813
+        $this->ensureUdfModule("tests/lua/test_stream.lua", "test_stream.lua");
+        $where = array();
+        $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name"), $returned);
+        if ($status != Aerospike::OK) {
+            return($this->db->errorno());
+        }
+        if ($isset($returned["bins"]) && is_array($returned["bins"])) {
+                if (array_key_exists("john", $returned["bins"]) &&
+                    array_key_exists("smith", $returned["bins"]) &&
+                    array_key_exists("ellie", $returned["bins"]) &&
+                    array_key_exists("adam", $returned["bins"])) {
+                        return Aerospike::OK;
+                    } else {
+                        return Aerospike::ERR;
+                    }
+            }
+    }
+
     /**
      * @test
      * Aggregate - first name of emp where age in between
