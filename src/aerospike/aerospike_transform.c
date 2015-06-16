@@ -3009,7 +3009,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
                         goto exit;
                     }
                     add_assoc_stringl(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST,
-                            Z_STRVAL_P(pk_p), AS_DIGEST_VALUE_SIZE, 1);
+                            Z_STRVAL_P(pk_p), Z_STRLEN_P(pk_p), 1);
                 }
                 break;
             default:

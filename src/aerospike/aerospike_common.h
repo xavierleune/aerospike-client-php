@@ -43,7 +43,7 @@
  * MACROS FOR MAX STORE SIZE.
  *******************************************************************************************************
  */
-#define AS_MAX_STORE_SIZE 1024
+#define AS_MAX_STORE_SIZE 4096
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
 
