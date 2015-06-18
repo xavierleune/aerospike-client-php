@@ -5,5 +5,5 @@ Aggregate - unknown function
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateUnknownFunctionNegative");
---EXPECT--
-ERR_CLIENT
+--EXPECTREGEX--
+(ERR_CLIENT|ERR_UDF)
