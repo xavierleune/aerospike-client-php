@@ -481,8 +481,8 @@ PHP_METHOD(Aerospike, __construct)
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -573,7 +573,7 @@ PHP_METHOD(Aerospike, __destruct)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -616,8 +616,8 @@ PHP_METHOD(Aerospike, close)
 
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
             !(aerospike_obj_p->as_ref_p->as_p)) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
@@ -668,8 +668,8 @@ PHP_METHOD(Aerospike, reconnect)
 
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
             !(aerospike_obj_p->as_ref_p->as_p)) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
@@ -677,8 +677,8 @@ PHP_METHOD(Aerospike, reconnect)
 
     if ((aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_TRUE) ||
             (aerospike_obj_p->as_ref_p->ref_as_p > 0)) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Already connected");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Already connected");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         DEBUG_PHP_EXT_ERROR("Already connected");
         goto exit;
@@ -727,8 +727,8 @@ PHP_METHOD(Aerospike, get)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -812,8 +812,8 @@ PHP_METHOD(Aerospike, put)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -874,9 +874,9 @@ PHP_METHOD(Aerospike, getNodes)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -884,7 +884,7 @@ PHP_METHOD(Aerospike, getNodes)
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
                 "getNodes: connection not established");
         DEBUG_PHP_EXT_ERROR("getNodes: connection not established");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLUSTER;
         goto exit;
     }
 
@@ -922,8 +922,8 @@ PHP_METHOD(Aerospike, info)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -980,9 +980,9 @@ PHP_METHOD(Aerospike, infoMany)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
@@ -1040,8 +1040,8 @@ PHP_METHOD(Aerospike, existsMany)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1099,8 +1099,8 @@ PHP_METHOD(Aerospike, getMany)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1153,8 +1153,8 @@ PHP_METHOD(Aerospike, operate)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1236,8 +1236,8 @@ PHP_METHOD(Aerospike, append)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1312,8 +1312,8 @@ PHP_METHOD(Aerospike, remove)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1372,8 +1372,8 @@ PHP_METHOD(Aerospike, exists)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1416,8 +1416,8 @@ PHP_METHOD(Aerospike, getMetadata)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1477,8 +1477,8 @@ PHP_METHOD(Aerospike, prepend)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1557,8 +1557,8 @@ PHP_METHOD(Aerospike, increment)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
         goto exit;
     }
@@ -1635,8 +1635,8 @@ PHP_METHOD(Aerospike, touch)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
         goto exit;
     }
@@ -1842,8 +1842,8 @@ PHP_METHOD(Aerospike, removeBin)
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -1878,7 +1878,7 @@ PHP_METHOD(Aerospike, removeBin)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_record_operations_remove_bin(aerospike_obj_p, &as_key_for_put_record, bins_p, &error, options_p))) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Unable to remove bin");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_SERVER, "Unable to remove bin");
         DEBUG_PHP_EXT_ERROR("Unable to remove bin");
         goto exit;
     }
@@ -2136,9 +2136,9 @@ PHP_METHOD(Aerospike, query)
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
                 "Aerospike::query() has no valid aerospike object");
         goto exit;
     }
@@ -2222,15 +2222,15 @@ PHP_METHOD(Aerospike, aggregate)
      */
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
                 "aggregate: Connection not established");
         DEBUG_PHP_EXT_ERROR("aggregate: Connection not established");
         goto exit;
@@ -2334,9 +2334,9 @@ PHP_METHOD(Aerospike, scan)
     as_error_init(&error);
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
+        status = AEROSPIKE_ERR_CLIENT;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Aerospike::scan() has no valid aerospike object");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Aerospike::scan() has no valid aerospike object");
         goto exit;
     }
 
@@ -2407,8 +2407,8 @@ PHP_METHOD(Aerospike, scanApply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2507,8 +2507,8 @@ PHP_METHOD(Aerospike, scanInfo)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2583,8 +2583,8 @@ PHP_METHOD(Aerospike, register)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2653,8 +2653,8 @@ PHP_METHOD(Aerospike, deregister)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT; 
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2727,8 +2727,8 @@ PHP_METHOD(Aerospike, apply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2843,8 +2843,8 @@ PHP_METHOD(Aerospike, listRegistered)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2906,8 +2906,8 @@ PHP_METHOD(Aerospike, getRegistered)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -2990,8 +2990,8 @@ PHP_METHOD(Aerospike, createIndex)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -3066,8 +3066,8 @@ PHP_METHOD(Aerospike, addIndex)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -3135,8 +3135,8 @@ PHP_METHOD(Aerospike, dropIndex)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -3204,8 +3204,8 @@ PHP_METHOD(Aerospike, setLogLevel)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }
@@ -3248,8 +3248,8 @@ PHP_METHOD(Aerospike, setLogHandler)
     is_callback_registered = 0;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         RETURN_FALSE;
     }
