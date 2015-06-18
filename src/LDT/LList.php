@@ -162,13 +162,20 @@ class LList extends LDT
     }
 
     /**
+     * @deprecated use findFirst instead
+     */
+    public function find_first($count, &$elements) {
+        return $this->findFirst($count, $elements);
+    }
+
+    /**
      * Finds the first N elements in the LList.
      *
      * @param int $count
      * @param array $elements matched
      * @return int status code of the operation
      */
-    public function find_first($count, &$elements) {
+    public function findFirst($count, &$elements) {
         if (!is_int($count)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
@@ -181,13 +188,20 @@ class LList extends LDT
     }
 
     /**
+     * @deprecated use findLast instead
+     */
+    public function find_last($count, &$elements) {
+        return $this->findLast($count, $elements);
+    }
+
+    /**
      * Finds the lasst N elements in the LList.
      *
      * @param int $count
      * @param array $elements matched
      * @return int status code of the operation
      */
-    public function find_last($count, &$elements) {
+    public function findLast($count, &$elements) {
         if (!is_int($count)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
@@ -195,6 +209,29 @@ class LList extends LDT
         }
         $elements = array();
         $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Finds the elements whose key is between min and max.
+     *
+     * A null $min gets all elements less than or equal to $max.
+     * A null $max gets all elements greater than or equal to $min.
+     *
+     * @param int|string|null $min
+     * @param int|string|null $max
+     * @param array $elements matched
+     * @return int status code of the operation
+     */
+    public function findRange($min, $max, &$elements) {
+        if (!is_string($value) && !is_int($value) && !is_null($value)) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $elements = array();
+        $status = $this->db->apply($this->key, 'llist', 'find_rage', array($this->bin, $min, $max), $elements);
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -296,30 +333,6 @@ class LList extends LDT
      */
     public function removeMany(array $values) {
         $status = $this->db->apply($this->key, 'llist', 'remove_all', array($this->bin, $values));
-        $this->processStatusCode($status);
-        return $this->errorno;
-    }
-
-    /**
-     * Retrieves the LDT configuration data.
-     *
-     * @param array $config will be updated with the configuration data
-     * @return int status code of the operation
-     */
-    public function config(&$config) {
-        $config = array();
-        $status = $this->db->apply($this->key, 'llist', 'config', array($this->bin), $config);
-        $this->processStatusCode($status);
-        return $this->errorno;
-    }
-
-    /**
-     * Not fully implemented yet.
-     * @param int $size
-     * @return int status code of the operation
-     */
-    public function setPageSize($size) {
-        $status = $this->db->apply($this->key, 'llist', 'setPageSize', array($this->bin, $size));
         $this->processStatusCode($status);
         return $this->errorno;
     }
