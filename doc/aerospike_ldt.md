@@ -69,14 +69,13 @@ abstract \Aerospike\LDT
 
     protected __construct ( Aerospike $db, array $key, string $bin, int $type )
     public boolean isLDT ( void )
+    public boolean isValid ( void )
     public string error ( void )
     public int errorno ( void )
     public int size ( int &$num_elements )
+    public int config ( array &$config )
+    public void setPageSize ( int $size )
     public int destroy ( void )
-
-    // Not yet implemented:
-    // public int getType ( void )
-    // public array getConfig ( void )
 }
 ```
 

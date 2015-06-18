@@ -18,20 +18,20 @@ capable of growing the collection to virtually any size.
     public int find ( int|string $value, array &$elements )
     public int find_first ( int $count, array &$elements )
     public int find_last ( int $count, array &$elements )
+    public int findRange ( int|string|null $min, int|string|null $max, array &$elements )
     public int remove ( int|string $value )
-    public int removeRange ( int|string $min, int|string $max )
+    public int removeRange ( int|string|null $min, int|string|null $max )
     public int removeMany ( array $values )
     public int scan ( array &$elements [, int|string $min=null [, int|string $max=null [, string $module=null [, string $function=null [, array $args=array()]]]]] )
-    public int config ( array &$config )
 
     /* Inherited Methods */
     public boolean isLDT ( void )
+    public boolean isValid ( void )
     public string error ( void )
     public int errorno ( void )
     public int size ( int &$num_elements )
+    public int config ( array &$config )
     public int destroy ( void )
-    public int getCapacity ( int &$num_elements )
-    public int setCapacity ( int $num_elements )
 }
 ```
 
