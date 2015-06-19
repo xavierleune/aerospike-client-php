@@ -1548,6 +1548,7 @@ PHP_METHOD(Aerospike, increment)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
+    zval*                  offset_p = NULL;
     as_error               error;
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
@@ -1570,9 +1571,9 @@ PHP_METHOD(Aerospike, increment)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
-                &offset, &options_p) == FAILURE) {
+                &offset_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for increment function");
@@ -1594,6 +1595,15 @@ PHP_METHOD(Aerospike, increment)
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for increment function");
+        goto exit;
+    }
+
+    if(Z_TYPE_P(offset_p) == IS_LONG) {
+        offset = Z_LVAL_P(offset_p);
+    } else if( !(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
+        DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
         goto exit;
     }
 
