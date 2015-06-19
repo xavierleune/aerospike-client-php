@@ -286,6 +286,21 @@ abstract class LDT
     }
 
     /**
+     * Validates whether the LDT at the specified key and bin is in good shape
+     *
+     * @return boolean
+     */
+    public function isValid() {
+        $status = $this->db->apply($this->key, $this->module, 'ldt_validate', array($this->bin), $returned);
+        $this->processStatusCode($status);
+        if ($status !== Aerospike::OK) {
+            return false;
+        } else {
+            return (boolean) $returned;
+        }
+    }
+
+    /**
      * Sets $num_elements with the number of elements in the LDT.
      *
      * @param int $num_elements returned
@@ -298,8 +313,48 @@ abstract class LDT
     }
 
     /**
-     * Sets $num_elements with the max number of elements the LDT can hold.
+     * Retrieves the LDT configuration data.
      *
+     * @param array $config will be updated with the configuration data
+     * @return int status code of the operation
+     */
+    public function config(&$config) {
+        $config = array();
+        $status = $this->db->apply($this->key, 'llist', 'config', array($this->bin), $config);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
+     * Set the page size of the LDT
+     *
+     * @param int $size
+     * @return int status code of the operation
+     */
+    public function setPageSize($size) {
+        $size = intval($size);
+        if ($size <= 0) {
+            $this->errorno = self::ERR_INPUT_PARAM;
+            $this->error = self::MSG_TYPE_NOT_SUPPORTED;
+            return $this->errorno;
+        }
+        $status = $this->db->apply($this->key, $this->module, 'setPageSize', array($this->bin, $size));
+        $this->processStatusCode($status);
+        return $status;
+    }
+
+    /**
+     * Destroy the LDT at the key and bin the class was initialized to.
+     *
+     * @return int status code of the operation
+     */
+    public function destroy() {
+        $status = $this->db->apply($this->key, $this->module, 'destroy', array($this->bin));
+        $this->processStatusCode($status);
+        return $status;
+    }
+
+    /**
      * @param int $num_elements returned
      * @return int status code of the operation
      * @deprecated
@@ -317,17 +372,6 @@ abstract class LDT
      */
     public function setCapacity($num_elements) {
         return LDT::OK;
-    }
-
-    /**
-     * Destroy the LDT at the key and bin the class was initialized to.
-     *
-     * @return int status code of the operation
-     */
-    public function destroy() {
-        $status = $this->db->apply($this->key, $this->module, 'destroy', array($this->bin));
-        $this->processStatusCode($status);
-        return $status;
     }
 
     /**
