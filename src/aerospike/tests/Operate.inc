@@ -49,7 +49,7 @@ class Operate  extends AerospikeTestCommon
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         else {
             return AEROSPIKE::OK;
@@ -89,7 +89,7 @@ class Operate  extends AerospikeTestCommon
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         } else {
             return AEROSPIKE::OK;
         }
@@ -124,7 +124,7 @@ class Operate  extends AerospikeTestCommon
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         else {
             return AEROSPIKE::OK;
@@ -186,7 +186,7 @@ class Operate  extends AerospikeTestCommon
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         else {
             return AEROSPIKE::OK;
@@ -225,7 +225,7 @@ class Operate  extends AerospikeTestCommon
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         else {
             return AEROSPIKE::OK;
@@ -263,7 +263,7 @@ class Operate  extends AerospikeTestCommon
         }
         $comp_res = array_diff_assoc_recursive($returned, $check);
         if (!empty($comp_res)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         else {
             return AEROSPIKE::OK;

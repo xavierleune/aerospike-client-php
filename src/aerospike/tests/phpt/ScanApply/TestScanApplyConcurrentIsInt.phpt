@@ -6,4 +6,4 @@ ScanApply - Concurrent parameter is Integer
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanApply", "testScanApplyConcurrentIsInt");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

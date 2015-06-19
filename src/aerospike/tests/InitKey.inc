@@ -32,7 +32,7 @@ class InitKey extends AerospikeTestCommon
     function testInitKeyHelper() {
         $key = $this->db->initKey("demo", "test", 10000);
         if (!$key) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         } else {
             return Aerospike::OK;
         }
@@ -55,7 +55,7 @@ class InitKey extends AerospikeTestCommon
     function testNameSpaceValueInt() {
         $key = $this->db->initKey(2312312, "test", 10000);
         if (!$key) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         } else {
             return Aerospike::OK;
         }
@@ -78,7 +78,7 @@ class InitKey extends AerospikeTestCommon
     function testSetValueInt() {
         $key = $this->db->initKey("demo", 12312312, 10000);
         if (!$key) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         } else {
             return Aerospike::OK;
         }

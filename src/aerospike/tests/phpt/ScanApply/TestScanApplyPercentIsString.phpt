@@ -6,4 +6,4 @@ ScanApply - Percent is string
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsString");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

@@ -6,4 +6,4 @@ ScanApply - Priority is string
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanApply", "testScanApplyPriorityIsString");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM
