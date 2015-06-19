@@ -66,7 +66,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
      * "false" and handle the freeing up of the same here.
      */
     if (NULL == (bytes_p = (uint8_t *) emalloc(content_size + 1))) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Memory allocation failed for contents of UDF");
         DEBUG_PHP_EXT_DEBUG("Memory allocation failed for contents of UDF");
         goto exit;

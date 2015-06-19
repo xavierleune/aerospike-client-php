@@ -49,7 +49,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 
     if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate scan");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate scan");
         goto exit;
     }
 
@@ -143,7 +143,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) ||
             (!namespace_p) || (!set_p) || (!scan_id_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate background scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate background scan");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate background scan");
         goto exit;
     }
 
@@ -176,7 +176,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     if (module_p && function_p && (!as_scan_apply_each(scan_p, module_p,
                     function_p, (as_list*)args_list_p))) {
         DEBUG_PHP_EXT_DEBUG("Unable to apply UDF on the scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Unable to initiate background scan");
         goto exit;
     }

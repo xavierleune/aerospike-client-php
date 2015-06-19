@@ -262,7 +262,7 @@ class Scan extends AerospikeTestCommon
      */
     function testCheckIncorrectValueForOptions()
     {
-        return($this->db->scan( "test", "demo", function ($record) use (&$processed) {
+        $status = $this->db->scan( "test", "demo", function ($record) use (&$processed) {
             if (array_key_exists("account", $record["bins"]) &&
                 !is_null($record["bins"]["account"])) {
                     echo $record["bins"]["email"]."\n";
@@ -270,7 +270,11 @@ class Scan extends AerospikeTestCommon
             if ($processed++ > 19) {
                 return false;
             }
-        }, array("email"), array(Aerospike::OPT_SCAN_NOBINS=>false, Aerospike::OPT_READ_TIMEOUT=>"pqr")));
+        }, array("email"), array(Aerospike::OPT_SCAN_NOBINS=>false, Aerospike::OPT_READ_TIMEOUT=>"pqr"));
+        if ($status !== aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return aerospike::OK;
     }
     /**
      * @test
