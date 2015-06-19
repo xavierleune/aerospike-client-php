@@ -46,7 +46,7 @@ class ExistsMany extends AerospikeTestCommon
             return $this->db->errorno();
         }
         if (empty($metadata)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -112,7 +112,7 @@ class ExistsMany extends AerospikeTestCommon
             return $this->db->errorno();
         }
         if (empty($metadata)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -204,7 +204,7 @@ class ExistsMany extends AerospikeTestCommon
         $metadta = "";
         $status = $this->db->existsMany($this->keys, $metadata);
         if (empty($metadata)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -227,7 +227,7 @@ class ExistsMany extends AerospikeTestCommon
         $metadata = "abc";
         $status = $this->db->existsMany($this->keys, $metadata);
         if (empty($metadata)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -283,7 +283,7 @@ class ExistsMany extends AerospikeTestCommon
             return $this->db->errorno();
         }
         if (empty($metadata)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }

@@ -43,8 +43,8 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
     }
 
     if ((!error_p) || (!as_object_p)) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to create index");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to create index");
         DEBUG_PHP_EXT_DEBUG("Unable to create index");
         goto exit;
     }
@@ -97,8 +97,8 @@ aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
     }
 
     if ((!error_p) || (!as_object_p)) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to drop index");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to drop index");
         DEBUG_PHP_EXT_DEBUG("Unable to drop index");
         goto exit;
     }

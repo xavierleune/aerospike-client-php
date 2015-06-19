@@ -31,6 +31,8 @@
  * @param concurrent                Whether to scan all nodes in parallel.
  * @param no_bins                   Whether to return only metadata (and no bins).
  * @param options_p                 The optional policy.
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject structure.
+ *                                  Value read from either INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
@@ -38,16 +40,16 @@
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        zval* options_p TSRMLS_DC)
+        zval* options_p, int8_t* serializer_policy_p TSRMLS_DC)
 {
     as_scan             scan;
     as_scan*            scan_p = NULL;
     as_policy_scan      scan_policy;
-    uint32_t            serializer_policy = -1;
+    int8_t              serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
 
     if ((!as_object_p) || (!error_p) || (!namespace_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate scan");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate scan");
         goto exit;
     }
 
@@ -59,7 +61,6 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 
     set_policy_scan(&as_object_p->config, &scan_policy, &serializer_policy,
             scan_p, options_p, error_p TSRMLS_CC);
-    
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
@@ -117,6 +118,8 @@ exit:
  * @param block                     Whether to block the scan API until the scan
  *                                  job is completed or make an asynchronous call
  *                                  to scan and return ID.
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject structur
+ *                                  Value read from either INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  ******************************************************************************************************
@@ -124,12 +127,13 @@ exit:
 extern as_status
 aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, zval* options_p, bool block TSRMLS_DC)
+        char* set_p, zval* scan_id_p, zval* options_p, bool block,
+        int8_t* serializer_policy_p TSRMLS_DC)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
-    uint32_t                    serializer_policy = -1;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_policy_scan              scan_policy;
     as_policy_info              info_policy;
     as_scan                     scan;
@@ -139,7 +143,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) ||
             (!namespace_p) || (!set_p) || (!scan_id_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate background scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to initiate background scan");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate background scan");
         goto exit;
     }
 
@@ -172,7 +176,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     if (module_p && function_p && (!as_scan_apply_each(scan_p, module_p,
                     function_p, (as_list*)args_list_p))) {
         DEBUG_PHP_EXT_DEBUG("Unable to apply UDF on the scan");
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Unable to initiate background scan");
         goto exit;
     }

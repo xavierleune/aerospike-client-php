@@ -5,6 +5,6 @@ Aggregate - unknown modules
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("Aggregate", "testAggregateUnknownModuleNegative");
---EXPECT--
-ERR_CLIENT
+--EXPECTREGEX--
+(ERR_CLIENT|ERR_UDF)
 

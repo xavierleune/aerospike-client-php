@@ -67,7 +67,7 @@ class PredicateEquals extends AerospikeTestCommon
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
-        return Aerospike::ERR;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -94,7 +94,7 @@ class PredicateEquals extends AerospikeTestCommon
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
-        return Aerospike::ERR;
+        return Aerospike::ERR_CLIENT;
     }
     /**
      * @test
@@ -168,7 +168,7 @@ class PredicateEquals extends AerospikeTestCommon
         }
         $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"=", "val"=>30));
         if(!empty($op)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }

@@ -159,7 +159,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Get the elements for keys 0-3 in the record's LList bin ≻", 'black', true);
 $start = __LINE__;
-$status = $rental_history->scan($elements, 0, 3);
+$status = $rental_history->findRange(0, 3, $elements);
 if ($status === Aerospike::OK) {
     echo success();
     var_dump($elements);
@@ -168,9 +168,9 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Find the LList element with 'key' 3 ≻", 'black', true);
+echo colorize("Find the LList element with 'key' 4 ≻", 'black', true);
 $start = __LINE__;
-$status = $rental_history->find(array('key' => 3), $elements);
+$status = $rental_history->find(array('key' => 4), $elements);
 if ($status === Aerospike::OK) {
     echo success();
     var_dump($elements);
@@ -209,6 +209,7 @@ if (isset($args['c']) || isset($args['clean'])) {
         echo standard_fail($db);
     }
     if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 }
 
 $db->close();

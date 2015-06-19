@@ -66,7 +66,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
      * "false" and handle the freeing up of the same here.
      */
     if (NULL == (bytes_p = (uint8_t *) emalloc(content_size + 1))) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Memory allocation failed for contents of UDF");
         DEBUG_PHP_EXT_DEBUG("Memory allocation failed for contents of UDF");
         goto exit;
@@ -78,6 +78,44 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
         size += read;
         buff_p += read;
         read = (int) fread(buff_p, 1, LUA_FILE_BUFFER_FRAME, file_p);
+    }
+
+    char *udf_path = LUA_USER_PATH_PHP_INI;
+    char copy_filepath[AS_CONFIG_PATH_MAX_LEN] = {0};
+    uint32_t user_path_len = strlen(udf_path);
+
+    memcpy(copy_filepath, udf_path, user_path_len);
+
+    if(udf_path[user_path_len - 1] != '/') {
+        memcpy(copy_filepath + user_path_len, "/", 1);
+    }
+
+    char *filename = strrchr(path_p, '/');
+    if(!filename) {
+        filename = path_p;
+    } else if(filename[0] == '/') {
+        filename = filename + 1;
+    }
+
+    memcpy(copy_filepath + user_path_len + 1, filename, strlen(filename));
+
+    FILE *fileW_p = NULL;
+    fileW_p = fopen(copy_filepath, "r");
+    if(!fileW_p && errno == ENOENT) {  
+        fileW_p = fopen(copy_filepath, "w");
+        if (!fileW_p) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
+                    "Cannot create script file");
+            DEBUG_PHP_EXT_DEBUG("Cannot create script file");
+            goto exit;
+        }
+
+        if (0 >= (int) fwrite(bytes_p, size, 1, fileW_p)) {
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
+                    "unable to write to script file");
+            DEBUG_PHP_EXT_DEBUG("unable to write to script file");
+            goto exit;
+        }
     }
 
     as_bytes_init_wrap(&udf_content, bytes_p, size, false);
@@ -104,6 +142,10 @@ exit:
 
     if (bytes_p) {
         efree(bytes_p);
+    }
+
+    if (fileW_p) {
+        fclose(fileW_p);
     }
 
     if (udf_content_p) {
@@ -173,14 +215,14 @@ exit:
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         as_key* as_key_p, as_error* error_p, char* module_p, char* function_p,
-        zval** args_pp, zval* return_value_p, zval* options_p)
+        zval** args_pp, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p)
 {
     as_arraylist                args_list;
     as_arraylist*               args_list_p = NULL;
     as_static_pool              udf_pool = {0};
     as_val*                     udf_result_p = NULL;
     foreach_callback_udata      udf_result_callback_udata;
-    uint32_t                    serializer_policy = -1;
+    int8_t                      serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
     as_policy_apply             apply_policy;
     TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
