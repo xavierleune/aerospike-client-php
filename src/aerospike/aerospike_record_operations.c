@@ -347,7 +347,16 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                         bin_name_p = (char *) Z_STRVAL_PP(each_operation);
                     } else if (!strcmp(options_key, "val")) {
                         if (IS_STRING == Z_TYPE_PP(each_operation)) {
-                            str = (char *) Z_STRVAL_PP(each_operation);
+                            if(op == AS_OPERATOR_INCR) {
+                                if( !(is_numeric_string(Z_STRVAL_PP(each_operation), Z_STRLEN_PP(each_operation), &offset, NULL, 0))) {
+                                    status = AEROSPIKE_ERR_PARAM;
+                                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
+                                    DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
+                                    goto exit;
+                                }
+                            } else {
+                                str = (char *) Z_STRVAL_PP(each_operation);
+                            }
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
                         } else {
