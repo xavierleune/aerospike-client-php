@@ -618,5 +618,65 @@ class Operate  extends AerospikeTestCommon
             return Aerospike::OK;
         }
     }
+    /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is a numeric string value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function TestOperateWithNumericStringOffset() {
+       $operations = array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => "100");
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+       } else {
+           return Aerospike::OK;
+       }
+   }
+   /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is a negative numeric string value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function TestOperateWithNegativeNumericStringOffset() {
+       $operations = array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => "-100");
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+       } else {
+           return Aerospike::OK;
+       }
+   }
+   /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is an invalid numeric string value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function TestOperateWithInvalidNumericStringOffset() {
+       $operations = array(array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => "100ia"));
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+       } else {
+           return Aerospike::OK;
+       }
+   }
 }
 ?>
