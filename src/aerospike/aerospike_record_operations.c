@@ -300,6 +300,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     char*                       str;
     zval **                     operation;
     int                         offset = 0;
+    long                        l_offset = 0;
     int                         op;
     zval**                      each_operation;
     zval**                      each_operation_back;
@@ -326,7 +327,6 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
         if (IS_ARRAY == Z_TYPE_PP(operation)) {
             each_operation_array_p = Z_ARRVAL_PP(operation);
             str = NULL;
-            offset = 0;
             op = 0;
             ttl = 0;
             bin_name_p = NULL;
@@ -368,7 +368,8 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             }
             if (op == AS_OPERATOR_INCR) {
                 if (str) {
-                    if  (!(is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &offset, NULL, 0))) {
+                    l_offset = (long) offset;
+                    if  (!(is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0))) {
                         status = AEROSPIKE_ERR_PARAM;
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
                         DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
