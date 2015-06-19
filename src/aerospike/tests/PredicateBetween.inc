@@ -66,7 +66,7 @@ class PredicateBetween extends AerospikeTestCommon
         }
         $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(1, 1)));
         if(!empty($op)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }
@@ -142,7 +142,7 @@ class PredicateBetween extends AerospikeTestCommon
         }
         $op = array_diff_assoc_recursive($ans, array("bin"=>"age", "op"=>"BETWEEN", "val"=>array(30, 40)));
         if(!empty($op)) {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return Aerospike::OK;
     }

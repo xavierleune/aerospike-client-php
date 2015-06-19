@@ -2045,7 +2045,7 @@ function testMixedTypesWithDefaultSerializer()
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
-                 return AEROSPIKE::ERR;
+                 return AEROSPIKE::ERR_CLIENT;
              }
          }
      return  $status;
@@ -2095,7 +2095,7 @@ function testMixedTypesWithDefaultSerializer()
              $comp_res = array_diff_assoc_recursive($put_record,
                  $get_record["bins"]);
              if(!empty($comp_res)) {
-                 return AEROSPIKE::ERR;
+                 return AEROSPIKE::ERR_CLIENT;
              }
          }
      return  $status;
@@ -2510,7 +2510,7 @@ function testMixedTypesWithDefaultSerializer()
          return $get_status;
      }
      $this->keys[] = $key;
-     if ($record['key']['key'] != 'policy_key_send_test') return Aerospike::ERR;
+     if ($record['key']['key'] != 'policy_key_send_test') return Aerospike::ERR_CLIENT;
      return $get_status;
  }
 /**

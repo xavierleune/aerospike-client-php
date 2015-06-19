@@ -336,7 +336,7 @@ class Scan extends AerospikeTestCommon
                         return Aerospike::OK;
                     }
                 } else {
-                    return(AEROSPIKE::ERR);
+                    return AEROSPIKE::ERR_CLIENT;
                 }
         }, array("email"), array(Aerospike::OPT_READ_TIMEOUT=>2000));
         $key = $this->db->initKey("test", "demo", "testing");

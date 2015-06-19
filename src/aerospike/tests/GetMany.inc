@@ -481,7 +481,7 @@ class GetMany extends AerospikeTestCommon
                 return $this->db->errorno();
             }
             if (empty($records)) {
-                return Aerospike::ERR;
+                return Aerospike::ERR_CLIENT;
             }
             return $this->db->status;
         } catch (ErrorException $e) {
