@@ -474,6 +474,7 @@ do {                                                                            
  *******************************************************************************************************
  */
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);
+extern bool AS_AGGREGATE_GET(const char *key, const as_val *value, void *array);
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
