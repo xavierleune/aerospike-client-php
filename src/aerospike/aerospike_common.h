@@ -711,6 +711,20 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* as_error_p
 
 /*
  ******************************************************************************************************
+ * Extern declarations of new Batch API Operations.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_batch_operations_exists_many_new(aerospike* as_object_p,
+        as_error* as_error_p, zval* keys_p, zval* metadata_p,
+        zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* as_error_p,
+        zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
  * Extern declarations of policy functions.
  ******************************************************************************************************
  */

@@ -327,6 +327,173 @@ exit:
     }
     return true;
 }
+
+/*
+ ******************************************************************************************************
+ * Get all records indentified by the array of keys. This functions same as the
+ * aerospike_batch_operations_get_many api, only difference being it uses new
+ * batch apis released with server version 3.5.15.
+ *
+ * @param as_object_p               The C Client's aerospike object.
+ * @param error_p                   The C client's as_error to be set to the encountered error.
+ * @param keys_p                    An array of initialized keys, each an array
+ *                                  with keys ['ns','set','key'] or ['ns','set','digest'].
+ * @param records_p                 The array of records to be populated with
+ *                                  the result by this method.
+ * @param filter_bins_p             The optional filter bins applicable to all
+ *                                  records.
+ * @param options_p                 Optional parameters.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ * ******************************************************************************************************
+ */
+extern as_status
+aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_p,
+        zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC)
+{
+    as_policy_batch         batch_policy;
+    as_batch                batch;
+    HashTable*              keys_ht_p = NULL;
+    HashPosition            key_pointer;
+    zval**                  key_entry;
+    int16_t                 initializeKey = 0;
+    int                     i = 0;
+    bool                    is_batch_init = false;
+    foreach_callback_udata  batch_get_callback_udata;
+    int                     filter_bins_count = 0;
+    as_batch_read_records   records;
+    as_vector*              list = NULL;
+    foreach_callback_udata  foreach_record_callback_udata;
+    bool                    null_flag = false;
+    as_batch_read_record*   record_batch = NULL;
+    zval*                   record_p_local = NULL;
+    zval*                   get_record_p = NULL;
+
+    if (!(as_object_p) || !(keys_p) || !(records_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to initiate batch get");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to initiate batch get");
+        goto exit;
+    }
+
+    set_policy_batch(&as_object_p->config, &batch_policy, options_p, error_p TSRMLS_CC);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    if(Z_TYPE_P(keys_p) == IS_ARRAY) {
+        keys_ht_p = Z_ARRVAL_P(keys_p);
+    } else {
+        DEBUG_PHP_EXT_DEBUG("Invalid type for keys");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid type for keys");
+    }
+
+    if (zend_hash_num_elements(keys_ht_p) == 0) {
+        /*
+         * No need to set error here. This condition can be eliminated after C
+         * SDK adds check for size.
+         */
+        goto exit;
+    }
+
+    as_batch_inita(&batch, zend_hash_num_elements(keys_ht_p));
+    is_batch_init = true;
+
+    as_batch_read_inita(&records, zend_hash_num_elements(keys_ht_p));
+
+    as_batch_read_record* record = NULL;
+
+    foreach_hashtable(keys_ht_p, key_pointer, key_entry) {
+        record = as_batch_read_reserve(&records);
+        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+                &record->key, &initializeKey);
+        i++;
+    }
+
+    batch_get_callback_udata.udata_p = records_p;
+    batch_get_callback_udata.error_p = error_p;
+
+    if (filter_bins_p) {
+        filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
+        const char* select_p[filter_bins_count];
+        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
+
+        record->bin_names = select_p;
+        record->n_bin_names = filter_bins_count;
+    } else {
+        record->read_all_bins = true;
+    }
+
+    if (aerospike_batch_read(as_object_p, error_p, &batch_policy, &records) != AEROSPIKE_OK) {
+        DEBUG_PHP_EXT_DEBUG("Aerospike batch read failed");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Aerospike batch read failed with error");
+        goto exit;
+    }
+
+    list = &(records.list);
+
+    for (i = 0; i < list->size; i++ ) {
+        record_batch = as_vector_get(list, i);
+
+        if (record_batch->result == AEROSPIKE_OK) {
+            MAKE_STD_ZVAL(record_p_local);
+            array_init(record_p_local);
+            ALLOC_INIT_ZVAL(get_record_p);
+            array_init(get_record_p);
+            batch_get_callback_udata;
+
+            foreach_record_callback_udata.udata_p = get_record_p;
+            foreach_record_callback_udata.error_p = batch_get_callback_udata.error_p;
+            foreach_record_callback_udata.obj = batch_get_callback_udata.obj;
+            null_flag = false;
+        } else if (record_batch->result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
+            null_flag = true;
+        }
+
+        populate_result_for_get_exists_many((as_key *)(&(record_batch->key)),
+                batch_get_callback_udata.udata_p, record_p_local, batch_get_callback_udata.error_p, null_flag TSRMLS_CC);
+        if (AEROSPIKE_OK != batch_get_callback_udata.error_p->code) {
+            DEBUG_PHP_EXT_DEBUG("%s", batch_get_callback_udata.error_p->message);
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "populate result failed.");
+        }
+
+        if( null_flag) {
+            goto exit;
+        }
+
+        if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record(NULL, (as_record *)&(record_batch->record),
+                    (as_key *)&(record_batch->key), record_p_local, NULL, false TSRMLS_CC)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get metadata of the record");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of the record");
+            goto exit;
+        }
+
+        if (!as_record_foreach(&(record_batch->record), (as_rec_foreach_callback) AS_DEFAULT_GET,
+                    &foreach_record_callback_udata)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get bins of the record");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get bins of the record");
+            goto exit;
+        }
+
+        if (0 != add_assoc_zval(record_p_local, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get the record");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get the record");
+            goto exit;
+        }
+    }
+
+exit:
+    foreach_record_callback_udata.udata_p = NULL;
+    if (get_record_p) {
+        zval_ptr_dtor(&get_record_p);
+    }
+
+    if (is_batch_init) {
+        as_batch_destroy(&batch);
+    }
+    return error_p->code;
+}
+
 /*
  ******************************************************************************************************
  * Get all records identified by the array of keys.
