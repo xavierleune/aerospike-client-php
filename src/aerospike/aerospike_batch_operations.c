@@ -135,6 +135,78 @@ exit:
 }
 
 /*
+ *****************************************************************************************************
+ * aerospike_batch_operations_exists_many_new - check if a batch of records exist
+ * in the Aerospike database. This is similar to the
+ * aerospike_batch_operations_exists_many api only difference being it uses new
+ * server batch apis.
+ *
+ * @param as_object_p              The C Client's aerospike object.
+ * @param error_p                  The C Client's as_error to be set to the
+ *                                 encounterer error.
+ * @param keys_p                   An array of initialized keys, each an array
+ *                                 with keys ['ns','set','key'] or
+ *                                 ['ns','set','digest'].
+ * @param metadata_p               Metadata of records.
+ * @param options_p                Optional parametes.
+ * 
+ *****************************************************************************************************
+ */
+/*extern as_status
+aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* error_p, 
+        zval* keys_p, zval* metadata_p, zval* options_p TSRMLS_DC)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_policy_read          read_policy;
+    as_policy_batch         batch_policy;
+    as_batch                batch;
+    HashTable*              keys_array = NULL;
+    HashPosition            key_pointer;
+    zval**                  key_entry;
+    int16_t                 initializeKey = 0;
+    int                     i = 0;
+    bool                    is_batch_init = false;
+    foreach_callback_udata  metadata_callback;
+
+    if (!(as_object_p) || !(keys_p) || !(metadata_P)) {
+        status = AEROSPIKE_ERR_PARAM;
+        goto exit;
+    }
+
+    set_policy_batch(&as_object_p->config, &batch_policy, options_p,
+            error_p TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    keys_array = Z_ARRIVAL_P(keys_p);
+    if(zend_hanh_num_elements(keys_array) == 0 ) {
+        goto exit;
+    }
+
+    as_batch_inita(&batch, zend_hash_num_elements(keys_array));
+    is_batch_init = true;
+
+    as_batch_read_inita(&records, zend_hash_num_elements(keys_ht_p));
+
+    as_batch_read_record* record = NULL;
+
+    foreach_hashtable(keys_array, key_pointer, key_entry) {
+        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+                as_batch_keyat(&batch,i), &initializeKey);
+        i++;
+    }
+
+    batch_get_callback_udata.udata_p = records_p;
+    batch_get_callback_udata.error_p = error_p;
+    if (aerospike_batch_read(as_object_p, error_p, &batch_policy, &records) != AEROSPIKE_OK) {
+        goto exit;
+    }
+}
+*/
+/*
  ******************************************************************************************************
  * Aerospike::existsMany - check if a batch of records exist in the Aerospike database.
  *
@@ -352,7 +424,6 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
         zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC)
 {
     as_policy_batch         batch_policy;
-    as_batch                batch;
     HashTable*              keys_ht_p = NULL;
     HashPosition            key_pointer;
     zval**                  key_entry;
@@ -396,9 +467,6 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
          */
         goto exit;
     }
-
-    as_batch_inita(&batch, zend_hash_num_elements(keys_ht_p));
-    is_batch_init = true;
 
     as_batch_read_inita(&records, zend_hash_num_elements(keys_ht_p));
 
@@ -446,49 +514,57 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
             null_flag = false;
         } else if (record_batch->result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
             null_flag = true;
+        } else {
+            return record_batch->result;
         }
+
 
         populate_result_for_get_exists_many((as_key *)(&(record_batch->key)),
                 batch_get_callback_udata.udata_p, record_p_local, batch_get_callback_udata.error_p, null_flag TSRMLS_CC);
         if (AEROSPIKE_OK != batch_get_callback_udata.error_p->code) {
             DEBUG_PHP_EXT_DEBUG("%s", batch_get_callback_udata.error_p->message);
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "populate result failed.");
+            goto cleanup;
         }
 
         if( null_flag) {
-            goto exit;
+            goto cleanup;
         }
+
 
         if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record(NULL, (as_record *)&(record_batch->record),
                     (as_key *)&(record_batch->key), record_p_local, NULL, false TSRMLS_CC)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of the record");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of the record");
-            goto exit;
+            goto cleanup;
         }
 
         if (!as_record_foreach(&(record_batch->record), (as_rec_foreach_callback) AS_DEFAULT_GET,
                     &foreach_record_callback_udata)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get bins of the record");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get bins of the record");
-            goto exit;
+            goto cleanup;
         }
 
         if (0 != add_assoc_zval(record_p_local, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get the record");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get the record");
-            goto exit;
+            goto cleanup;
+        }
+
+        if (batch_get_callback_udata.error_p->code == AEROSPIKE_OK) {
+            continue;
+        }
+
+cleanup:
+        foreach_record_callback_udata.udata_p = NULL;
+        if (get_record_p) {
+            zval_ptr_dtor(&get_record_p);
         }
     }
+    as_batch_read_destroy(&records);
 
 exit:
-    //    foreach_record_callback_udata.udata_p = NULL;
-    /*    if (get_record_p) {
-          zval_ptr_dtor(&get_record_p);
-          }
-          */
-    /*    if (is_batch_init) {
-          as_batch_destroy(&batch);
-          }*/
     return error_p->code;
 }
 
