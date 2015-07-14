@@ -152,23 +152,26 @@ exit:
  * 
  *****************************************************************************************************
  */
-/*extern as_status
+extern as_status
 aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* error_p, 
         zval* keys_p, zval* metadata_p, zval* options_p TSRMLS_DC)
 {
     as_status               status = AEROSPIKE_OK;
     as_policy_read          read_policy;
     as_policy_batch         batch_policy;
-    as_batch                batch;
     HashTable*              keys_array = NULL;
     HashPosition            key_pointer;
     zval**                  key_entry;
     int16_t                 initializeKey = 0;
     int                     i = 0;
     bool                    is_batch_init = false;
+    bool                    null_flag = false;
     foreach_callback_udata  metadata_callback;
+    as_batch_read_record*   record_batch = NULL;
+    as_batch_read_records   records;
+    as_vector*              list = NULL;
 
-    if (!(as_object_p) || !(keys_p) || !(metadata_P)) {
+    if (!(as_object_p) || !(keys_p) || !(metadata_p)) {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;
     }
@@ -181,31 +184,80 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
         goto exit;
     }
 
-    keys_array = Z_ARRIVAL_P(keys_p);
-    if(zend_hanh_num_elements(keys_array) == 0 ) {
+    keys_array = Z_ARRVAL_P(keys_p);
+    if(zend_hash_num_elements(keys_array) == 0 ) {
         goto exit;
     }
 
-    as_batch_inita(&batch, zend_hash_num_elements(keys_array));
-    is_batch_init = true;
-
-    as_batch_read_inita(&records, zend_hash_num_elements(keys_ht_p));
+    as_batch_read_inita(&records, zend_hash_num_elements(keys_array));
 
     as_batch_read_record* record = NULL;
 
     foreach_hashtable(keys_array, key_pointer, key_entry) {
+        record = as_batch_read_reserve(&records);
         aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
-                as_batch_keyat(&batch,i), &initializeKey);
+                &record->key, &initializeKey);
         i++;
     }
 
-    batch_get_callback_udata.udata_p = records_p;
-    batch_get_callback_udata.error_p = error_p;
+    metadata_callback.udata_p = metadata_p;
+    metadata_callback.error_p = error_p;
     if (aerospike_batch_read(as_object_p, error_p, &batch_policy, &records) != AEROSPIKE_OK) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get metadata of batch records");
         goto exit;
     }
+
+    list = &(records.list);
+
+    for (i = 0; i < list->size; i++) {
+        record_batch = as_vector_get(list, i);
+        zval *record_metadata_p = NULL;
+
+        if (record_batch->result == AEROSPIKE_OK) {
+            MAKE_STD_ZVAL(record_metadata_p);
+            array_init(record_metadata_p);
+            if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
+                        record_batch->record.gen)) {
+                DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
+                PHP_EXT_SET_AS_ERR(metadata_callback.error_p, AEROSPIKE_ERR_SERVER,
+                        "Unable to get generation of record");
+                goto cleanup;
+            }
+
+            if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_TTL,
+                        record_batch->record.ttl)) {
+                DEBUG_PHP_EXT_DEBUG("Unable to get ttl of a record");
+                PHP_EXT_SET_AS_ERR(metadata_callback.error_p, AEROSPIKE_ERR_SERVER,
+                        "Unable to get ttl of a record");
+                goto cleanup;
+            }
+            null_flag = false;
+        } else if (record_batch->result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
+            null_flag = true;
+        } else {
+            return false;
+        }
+
+        populate_result_for_get_exists_many((as_key *) (&(record_batch->key)),
+                metadata_callback.udata_p, record_metadata_p, metadata_callback.error_p,
+                null_flag TSRMLS_CC);
+
+        if( AEROSPIKE_OK != metadata_callback.error_p->code) {
+            DEBUG_PHP_EXT_DEBUG("%s", metadata_callback.error_p->message);
+            goto cleanup;
+        } else {
+            continue;
+        }
+cleanup:
+        if( record_metadata_p && (AEROSPIKE_OK != metadata_callback.error_p->code)) {
+            zval_ptr_dtor(&record_metadata_p);
+        }
+    }
+exit:
+
+    return error_p->code;
 }
-*/
+
 /*
  ******************************************************************************************************
  * Aerospike::existsMany - check if a batch of records exist in the Aerospike database.

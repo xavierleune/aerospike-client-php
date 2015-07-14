@@ -1071,10 +1071,16 @@ PHP_METHOD(Aerospike, existsMany)
     zval_dtor(metadata_p);
     array_init(metadata_p);
 
-    if (AEROSPIKE_OK !=
-            (status = aerospike_batch_operations_exists_many(aerospike_obj_p->as_ref_p->as_p,
-                                                             &error, keys_p, metadata_p,
-                                                             options_p TSRMLS_CC))) {
+    if (aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
+        status = aerospike_batch_operations_exists_many_new(aerospike_obj_p->as_ref_p->as_p,
+                &error, keys_p, metadata_p,
+                options_p TSRMLS_CC);
+    } else {
+        status = aerospike_batch_operations_exists_many(aerospike_obj_p->as_ref_p->as_p,
+                &error, keys_p, metadata_p,
+                options_p TSRMLS_CC);
+    }
+    if (AEROSPIKE_OK != status ) {
         DEBUG_PHP_EXT_ERROR("existsMany() function returned an error");
         goto exit;
     }
@@ -1207,11 +1213,11 @@ PHP_METHOD(Aerospike, operate)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_operations_operate(aerospike_obj_p,
-                    &as_key_for_get_record,
-                    options_p,
-                    &error,
-                    returned_p,
-                    Z_ARRVAL_P(operations_p)))) {
+                                                          &as_key_for_get_record,
+                                                          options_p,
+                                                          &error,
+                                                          returned_p,
+                                                          Z_ARRVAL_P(operations_p)))) {
         DEBUG_PHP_EXT_ERROR("Operate function returned an error");
         goto exit;
     }
@@ -1729,7 +1735,7 @@ PHP_METHOD(Aerospike, initKey)
 
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz|b", &ns_p, &ns_p_length,
-                                         &set_p, &set_p_length, &pk_p, &is_digest)) {
+                &set_p, &set_p_length, &pk_p, &is_digest)) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1,3 to be a non-empty strings");
         DEBUG_PHP_EXT_ERROR("Aerospike::initKey() expects parameter 1,3 to be non-empty strings");
         RETURN_NULL();
@@ -1766,7 +1772,7 @@ PHP_METHOD(Aerospike, getKeyDigest)
     char                    *digest_p = NULL;
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length,
-                                         &set_p, &set_p_length, &pk_p)) {
+                &set_p, &set_p_length, &pk_p)) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
         DEBUG_PHP_EXT_ERROR("Aerospike::getKeyDigest() expects parameter 1-2 to be non-empty strings and parameter 3 to be non-empty string/integer");
         RETURN_NULL();
@@ -1821,7 +1827,7 @@ PHP_METHOD(Aerospike, setSerializer)
     as_status              status = AEROSPIKE_OK;
 
     if (user_serializer_call_info.function_name &&
-        (Z_ISREF_P(user_serializer_call_info.function_name))) {
+            (Z_ISREF_P(user_serializer_call_info.function_name))) {
         /*
          * once set the same serializer would be used. Incase a new 
          * serializer is to be given, then we would have to unref the older
@@ -2049,7 +2055,7 @@ PHP_METHOD(Aerospike, predicateContains)
 
 /* {{{ proto array Aerospike::predicateRange( string bin, int index_type,
  * int min, int max )
-   Helper which builds the 'WHERE RANGE' predicate */
+ Helper which builds the 'WHERE RANGE' predicate */
 PHP_METHOD(Aerospike, predicateRange)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2170,8 +2176,8 @@ PHP_METHOD(Aerospike, query)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!f|a!a!",
-        &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
-        &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
+                &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
+                &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::query() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::query() unable to parse parameters");
@@ -2267,8 +2273,8 @@ PHP_METHOD(Aerospike, aggregate)
 
     if (((args_p) && (PHP_TYPE_ISNOTARR(args_p)) &&
                 (PHP_TYPE_ISNOTNULL(args_p))) || ((options_p) &&
-                (PHP_TYPE_ISNOTARR(options_p)) &&
-                (PHP_TYPE_ISNOTNULL(options_p))) ||
+                    (PHP_TYPE_ISNOTARR(options_p)) &&
+                    (PHP_TYPE_ISNOTNULL(options_p))) ||
             (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(function_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(namespace_zval_p)) ||
@@ -2366,8 +2372,8 @@ PHP_METHOD(Aerospike, scan)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!f|aza",
-        &ns_p, &ns_p_length, &set_p, &set_p_length,
-        &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
+                &ns_p, &ns_p_length, &set_p, &set_p_length,
+                &user_func.fci, &user_func.fcc, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         DEBUG_PHP_EXT_ERROR("Aerospike::scan() unable to parse parameters");
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Aerospike::scan() unable to parse parameters");
@@ -2388,8 +2394,8 @@ PHP_METHOD(Aerospike, scan)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
-                                     &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                                         &error, ns_p, set_p, &user_func,
+                                         bins_ht_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -2452,8 +2458,8 @@ PHP_METHOD(Aerospike, scanApply)
 
     if (((args_p) && (PHP_TYPE_ISNOTARR(args_p)) &&
                 (PHP_TYPE_ISNOTNULL(args_p))) || ((options_p) &&
-                (PHP_TYPE_ISNOTARR(options_p)) &&
-                (PHP_TYPE_ISNOTNULL(options_p))) ||
+                    (PHP_TYPE_ISNOTARR(options_p)) &&
+                    (PHP_TYPE_ISNOTNULL(options_p))) ||
             (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(function_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(namespace_zval_p)) ||
@@ -2500,9 +2506,9 @@ PHP_METHOD(Aerospike, scanApply)
     ZVAL_LONG(scan_id_p, 0);
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
-                                                &error, module_p, function_name_p,
-                                                &args_p, namespace_p, set_p,
-                                                scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                                                    &error, module_p, function_name_p,
+                                                    &args_p, namespace_p, set_p,
+                                                    scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
@@ -3049,9 +3055,9 @@ PHP_METHOD(Aerospike, createIndex)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_index_create_php(aerospike_obj_p->as_ref_p->as_p,
-                                             &error, ns_p, set_p, bin_p, name_p,
-                                             AS_INDEX_TYPE_DEFAULT, type,
-                                             options_p TSRMLS_CC))) {
+                                                 &error, ns_p, set_p, bin_p, name_p,
+                                                 AS_INDEX_TYPE_DEFAULT, type,
+                                                 options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("createIndex() function returned an error");
         goto exit;
     }
@@ -3065,7 +3071,7 @@ exit:
 
 /* {{{ proto int Aerospike::addIndex( string ns, string set, string bin, string name,
  * int index_type, int data_type [, array options ] )
-   Creates a secondary index on a bin of a specified set */
+ Creates a secondary index on a bin of a specified set */
 PHP_METHOD(Aerospike, addIndex)
 {
     as_status               status = AEROSPIKE_OK;
@@ -3126,8 +3132,8 @@ PHP_METHOD(Aerospike, addIndex)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_index_create_php(aerospike_obj_p->as_ref_p->as_p,
-                                             &error, ns_p, set_p, bin_p, name_p,
-                                             index_type, datatype, options_p TSRMLS_CC))) {
+                                                 &error, ns_p, set_p, bin_p, name_p,
+                                                 index_type, datatype, options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("addIndex() function returned an error");
         goto exit;
     }
