@@ -368,6 +368,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
     as_batch_read_record*   record_batch = NULL;
     zval*                   record_p_local = NULL;
     zval*                   get_record_p = NULL;
+    const char**            select_p;
 
     if (!(as_object_p) || !(keys_p) || !(records_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate batch get");
@@ -408,22 +409,20 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
         aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
                 &record->key, &initializeKey);
         i++;
-    }
 
+        if (filter_bins_p) {
+            filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
+            select_p = (char**)emalloc(sizeof(char*) * filter_bins_count);
+            process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
+
+            record->bin_names = select_p;
+            record->n_bin_names = filter_bins_count;
+        } else {
+            record->read_all_bins = true;
+        }
+    }
     batch_get_callback_udata.udata_p = records_p;
     batch_get_callback_udata.error_p = error_p;
-
-    if (filter_bins_p) {
-        filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
-        const char* select_p[filter_bins_count];
-        process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
-
-        record->bin_names = select_p;
-        record->n_bin_names = filter_bins_count;
-    } else {
-        record->read_all_bins = true;
-    }
-
     if (aerospike_batch_read(as_object_p, error_p, &batch_policy, &records) != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Aerospike batch read failed");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Aerospike batch read failed with error");
@@ -440,7 +439,6 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
             array_init(record_p_local);
             ALLOC_INIT_ZVAL(get_record_p);
             array_init(get_record_p);
-            batch_get_callback_udata;
 
             foreach_record_callback_udata.udata_p = get_record_p;
             foreach_record_callback_udata.error_p = batch_get_callback_udata.error_p;
@@ -454,6 +452,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
                 batch_get_callback_udata.udata_p, record_p_local, batch_get_callback_udata.error_p, null_flag TSRMLS_CC);
         if (AEROSPIKE_OK != batch_get_callback_udata.error_p->code) {
             DEBUG_PHP_EXT_DEBUG("%s", batch_get_callback_udata.error_p->message);
+            printf("%s", batch_get_callback_udata.error_p->message);
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "populate result failed.");
         }
 
@@ -464,6 +463,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
         if (AEROSPIKE_OK != aerospike_get_key_meta_bins_of_record(NULL, (as_record *)&(record_batch->record),
                     (as_key *)&(record_batch->key), record_p_local, NULL, false TSRMLS_CC)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of the record");
+            printf("Unable to get metadata of the record");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of the record");
             goto exit;
         }
@@ -471,26 +471,28 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
         if (!as_record_foreach(&(record_batch->record), (as_rec_foreach_callback) AS_DEFAULT_GET,
                     &foreach_record_callback_udata)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get bins of the record");
+            printf("Unable to get bins of the record");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get bins of the record");
             goto exit;
         }
 
         if (0 != add_assoc_zval(record_p_local, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get the record");
+            printf("Unable to get the record");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get the record");
             goto exit;
         }
     }
 
 exit:
-    foreach_record_callback_udata.udata_p = NULL;
-    if (get_record_p) {
-        zval_ptr_dtor(&get_record_p);
-    }
-
-    if (is_batch_init) {
-        as_batch_destroy(&batch);
-    }
+    //    foreach_record_callback_udata.udata_p = NULL;
+    /*    if (get_record_p) {
+          zval_ptr_dtor(&get_record_p);
+          }
+          */
+    /*    if (is_batch_init) {
+          as_batch_destroy(&batch);
+          }*/
     return error_p->code;
 }
 
@@ -511,7 +513,7 @@ exit:
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  * ******************************************************************************************************
  */
-extern as_status
+    extern as_status
 aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
         zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC)
 {
