@@ -1343,6 +1343,30 @@ exit:
 
 /*
  *******************************************************************************************************
+ * helper function for as_query_foreach's callback.
+ *
+ * @param key                   The bin name.
+ * @param value                 The current bin value.
+ * @param array                 The foreach_callback_udata struct containing the PHP record array 
+ *                              as well as the as_error to be populated by the callback.
+ *
+ * @return true if the callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
+extern bool AS_AGGREGATE_GET(const char *key, const as_val *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
+    TSRMLS_FETCH();
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(((foreach_callback_udata *) array)->error_p,
+            NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
+
+exit:
+    return (((((foreach_callback_udata *) array)->error_p)->code == AEROSPIKE_OK) ? true : false);
+}
+
+/*
+ *******************************************************************************************************
  * Sets a map in a record.
  *
  * @param outer_store       The as_record in which as_map is to be set.

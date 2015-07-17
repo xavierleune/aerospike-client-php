@@ -115,7 +115,7 @@ if($status !== Aerospike::OK) {
 } else {
     echo success();
     echo "Counts of characters in their first two centuries, grouped by workplace:\n";
-    var_dump($result['bins']);
+    var_dump($result);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
