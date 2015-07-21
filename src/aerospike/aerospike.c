@@ -389,6 +389,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, createUser, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, dropUser, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, changePassword, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, setPassword, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, grantRoles, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, revokeRoles, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, queryUser, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
@@ -3404,6 +3405,73 @@ PHP_METHOD(Aerospike, changePassword)
                                                                     &error, user_p, password_p,
                                                                     options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("changePassword() function returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
+/*
+ *******************************************************************************************************
+ * PHP Method:  Aerospike::setPassword()
+ *******************************************************************************************************
+ * Sets the password of an existing user in a security-enabled Aerospike database
+ * Method prototype for PHP userland:
+ * public int setPassword ( string $user, string $password [, array $options ] )
+ *******************************************************************************************************
+ */
+PHP_METHOD(Aerospike, setPassword)
+{
+    as_status               status = AEROSPIKE_OK;
+    as_error                error;
+    char*                   user_p = NULL;
+    int                     user_p_length = 0;
+    char*                   password_p = NULL;
+    int                     password_p_length = 0;
+    zval*                   options_p = NULL;
+    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "setPassword: Connection not established");
+        DEBUG_PHP_EXT_ERROR("setPassword: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
+                &user_p, &user_p_length, &password_p, &password_p_length,
+                &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for setPassword()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for setPassword()");
+        goto exit;
+    }
+
+    if (user_p_length == 0 || password_p_length == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Aerospike::setPassword() expects parameters 1-2 to be non-empty strings");
+        DEBUG_PHP_EXT_ERROR("Aerospike::setPassword() expects parameters 1-2 to be non-empty strings");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_security_operations_set_password(aerospike_obj_p->as_ref_p->as_p,
+                                                                    &error, user_p, password_p,
+                                                                    options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("setPassword() function returned an error");
         goto exit;
     }
 

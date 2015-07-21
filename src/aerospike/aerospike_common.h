@@ -747,6 +747,11 @@ aerospike_security_operations_change_password(aerospike* as_object_p,
         zval* options_p TSRMLS_DC);
 
 extern as_status
+aerospike_security_operations_set_password(aerospike* as_object_p,
+        as_error *error_p, char* user_p, char* password_p,
+        zval* options_p TSRMLS_DC);
+
+extern as_status
 aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *error_p,
         char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
 

@@ -178,6 +178,7 @@ PHP_METHOD(Aerospike, operate);
 PHP_METHOD(Aerospike, createUser);
 PHP_METHOD(Aerospike, dropUser);
 PHP_METHOD(Aerospike, changePassword);
+PHP_METHOD(Aerospike, setPassword);
 PHP_METHOD(Aerospike, grantRoles);
 PHP_METHOD(Aerospike, revokeRoles);
 PHP_METHOD(Aerospike, queryUser);

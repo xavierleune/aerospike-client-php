@@ -388,8 +388,8 @@ aerospike_security_operations_change_password(aerospike* as_object_p,
     as_policy_admin             admin_policy;
 
     if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to create user");
-        DEBUG_PHP_EXT_DEBUG("Unable to create user");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to change password");
+        DEBUG_PHP_EXT_DEBUG("Unable to change password");
         goto exit;
     }
 
@@ -399,11 +399,54 @@ aerospike_security_operations_change_password(aerospike* as_object_p,
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         goto exit;
     }
-   
-	aerospike_set_password(as_object_p, error_p, &admin_policy, user_p, password_p);
+
+	aerospike_change_password(as_object_p, error_p, &admin_policy, user_p, password_p);
     if (AEROSPIKE_OK != error_p->code) {
         PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to change password");
         DEBUG_PHP_EXT_DEBUG("Unable to change password");
+        goto exit;
+    }
+
+exit:
+    return(error_p->code);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function to set password of an existing user on aerospike server.
+ *
+ * @param as_object_p           The C client's aerospike object.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ * @param user_p                The user whose password is to be changed.
+ * @param password_p            The new password of the user.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ *
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_security_operations_set_password(aerospike* as_object_p,
+        as_error *error_p, char* user_p, char* password_p,
+        zval* options_p TSRMLS_DC)
+{
+    as_policy_admin             admin_policy;
+
+    if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set password");
+        DEBUG_PHP_EXT_DEBUG("Unable to set password");
+        goto exit;
+    }
+
+    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+	aerospike_set_password(as_object_p, error_p, &admin_policy, user_p, password_p);
+    if (AEROSPIKE_OK != error_p->code) {
+        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to set password");
+        DEBUG_PHP_EXT_DEBUG("Unable to set password");
         goto exit;
     }
 

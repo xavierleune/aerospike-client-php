@@ -1,18 +1,18 @@
 <?php
 class ChangePassword extends AerospikeTestCommon
 {
+    static $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
     protected function setUp() {
-        $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
-        $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
+        $config = array("hosts"=>array(self::$host), "user"=>"admin", "pass"=>"admin");
         $this->db = new Aerospike($config);
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
         }
-        $res = $this->db->createUser("example", "example@123", array("read"));
+        $res = $this->db->createUser("testchangepassworduser", "aerospike", array("read"));
     }
 
     protected function tearDown() {
-        $res = $this->db->dropUser("example");
+        $res = $this->db->dropUser("testchangepassworduser");
         $this->db->close();
     }
     /**
@@ -55,11 +55,26 @@ class ChangePassword extends AerospikeTestCommon
      */
     function testChangePasswordPositive()
     {
-	    $res = $this->db->changePassword("example", "john@123");
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword($user, "john123");
 	    if ($res == Aerospike::OK) {
-    	    return Aerospike::OK;
+            $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+            $wrongconnection = new Aerospike($config, false);
+            if (!$wrongconnection->isConnected()) {
+                $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"john@123");
+                $rightconnection = new Aerospike($config);
+                if ($rightconnection->isConnected()) {
+                    $rightconnection->close();
+                    $connection->close();
+                    return AEROSPIKE::OK;
+                }
+            } else {
+                return AEROSPIKE::ERR_CLIENT;
+            }
         } else {
-    	    return $this->db->error();
+    	    return $connection->errorno();
 	    }
     }
     /**
@@ -79,11 +94,26 @@ class ChangePassword extends AerospikeTestCommon
      */
     function testChangePasswordCorrectTimeout()
     {
-	    $res = $this->db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword($user, "john123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
 	    if ($res == Aerospike::OK) {
-	        return Aerospike::OK;
+            $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+            $wrongconnection = new Aerospike($config, false);
+            if (!$wrongconnection->isConnected()) {
+                $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"john@123");
+                $rightconnection = new Aerospike($config);
+                if ($rightconnection->isConnected()) {
+                    $rightconnection->close();
+                    $connection->close();
+                    return AEROSPIKE::OK;
+                }
+            } else {
+                return AEROSPIKE::ERR_CLIENT;
+            }
         } else {
-    	    return $this->db->errorno();
+    	    return $connection->errorno();
 	    }
     }
     /**
@@ -103,11 +133,14 @@ class ChangePassword extends AerospikeTestCommon
      */
     function testChangePasswordIncorrectTimeout()
     {
-        $res = $this->db->changePassword("example", "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 0.2));
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword($user, "john123", array(Aerospike::OPT_WRITE_TIMEOUT => 0.2));
         if ($res == Aerospike::OK) {
-	        return Aerospike::OK;
+            return Aerospike::OK;
         } else {
-		    return $this->db->errorno();
+            return $connection->errorno();
         }
     }
     /**
@@ -127,11 +160,14 @@ class ChangePassword extends AerospikeTestCommon
      */
     function testChangePasswordNonExistentUser()
     {
-        $res = $this->db->changePassword("abcdefgh", "john@123");
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword("abcdefgh", "john@123");
         if ($res == Aerospike::OK) {
 	        return Aerospike::OK;
         } else {
-		    return $this->db->errorno();
+		    return $connection->errorno();
         }
     }
     /**
@@ -151,11 +187,14 @@ class ChangePassword extends AerospikeTestCommon
      */
     function testChangePasswordNullUser()
     {
-        $res = $this->db->changePassword(NULL, "example@123");
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword(NULL, "example@123");
         if ($res == Aerospike::OK) {
 	        return Aerospike::OK;
         } else {
-		    return $this->db->errorno();
+		    return $connection->errorno();
         }
     }
     /**
@@ -175,11 +214,14 @@ class ChangePassword extends AerospikeTestCommon
      */
     function testChangePasswordNullPassword()
     {
-        $res = $this->db->changePassword("example", NULL);
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword("example", NULL);
         if ($res == Aerospike::OK) {
 	        return Aerospike::OK;
         } else {
-		    return $this->db->errorno();
+		    return $connection->errorno();
         }
     }
     /**
@@ -200,14 +242,17 @@ class ChangePassword extends AerospikeTestCommon
     function testChangePasswordVeryLong()
     {
 	    $pass = "pass";
-	    for ($i=1; $i<100; $i++) {
+	    for ($i=1; $i<10; $i++) {
 		    $pass = $pass + "pass";
 	    }
-        $res = $this->db->changePassword("example", $pass);
+        $user = "testchangepassworduser";
+        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
+        $connection = new Aerospike($config, false);
+        $res = $connection->changePassword($user, $pass);
         if ($res == Aerospike::OK) {
-	        return Aerospike::OK;
+            return Aerospike::OK;
         } else {
-		    return $this->db->errorno();
-        }
+    	    return $connection->errorno();
+	    }
     }
 }
