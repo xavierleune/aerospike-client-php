@@ -28,6 +28,7 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
         char* path_p, char* module_p, long language, zval* options_p)
 {
     FILE*                   file_p = NULL;
+    FILE*                   fileW_p = NULL;
     uint32_t                size = 0;
     uint32_t                content_size;
     uint8_t*                bytes_p = NULL;
@@ -99,23 +100,18 @@ aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
 
     memcpy(copy_filepath + user_path_len + 1, filename, strlen(filename));
 
-    FILE *fileW_p = NULL;
-    fileW_p = fopen(copy_filepath, "r");
-    if(!fileW_p && errno == ENOENT) {  
-        fileW_p = fopen(copy_filepath, "w");
-        if (!fileW_p) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
+    fileW_p = fopen(copy_filepath, "w");
+    if (!fileW_p) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
                     "Cannot create script file");
-            DEBUG_PHP_EXT_DEBUG("Cannot create script file");
-            goto exit;
-        }
+        DEBUG_PHP_EXT_DEBUG("Cannot create script file");
+        goto exit;
+    }
 
-        if (0 >= (int) fwrite(bytes_p, size, 1, fileW_p)) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND,
-                    "unable to write to script file");
+    if (0 >= (int) fwrite(bytes_p, size, 1, fileW_p)) {
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_UDF_NOT_FOUND, "unable to write to script file");
             DEBUG_PHP_EXT_DEBUG("unable to write to script file");
-            goto exit;
-        }
+        goto exit;
     }
 
     as_bytes_init_wrap(&udf_content, bytes_p, size, false);

@@ -300,8 +300,10 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     char*                       str;
     zval **                     operation;
     int                         offset = 0;
+    long                        l_offset = 0;
     int                         op;
     zval**                      each_operation;
+    zval**                      each_operation_back;
     int8_t                      serializer_policy;
     uint32_t                    ttl;
     foreach_callback_udata      foreach_record_callback_udata;
@@ -325,7 +327,6 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
         if (IS_ARRAY == Z_TYPE_PP(operation)) {
             each_operation_array_p = Z_ARRVAL_PP(operation);
             str = NULL;
-            offset = 0;
             op = 0;
             ttl = 0;
             bin_name_p = NULL;
@@ -347,16 +348,8 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                         bin_name_p = (char *) Z_STRVAL_PP(each_operation);
                     } else if (!strcmp(options_key, "val")) {
                         if (IS_STRING == Z_TYPE_PP(each_operation)) {
-                            if(op == AS_OPERATOR_INCR) {
-                                if( !(is_numeric_string(Z_STRVAL_PP(each_operation), Z_STRLEN_PP(each_operation), &offset, NULL, 0))) {
-                                    status = AEROSPIKE_ERR_PARAM;
-                                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
-                                    DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
-                                    goto exit;
-                                }
-                            } else {
-                                str = (char *) Z_STRVAL_PP(each_operation);
-                            }
+                            str = (char *) Z_STRVAL_PP(each_operation);
+                            each_operation_back = each_operation;
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
                         } else {
@@ -369,6 +362,17 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                         status = AEROSPIKE_ERR_CLIENT;
                         DEBUG_PHP_EXT_DEBUG("Unable to set Operate: Invalid Optiopns Key");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to set Operate: Invalid Options Key");
+                        goto exit;
+                    }
+                }
+            }
+            if (op == AS_OPERATOR_INCR) {
+                if (str) {
+                    l_offset = (long) offset;
+                    if  (!(is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0))) {
+                        status = AEROSPIKE_ERR_PARAM;
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
+                        DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
                         goto exit;
                     }
                 }

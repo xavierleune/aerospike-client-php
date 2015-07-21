@@ -8,6 +8,7 @@
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_arraylist.h"
 #include "aerospike/as_bytes.h"
+#include "aerospike/as_nil.h"
 
 #include "aerospike_common.h"
 #include "aerospike_transform.h"
@@ -1343,6 +1344,30 @@ exit:
 
 /*
  *******************************************************************************************************
+ * helper function for as_query_foreach's callback.
+ *
+ * @param key                   The bin name.
+ * @param value                 The current bin value.
+ * @param array                 The foreach_callback_udata struct containing the PHP record array 
+ *                              as well as the as_error to be populated by the callback.
+ *
+ * @return true if the callback succeeds. Otherwise false.
+ *******************************************************************************************************
+ */
+extern bool AS_AGGREGATE_GET(const char *key, const as_val *value, void *array)
+{
+    as_status status = AEROSPIKE_OK;
+    Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
+    TSRMLS_FETCH();
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(((foreach_callback_udata *) array)->error_p,
+            NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
+
+exit:
+    return (((((foreach_callback_udata *) array)->error_p)->code == AEROSPIKE_OK) ? true : false);
+}
+
+/*
+ *******************************************************************************************************
  * Sets a map in a record.
  *
  * @param outer_store       The as_record in which as_map is to be set.
@@ -1493,6 +1518,36 @@ static void AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array,
         DEBUG_PHP_EXT_DEBUG("Unable to append string to list");
         PHP_EXT_SET_AS_ERR(error_p, error_p->code,
                 "Unable to append string to list");
+        goto exit;
+    }
+    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
+
+exit:
+    return;
+}
+/*
+ *******************************************************************************************************
+ * Appends a as_nil to a list.
+ *
+ * @param key                   The key for the array.
+ * @param value                 The NULL value to be appended to the list
+ * @param array                 The as_arraylist to be appended to.
+ * @param static_pool           The static pool.
+ * @param serializer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function with
+ *                              encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void AS_LIST_PUT_APPEND_NULL(void *key, void *value, void *array,
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
+{
+    if (AEROSPIKE_OK != (error_p->code =
+                as_arraylist_append((as_arraylist *) array,
+                        as_val_reserve(&as_nil)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append as_nil to list");
+        PHP_EXT_SET_AS_ERR(error_p, error_p->code,
+                "Unable to append as_nil to list");
         goto exit;
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
