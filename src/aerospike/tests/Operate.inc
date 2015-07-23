@@ -569,38 +569,114 @@ class Operate  extends AerospikeTestCommon
 
     /**
      * @test
-     * Basic Operate on on increment without previous record
+     * Basic operate with ttl value set
      *
      * @pre
      * Connect using aerospike object to the specified node
      *
      * @post
-     * newly initialized Aerospike objects
+     * newly initialized ttl value for record
      *
-     * @remark
-     * Variants: OO (testOperatePositive)
-     *
-     * @test_plans{1.1}
      */
-    function testOperatePositiveIncrement() {
-        $this->db->removeBin($this->keys[0], array("age"));
-        $check = array("first_name" => "John", "last_name" => "Smith", "age" => 1);
-        $operations = array(
-            array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1)
-        );
-        $returned = array();
+    function testOperateWithTTLPositive() {
+        $operations = array(array("op" => Aerospike::OPERATOR_TOUCH, "ttl" => 400));
         $status = $this->db->operate($this->keys[0], $operations, $returned);
-        if ($status != AEROSPIKE::OK) {
+        if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        $status = $this->db->get($this->keys[0], $bin_arr);
-        $comp_res = array_diff_assoc_recursive($bin_arr['bins'], $check);
-        if (!empty($comp_res)) {
-            return Aerospike::ERR_CLIENT;
+
+        $status = $this->db->exists($this->keys[0], $metadata);
+        if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+        }
+        if ($metadata["ttl"] == 400) {
+            return Aerospike::OK;
         } else {
-            return AEROSPIKE::OK;
-        } 
-        return $status;
+            return Aerospike::ERR_CLIENT;
+        }
     }
+
+
+    /**
+     * @test
+     * Basic operate with ttl value set
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized ttl value for record
+     *
+     */
+    function testOperateWithTTLString() {
+        $operations = array(array("op" => Aerospike::OPERATOR_TOUCH, "ttl" => "fail"));
+        $status = $this->db->operate($this->keys[0], $operations, $returned);
+        //var_dump($this->db->errorno());
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        } else {
+            return Aerospike::OK;
+        }
+    }
+    /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is a numeric string value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function TestOperateWithNumericStringOffset() {
+       $operations = array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => "100");
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+       } else {
+           return Aerospike::OK;
+       }
+   }
+   /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is a negative numeric string value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function TestOperateWithNegativeNumericStringOffset() {
+       $operations = array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => "-100");
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+       } else {
+           return Aerospike::OK;
+       }
+   }
+   /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is an invalid numeric string value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function TestOperateWithInvalidNumericStringOffset() {
+       $operations = array(array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => "100ia"));
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status != Aerospike::OK) {
+           return $this->db->errorno();
+       } else {
+           return Aerospike::OK;
+       }
+   }
 }
 ?>

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("QueryRoles", "testQueryRolesIncorrectPolicy");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("QueryRoles", "testQueryRolesIncorrectPolicy");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

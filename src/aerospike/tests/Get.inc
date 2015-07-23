@@ -78,10 +78,10 @@ class Get extends AerospikeTestCommon
             strcmp($bin_arr["key"]["key"], NULL) == 0) {
             $comp_res = array_diff_assoc_recursive(self::$put_rec, $bin_arr["bins"]);
             if (!empty($comp_res)) {
-                return Aerospike::ERR;
+                return Aerospike::ERR_CLIENT;
             }
         } else {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -112,10 +112,10 @@ class Get extends AerospikeTestCommon
             strcmp($rec_arr["key"]["key"], NULL) == 0) {
             $comp_res = array_diff_assoc_recursive(self::$put_rec, $rec_arr["bins"]);
             if (!empty($comp_res)) {
-                return Aerospike::ERR;
+                return Aerospike::ERR_CLIENT;
             }
         } else {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -170,10 +170,10 @@ class Get extends AerospikeTestCommon
             strcmp($get_record["key"]["key"], NULL) == 0) {
             $comp_res = array_diff_assoc_recursive(self::$put_rec, $get_record["bins"]);
             if (!empty($comp_res)) {
-                return Aerospike::ERR;
+                return Aerospike::ERR_CLIENT;
             }
         } else {
-            return Aerospike::ERR;
+            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }
@@ -381,10 +381,10 @@ class Get extends AerospikeTestCommon
           strcmp($get_rec["key"]["key"], NULL) == 0) {
           $comp_res = array_diff_assoc_recursive(array("bin1"=>array("speaking", "reading", "writing")), $get_rec["bins"]);
           if (!empty($comp_res)) {
-              return Aerospike::ERR;
+              return Aerospike::ERR_CLIENT;
           }
       } else {
-          return Aerospike::ERR;
+          return Aerospike::ERR_CLIENT;
       }
       return $status;
   }
@@ -424,10 +424,10 @@ class Get extends AerospikeTestCommon
           strcmp($get_rec["key"]["key"], NULL) == 0) {
           $comp_res = array_diff_assoc_recursive(array("bin1"=>$map1), $get_rec["bins"]);
           if (!empty($comp_res)) {
-              return Aerospike::ERR;
+              return Aerospike::ERR_CLIENT;
           }
       } else {
-          return Aerospike::ERR;
+          return Aerospike::ERR_CLIENT;
       }
       return $status;
   }
@@ -460,7 +460,7 @@ class Get extends AerospikeTestCommon
       }
       if ($get_rec['bins']['array_bin'] !== array()) {
           var_dump($get_rec['bins']['array_bin']);
-          return Aerospike::ERR;
+          return Aerospike::ERR_CLIENT;
       }
       return Aerospike::OK;
   }
@@ -506,7 +506,7 @@ class Get extends AerospikeTestCommon
           strcmp($get_rec["key"]["key"], NULL) == 0) {
           $comp_res = array_diff_assoc_recursive($rec, $get_rec["bins"]);
           if (!empty($comp_res)) {
-              return Aerospike::ERR;
+              return Aerospike::ERR_CLIENT;
           }
       }
       return $status;

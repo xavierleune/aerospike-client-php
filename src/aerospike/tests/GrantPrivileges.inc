@@ -8,7 +8,7 @@ class GrantPrivileges extends AerospikeTestCommon
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
         }
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
         $status = $this->db->createRole("examples_role", $privileges);
         sleep(1);
     }
@@ -58,7 +58,7 @@ class GrantPrivileges extends AerospikeTestCommon
      */
     function testGrantPrivilegesPositive()
 	{
-		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::READ_WRITE_UDF)));
+		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ_WRITE_UDF)));
 		sleep(1);
 		if($status == AEROSPIKE::OK) {
     		$this->db->queryRole("examples_role", $ret_privileges);
@@ -91,7 +91,7 @@ class GrantPrivileges extends AerospikeTestCommon
     function testGrantPrivilegesPositivePolicy()
 	{
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
-		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::READ_WRITE_UDF)), $policy);
+		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ_WRITE_UDF)), $policy);
 		sleep(1);
 		if($status == AEROSPIKE::OK) {
     		$this->db->queryRole("examples_role", $ret_privileges);
@@ -123,7 +123,7 @@ class GrantPrivileges extends AerospikeTestCommon
      */
     function testGrantPrivilegesExistingPrivilege()
 	{
-		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::READ)));
+		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ)));
 		sleep(1);
 		if($status == AEROSPIKE::OK) {
     		$this->db->queryRole("examples_role", $ret_privileges);
@@ -156,7 +156,7 @@ class GrantPrivileges extends AerospikeTestCommon
     function testGrantPrivilegesIncorrectRoleType()
     {
         try {
-            return($this->db->grantPrivileges(1, array(array("code" => Aerospike::READ))));
+            return($this->db->grantPrivileges(1, array(array("code" => Aerospike::PRIV_READ))));
         } catch(ErrorException $e) {
             return($this->db->errorno());
         }
@@ -179,7 +179,7 @@ class GrantPrivileges extends AerospikeTestCommon
     function testGrantPrivilegesUnknownRoleName()
     {
         try {
-            return($this->db->grantPrivileges("examples_role_unknown", array(array("code" => Aerospike::READ))));
+            return($this->db->grantPrivileges("examples_role_unknown", array(array("code" => Aerospike::PRIV_READ))));
         } catch(ErrorException $e) {
             return($this->db->errorno());
         }

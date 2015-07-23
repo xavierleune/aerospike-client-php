@@ -54,7 +54,7 @@ class DropRole extends AerospikeTestCommon
      */
     function testDropRolePositive()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
         $testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
         $status = $this->db->createRole("examples_role", $privileges);
 		sleep(1);
@@ -109,7 +109,7 @@ class DropRole extends AerospikeTestCommon
      */
     function testDropRolePositivePolicy()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
         $status = $this->db->createRole("examples_role", $privileges, $policy);
@@ -211,7 +211,7 @@ class DropRole extends AerospikeTestCommon
      */
     function testDropRoleIncorrectPolicy()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
         $status = $this->db->createRole("examples_role", $privileges, $policy);

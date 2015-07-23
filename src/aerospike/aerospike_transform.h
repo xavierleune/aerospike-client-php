@@ -244,7 +244,7 @@ do {                                                                           \
         as_integer_init(map_int, index);                                       \
         key = (as_val*) map_int;                                               \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR, "Invalid Key type for Map");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map");    \
         goto label;                                                            \
     }                                                                          \
 } while(0);
@@ -294,7 +294,7 @@ do {                                                                           \
     if (AS_MAX_STORE_SIZE > STR_CNT(static_pool)) {                            \
         map_str = &(STR_POOL(static_pool)[STR_CNT(static_pool)++]);            \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR, "Cannot allocate as_string");   \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_string");   \
         goto label;                                                            \
     }
 
@@ -302,7 +302,7 @@ do {                                                                           \
     if (AS_MAX_STORE_SIZE > INT_CNT(static_pool)) {                            \
         map_int = &(INT_POOL(static_pool)[INT_CNT(static_pool)++]);            \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR, "Cannot allocate as_integer");  \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_integer");  \
         goto label;                                                            \
     }
 
@@ -310,7 +310,7 @@ do {                                                                           \
     if (AS_MAX_STORE_SIZE > BYTES_CNT(static_pool)) {                          \
         map_bytes = &(BYTES_POOL(static_pool)[BYTES_CNT(static_pool)++]);      \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR, "Cannot allocate as_bytes");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_bytes");    \
         goto label;                                                            \
     }
 
@@ -329,7 +329,7 @@ do {                                                                           \
         (CURRENT_##level##_SIZE(static_pool))++];                              \
         INIT_##level##_IN_POOL(store, hashtable);                              \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR, "Cannot allocate list/map");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate list/map");    \
         goto label;                                                            \
     }
 
@@ -647,8 +647,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
-    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
-            serializer_policy, err TSRMLS_CC)
+    AS_LIST_PUT_APPEND_NULL(key, value, array, static_pool,                    \
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool,         \
            serializer_policy, err)                                             \

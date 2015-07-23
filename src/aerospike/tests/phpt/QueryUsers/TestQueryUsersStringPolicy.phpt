@@ -11,4 +11,4 @@ aerospike_phpt_skipif("QueryUsers", "testQueryUsersStringPolicy");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("QueryUsers", "testQueryUsersStringPolicy");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

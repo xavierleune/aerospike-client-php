@@ -11,4 +11,4 @@ aerospike_phpt_skipif("GrantRoles", "testGrantRolesPolicyIncorrect");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("GrantRoles", "testGrantRolesPolicyIncorrect");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

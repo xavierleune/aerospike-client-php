@@ -11,4 +11,4 @@ aerospike_phpt_skipif("CreateUser", "testCreateUserPolicyIncorrect");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("CreateUser", "testCreateUserPolicyIncorrect");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("DropUser", "testDropUserUserPositiveWithIncorrectPolicy")
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("DropUser", "testDropUserUserPositiveWithIncorrectPolicy");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

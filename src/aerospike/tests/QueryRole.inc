@@ -8,7 +8,7 @@ class QueryRole extends AerospikeTestCommon
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
         }
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$status = $this->db->createRole("examples_role", $privileges);
 		sleep(1);
     }

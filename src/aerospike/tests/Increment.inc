@@ -155,12 +155,44 @@ class Increment extends AerospikeTestCommon
      */
     function testBinIncrementOffsetValueString()
     {
-        try {
-            $this->db->increment($this->keys[0], 'bin1', "abc");
-        } catch (ErrorException $e) {
-            return Aerospike::OK;
-        }
-        return Aerospike::ERR_CLIENT;
+        $status = $this->db->increment($this->keys[0], 'bin1', "abc");
+        return $status;
+    }
+    /**
+     * @test
+     * Basic bin increment when offset value is a numeric string
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinIncrementOffsetValueNumericString)
+     */
+    function testBinIncrementOffsetValueNumericString()
+    {
+        $status = $this->db->increment($this->keys[0], 'bin1', "10");
+        return $status;
+    }
+    /**
+     * @test
+     * Basic bin increment when offset value is a Negative numeric string
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testBinIncrementOffsetValueNegativeNumericString)
+     */
+    function testBinIncrementOffsetValueNegativeNumericString()
+    {
+        $status = $this->db->increment($this->keys[0], 'bin1', "-10");
+        return $status;
     }
     /**
      * @test

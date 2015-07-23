@@ -68,8 +68,8 @@ constants.  When non-zero the **Aerospike::error()** and
 Registered module **stream_udf.lua**
 ```lua
 local function having_ge_threshold(bin_having, ge_threshold)
+    debug("group_count::thresh_filter: %s >  %s ?", tostring(rec[bin_having]), tostring(ge_threshold))
     return function(rec)
-        debug("group_count::thresh_filter: %s >  %s ?", tostring(rec[bin_having]), tostring(ge_threshold))
         if rec[bin_having] < ge_threshold then
             return false
         end
@@ -82,7 +82,6 @@ local function count(group_by_bin)
     if rec[group_by_bin] then
       local bin_name = rec[group_by_bin]
       group[bin_name] = (group[bin_name] or 0) + 1
-      debug("group_count::count: bin %s has value %s which has the count of %s", tostring(bin_name), tostring(group[bin_name]))
     end
     return group
   end

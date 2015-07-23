@@ -17,6 +17,7 @@
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
 export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.16}
+export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 if [[ ! -d $CLIENTREPO_3X || ! `ls $CLIENTREPO_3X/package/aerospike-client-c-devel-${AEROSPIKE_C_CLIENT}* 2> /dev/null` ]]; then
     rm -rf $CLIENTREPO_3X/package
     echo "Downloading Aerospike C Client SDK $AEROSPIKE_C_CLIENT"
@@ -106,8 +107,9 @@ if [ $OS = "Darwin" ] ; then
 else
     LDFLAGS="-Wl,-Bstatic -L$CLIENTREPO_3X/lib -laerospike -Wl,-Bdynamic"
     # Find and link to libcrypto (provided by OpenSSL)
-    ec=`ls /usr/local/lib/libcrypto.a || ls /usr/local/lib/libcrypto.so`
-    if [ $? -eq 0 ] ; then
+    if [ -e /usr/lib64/libcrypto.so  ] || [ -e /usr/lib64/libcrypto.a ]; then
+        LIBCRYPTO="-L/usr/lib64 -lcrypto"
+    elif [ -e /usr/local/lib/libcrypto.a ] || [ -e /usr/local/lib/libcrypto.so ]; then
         LIBCRYPTO="-L/usr/local/lib -lcrypto"
     else
         ec=`ls /usr/local/ssl/lib/libcrypto.a || ls /usr/local/ssl/lib/libcrypto.so`

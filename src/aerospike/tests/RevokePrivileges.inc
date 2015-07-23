@@ -8,7 +8,7 @@ class RevokePrivileges extends AerospikeTestCommon
         if (!$this->db->isConnected()) {
             return $this->db->errorno();
         }
-        $privileges = array(array("code" => Aerospike::SYS_ADMIN), array("code" => Aerospike::USER_ADMIN));
+        $privileges = array(array("code" => Aerospike::PRIV_SYS_ADMIN), array("code" => Aerospike::PRIV_USER_ADMIN));
         $status = $this->db->createRole("examples_role", $privileges);
         sleep(1);
     }
@@ -58,13 +58,13 @@ class RevokePrivileges extends AerospikeTestCommon
      */
     function testRevokePrivilegesPositive()
 	{
-		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::READ)));
+		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ)));
 		if($status == AEROSPIKE::OK) {
     		$this->db->queryRole("examples_role", $ret_privileges);
 			$testprivileges = array(array("code" => 0), array("code" => 1), array("code" => 10));
 			$result = array_diff_assoc_recursive($testprivileges, $ret_privileges);
 			if(empty($result)) {
-				$status = $this->db->revokePrivileges("examples_role", array(array("code" => Aerospike::READ)));
+				$status = $this->db->revokePrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ)));
 				if($status == AEROSPIKE::OK) {
     				$this->db->queryRole("examples_role", $ret_privileges);
 					$testprivileges = array(array("code" => 0), array("code" => 1));
@@ -101,14 +101,14 @@ class RevokePrivileges extends AerospikeTestCommon
 	{
 		sleep(2);
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
-		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::READ)), $policy);
+		$status = $this->db->grantPrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ)), $policy);
 		sleep(1);
 		if($status == AEROSPIKE::OK) {
     		$this->db->queryRole("examples_role", $ret_privileges);
             $testprivileges = array(array("code" => 0), array("code" => 1), array("code" => 10));
 			$result = array_diff_assoc_recursive($testprivileges, $ret_privileges);
 			if(empty($result)) {
-				$status = $this->db->revokePrivileges("examples_role", array(array("code" => Aerospike::READ)));
+				$status = $this->db->revokePrivileges("examples_role", array(array("code" => Aerospike::PRIV_READ)));
                 if($status == AEROSPIKE::OK) {
     				$this->db->queryRole("examples_role", $ret_privileges);
 					$testprivileges = array(array("code" => 0), array("code" => 1));
@@ -144,7 +144,7 @@ class RevokePrivileges extends AerospikeTestCommon
     function testRevokePrivilegesIncorrectRoleType()
     {
         try {
-            return($this->db->revokePrivileges(1, array(array("code" => Aerospike::READ))));
+            return($this->db->revokePrivileges(1, array(array("code" => Aerospike::PRIV_READ))));
         } catch(ErrorException $e) {
             return($this->db->errorno());
         }
@@ -167,7 +167,7 @@ class RevokePrivileges extends AerospikeTestCommon
     function testRevokePrivilegesUnknownRoleName()
     {
         try {
-            return($this->db->revokePrivileges("examples_role_unknown", array(array("code" => Aerospike::READ))));
+            return($this->db->revokePrivileges("examples_role_unknown", array(array("code" => Aerospike::PRIV_READ))));
         } catch(ErrorException $e) {
             return($this->db->errorno());
         }

@@ -11,4 +11,4 @@ aerospike_phpt_skipif("DropRole", "testDropRoleIncorrectPolicy");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("DropRole", "testDropRoleIncorrectPolicy");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

@@ -526,6 +526,9 @@ PHP_METHOD(Aerospike, __construct)
 
     aerospike_obj_p->is_persistent = persistent_connection;
 
+    /* Initializing serializer option to invalid value */
+    aerospike_obj_p->serializer_opt = -1;
+
     if (PHP_TYPE_ISNOTARR(config_p) ||
         ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
@@ -533,6 +536,7 @@ PHP_METHOD(Aerospike, __construct)
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for construct not proper");
         goto exit;
     }
+
 
     /* configuration */
     as_config_init(&config);
@@ -556,7 +560,7 @@ PHP_METHOD(Aerospike, __construct)
     }
 
     /* check and set config policies */
-    set_general_policies(&config, options_p, &error TSRMLS_CC);
+    set_general_policies(&config, options_p, &error, &aerospike_obj_p->serializer_opt TSRMLS_CC);
     if (AEROSPIKE_OK != (error.code)) {
         status = error.code;
         DEBUG_PHP_EXT_ERROR("Unable to set policies");
@@ -640,7 +644,7 @@ PHP_METHOD(Aerospike, close)
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
             !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
@@ -873,7 +877,7 @@ PHP_METHOD(Aerospike, put)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p->as_ref_p->as_p,
-                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p TSRMLS_CC))) {
+                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
     }
@@ -1571,6 +1575,7 @@ PHP_METHOD(Aerospike, increment)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
+    zval*                  offset_p = NULL;
     as_error               error;
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
@@ -1593,9 +1598,9 @@ PHP_METHOD(Aerospike, increment)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
-                &offset, &options_p) == FAILURE) {
+                &offset_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for increment function");
@@ -1617,6 +1622,15 @@ PHP_METHOD(Aerospike, increment)
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for increment function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for increment function");
+        goto exit;
+    }
+
+    if(Z_TYPE_P(offset_p) == IS_LONG) {
+        offset = Z_LVAL_P(offset_p);
+    } else if( !(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
+        DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
         goto exit;
     }
 
@@ -1901,7 +1915,7 @@ PHP_METHOD(Aerospike, removeBin)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_record_operations_remove_bin(aerospike_obj_p, &as_key_for_put_record, bins_p, &error, options_p))) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to remove bin");
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_SERVER, "Unable to remove bin");
         DEBUG_PHP_EXT_ERROR("Unable to remove bin");
         goto exit;
     }
@@ -1953,12 +1967,12 @@ PHP_METHOD(Aerospike, predicateEquals)
             add_assoc_long(return_value, VAL, Z_LVAL_P(val_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(val_p)) == 0) {
+            if (Z_STRLEN_P(val_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
+            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
             break;
         default:
             zval_dtor(return_value);
@@ -2037,12 +2051,12 @@ PHP_METHOD(Aerospike, predicateContains)
             add_assoc_long(return_value, VAL, Z_LVAL_P(val_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(val_p)) == 0) {
+            if (Z_STRLEN_P(val_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_assoc_string(return_value, VAL, Z_STRVAL_P(val_p), 1);
+            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
             break;
         default:
             zval_dtor(return_value);
@@ -2099,7 +2113,7 @@ PHP_METHOD(Aerospike, predicateRange)
             add_next_index_long(minmax_arr, Z_LVAL_P(min_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(min_p)) == 0) {
+            if (Z_STRLEN_P(min_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
@@ -2120,7 +2134,7 @@ PHP_METHOD(Aerospike, predicateRange)
             add_next_index_long(minmax_arr, Z_LVAL_P(max_p));
             break;
         case IS_STRING:
-            if (strlen(Z_STRVAL_P(min_p)) == 0) {
+            if (Z_STRLEN_P(min_p) == 0) {
                 zval_dtor(return_value);
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
@@ -2253,7 +2267,7 @@ PHP_METHOD(Aerospike, aggregate)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
                 "aggregate: Connection not established");
         DEBUG_PHP_EXT_ERROR("aggregate: Connection not established");
         goto exit;
@@ -2322,7 +2336,7 @@ PHP_METHOD(Aerospike, aggregate)
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                                returned_p, options_p TSRMLS_CC))) {
+                                                returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("aggregate returned an error");
         goto exit;
     }
@@ -2394,7 +2408,7 @@ PHP_METHOD(Aerospike, scan)
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run(aerospike_obj_p->as_ref_p->as_p,
                                      &error, ns_p, set_p, &user_func,
-                                     bins_ht_p, options_p TSRMLS_CC))) {
+                                     bins_ht_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scan returned an error");
         goto exit;
     }
@@ -2507,7 +2521,7 @@ PHP_METHOD(Aerospike, scanApply)
             (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
-                                                scan_id_p, options_p, true TSRMLS_CC))) {
+                                                scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
@@ -2839,7 +2853,8 @@ PHP_METHOD(Aerospike, apply)
             (status = aerospike_udf_apply(aerospike_obj_p, 
                                           &as_key_for_apply_udf, &error,
                                           module_p, function_name_p, &args_p,
-                                          return_value_of_udf_p, options_p))) {
+                                          return_value_of_udf_p, options_p,
+                                          &aerospike_obj_p->serializer_opt))) {
         DEBUG_PHP_EXT_ERROR("apply function returned an error");
         goto exit;
     }
@@ -3088,8 +3103,8 @@ PHP_METHOD(Aerospike, addIndex)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
         goto exit;
     }

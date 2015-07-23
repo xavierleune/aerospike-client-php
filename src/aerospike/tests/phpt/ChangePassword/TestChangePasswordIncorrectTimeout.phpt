@@ -11,4 +11,4 @@ aerospike_phpt_skipif("ChangePassword", "testChangePasswordIncorrectTimeout");
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ChangePassword", "testChangePasswordIncorrectTimeout");
 --EXPECT--
-ERR_CLIENT
+ERR_PARAM

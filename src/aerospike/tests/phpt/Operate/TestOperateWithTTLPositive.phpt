@@ -1,9 +1,8 @@
 --TEST--
-ScanApply - Percent is string
-
+Operate - Operate positive TTL
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsString");
+aerospike_phpt_runtest("Operate", "testOperateWithTTLPositive");
 --EXPECT--
-ERR_PARAM
+OK

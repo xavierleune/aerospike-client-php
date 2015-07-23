@@ -54,7 +54,7 @@ class CreateRole extends AerospikeTestCommon
      */
     function testCreateRolePositive()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
         $testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
         $status = $this->db->createRole("examples_role", $privileges);
 		sleep(1);
@@ -109,7 +109,7 @@ class CreateRole extends AerospikeTestCommon
      */
     function testCreateRolePositivePolicy()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
         $status = $this->db->createRole("examples_role", $privileges, $policy);
@@ -164,7 +164,7 @@ class CreateRole extends AerospikeTestCommon
      */
     function testCreateRoleInvalidRoleType()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
         try {
             return($this->db->createRole(1, $privileges));
         } catch(ErrorException $e) {
@@ -212,7 +212,7 @@ class CreateRole extends AerospikeTestCommon
      */
     function testCreateRoleExistingRole()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
         $status = $this->db->createRole("examples_role", $privileges, $policy);
@@ -244,7 +244,7 @@ class CreateRole extends AerospikeTestCommon
      */
     function testCreateRolePositiveSpecialCharactersRoleName()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
 		$role_name = "!#Q#AEQ@#$%&^*((^&*~~~````";
@@ -301,7 +301,7 @@ class CreateRole extends AerospikeTestCommon
      */
     function testCreateRoleTooLongRoleName()
     {
-        $privileges = array(array("code" => Aerospike::READ), array("code" => Aerospike::READ_WRITE, "ns" => "test", "set" => "demo"));
+        $privileges = array(array("code" => Aerospike::PRIV_READ), array("code" => Aerospike::PRIV_READ_WRITE, "ns" => "test", "set" => "demo"));
 		$testprivileges = array(array("code" => 10), array("code" => 11, "ns" => "test", "set" => "demo"));
 		$policy = array(Aerospike::OPT_WRITE_TIMEOUT => 2000);
 		$role_name = "example";

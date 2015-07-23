@@ -14,6 +14,7 @@ class Udf extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $this->ensureUdfModule("tests/lua/test_record_udf.lua", "module.lua");
+        $this->ensureUdfModule("tests/lua/sample.lua", "sample.lua");
     }
 
     /**
@@ -291,6 +292,46 @@ class Udf extends AerospikeTestCommon
         return Aerospike::ERR_CLIENT;
     }
 
+    /**
+     * @test
+     * Basic Udf operation with parameter as NULL
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveApplyParameterNull)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveApplyParameterNull() {
+        if (!$this->db->isConnected()) {
+            return ($this->db->errorno());
+        }
+        $key = $this->db->initKey("test","demo", "udf_parameter_null");
+        if ($this->db->isConnected()) {
+            $status = $this->db->put($key,array("first_name"=>array("smith"), "age"=>27));
+        } else {
+            $this->db->close();
+            return($this->db->errorno());
+        }
+        $status = $this->db->apply($key, "sample", "list_append", array("first_name",
+            NULL), $returned);
+        if ($status != Aerospike::OK) {
+            return ($this->db->errorno());
+        }
+        $status = $this->db->get($key, $returned);
+        $status = $this->db->remove($key,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        $result = array_diff_assoc_recursive($returned["bins"]["first_name"], array("smith", NULL));
+        if(empty($result)) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
     /**
      * @test
      * Apply UDF on a record containing List.
