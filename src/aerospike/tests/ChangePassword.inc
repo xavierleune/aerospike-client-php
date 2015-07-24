@@ -58,7 +58,7 @@ class ChangePassword extends AerospikeTestCommon
         $user = "testchangepassworduser";
         $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
         $connection = new Aerospike($config, false);
-        $res = $connection->changePassword($user, "john123");
+        $res = $connection->changePassword($user, "john@123");
 	    if ($res == Aerospike::OK) {
             $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
             $wrongconnection = new Aerospike($config, false);
@@ -97,7 +97,7 @@ class ChangePassword extends AerospikeTestCommon
         $user = "testchangepassworduser";
         $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
         $connection = new Aerospike($config, false);
-        $res = $connection->changePassword($user, "john123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
+        $res = $connection->changePassword($user, "john@123", array(Aerospike::OPT_WRITE_TIMEOUT => 20000));
 	    if ($res == Aerospike::OK) {
             $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
             $wrongconnection = new Aerospike($config, false);
