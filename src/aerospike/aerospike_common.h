@@ -560,6 +560,12 @@ aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
                               as_error *error_p);
 
 extern as_status
+aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p,
+        as_record* get_record_p,
+        as_key* record_key_p, zval* outer_container_p,
+        zval* options_p, bool nullflag, bool get_flag TSRMLS_DC);
+
+extern as_status
 aerospike_get_key_meta_bins_of_record(as_config *as_config_p,
         as_record* get_record_p,
         as_key* record_key_p, zval* outer_container_p,
