@@ -20,14 +20,30 @@ populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
 
         }
     } else {
-       if (0 != add_index_string(outer_container_p, iterator, key_p->value.string.value, 0)) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
-                    "Unable to get key of a record");
-            DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
-
+        if (!(as_val*)(key_p->valuep)) {
+            if (0 != add_index_string(outer_container_p, iterator, (char*) key_p->digest.value, 0)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                        "Unable to get key of a record");
+                DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+            }
+        } else {
+            switch (((as_val*)(key_p->valuep))->type) {
+                case AS_STRING:
+                    if (0 != add_index_string(outer_container_p, iterator, (char*) key_p->value.string.value, 1)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                                "Unable to get key of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    }
+                case AS_INTEGER:
+                    if (0 != add_index_long(outer_container_p, iterator, key_p->value.integer.value)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                                "Unable to get key of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    }
+            }
         }
+        iterator++;
     }
-    iterator++;
 }
 
 /*
