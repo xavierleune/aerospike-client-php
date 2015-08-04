@@ -80,14 +80,13 @@ class Aggregate extends AerospikeTestCommon
      */
     function testScanAggregation()
     {
-        return Aerospike::ERR_CLIENT; // wait on AER-3813
         $this->ensureUdfModule("tests/lua/test_stream.lua", "test_stream.lua");
         $where = array();
         $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name"), $returned);
         if ($status != Aerospike::OK) {
             return($this->db->errorno());
         }
-        if ($isset($returned) && is_array($returned[0])) {
+        if (isset($returned) && is_array($returned[0])) {
                 if (array_key_exists("john", $returned[0]) &&
                     array_key_exists("smith", $returned[0]) &&
                     array_key_exists("ellie", $returned[0]) &&
@@ -555,8 +554,7 @@ class Aggregate extends AerospikeTestCommon
         $this->ensureUdfModule("tests/lua/test_stream.lua", "test_stream.lua");
         $where = $this->db->predicateBetween("age", true, true);
         $status = $this->db->aggregate("test", "demo", $where, "test_stream", "group_count", array("first_name"), $returned);
-        if (array_key_exists("john", $returned[0]) && array_key_exists("smith", $returned[0]) &&
-            array_key_exists("adam", $returned[0])) {
+        if (count($returned) == 0) {
                 return Aerospike::OK;
             } else {
                 return Aerospike::ERR_CLIENT;
