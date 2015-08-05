@@ -8,7 +8,7 @@ The Aerospike PHP Client works with PHP 5.3.3+, 5.4, 5.5, and 5.6.
 
 The PHP extension was tested to build on 64-bit
 
- - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7 and related distros using the **apt** package manager
+ - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7, 8 and related distros using the **apt** package manager
  - CentOS 6.x, 7.x, RedHat 6.x, 7.x and related distros using the **yum** package manager
  - OS X 10.9 (Mavericks), 10.10 (Yosemite)
 
@@ -84,7 +84,7 @@ To install the PHP extension do:
 
 Now edit the php.ini file.  If PHP is configured --with-config-file-scan-dir
 (usually set to `/etc/php.d/`) you can create an `aerospike.ini` file in the
-directory, otherwise edit php.ini directly. Add the following directive:
+directory, otherwise edit `php.ini` directly. Add the following directive:
 
     extension=aerospike.so
     aerospike.udf.lua_system_path=/path/to/client-php/sys-lua
@@ -94,6 +94,12 @@ The *aerospike* module should now be available to the PHP CLI:
 
     php -m | grep aerospike
     aerospike
+
+Remember that if you are using PHP with Nginx or Apache there is likely a
+separate `php.ini` config file for the web server  Copy the `aerospike.ini`
+you have just created into `/etc/php5/apache2/conf.d/`, `/etc/php5/fpm/conf.d/`
+or wherever the configuration include directory of the web server is, then issue
+a graceful restart.
 
 ## License
 
