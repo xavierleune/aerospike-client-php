@@ -2,10 +2,7 @@
 Query role - query role incorrect role name
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryRole", "testQueryRoleIncorrectRoleName");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

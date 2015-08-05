@@ -14,12 +14,7 @@ if(file_exists(dirname(__FILE__)."/aerospike.local.inc")) {
     define("AEROSPIKE_CONFIG_NAME2", "127.0.0.1");
     define("AEROSPIKE_CONFIG_PORT2", 3010);
 
-    //Database is secure but disabled
-    define("AEROSPIKE_CONFIG_SECURITY_DISABLED", "127.0.0.1");
-    define("AEROSPIKE_CONFIG_SECURITY_DISABLED_PORT", 3010);
-
-    //Database is secure and enabled.
-    define("AEROSPIKE_CONFIG_SECURE", "127.0.0.1");
-    define("AEROSPIKE_CONFIG_SECURE_PORT", 3010);
+    // Database is Enterprise Edition, so run security tests
+    define("AEROSPIKE_ENTERPRISE_EDITION", false);
 }
 ?>

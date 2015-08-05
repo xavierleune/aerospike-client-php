@@ -2,10 +2,7 @@
 QueryUsers - query users has a string policy
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("QueryUsers", "testQueryUsersStringPolicy");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

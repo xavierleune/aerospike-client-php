@@ -2,10 +2,7 @@
 RevokeRoles - revoke roles is empty
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("RevokeRoles", "testRevokeRolesNoParameter");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

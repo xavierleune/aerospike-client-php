@@ -2,10 +2,7 @@
 Drop role - drop role incorrect policy
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("DropRole", "testDropRoleIncorrectPolicy");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

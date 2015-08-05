@@ -2,10 +2,7 @@
 Create user - create user with special characters in username
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("CreateUser", "testCreateUserSpecialCharacterUsername");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

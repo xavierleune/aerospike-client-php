@@ -2,10 +2,7 @@
 Revoke privileges - revoke privileges incorrect privilege type
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("RevokePrivileges", "testRevokePrivilegesIncorrectPrivilegeType");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

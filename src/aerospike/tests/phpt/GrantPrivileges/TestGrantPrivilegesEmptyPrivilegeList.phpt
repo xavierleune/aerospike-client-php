@@ -2,10 +2,7 @@
 Grant privileges - grant privileges empty privilege list
 
 --SKIPIF--
-<?php
-include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_skipif("GrantPrivileges", "testGrantPrivilegesEmptyPrivilegeList");
-
+<?php include('skip_enterprise.inc'); ?>
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";

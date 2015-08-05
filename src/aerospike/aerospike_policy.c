@@ -632,7 +632,7 @@ set_policy_read(as_policy_read *read_policy_p,
  */
 extern void
 set_policy_write(as_policy_write *write_policy_p,
-        uint32_t *serializer_policy_p,
+        int8_t *serializer_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC)
 {
@@ -657,7 +657,7 @@ set_policy_write(as_policy_write *write_policy_p,
  */
 extern void
 set_policy_operate(as_policy_operate *operate_policy_p,
-        uint32_t *serializer_policy_p,
+        int8_t *serializer_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC)
 {

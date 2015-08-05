@@ -779,6 +779,10 @@ aerospike_security_operations_create_role(aerospike* as_object_p, as_error *erro
         char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
+aerospike_security_operations_drop_role(aerospike* as_object_p, as_error *error_p,
+        char* role_p, zval* options_p TSRMLS_DC);
+
+extern as_status
 aerospike_security_operations_drop_user(aerospike* as_object_p,
         as_error *error_p, char* role_p, zval* options_p TSRMLS_DC);
 

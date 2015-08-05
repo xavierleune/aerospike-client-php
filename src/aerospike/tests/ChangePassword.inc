@@ -1,7 +1,7 @@
 <?php
 class ChangePassword extends AerospikeTestCommon
 {
-    static $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
+    static $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
     protected function setUp() {
         $config = array("hosts"=>array(self::$host), "user"=>"admin", "pass"=>"admin");
         $this->db = new Aerospike($config);

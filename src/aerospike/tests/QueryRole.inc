@@ -2,7 +2,7 @@
 class QueryRole extends AerospikeTestCommon
 {
     protected function setUp() {
-        $host = array("addr"=>AEROSPIKE_CONFIG_SECURE, "port"=>AEROSPIKE_CONFIG_SECURE_PORT);
+        $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT);
         $config = array("hosts"=>array($host), "user"=>"admin", "pass"=>"admin");
         $this->db = new Aerospike($config);
         if (!$this->db->isConnected()) {
