@@ -188,6 +188,10 @@ config()
             fi
         fi
     fi
+    echo ""
+    echo "If you are using a web server such as Apache or Nginx you will need"
+    echo "to copy aerospike.ini to the configuration include directory of the"
+    echo "server, then issue a graceful restart."
     headline "Verify the Extension"
     code "php -m | grep aerospike"
     seperator
