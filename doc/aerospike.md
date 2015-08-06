@@ -161,6 +161,25 @@ class Aerospike
     // UDF types
     const UDF_TYPE_LUA;
 
+    // bin types
+    const INDEX_TYPE_STRING;
+    const INDEX_TYPE_INTEGER;
+
+    // security
+    const ERR_SECURITY_NOT_SUPPORTED;
+    const ERR_SECURITY_NOT_ENABLED;
+    const ERR_SECURITY_SCHEME_NOT_SUPPORTED;
+    const ERR_INVALID_USER;
+    const ERR_USER_ALREADY_EXISTS;
+    const ERR_INVALID_PASSWORD;
+    const ERR_EXPIRED_PASSWORD;
+    const ERR_FORBIDDEN_PASSWORD;
+    const ERR_INVALID_CREDENTIAL;
+    const ERR_INVALID_ROLE;
+    const ERR_INVALID_PRIVILEGE;
+    const ERR_NOT_AUTHENTICATED;
+    const ERR_ROLE_VIOLATION;
+
     // index types
     const INDEX_TYPE_DEFAULT;   // index records where the bin contains an atomic (string, integer) type
     const INDEX_TYPE_LIST;      // index records where the bin contains a list
@@ -231,6 +250,17 @@ class Aerospike
     public int info ( string $request, string &$response [, array $host [, array options ] ] )
     public array infoMany ( string $request [, array $config [, array options ]] )
     public array getNodes ( void )
+
+    // security methods
+    public int createUser ( string $user, string $password, array $roles [, array $options ] )
+    public int dropUser ( string $user [, array $options ] )
+    public int setPassword ( string $user, string $password [, array $options ] )
+    public int changePassword ( string $user, string $password [, array $options ] )
+    public int grantRoles ( string $user, array $roles [, array $options ] )
+    public int revokeRoles ( string $user, array $roles [, array $options ] )
+    public int replaceRoles ( string $user, array $roles [, array $options ] )
+    public int queryUser ( string $user, array &$roles [, array $options ] )
+    public int queryUsers ( array &$roles [, array $options ] )
 }
 ```
 
@@ -244,6 +274,7 @@ class Aerospike
 ### [Admin Methods](apiref_admin.md)
 ### [Info Methods](apiref_info.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
+### [Security Methods](apiref_security.md)
 
 An overview of the development of the client is at the top level
 [README](README.md).

@@ -354,12 +354,8 @@ class Remove extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testBinRemoveWithOptions() {
-        if ($this->db->isConnected()) {
-            return $this->db->removeBin($this->keys[0], array("bin1"),
-                array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
-        } else {
-            return($this->db->errorno());
-        }
+        return $this->db->removeBin($this->keys[0], array("bin1"),
+            array(Aerospike::OPT_POLICY_COMMIT_LEVEL=>Aerospike::POLICY_COMMIT_LEVEL_MASTER));
     }
     /**
      * @test

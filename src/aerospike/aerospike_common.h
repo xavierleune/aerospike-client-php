@@ -7,6 +7,7 @@
 #include "aerospike/as_node.h"
 #include "aerospike/as_operations.h"
 #include "aerospike/as_record.h"
+#include "aerospike/as_scan.h"
 
 /*
  *******************************************************************************************************
@@ -722,4 +723,82 @@ set_policy(as_config* as_config_p, as_policy_read *read_policy_p,
         as_policy_scan *scan_policy_p, as_policy_query *query_policy_p,
         int8_t *serializer_policy_p, zval *options_p, as_error *error_p TSRMLS_DC);
 
+extern void
+set_policy_info(as_policy_info *info_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_query(as_policy_query *query_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_admin(as_policy_admin *admin_policy_p, zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+/*
+ ******************************************************************************************************
+ * Extern declarations of Security operations.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_security_operations_create_user(aerospike* as_object_p, as_error *error_p,
+        char* user_p, char* password_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_drop_user(aerospike* as_object_p,
+        as_error *error_p, char* user_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_change_password(aerospike* as_object_p,
+        as_error *error_p, char* user_p, char* password_p,
+        zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_set_password(aerospike* as_object_p,
+        as_error *error_p, char* user_p, char* password_p,
+        zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *error_p,
+        char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_revoke_roles(aerospike* as_object_p, as_error *error_p,
+        char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_query_user(aerospike* as_object_p, as_error *error_p,
+        char* user_p, zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_query_users(aerospike* as_object_p, as_error *error_p,
+        zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_create_role(aerospike* as_object_p, as_error *error_p,
+        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_drop_role(aerospike* as_object_p, as_error *error_p,
+        char* role_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_drop_user(aerospike* as_object_p,
+        as_error *error_p, char* role_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_grant_privileges(aerospike* as_object_p, as_error *error_p,
+        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_revoke_privileges(aerospike* as_object_p, as_error *error_p,
+        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error_p,
+        char* role_p, zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern as_status
+aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
+        zval* roles_p, zval* options_p TSRMLS_DC);
 #endif
