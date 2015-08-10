@@ -17,6 +17,10 @@ those, such as in the case the UDF does not specify a reducer and there are
 multiple nodes in the cluster (each sending back the result of its own
 aggregation).
 
+As with query(), if an empty array is given as the *where* predicate a 'scan
+aggregation' is initiated instead of a query, which means the stream UDF is
+applied to all the records returned by the scan.
+
 **Note** that modules containing stream UDFs need to also be
 copied to the path described in `aerospike.udf.lua_user_path`, as the last reduce
 iteration is run locally on the client (after reducing on all the nodes of the

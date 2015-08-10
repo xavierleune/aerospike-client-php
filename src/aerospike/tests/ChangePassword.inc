@@ -56,25 +56,17 @@ class ChangePassword extends AerospikeTestCommon
     function testChangePasswordPositive()
     {
         $user = "testchangepassworduser";
-        $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
-        $connection = new Aerospike($config, false);
-        $res = $connection->changePassword($user, "john@123");
-	    if ($res == Aerospike::OK) {
-            $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"aerospike");
-            $wrongconnection = new Aerospike($config, false);
-            if (!$wrongconnection->isConnected()) {
-                $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"john@123");
-                $rightconnection = new Aerospike($config);
-                if ($rightconnection->isConnected()) {
-                    $rightconnection->close();
-                    $connection->close();
-                    return AEROSPIKE::OK;
-                }
+        $res = $this->db->changePassword($user, "john@123");
+        if ($res == Aerospike::OK) {
+            $config = array("hosts"=>array(self::$host), "user"=>$user, "pass"=>"john@123");
+            $new_client = new Aerospike($config, false);
+            if ($new_client->isConnected()) {
+                return AEROSPIKE::OK;
             } else {
                 return AEROSPIKE::ERR_CLIENT;
             }
         } else {
-    	    return $connection->errorno();
+    	    return $this->db->errorno();
 	    }
     }
     /**
