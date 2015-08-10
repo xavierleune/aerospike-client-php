@@ -8,6 +8,7 @@
 #include "aerospike/as_hashmap.h"
 #include "aerospike/as_arraylist.h"
 #include "aerospike/as_bytes.h"
+#include "aerospike/as_password.h"
 #include "aerospike/as_nil.h"
 
 #include "aerospike_common.h"
@@ -2489,7 +2490,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for checking expected keys (addr and port) in each host within the array of hosts
  * in the input config array for Aerospike::construct().
@@ -2615,7 +2616,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Checks and sets the as_key using the input ns, set and key value.
  *
@@ -2671,7 +2672,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for checking and setting the as_key for the record to be read/written from/to Aerospike.
  *
@@ -2722,7 +2723,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Check and set the as_key for the record to be read/written from/to Aerospike.
  *
@@ -2776,7 +2777,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Iterate over the input PHP record array and translate it to corresponding C
  * client's as_record by transforming the datatypes from PHP to C client's
@@ -2815,7 +2816,7 @@ exit:
     return;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Creates and puts the as_record into Aerospike db by using appropriate write policy.
  *
@@ -2893,7 +2894,7 @@ exit:
     return error_p->code;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Read specified filter bins for the record specified by get_rec_key_p.
  *
@@ -3159,7 +3160,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
     return (char *)result;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record key and key digest. 
  *
@@ -3219,7 +3220,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record metadata(ttl, generation)
  *
@@ -3255,7 +3256,7 @@ exit:
     return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record key, metadata and bins of a record.
  *

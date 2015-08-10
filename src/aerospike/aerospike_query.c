@@ -316,7 +316,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
     as_query_init(&query, namespace_p, set_p);
     is_init_query = true;
 
-    if (predicate_ht_p) {
+    if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
         as_query_where_inita(&query, 1);
     }
 
@@ -436,7 +436,10 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     is_init_query = true;
-    as_query_where_inita(&query, 1);
+    if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
+        as_query_where_inita(&query, 1);
+    }
+    
     if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
                     set_p, predicate_ht_p, module_p, function_p,
                     args_list_p TSRMLS_CC))) {

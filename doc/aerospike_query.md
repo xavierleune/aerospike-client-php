@@ -16,7 +16,8 @@ The bins returned can be filtered by passing an associative array of the *bins*
 needed, otherwise all bins in the record are returned (similar to a SELECT \*).
 Non-existent bins will appear in the *record* with a NULL value.
 
-To query **without a predicate** the value of the *where* must be an empty array.
+To query **without a predicate** the value of the *where* must be an empty
+array. As a result, a scan is initiated instead of a query.
 
 ## Parameters
 
