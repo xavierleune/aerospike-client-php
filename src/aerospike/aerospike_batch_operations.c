@@ -11,6 +11,63 @@ static void
 populate_result_for_get_exists_many(as_key *key_p, zval *outer_container_p,
         zval *inner_container_p, as_error *error_p, bool null_flag TSRMLS_DC)
 {
+    if (!(as_val*)(key_p->valuep)) {
+        if (!null_flag) {
+            if (0 != add_assoc_zval(outer_container_p, (char *) key_p->digest.value, inner_container_p)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                        "Unable to get key of a record");
+                DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+            }
+        } else {
+            if (0 != add_assoc_null(outer_container_p, (char *) key_p->digest.value)) {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                        "Unable to get key of a record");
+                DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+            }
+        }
+    } else {
+        switch (((as_val*)(key_p->valuep))->type) {
+            case AS_STRING:
+                if (!null_flag) {
+                    if (0 != add_assoc_zval(outer_container_p, key_p->value.string.value, inner_container_p)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                                "Unable to get key of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    }
+                } else {
+                    if (0 != add_assoc_null(outer_container_p, key_p->value.string.value)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                                "Unable to get key of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    }
+                }
+                break;
+            case AS_INTEGER:
+                if (!null_flag) {
+                    if (FAILURE == add_index_zval(outer_container_p, key_p->value.integer.value,
+                                inner_container_p)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                                "Unable to get key of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    }
+                } else {
+                    if (0 != add_index_null(outer_container_p, key_p->value.integer.value)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_SERVER,
+                                "Unable to get key of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+static void
+populate_result_for_get_exists_many_new(as_key *key_p, zval *outer_container_p,
+        zval *inner_container_p, as_error *error_p, bool null_flag TSRMLS_DC)
+{
     static int iterator = 0;
     if (!null_flag) {
         if (0 != add_next_index_zval(outer_container_p, inner_container_p)) {
@@ -213,6 +270,7 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
                         "Unable to get ttl of a record");
                 goto cleanup;
             }
+
             null_flag = false;
         } else if (record_batch->result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
             null_flag = true;
@@ -517,11 +575,15 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 
         if (filter_bins_p) {
             filter_bins_count = zend_hash_num_elements(Z_ARRVAL_P(filter_bins_p));
-            select_p = (char**)emalloc(sizeof(char*) * filter_bins_count);
-            process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
+            if(filter_bins_count == 0) {
+                record->read_all_bins = true;
+            } else {
+                select_p = (char**)emalloc(sizeof(char*) * filter_bins_count);
+                process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
 
-            record->bin_names = select_p;
-            record->n_bin_names = filter_bins_count;
+                record->bin_names = select_p;
+                record->n_bin_names = filter_bins_count;
+            }
         } else {
             record->read_all_bins = true;
         }
@@ -556,7 +618,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
         }
 
 
-        populate_result_for_get_exists_many((as_key *)(&(record_batch->key)),
+        populate_result_for_get_exists_many_new((as_key *)(&(record_batch->key)),
                 batch_get_callback_udata.udata_p, record_p_local, batch_get_callback_udata.error_p, false TSRMLS_CC);
         if (AEROSPIKE_OK != batch_get_callback_udata.error_p->code) {
             DEBUG_PHP_EXT_DEBUG("%s", batch_get_callback_udata.error_p->message);
