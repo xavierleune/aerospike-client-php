@@ -3327,6 +3327,86 @@ exit:
 
 /* 
  *******************************************************************************************************
+ * Get record key, metadata and bins of a record.
+ *
+ * @param get_record_p              Record
+ * @param record_key_p              Key of a record
+ * @param outer_container_p         Return value
+ * @param options                   Optional parameters
+ * @param null_flag                 Bool flag to indicate if we have a valid
+ *                                  record or just to append null.
+ * @param get_flag                  The flag which indicates whether this function
+ *                                  was called from get() API or other APIS.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get_record_p,
+        as_key* record_key_p, zval* outer_container_p, zval* options_p, bool nullflag, bool get_flag TSRMLS_DC)
+{
+    as_status           status = AEROSPIKE_OK;
+    zval*               metadata_container_p = NULL;
+    zval*               key_container_p = NULL;
+    zval*               bins_container_p = NULL;
+
+    if (!get_record_p || !record_key_p || ! outer_container_p) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get a record");
+        status = AEROSPIKE_ERR_CLIENT;
+        goto exit; 
+    }
+
+    MAKE_STD_ZVAL(key_container_p);
+    array_init(key_container_p);
+    status = aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
+    if (status != AEROSPIKE_OK) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
+        goto exit;
+    }
+
+    MAKE_STD_ZVAL(metadata_container_p);
+    array_init(metadata_container_p);
+    status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
+    if (status != AEROSPIKE_OK) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
+        goto exit;
+    }
+
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
+        status = AEROSPIKE_ERR_CLIENT;
+        goto exit;
+    }
+
+    if (!nullflag) {
+        if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
+            status = AEROSPIKE_ERR_CLIENT;
+            goto exit;
+        }
+    } else {
+        if (0 != add_assoc_null(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
+            status = AEROSPIKE_ERR_CLIENT;
+            goto exit;
+        }
+    }
+exit:
+    if (AEROSPIKE_OK != status) {
+        if (key_container_p) {
+            zval_ptr_dtor(&key_container_p);
+        }
+
+        if (metadata_container_p) {
+            zval_ptr_dtor(&metadata_container_p);
+        }
+    }
+
+    return status;
+}
+
+/* 
+ *******************************************************************************************************
  * Read all bins for the record specified by get_rec_key_p.
  *
  * @param as_object_p               The C client's aerospike object.
@@ -3341,13 +3421,13 @@ exit:
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-extern as_status
+    extern as_status
 aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
-                               as_key* get_rec_key_p,
-                               zval* options_p,
-                               as_error *error_p,
-                               zval* outer_container_p,
-                               zval* bins_p TSRMLS_DC)
+        as_key* get_rec_key_p,
+        zval* options_p,
+        as_error *error_p,
+        zval* outer_container_p,
+        zval* bins_p TSRMLS_DC)
 {
     as_status               status = AEROSPIKE_OK;
     as_policy_read          read_policy;
@@ -3378,8 +3458,8 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
     if (bins_p != NULL) {
         if (AEROSPIKE_OK != (status =
                     aerospike_transform_filter_bins_exists(as_object_p,
-                            Z_ARRVAL_P(bins_p), &get_record, error_p,
-                                    get_rec_key_p, &read_policy))) {
+                        Z_ARRVAL_P(bins_p), &get_record, error_p,
+                        get_rec_key_p, &read_policy))) {
             goto exit;
         }
     } else if (AEROSPIKE_OK != (status = aerospike_key_get(as_object_p, error_p,
