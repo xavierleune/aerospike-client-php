@@ -534,7 +534,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
     as_batch_read_record*   record_batch = NULL;
     zval*                   record_p_local = NULL;
     zval*                   get_record_p = NULL;
-    const char**            select_p;
+    char**                  select_p;
 
     if (!(as_object_p) || !(keys_p) || !(records_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate batch get");
@@ -579,7 +579,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
                 record->read_all_bins = true;
             } else {
                 select_p = (char**)emalloc(sizeof(char*) * filter_bins_count);
-                process_filer_bins(Z_ARRVAL_P(filter_bins_p), select_p TSRMLS_CC);
+                process_filer_bins(Z_ARRVAL_P(filter_bins_p), (const char**)select_p TSRMLS_CC);
 
                 record->bin_names = select_p;
                 record->n_bin_names = filter_bins_count;
