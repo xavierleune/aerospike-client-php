@@ -17,6 +17,7 @@
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
 export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.16}
+export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 if [[ ! -d $CLIENTREPO_3X || ! `ls $CLIENTREPO_3X/package/aerospike-client-c-devel-${AEROSPIKE_C_CLIENT}* 2> /dev/null` ]]; then
     rm -rf $CLIENTREPO_3X/package
     echo "Downloading Aerospike C Client SDK $AEROSPIKE_C_CLIENT"
@@ -187,6 +188,10 @@ config()
             fi
         fi
     fi
+    echo ""
+    echo "If you are using a web server such as Apache or Nginx you will need"
+    echo "to copy aerospike.ini to the configuration include directory of the"
+    echo "server, then issue a graceful restart."
     headline "Verify the Extension"
     code "php -m | grep aerospike"
     seperator

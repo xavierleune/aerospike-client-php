@@ -13,5 +13,8 @@ if(file_exists(dirname(__FILE__)."/aerospike.local.inc")) {
     // skip multi-host configuration tests by commenting out the following:
     define("AEROSPIKE_CONFIG_NAME2", "127.0.0.1");
     define("AEROSPIKE_CONFIG_PORT2", 3010);
+
+    // Database is Enterprise Edition, so run security tests
+    define("AEROSPIKE_ENTERPRISE_EDITION", false);
 }
 ?>

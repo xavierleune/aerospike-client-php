@@ -34,3 +34,17 @@ function group_count(stream, group_by_bin, bin_having, ge_threshold)
   end
 end
 
+local function names_filter(rec)
+    if rec['first_name'] and rec['age'] then
+        return true
+    end
+    return false
+end
+
+local function mapp_name_age(rec)
+    return map{FirstName = rec.first_name, Age = rec.age}
+end
+
+function test_aggregate(s)
+    return s : filter(names_filter) : map(mapp_name_age)
+end
