@@ -16,6 +16,8 @@
 ################################################################################
 
 AEROSPIKE_C_VERSION=${AEROSPIKE_C_CLIENT:-'latest'}
+# always download unless environment var is set to 0, then check locally first
+DOWNLOAD=${DOWNLOAD_C_CLIENT:-1}
 
 ################################################################################
 #
@@ -49,13 +51,18 @@ detect_linux()
 
     case ${DIST_NAME} in
 
-      "centos6" | "redhatenterpriseserver6" | "fedora20" | "oracleserver6" )
+      "centos6" | "centos7" | "redhatenterpriceserver6" | "fedora20" | "fedora21" | "oracleserver6" | "scientific6" )
         echo "el6" "rpm"
         return 0
         ;;
 
-      "debian6" | "debian7" )
-        echo ${DIST_NAME} "deb"
+      "debian6" )
+        echo "debian6" "deb"
+        return 0
+        ;;
+
+      "debian7" | "debian8" )
+        echo "debian7" "deb"
         return 0
         ;;
 
@@ -99,7 +106,7 @@ detect_linux()
     dist=$(cat /etc/issue | tr '[:upper:]' '[:lower:]')
     case ${dist} in
 
-      "centos"* | "red hat enterprise linux"* | "fedora"* | "oracleserver"* )
+      "centos"* | "red hat enterprise linux"* | "fedora"* | "oracleserver"* | "scientific linux"* )
         echo "el6" "rpm"
         return 0
         ;;
@@ -113,6 +120,11 @@ detect_linux()
             ;;
 
           "7."* )
+            echo "debian7" "deb"
+            return 0
+            ;;
+
+          "8."* )
             echo "debian7" "deb"
             return 0
             ;;

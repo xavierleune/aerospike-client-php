@@ -560,5 +560,3 @@ exit:
 
     return status;
 }
-
-
