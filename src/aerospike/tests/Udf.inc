@@ -572,22 +572,16 @@ class Udf extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", "udf_returns_record");
         $map = array("k30"=>6, "k20"=>5, "k10"=>1);
         $list = array(1, 2, 89);
-        if ($this->db->isConnected()) {
-            $status = $this->db->put($key, array("bin1"=>$map, "bin2"=>$list));
-        } else{
-            $this->db->close();
-            return($this->db->errorno());
-        }
-        $status = $this->db->apply($key, "module", "udf_returns_record", NULL, $returned);
+        $this->db->put($key, array("bin1"=>$map, "bin2"=>$list));
+        $this->keys[] = $key; // mark record for removal during teardown
+        $status = $this->db->apply($key, "module", "udf_returns_record", array(), $returned);
         if ($status != Aerospike::OK) {
             return ($this->db->errorno());
         }
-        $status = $this->db->remove($key,
-            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        if ($returned != "") {
-            return Aerospike::ERR_CLIENT;
+        if (isset($returned['bin1']) && isset($returned['bin2'])) {
+            return Aerospike::OK;
         }
-        return Aerospike::OK;
+        return Aerospike::ERR_UDF;
     }
 
     /**

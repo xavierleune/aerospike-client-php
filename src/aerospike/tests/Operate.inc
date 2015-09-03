@@ -57,6 +57,34 @@ class Operate  extends AerospikeTestCommon
         return $status;
     }
     /**
+    * @test
+    * Basic operate with OPERATOR_INCR and offset is an integer value
+    *
+    * @pre
+    * Connect using aerospike object to the specified node
+    *
+    * @post
+    * newly initialized ttl value for record
+    *
+    */
+   function testOperatePositiveIncrement() {
+       $operations = array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 2);
+       $status = $this->db->operate($this->keys[0], $operations, $returned);
+       if ($status !== Aerospike::OK) {
+           return $this->db->errorno();
+       }
+       $status = $this->db->get($this->keys[0], $record, array('age'));
+       if ($status == Aerospike::OK) {
+           if ($record['bins']['age'] == 27) {
+               return Aerospike::OK;
+           } else {
+               return Aerospike::ERR_SERVER;
+           }
+       } else {
+           return $this->db->errorno();
+       }
+   }
+    /**
      * @test
      * Basic Operate with options. 
      *
@@ -111,25 +139,23 @@ class Operate  extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testOperateSameBinNegative() {
-        $check = array("first_name" => "Mr John");
         $operations = array(
             array("op" => Aerospike::OPERATOR_PREPEND, "bin" => "first_name", "val" => "Mr "),
-            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "first_name",
-            "val" => ".")
+            array("op" => Aerospike::OPERATOR_APPEND, "bin" => "first_name", "val" => "."),
+            array("op" => Aerospike::OPERATOR_READ, "bin" => "first_name")
         );
         $returned = array();
         $status = $this->db->operate($this->keys[0], $operations, $returned);
+
         if ($status != AEROSPIKE::OK) {
             return $this->db->errorno();
         }
-        $comp_res = array_diff_assoc_recursive($returned, $check);
-        if (!empty($comp_res)) {
-            return Aerospike::ERR_CLIENT;
-        }
-        else {
+        if ($returned['first_name'] == "Mr John.") {
             return AEROSPIKE::OK;
         }
-        return $status;
+        else {
+            return AEROSPIKE::ERR_SERVER;
+        }
     }
     /**
      * @test
