@@ -9,19 +9,19 @@ Aerospike::getMany - gets a batch of record from the Aerospike database
 public int Aerospike::getMany ( array $keys, array &$records [, array $filter [, array $options]] )
 ```
 
-**Aerospike::getMany()** will read a batch of *records* from a list of given *keys*
-Each of the *records* is filled with an array of records. Each of those records
-is an array with keys *key*, *meta*, *bins* (see: [get()](aerospike_get.md)).
+**Aerospike::getMany()** will read a batch of *records* from a list of given
+*keys*, and fill *records* with the resulting indexed array. Each record is an array
+consisting of *key*, *meta* and *bins* (see: [get()](aerospike_get.md)).
 Non-existent records will have NULL for their *meta* and *bins* fields.
-The bins returned can be filtered by passing the array of needed bin names.
+The bins returned can be filtered by passing an array of bin names.
 
 ## Parameters
 
-**keys** an array of initialized keys, each an array with keys ['ns','set','key'] or ['ns','set','digest'].
+**keys** an array of initialized keys, each key an array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**records** filled by an array of [records](aerospike_get.md).
+**records** filled by an indexed array of [record](aerospike_get.md) values.
 
-**filter** an array of bin names
+**filter** an array of bin names. Non-existent bins have a NULL value.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
