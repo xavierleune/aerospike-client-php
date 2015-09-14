@@ -936,7 +936,12 @@ set_config_policies(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         goto exit;
                     }
-                    as_config_p->policies.read.timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    uint32_t read_timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.read.timeout = read_timeout;
+                    as_config_p->policies.info.timeout = read_timeout;
+                    as_config_p->policies.batch.timeout = read_timeout;
+                    as_config_p->policies.scan.timeout = read_timeout;
+                    as_config_p->policies.query.timeout = read_timeout;
                     break;
                 case OPT_WRITE_TIMEOUT:
                     if (Z_TYPE_PP(options_value) != IS_LONG) {
@@ -945,7 +950,11 @@ set_config_policies(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         goto exit;
                     }
-                    as_config_p->policies.write.timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    uint32_t write_timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.write.timeout = write_timeout;
+                    as_config_p->policies.operate.timeout = write_timeout;
+                    as_config_p->policies.remove.timeout = write_timeout;
+                    as_config_p->policies.apply.timeout = write_timeout;
                     break;
                 case OPT_POLICY_KEY:
                     if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
@@ -954,7 +963,12 @@ set_config_policies(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         goto exit;
                     }
-                    as_config_p->policies.key = (uint32_t) Z_LVAL_PP(options_value);
+                    uint32_t key_policy = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.key = key_policy;
+                    as_config_p->policies.read.key = key_policy;
+                    as_config_p->policies.write.key = key_policy;
+                    as_config_p->policies.operate.key = key_policy;
+                    as_config_p->policies.remove.key = key_policy;
                     break;
                 case OPT_POLICY_RETRY:
                     if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
