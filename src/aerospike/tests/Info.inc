@@ -460,7 +460,7 @@ class Info extends AerospikeTestCommon
     {
         $host = array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>3001);
         try {
-            return $this->db->info('node', $response, $host);
+            return $this->db->info('node', $response, $host, array(Aerospike::OPT_READ_TIMEOUT=>10));
         } catch (ErrorException $e) {
             return $this->db->errorno();
         }

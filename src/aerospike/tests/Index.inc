@@ -17,12 +17,12 @@ class Index extends AerospikeTestCommon
         $this->db->put($key, array("string_list"=>array('a', 'b', 'c', 'd', 'e')));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "key3");
-		$this->db->put($key, array("string_map_keys"=>array('a' =>1, 'b' => 2, 'c' => 3),
-			"string_map_values"=>array('a' => 'x', 'b' => 'y', 'c' => 'z')));
+		$this->db->put($key, array("str_map_keys"=>array('a' =>1, 'b' => 2, 'c' => 3),
+            "str_map_vals"=>array('a' => 'x', 'b' => 'y', 'c' => 'z')));
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "key4");
 		$this->db->put($key, array("num_mapkeys"=>array(1 => 'aa', 2 => 'bb', 3 => 'cc'),
-			"numeric_map_values"=>array('a' => 11, 'b' => 12, 'c' => 13)));
+			"num_map_vals"=>array('a' => 11, 'b' => 12, 'c' => 13)));
         $this->keys[] = $key;
    }
 
@@ -540,16 +540,16 @@ class Index extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testAddIndexMapKeysStringPositive() {
-        $status = $this->db->addIndex("test", "demo", "string_map_keys",
+        $status = $this->db->addIndex("test", "demo", "str_map_keys",
 			"index_mapkeys_string", Aerospike::INDEX_TYPE_MAPKEYS,
-			Aerospike::INDEX_STRING, array(Aerospike::OPT_WRITE_TIMEOUT => 12000));
+            Aerospike::INDEX_STRING, array(Aerospike::OPT_WRITE_TIMEOUT => 12000));
 		if ($status != AEROSPIKE::OK) {
 			return $this->db->errorno();
 		}
         $status = $this->db->dropIndex("test", "index_mapkeys_string");
 		if ($status != AEROSPIKE::OK) {
 			return $this->db->errorno();
-		}
+        }
 		return $status;
     }
     /**
@@ -596,7 +596,7 @@ class Index extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testAddIndexMapValuesStringPositive() {
-        $status = $this->db->addIndex("test", "demo", "string_map_values",
+        $status = $this->db->addIndex("test", "demo", "str_map_vals",
 			"index_mapvalues_string", Aerospike::INDEX_TYPE_MAPVALUES,
 			Aerospike::INDEX_STRING, array(Aerospike::OPT_WRITE_TIMEOUT => 12000));
 		if ($status != AEROSPIKE::OK) {
@@ -624,7 +624,7 @@ class Index extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testAddIndexMapValuesNumericPositive() {
-        $status = $this->db->addIndex("test", "demo", "numeric_map_values",
+        $status = $this->db->addIndex("test", "demo", "num_map_vals",
 			"index_mapvalues_numeric", Aerospike::INDEX_TYPE_MAPKVALUES,
 			Aerospike::INDEX_NUMERIC, array(Aerospike::OPT_WRITE_TIMEOUT => 12000));
 		if ($status != AEROSPIKE::OK) {
