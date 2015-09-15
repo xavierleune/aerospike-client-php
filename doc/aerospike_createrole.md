@@ -16,7 +16,7 @@ Clear-text password will be hashed using bcrypt before sending to server.
 
 **role** string rolename.
 
-**privileges** an array of privileges to be assigned to the role.
+**privileges** an array of Aerospike::PRIV\_* privileges to be assigned to the role.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
@@ -40,7 +40,7 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->createRole("example_role", array(array("code" : Aerospike::READ, "ns":
+$res = $db->createRole("example_role", array(array("code" : Aerospike::PRIV_READ, "ns":
                 "test", "set": "demo")));
 if ($res == Aerospike::OK) {
     echo "Role successfully created";
@@ -56,4 +56,3 @@ We expect to see:
 ```
 Role successfully created
 ```
-

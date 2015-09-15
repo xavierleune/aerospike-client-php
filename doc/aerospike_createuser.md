@@ -42,7 +42,7 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->createUser("john", "mypass@123", array("read"));
+$res = $db->createUser("john", "mypass@123", array("reader"));
 if ($res == Aerospike::OK) {
     echo "User john successfully created";
 } elseif ($res == Aerospike::ROLE_VIOLATION) {
@@ -61,4 +61,3 @@ We expect to see:
 ```
 User john successfully created
 ```
-

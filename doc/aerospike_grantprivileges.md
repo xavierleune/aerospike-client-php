@@ -15,7 +15,7 @@ public int grantPrivileges ( string $role, array $privileges [, array $options ]
 
 **role** string rolename.
 
-**privileges** an array of new privileges to be assigned to the role.
+**privileges** an array of Aerospike::PRIV\_* privileges to be assigned to the role.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
@@ -40,7 +40,7 @@ if (!$db->isConnected()) {
 }
 
 $res = $db->grantPrivileges("example_role", array(array("code":
-                Aerospike::READ_WRITE_UDF)));
+                Aerospike::PRIV_READ_WRITE_UDF)));
 if ($res == Aerospike::OK) {
     echo "read-write_udf privileges successfully granted to role";
 } else {
@@ -55,4 +55,3 @@ We expect to see:
 ```
 read-write_udf privileges successfully granted to role
 ```
-
