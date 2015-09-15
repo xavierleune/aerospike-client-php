@@ -1,3 +1,4 @@
+sudo: false
 language: php
 php:
 - 5.3
@@ -9,8 +10,11 @@ os:
 before_install:
 - ./.travis/start-aerospike.sh
 - cp .travis/slacktee.conf ~/.slacktee
-install:
-- sudo apt-get install autoconf libssl-dev
+addons:
+  apt:
+    packages:
+      - libssl-dev
+      - autoconf
 script:
 - cd src/aerospike
 - ./build.sh

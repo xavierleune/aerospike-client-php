@@ -162,13 +162,6 @@ class LList extends LDT
     }
 
     /**
-     * @deprecated use findFirst instead
-     */
-    public function find_first($count, &$elements) {
-        return $this->findFirst($count, $elements);
-    }
-
-    /**
      * Finds the first N elements in the LList.
      *
      * @param int $count
@@ -185,13 +178,6 @@ class LList extends LDT
         $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
         $this->processStatusCode($status);
         return $this->errorno;
-    }
-
-    /**
-     * @deprecated use findLast instead
-     */
-    public function find_last($count, &$elements) {
-        return $this->findLast($count, $elements);
     }
 
     /**
