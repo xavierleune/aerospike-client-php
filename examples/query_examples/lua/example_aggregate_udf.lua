@@ -34,3 +34,23 @@ function group_count(stream, group_by_bin, bin_having, ge_threshold)
   end
 end
 
+local function and_filter(bin_name, bin_val)
+    local type_check = type(bin_val)
+    return function(rec)
+        if rec[bin_name] and (type(rec[bin_name]) == type_check) and
+           rec[bin_name] == bin_val then
+            return true
+        end
+        return false
+    end
+end
+
+local function map_ages(rec)
+    local result = map()
+    result[rec['name']] = rec['age']
+    return result
+end
+
+function ages(stream, bin_name, bin_val)
+    return stream : filter(and_filter(bin_name, bin_val)) : map(map_ages)
+end

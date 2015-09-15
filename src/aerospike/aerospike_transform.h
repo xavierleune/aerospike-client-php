@@ -647,8 +647,8 @@ do {                                                                           \
  */
 #define AEROSPIKE_LIST_PUT_APPEND_NULL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
-    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
-            serializer_policy, err TSRMLS_CC)
+    AS_LIST_PUT_APPEND_NULL(key, value, array, static_pool,                    \
+        serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_LONG(key, value, array, static_pool,         \
            serializer_policy, err)                                             \

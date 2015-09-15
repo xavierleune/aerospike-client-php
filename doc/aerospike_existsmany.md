@@ -9,16 +9,17 @@ Aerospike::existsMany - check if a batch of records exist in the Aerospike datab
 public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
 ```
 
-**Aerospike::existsMany()** will check if a batch of records from a list of given *keys*
-exists in the database.
+**Aerospike::existsMany()** will check if a batch of records from a list of given
+*keys* exists in the database, and returned an indexed array matching the order
+of the *keys*.
 If the key exists its metadata will be returned in the *metadata* variable,
-and non-existent records will return as NULL.
+and non-existent records will have a NULL.
 
 ## Parameters
 
 **keys** an array of initialized keys, each an array with keys ['ns','set','key'] or ['ns','set','digest'].
 
-**metadata** filled by an array of metadata.
+**metadata** filled by an array of metadata arrays.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
@@ -59,22 +60,21 @@ We expect to see:
 
 ```
 array(3) {
-  [1234]=>
+  [0]=>
   array(2) {
     ["generation"]=>
-    int(4)
+    int(6)
     ["ttl"]=>
-    int(1337)
+    int(4294967295)
   }
-  [12345]=>
+  [1]=>
   NULL
-  [1236]=>
+  [2]=>
   array(2) {
     ["generation"]=>
-    int(3)
+    int(6)
     ["ttl"]=>
-    int(505)
+    int(4294967295)
   }
 }
 ```
-

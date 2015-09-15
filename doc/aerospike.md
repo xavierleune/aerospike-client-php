@@ -8,7 +8,7 @@ The main Aerospike class
 
 ```php
 
-class Aerospike
+final class Aerospike
 {
     // The key policy can be determined by setting OPT_POLICY_KEY to one of
     const POLICY_KEY_DIGEST; // hashes (ns,set,key) data into a unique record ID (default)
@@ -128,6 +128,20 @@ class Aerospike
     const ERR_UDF                ; // Generic UDF error
     const ERR_UDF_NOT_FOUND      ; // UDF does not exist
     const ERR_LUA_FILE_NOT_FOUND ; // Source file for the module not found
+    // Security operations:
+    const ERR_SECURITY_NOT_SUPPORTED;
+    const ERR_SECURITY_NOT_ENABLED;
+    const ERR_SECURITY_SCHEME_NOT_SUPPORTED;
+    const ERR_INVALID_USER;
+    const ERR_USER_ALREADY_EXISTS;
+    const ERR_INVALID_PASSWORD;
+    const ERR_EXPIRED_PASSWORD;
+    const ERR_FORBIDDEN_PASSWORD;
+    const ERR_INVALID_CREDENTIAL;
+    const ERR_INVALID_ROLE;
+    const ERR_INVALID_PRIVILEGE;
+    const ERR_NOT_AUTHENTICATED;
+    const ERR_ROLE_VIOLATION;
 
     // Status values returned by scanInfo()
     const SCAN_STATUS_UNDEF;      // Scan status is undefined.
@@ -169,6 +183,14 @@ class Aerospike
     // data type
     const INDEX_STRING;  // if the index type is matched, regard values of type string
     const INDEX_NUMERIC; // if the index type is matched, regard values of type integer
+
+    // Security role privileges
+    const PRIV_READ; // user can read data only
+    const PRIV_WRITE; // user can read and write data
+    const PRIV_READ_WRITE_UDF; // can read and write data through User-Defind Functions
+    const PRIV_USER_ADMIN; // user can edit/remove other users
+    const PRIV_SYS_ADMIN; // can perform sysadmin functions that do not involve user admin
+    const PRIV_DATA_ADMIN; // can perform data admin functions that do not involve user admin
 
     // lifecycle and connection methods
     public __construct ( array $config [,  boolean $persistent_connection = true [, array $options]] )
@@ -231,6 +253,22 @@ class Aerospike
     public int info ( string $request, string &$response [, array $host [, array options ] ] )
     public array infoMany ( string $request [, array $config [, array options ]] )
     public array getNodes ( void )
+
+    // security methods
+    public int createRole ( string $role, array $privileges [, array $options ] )
+    public int grantPrivileges ( string $role, array $privileges [, array $options ] )
+    public int revokePrivileges ( string $role, array $privileges [, array $options ] )
+    public int queryRole ( string $role, array &$privileges [, array $options ] )
+    public int queryRoles ( array &$roles [, array $options ] )
+    public int dropRole ( string $role [, array $options ] )
+    public int createUser ( string $user, string $password, array $roles [, array $options ] )
+    public int setPassword ( string $user, string $password [, array $options ] )
+    public int changePassword ( string $user, string $password [, array $options ] )
+    public int grantRoles ( string $user, array $roles [, array $options ] )
+    public int revokeRoles ( string $user, array $roles [, array $options ] )
+    public int queryUser ( string $user, array &$roles [, array $options ] )
+    public int queryUsers ( array &$roles [, array $options ] )
+    public int dropUser ( string $user [, array $options ] )
 }
 ```
 
@@ -244,6 +282,7 @@ class Aerospike
 ### [Admin Methods](apiref_admin.md)
 ### [Info Methods](apiref_info.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
+### [Security Methods](apiref_security.md)
 
 An overview of the development of the client is at the top level
 [README](README.md).

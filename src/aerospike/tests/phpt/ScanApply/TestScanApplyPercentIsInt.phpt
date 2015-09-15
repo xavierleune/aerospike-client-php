@@ -6,6 +6,6 @@ ScanApply - Percent is int
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
 aerospike_phpt_runtest("ScanApply", "testScanApplyPercentIsInt");
 --XFAIL--
-Waiting for the cause to be fixed in the C client.
+A bug in C client as_scan_set_percent() only allows for 0 or 100 as values.
 --EXPECT--
 OK

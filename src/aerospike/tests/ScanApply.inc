@@ -21,7 +21,6 @@ class ScanApply extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $this->ensureUdfModule("tests/lua/test_transform.lua", "test_transform.lua");
-        //$this->db->register("tests/lua/test_transform.lua", "test_transform.lua");
         sleep(2);
         $key = $this->db->initKey("test", "demo", "Get_key");
         $this->db->put($key, array("first_name"=>"john", "age"=>($this->ages[0])));
@@ -38,10 +37,6 @@ class ScanApply extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", "Get_key4");
         $this->db->put($key, array("first_name"=>"mitchell", "age"=>($this->ages[4])));
         $this->keys[] = $key;
-    }
-
-    protected function tearDown() {
-        //$this->db->deregister("test_transform.lua");
     }
 
     /**
