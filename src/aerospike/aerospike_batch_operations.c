@@ -238,8 +238,12 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 
     foreach_hashtable(keys_array, key_pointer, key_entry) {
         record = as_batch_read_reserve(&records);
-        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
-                &record->key, &initializeKey);
+        if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+                &record->key, &initializeKey)) {
+            DEBUG_PHP_EXT_DEBUG("Invalid params.");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid params.");
+            goto exit;
+        }
         i++;
     }
 
@@ -357,8 +361,12 @@ aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p
     is_batch_init = true;
 
     foreach_hashtable(keys_array, key_pointer, key_entry) {
-        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
-                as_batch_keyat(&batch, i), &initializeKey);
+        if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+                as_batch_keyat(&batch, i), &initializeKey)) {
+            DEBUG_PHP_EXT_DEBUG("Invalid params.");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid params.");
+            goto exit;
+        }
         i++;
     }
 
@@ -573,8 +581,12 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 
     foreach_hashtable(keys_ht_p, key_pointer, key_entry) {
         record = as_batch_read_reserve(&records);
-        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
-                &record->key, &initializeKey);
+        if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+               &record->key, &initializeKey) ) {
+            DEBUG_PHP_EXT_DEBUG("Invalid params.");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid params.");
+            goto exit;
+        }
         i++;
 
         if (filter_bins_p) {
@@ -738,8 +750,12 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
     is_batch_init = true;
 
     foreach_hashtable(keys_ht_p, key_pointer, key_entry) {
-        aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
-                as_batch_keyat(&batch, i), &initializeKey);
+        if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
+                as_batch_keyat(&batch, i), &initializeKey)) {
+            DEBUG_PHP_EXT_DEBUG("Invalid params.");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid params.");
+            goto exit;
+        }
         i++;
     }
 

@@ -8,12 +8,12 @@ public string Aerospike::getKeyDigest (string $ns, string $set, string|int $pk)
 
 ### [Aerospike::initKey](aerospike_initkey.md)
 ```
-public array initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
+public array Aerospike::initKey ( string $ns, string $set, int|string $pk [, boolean $is_digest = false ] )
 ```
 
 ### [Aerospike::getKeyDigest](aerospike_getkeydigest.md)
 ```
-public string getKeyDigest ( string $ns, string $set, int|string $pk )
+public string Aerospike::getKeyDigest ( string $ns, string $set, int|string $pk )
 ```
 
 ### [Aerospike::put](aerospike_put.md)

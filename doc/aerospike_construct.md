@@ -74,6 +74,6 @@ if (!$db->isConnected()) {
 On error we expect to see:
 
 ```
-Aerospike failed to connect[300]: failed to initialize cluster
+Aerospike failed to connect[-1]: Unable to connect to server
 ```
 
