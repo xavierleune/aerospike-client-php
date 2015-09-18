@@ -1,4 +1,3 @@
-sudo: false
 language: php
 php:
 - 5.3
@@ -12,9 +11,29 @@ addons:
     packages:
       - libssl-dev
       - autoconf
+install:
+- wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
+- tar xvzf aerospike-server.tgz
+- cp -f .travis/aerospike.conf ./aerospike-server/share/etc
+- cd aerospike-server
+- mkdir instance1
+- mkdir instance2
+- ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
+- ./bin/aerospike init --home instance2 --instance 2 --service-port 3010
+- cd instance1
+- sudo ./bin/aerospike start
+- cd ..
+- cd instance2
+- sudo ./bin/aerospike start
+- cd ../..
+- sleep 3
 script:
 - cd src/aerospike
 - ./build.sh
+- ../../.travis/edit-php-ini.sh
+- cp ../aerospike-client-c/package/opt/aerospike/client/sys/udf/lua/*lua ~/udf/sys/
+- cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
+- make test TESTS=tests/phpt TEST_PHP_ARGS="--show-diff"
 notifications:
   slack:
     secure: CvYjLs0z+Y7NnhhoDLU61GSEKaPr0AM6fGrLHqqpXmNgl4AlaLSL46eSA6Zu/6cpnwr7m5REpjR6p4iNT57may783Ud+d89offuXK4nwiexi0MBPaPNb7MlBl07k1eOfX9GfbEYYo6vbp6q2DSn3RgrGIlyT20ocXPOLNJrh58U=
