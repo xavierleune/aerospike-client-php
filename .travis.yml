@@ -7,9 +7,6 @@ php:
 - 5.6
 os:
 - linux
-before_install:
-- ./.travis/start-aerospike.sh
-- cp .travis/slacktee.conf ~/.slacktee
 addons:
   apt:
     packages:
@@ -18,18 +15,6 @@ addons:
 script:
 - cd src/aerospike
 - ./build.sh
-- ../../.travis/load-extension.sh
-- php pause-for-server.php
-- cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
-- make test TESTS=tests/phpt TEST_PHP_ARGS="--show-diff"
-after_failure:
-- cat configure.in | ./scripts/slacktee.sh -t "$TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
-  ($TRAVIS_COMMIT)" -f
-- cat Makefile | ./scripts/slacktee.sh -t "$TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER ($TRAVIS_COMMIT)"
-  -f
-after_script:
-- ./scripts/slack-debug.sh
-- ./scripts/test-cleanup.sh
 notifications:
   slack:
     secure: CvYjLs0z+Y7NnhhoDLU61GSEKaPr0AM6fGrLHqqpXmNgl4AlaLSL46eSA6Zu/6cpnwr7m5REpjR6p4iNT57may783Ud+d89offuXK4nwiexi0MBPaPNb7MlBl07k1eOfX9GfbEYYo6vbp6q2DSn3RgrGIlyT20ocXPOLNJrh58U=
