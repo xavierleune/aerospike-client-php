@@ -67,7 +67,24 @@ AerospikeStatus aerospike_status[] = {
   { AEROSPIKE_ERR_QUERY_TIMEOUT        ,   "ERR_QUERY_TIMEOUT"        },
   { AEROSPIKE_ERR_QUERY                ,   "ERR_QUERY"                },
   { AEROSPIKE_ERR_UDF_NOT_FOUND        ,   "ERR_UDF_NOT_FOUND"        },
-  { AEROSPIKE_ERR_LUA_FILE_NOT_FOUND   ,   "ERR_LUA_FILE_NOT_FOUND"   }
+  { AEROSPIKE_ERR_LUA_FILE_NOT_FOUND   ,   "ERR_LUA_FILE_NOT_FOUND"   },
+  { AEROSPIKE_SECURITY_NOT_SUPPORTED        ,   "ERR_SECURITY_NOT_SUPPORTED"          },
+  { AEROSPIKE_SECURITY_NOT_ENABLED          ,   "ERR_SECURITY_NOT_ENABLED"            },
+  { AEROSPIKE_SECURITY_SCHEME_NOT_SUPPORTED ,   "ERR_SECURITY_SCHEME_NOT_SUPPORTED"   },
+  { AEROSPIKE_INVALID_USER                  ,   "ERR_INVALID_USER"                    },
+  { AEROSPIKE_USER_ALREADY_EXISTS           ,   "ERR_USER_ALREADY_EXISTS"             },
+  { AEROSPIKE_INVALID_PASSWORD              ,   "ERR_INVALID_PASSWORD"                },
+  { AEROSPIKE_EXPIRED_PASSWORD              ,   "ERR_EXPIRED_PASSWORD"                },
+  { AEROSPIKE_FORBIDDEN_PASSWORD            ,   "ERR_FORBIDDEN_PASSWORD"              },
+  { AEROSPIKE_INVALID_CREDENTIAL            ,   "ERR_INVALID_CREDENTIAL"              },
+  { AEROSPIKE_INVALID_ROLE                  ,   "ERR_INVALID_ROLE"                    },
+  { AEROSPIKE_INVALID_PRIVILEGE             ,   "ERR_INVALID_PRIVILEGE"               },
+  { AEROSPIKE_INVALID_COMMAND               ,   "ERR_INVALID_COMMAND"                 },
+  { AEROSPIKE_INVALID_FIELD                 ,   "ERR_INVALID_FIELD"                   },
+  { AEROSPIKE_ILLEGAL_STATE                 ,   "ERR_ILLEGAL_STATE"                   },
+  { AEROSPIKE_NOT_AUTHENTICATED             ,   "ERR_NOT_AUTHENTICATED"               },
+  { AEROSPIKE_ROLE_VIOLATION                ,   "ERR_ROLE_VIOLATION"                  },
+  { AEROSPIKE_ROLE_ALREADY_EXISTS			, 	"ERR_ROLE_ALREADY_EXISTS"			  },
 };
 
 #define AEROSPIKE_STATUS_ARR_SIZE (sizeof(aerospike_status)/sizeof(AerospikeStatus))

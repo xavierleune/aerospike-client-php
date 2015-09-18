@@ -86,7 +86,7 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Writing records in test.characters with PKs=4-10 ≻", 'black', true);
 $start = __LINE__;
-$characters = array("freudian.circuits" => array('HAL Institute', 162),
+$characters = array("Dr. Perceptron" => array('HAL Institute', 162),
     "Philip J Fry" => array('Planet Express', 40),
     "Tarunga Leela" => array('Planet Express', 39),
     "Dr. Amy Wong" => array('Planet Express', 34),
@@ -115,7 +115,21 @@ if($status !== Aerospike::OK) {
 } else {
     echo success();
     echo "Counts of characters in their first two centuries, grouped by workplace:\n";
-    var_dump($result['bins']);
+    var_dump($result);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+
+echo colorize("Showing characters WHERE ages between 20 and 200 AND workplace='Planet Express' ≻", 'black', true);
+$start = __LINE__;
+$where = $db->predicateBetween("age", 20, 200);
+$status = $db->aggregate("test", "characters", $where, "example_aggregate_udf", "ages", array('workplace', 'Planet Express'), $result);
+if($status !== Aerospike::OK) {
+    echo standard_fail($db);
+} else {
+    echo success();
+    echo "The characters expressed as name => age pairs:\n";
+    var_dump($result);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 

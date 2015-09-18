@@ -10,8 +10,8 @@ The following configuration options in php.ini
 | aerospike.write_timeout | 1000 |
 | aerospike.key_policy | digest |
 | aerospike.serializer | php |
-| aerospike.udf.lua_system_path | /opt/aerospike/client-php/sys-lua |
-| aerospike.udf.lua_user_path | /opt/aerospike/client-php/usr-lua |
+| aerospike.udf.lua_system_path | /opt/aerospike/lua |
+| aerospike.udf.lua_user_path | /opt/aerospike/usr-lua |
 | aerospike.shm.use | false |
 | aerospike.shm.max_nodes | 16 |
 | aerospike.shm.max_namespaces | 8 |

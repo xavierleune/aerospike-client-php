@@ -355,26 +355,6 @@ abstract class LDT
     }
 
     /**
-     * @param int $num_elements returned
-     * @return int status code of the operation
-     * @deprecated
-     */
-    public function getCapacity(&$num_elements) {
-        return LDT::OK;
-    }
-
-    /**
-     * Sets the max number of elements that the LDT can hold.
-     *
-     * @param int $num_elements
-     * @return int status code of the operation
-     * @deprecated
-     */
-    public function setCapacity($num_elements) {
-        return LDT::OK;
-    }
-
-    /**
      * Process the operation status code into error number and message
      *
      * @param int $status code of the operation

@@ -273,11 +273,13 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
      */
 
     for (itr_user=0; itr_user < conf->hosts_size; itr_user++) {
-        alias_to_search = (char*) emalloc(strlen(conf->hosts[itr_user].addr) + MAX_PORT_SIZE + 1);
+        alias_to_search = (char*) emalloc(strlen(conf->hosts[itr_user].addr) + strlen(conf->user) + MAX_PORT_SIZE + 2);
         sprintf(port, "%d", conf->hosts[itr_user].port);
         strcpy(alias_to_search, conf->hosts[itr_user].addr);
         strcat(alias_to_search, ":");
         strcat(alias_to_search, port);
+        strcat(alias_to_search, ":");
+        strcat(alias_to_search, conf->user);
         pthread_rwlock_rdlock(&AEROSPIKE_G(aerospike_mutex));
         if (zend_hash_find(persistent_list, alias_to_search,
                 strlen(alias_to_search), (void **) &le) == SUCCESS) {
@@ -296,11 +298,13 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         }
     }
 
-    alias_to_search = (char*) emalloc(strlen(conf->hosts[0].addr) + MAX_PORT_SIZE + 1);
+    alias_to_search = (char*) emalloc(strlen(conf->hosts[0].addr) + strlen(conf->user) + MAX_PORT_SIZE + 2);
     sprintf(port, "%d", conf->hosts[0].port);
     strcpy(alias_to_search, conf->hosts[0].addr);
     strcat(alias_to_search, ":");
     strcat(alias_to_search, port);
+    strcat(alias_to_search, ":");
+    strcat(alias_to_search, conf->user);
     ZEND_HASH_CREATE_ALIAS_NEW(alias_to_search, strlen(alias_to_search), 1);
 
     /*
@@ -310,11 +314,13 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
      */
 
     for (itr_user=1; itr_user < conf->hosts_size; itr_user++ ) {
-        alias_to_hash = (char*) emalloc(strlen(conf->hosts[itr_user].addr) + MAX_PORT_SIZE + 1);
+        alias_to_hash = (char*) emalloc(strlen(conf->hosts[itr_user].addr) + strlen(conf->user) + MAX_PORT_SIZE + 2);
         sprintf(port, "%d", conf->hosts[itr_user].port);
         strcpy(alias_to_hash, conf->hosts[itr_user].addr);
         strcat(alias_to_hash, ":");
         strcat(alias_to_hash, port);
+        strcat(alias_to_hash, ":");
+        strcat(alias_to_hash, conf->user);
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));
         zend_hash_add(persistent_list, alias_to_hash,
                 strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
@@ -507,7 +513,7 @@ aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p)
         return true;
     }
 
-    AS_DEFAULT_GET(NULL, val_p, (foreach_callback_udata *) udata_p);
+    AS_AGGREGATE_GET(NULL, val_p, (foreach_callback_udata *) udata_p);
 exit:
     return true;
 }

@@ -316,7 +316,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
     as_query_init(&query, namespace_p, set_p);
     is_init_query = true;
 
-    if (predicate_ht_p) {
+    if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
         as_query_where_inita(&query, 1);
     }
 
@@ -389,7 +389,7 @@ extern as_status
 aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
-        HashTable* predicate_ht_p, zval* outer_container_p,
+        HashTable* predicate_ht_p, zval* return_value_p,
         zval* options_p, int8_t* serializer_policy_p  TSRMLS_DC)
 {
     as_arraylist                args_list;
@@ -400,14 +400,11 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     as_query                    query;
     bool                        is_init_query = false;
     foreach_callback_udata      aggregate_result_callback_udata;
-    zval*                       key_container_p = NULL;
-    zval*                       return_value_p = NULL;
-    bool                        key_container_assoc = false;
     bool                        return_value_assoc = false;
 
     if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) ||
             (!args_pp && (!(*args_pp))) || (!namespace_p) || (!set_p) ||
-            (!predicate_ht_p) || (!outer_container_p)) {
+            (!predicate_ht_p) || (!return_value_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate query aggregation");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate query aggregation");
         goto exit;
@@ -439,21 +436,15 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     is_init_query = true;
-    as_query_where_inita(&query, 1);
+    if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
+        as_query_where_inita(&query, 1);
+    }
+    
     if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
                     set_p, predicate_ht_p, module_p, function_p,
                     args_list_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_DEBUG("Unable to define query");
         goto exit;
-    }
-
-    MAKE_STD_ZVAL(return_value_p);
-    array_init(return_value_p);
-
-    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
-       DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
-       error_p->code = AEROSPIKE_ERR_CLIENT;
-       goto exit;
     }
 
     return_value_assoc = true;
@@ -490,56 +481,6 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    if (is_init_query == true) {
-
-        MAKE_STD_ZVAL(key_container_p);
-        array_init(key_container_p);
-
-        if (0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_NS, query.ns, strlen(query.ns), 1)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get namespace");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }
-
-        if ( 0 != add_assoc_stringl(key_container_p, PHP_AS_KEY_DEFINE_FOR_SET, query.set, strlen(query.set), 1)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get set");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }
-
-        if (0 != add_assoc_null(key_container_p, PHP_AS_KEY_DEFINE_FOR_KEY)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }
-
-        if (0 != add_assoc_null(key_container_p, PHP_AS_KEY_DEFINE_FOR_DIGEST)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get primary of a record");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }
-
-        if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get a key");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }
-
-        key_container_assoc = true;
-
-        if (0 != add_assoc_null(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }
-
-      /*  if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, return_value_p)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to get result of aggregate");
-            error_p->code = AEROSPIKE_ERR_CLIENT;
-            goto exit;
-        }*/
-    }
-
 exit:
     if (args_list_p) {
         as_arraylist_destroy(args_list_p);
@@ -550,10 +491,8 @@ exit:
     }
 
     if (error_p->code == AEROSPIKE_ERR_CLIENT) {
-        if (return_value_p && !return_value_assoc)
+        if (return_value_p && !return_value_assoc) {
             zval_dtor(return_value_p);
-        if (key_container_p && (false == key_container_assoc)) {
-            zval_dtor(key_container_p);
         }
     }
 

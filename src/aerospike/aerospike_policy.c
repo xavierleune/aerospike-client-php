@@ -104,7 +104,8 @@ exit:
  * @param options_p             The optional parameters.
  * @param generation_value_p    The generation value to be set into put record.
  * @param error_p               The as_error to be populated by the function
- *  *                           with the encountered error if any.
+ *                              with the encountered error if any.
+ *******************************************************************************************************
  */
 extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *error_p TSRMLS_DC)
@@ -160,6 +161,8 @@ exit:
  * @param serializer_policy_p   The serialization policy to be passed in case of put.
  * @param batch_policy_p        The as_policy_batch to be passed in case of getMany
  *                              and existsMany.
+ * @param apply_policy_p        The as_policy_apply to be passed in case of udf apply.
+ * @param admin_policy_p        The as_policy_admin to be passed in case of security APIs.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
@@ -179,6 +182,7 @@ set_policy_ex(as_config *as_config_p,
               as_scan* as_scan_p,
               as_policy_batch *batch_policy_p,
               as_policy_apply *apply_policy_p,
+              as_policy_admin *admin_policy_p,
               zval *options_p,
               as_error *error_p TSRMLS_DC)
 {
@@ -187,7 +191,7 @@ set_policy_ex(as_config *as_config_p,
     if ((!read_policy_p) && (!write_policy_p) &&
         (!operate_policy_p) && (!remove_policy_p) && (!info_policy_p) &&
         (!scan_policy_p) && (!query_policy_p) && (!serializer_policy_p)
-        && (!batch_policy_p) && (!apply_policy_p)) {
+        && (!batch_policy_p) && (!apply_policy_p) && (!admin_policy_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to set policy");
         goto exit;
@@ -260,6 +264,11 @@ set_policy_ex(as_config *as_config_p,
         as_policy_apply_init(apply_policy_p);
         as_policy_apply_copy(&as_config_p->policies.apply,
                 apply_policy_p);
+    } else if(admin_policy_p) {
+        /*
+         * case : security APIs
+         */
+        as_policy_admin_init(admin_policy_p);
     }
 
     if (options_p != NULL) {
@@ -343,6 +352,8 @@ set_policy_ex(as_config *as_config_p,
                         query_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else if (apply_policy_p) {
                         apply_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    } else if (admin_policy_p) {
+                        admin_policy_p->timeout = (uint32_t) Z_LVAL_PP(options_value);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -586,23 +597,126 @@ exit:
 
 /*
  *******************************************************************************************************
- * Wrapper function for setting the relevant aerospike policies by using the user's
+ * Wrapper function for setting the read policy by using the user's
  * optional policy options (if set) else the defaults.
- * (Called by all methods except connect.)
  *
  * @param read_policy_p         The as_policy_read to be passed in case of get.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_read(as_policy_read *read_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, read_policy_p, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the write policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
  * @param write_policy_p        The as_policy_write to be passed in case of put.
- * @param operate_policy_p      The as_policy_operate to be passed in case of operations:
- *                              append, prepend, increment and touch.
+ * @param serializer_policy_p   The integer serializer_policy to be passed to
+ *                              handle aerospike-unsupported data types in put.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_write(as_policy_write *write_policy_p,
+        int8_t *serializer_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, write_policy_p, NULL, NULL, NULL, NULL,
+            NULL, serializer_policy_p, NULL, NULL, NULL, NULL, options_p,
+            error_p TSRMLS_CC);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the operate policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param operate_policy_p      The as_policy_operate to be passed in case of operate.
+ * @param serializer_policy_p   The integer serializer_policy to be passed to
+ *                              handle aerospike-unsupported data types in operate.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_operate(as_policy_operate *operate_policy_p,
+        int8_t *serializer_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, NULL, operate_policy_p, NULL, NULL, NULL,
+            NULL, serializer_policy_p, NULL, NULL, NULL, NULL,
+            options_p, error_p TSRMLS_CC);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the remove policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
  * @param remove_policy_p       The as_policy_remove to be passed in case of remove.
- * @param info_policy_p         The as_policy_info to be passed in case of
- *                              scan_info, register, deregister, get_registered,
- *                              list_registered udfs.
- * @param scan_policy_p         The as_policy_scan to be passed in case of scan
- *                              and scanApply.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_remove(as_policy_remove *remove_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, NULL, NULL, remove_policy_p, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the info policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param info_policy_p         The as_policy_info to be passed in case of scan get info,
+ *                              udf operations, index operations, info operations.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_info(as_policy_info *info_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, NULL, NULL, NULL, info_policy_p, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL, options_p,
+            error_p TSRMLS_CC);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the query policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
  * @param query_policy_p        The as_policy_query to be passed in case of
- *                              as_query_for_each.
- * @param serializer_policy_p   The serialization policy to be passed in case of put.
+ *                              query/aggregate.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
@@ -624,9 +738,24 @@ set_policy(as_config *as_config_p,
 {
     set_policy_ex(as_config_p, read_policy_p, write_policy_p, operate_policy_p,
             remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
-            serializer_policy_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the scan policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param scan_policy_p         The as_policy_scan to be passed in case of scan.
+ * @param serializer_policy_p   The integer serializer_policy to be passed to
+ *                              handle aerospike-unsupported data types in operate.
+ * @param as_scan_p             The as_scan object to be set.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 extern void
 set_policy_scan(as_config *as_config_p,
         as_policy_scan *scan_policy_p,
@@ -636,9 +765,21 @@ set_policy_scan(as_config *as_config_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, scan_policy_p, NULL,
-            serializer_policy_p, as_scan_p, NULL, NULL, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, as_scan_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the batch policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param batch_policy_p        The as_policy_batch to be passed in case of batch oeprations.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 extern void
 set_policy_batch(as_config *as_config_p,
         as_policy_batch *batch_policy_p,
@@ -646,9 +787,21 @@ set_policy_batch(as_config *as_config_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            NULL, NULL, batch_policy_p, NULL, options_p, error_p TSRMLS_CC);
+            NULL, NULL, batch_policy_p, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the apply policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param apply_policy_p        The as_policy_apply to be passed in case of udf apply.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 extern void
 set_policy_udf_apply(as_config *as_config_p,
         as_policy_apply *apply_policy_p,
@@ -657,7 +810,29 @@ set_policy_udf_apply(as_config *as_config_p,
         as_error *error_p TSRMLS_DC)
 {
     set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            serializer_policy_p, NULL, NULL, apply_policy_p, options_p, error_p TSRMLS_CC);
+            serializer_policy_p, NULL, NULL, apply_policy_p, NULL, options_p, error_p TSRMLS_CC);
+}
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the admin policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param admin_policy_p        The as_policy_admin to be passed in case of security operations.
+ * @param options_p             The user's optional policy options to be used if set, else defaults.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_admin(as_policy_admin *admin_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, admin_policy_p, options_p,
+            error_p TSRMLS_CC);
 }
 
 /*
@@ -675,7 +850,6 @@ set_policy_udf_apply(as_config *as_config_p,
  *
  *******************************************************************************************************
  */
-
 void
 set_config_policies(as_config *as_config_p,
         zval *options_p,
@@ -762,7 +936,12 @@ set_config_policies(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
                         goto exit;
                     }
-                    as_config_p->policies.read.timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    uint32_t read_timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.read.timeout = read_timeout;
+                    as_config_p->policies.info.timeout = read_timeout;
+                    as_config_p->policies.batch.timeout = read_timeout;
+                    as_config_p->policies.scan.timeout = read_timeout;
+                    as_config_p->policies.query.timeout = read_timeout;
                     break;
                 case OPT_WRITE_TIMEOUT:
                     if (Z_TYPE_PP(options_value) != IS_LONG) {
@@ -771,7 +950,11 @@ set_config_policies(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_WRITE_TIMEOUT");
                         goto exit;
                     }
-                    as_config_p->policies.write.timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    uint32_t write_timeout = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.write.timeout = write_timeout;
+                    as_config_p->policies.operate.timeout = write_timeout;
+                    as_config_p->policies.remove.timeout = write_timeout;
+                    as_config_p->policies.apply.timeout = write_timeout;
                     break;
                 case OPT_POLICY_KEY:
                     if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
@@ -780,7 +963,12 @@ set_config_policies(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_KEY");
                         goto exit;
                     }
-                    as_config_p->policies.key = (uint32_t) Z_LVAL_PP(options_value);
+                    uint32_t key_policy = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.key = key_policy;
+                    as_config_p->policies.read.key = key_policy;
+                    as_config_p->policies.write.key = key_policy;
+                    as_config_p->policies.operate.key = key_policy;
+                    as_config_p->policies.remove.key = key_policy;
                     break;
                 case OPT_POLICY_RETRY:
                     if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {

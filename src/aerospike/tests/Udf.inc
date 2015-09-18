@@ -14,6 +14,7 @@ class Udf extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $this->ensureUdfModule("tests/lua/test_record_udf.lua", "module.lua");
+        $this->ensureUdfModule("tests/lua/sample.lua", "sample.lua");
     }
 
     /**
@@ -293,6 +294,46 @@ class Udf extends AerospikeTestCommon
 
     /**
      * @test
+     * Basic Udf operation with parameter as NULL
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testUdfPositiveApplyParameterNull)
+     *
+     * @test_plans{1.1}
+     */
+    function testUdfPositiveApplyParameterNull() {
+        if (!$this->db->isConnected()) {
+            return ($this->db->errorno());
+        }
+        $key = $this->db->initKey("test","demo", "udf_parameter_null");
+        if ($this->db->isConnected()) {
+            $status = $this->db->put($key,array("first_name"=>array("smith"), "age"=>27));
+        } else {
+            $this->db->close();
+            return($this->db->errorno());
+        }
+        $status = $this->db->apply($key, "sample", "list_append", array("first_name",
+            NULL), $returned);
+        if ($status != Aerospike::OK) {
+            return ($this->db->errorno());
+        }
+        $status = $this->db->get($key, $returned);
+        $status = $this->db->remove($key,
+            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
+        $result = array_diff_assoc_recursive($returned["bins"]["first_name"], array("smith", NULL));
+        if(empty($result)) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+    /**
+     * @test
      * Apply UDF on a record containing List.
      *
      * @pre
@@ -531,22 +572,16 @@ class Udf extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", "udf_returns_record");
         $map = array("k30"=>6, "k20"=>5, "k10"=>1);
         $list = array(1, 2, 89);
-        if ($this->db->isConnected()) {
-            $status = $this->db->put($key, array("bin1"=>$map, "bin2"=>$list));
-        } else{
-            $this->db->close();
-            return($this->db->errorno());
-        }
-        $status = $this->db->apply($key, "module", "udf_returns_record", NULL, $returned);
+        $this->db->put($key, array("bin1"=>$map, "bin2"=>$list));
+        $this->keys[] = $key; // mark record for removal during teardown
+        $status = $this->db->apply($key, "module", "udf_returns_record", array(), $returned);
         if ($status != Aerospike::OK) {
             return ($this->db->errorno());
         }
-        $status = $this->db->remove($key,
-            array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
-        if ($returned != "") {
-            return Aerospike::ERR_CLIENT;
+        if (isset($returned['bin1']) && isset($returned['bin2'])) {
+            return Aerospike::OK;
         }
-        return Aerospike::OK;
+        return Aerospike::ERR_UDF;
     }
 
     /**
