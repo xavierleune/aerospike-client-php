@@ -426,29 +426,3 @@ rm -rf ${AEROSPIKE}/lua
 mkdir -p ${AEROSPIKE}/lua
 cp -R ${AEROSPIKE_LUA}/* ${AEROSPIKE}/lua
 
-LUA_SYSPATH=${LUA_SYSPATH_PREFIX}/client-php/${AEROSPIKE_C_CLIENT}/sys/udf/lua
-if [ ! -d $LUA_SYSPATH ]; then
-    scripts/lua-paths.sh "${LUA_SYSPATH_PREFIX}" "${AEROSPIKE_C_CLIENT}"
-fi
-
-if [ ! -d $LUA_SYSPATH ]; then
-    sudo scripts/lua-paths.sh ${LUA_SYSPATH_PREFIX} ${AEROSPIKE_C_CLIENT}
-    if [ $? -gt 0 ]; then
-        printf "Failed to create the Lua system files path.  Please run:\n"
-        printf "    sudo scripts/lua-paths.sh ${LUA_SYSPATH_PREFIX} ${AEROSPIKE_C_CLIENT}\n"
-        printf "Then re-run this scripts:\n    ./build.sh\n"
-        exit 1
-    fi
-    sudo cp ${AEROSPIKE_LUA}/*.lua ${LUA_SYSPATH}
-fi
-
-if [ ! -f ${LUA_SYSPATH}/aerospike.lua ]; then
-    cp ${AEROSPIKE_LUA}/*.lua ${LUA_SYSPATH}
-    if [ $? -gt 0 ] ; then
-        printf "Failed to copy the Lua system files.  Please run:\n"
-        printf "    sudo cp ${AEROSPIKE_LUA}/*.lua ${LUA_SYSPATH}\n"
-        printf "Then re-run this scripts:\n    ./build.sh\n"
-        exit 2
-    fi
-fi
-

@@ -163,28 +163,24 @@ config()
     INI_PATH=`echo $2|cut -d '>' -f2`
     echo "$1 file at $INI_PATH with the directive:"
     code "extension=aerospike.so"
-    if [ -f /opt/aerospike/client-php/sys-lua/aerospike.lua ]; then
-        code "aerospike.udf.lua_system_path=/opt/aerospike/client-php/sys-lua"
-        if [ -d /opt/aerospike/client-php/usr-lua ]; then
-            code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
-            if [ ! -f /opt/aerospike/client-php/usr-lua/test_transform.lua ]; then
-                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
-                if [ $? -gt 0 ] ; then
-                    echo "Failed to copy the Lua user files.  Please run:"
-                    code "sudo cp tests/lua/*.lua /opt/aerospike/client-php/usr-lua/"
-                fi
+    if [ -f /opt/aerospike/lua/aerospike.lua ]; then
+        code "aerospike.udf.lua_system_path=/opt/aerospike/lua"
+        code "aerospike.udf.lua_user_path=/opt/aerospike/usr-lua"
+        if [ ! -d /opt/aerospike/usr-lua ]; then
+            mkdir /opt/aerospike/usr-lua
+            if [ $? -gt 0 ] ; then
+                echo "Failed to create a directory for the user-defined function files.  Please run:"
+                code "sudo mkdir /opt/aerospike/usr-lua/"
             fi
         fi
-    elif [ -f /usr/local/aerospike/client-php/sys-lua/aerospike.lua ]; then
-        code "aerospike.udf.lua_system_path=/usr/local/aerospike/client-php/sys-lua"
-        if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
-            code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
-            if [ ! -f /usr/local/aerospike/client-php/usr-lua/test_transform.lua ]; then
-                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
-                if [ $? -gt 0 ] ; then
-                    echo "Failed to copy the Lua user files.  Please run:"
-                    code "sudo cp tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/"
-                fi
+    elif [ -f /usr/local/aerospike/lua/aerospike.lua ]; then
+        code "aerospike.udf.lua_system_path=/usr/local/aerospike/lua"
+        code "aerospike.udf.lua_user_path=/usr/local/aerospike/usr-lua"
+        if [ ! -d /usr/local/aerospike/usr-lua ]; then
+            mkdir /usr/local/aerospike/usr-lua
+            if [ $? -gt 0 ] ; then
+                echo "Failed to create a directory for the user-defined function files.  Please run:"
+                code "sudo mkdir /usr/local/aerospike/usr-lua/"
             fi
         fi
     fi
