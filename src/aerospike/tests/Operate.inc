@@ -612,14 +612,10 @@ class Operate  extends AerospikeTestCommon
         }
 
         $status = $this->db->exists($this->keys[0], $metadata);
-        if ($status != Aerospike::OK) {
-           return $this->db->errorno();
-        }
-        if ($metadata["ttl"] == 400) {
+        if ($status == Aerospike::OK && !empty($metadata)) {
             return Aerospike::OK;
-        } else {
-            return Aerospike::ERR_CLIENT;
         }
+        return $this->db->errorno();
     }
 
 
