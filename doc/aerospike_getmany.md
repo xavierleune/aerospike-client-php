@@ -11,8 +11,8 @@ public int Aerospike::getMany ( array $keys, array &$records [, array $filter [,
 
 **Aerospike::getMany()** will read a batch of *records* from a list of given
 *keys*, and fill *records* with the resulting indexed array. Each record is an array
-consisting of *key*, *meta* and *bins* (see: [get()](aerospike_get.md)).
-Non-existent records will have NULL for their *meta* and *bins* fields.
+consisting of *key*, *metadata* and *bins* (see: [get()](aerospike_get.md)).
+Non-existent records will have NULL for their *metadata* and *bins* fields.
 The bins returned can be filtered by passing an array of bin names.
 
 ## Parameters
