@@ -179,6 +179,33 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Register a filter module that will be used with this LDT ≻", 'black', true);
+$start = __LINE__;
+$copied = copy(__DIR__.'/lua/keyfilters.lua', ini_get('aerospike.udf.lua_user_path').'/keyfilters.lua');
+if (!$copied) {
+    echo fail("Could not copy the local lua/keyfilters.lua to ". ini_get('aerospike.udf.lua_user_path'));
+}
+$status = $db->register(ini_get('aerospike.udf.lua_user_path').'/keyfilters.lua', "keyfilters.lua");
+if ($status == Aerospike::OK) {
+    echo success();
+} elseif ($status == Aerospike::ERR_UDF_NOT_FOUND) {
+    echo fail("Could not find the udf file lua/keyfilters.lua");
+} else {
+    echo standard_fail($db);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Scan the LList for elements which have even-valued keys", 'black', true);
+$start = __LINE__;
+$status = $rental_history->scan($elements, 'keyfilters', 'even_filter');
+if ($status === Aerospike::OK) {
+    echo success();
+    var_dump($elements);
+} else {
+    echo standard_fail($rental_history);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 if (isset($args['c']) || isset($args['clean'])) {
     $start = __LINE__;
     echo colorize("Removing a range of elements with key 0-5 from the LDT ≻", 'black', true);

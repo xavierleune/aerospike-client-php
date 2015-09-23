@@ -14,25 +14,3 @@ namespace test {
 ```bash
 php llist.php --host=192.168.119.3 -a -c
 ```
-
-### Large Set
-`lset.php` gives an example of large set (LSet) operations.
-
-```bash
-php lset.php --host=192.168.119.3 -a -c
-```
-
-### Large Map
-`lmap.php` gives an example of large map (LMap) operations.
-
-```bash
-php lmap.php --host=192.168.119.3 -a -c
-```
-
-### Large Stack
-`lstack.php` gives an example of large stack (LStack) operations.
-
-```bash
-php lstack.php --host=192.168.119.3 -a -c
-```
-

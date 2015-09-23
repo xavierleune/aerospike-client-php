@@ -28,7 +28,7 @@ use Aerospike;
 /**
  * Large Data Types (LDTs) allow individual record bins to contain collections
  * of hundreds of thousands of objects. Developers can employ LDTs to
- * manipulate large amounts of data quickly and efficiently, without being 
+ * manipulate large amounts of data quickly and efficiently, without being
  * concerned with record or record bin size limitations.
  *
  * @package    Aerospike
@@ -48,8 +48,8 @@ abstract class LDT
      * Each Aerospike API method invocation returns a status code
      *  depending upon the success or failure condition of the call.
      *
-     * The error status codes map to the C client AEROSPIKE_ERR_LDT_* codes
-     *  src/include/aerospike/as_status.h
+     * The aerospike/aerospike-lua-core error codes
+     * https://github.com/aerospike/aerospike-lua-core/blob/master/src/ldt/ldt_errors.lua
      */
     const OK                        =    0;
     /**
@@ -57,17 +57,13 @@ abstract class LDT
      */
     const ERR_LDT                   = 1300;
     /**
-     * Generic input parameter error
-     */
-    const ERR_INPUT_PARAM           = 1409;
-    /**
      * Generic server-side error
      */
     const ERR_INTERNAL              = 1400;
     /**
      * Element not found
      */
-    const ERR_NOT_FOUND             = 1401;
+    const ERR_NOT_FOUND             =  125;
     /**
      * Duplicate element written when 'unique key' set
      */
@@ -85,9 +81,15 @@ abstract class LDT
      */
     const ERR_DELETE                = 1405;
     /**
-     * General input parameter error
+    */
+    const ERR_VERSION               = 1406;
+    /**
+    */
+    const ERR_CAPACITY_EXCEEDED     = 1408;
+    /**
+     * Generic input parameter error
      */
-    const ERR_LDT_INPUT_PARM        = 1409;
+    const ERR_INPUT_PARAM           = 1409;
     /**
      * LDT type mismatched for the bin
      */
@@ -111,7 +113,7 @@ abstract class LDT
     /**
      * record containing the LDT not found
      */
-    const ERR_TOP_REC_NOT_FOUND     = 1415;
+    const ERR_TOP_REC_NOT_FOUND     = 2;
     /**
      * Server-side error: subrec not found
      */
@@ -167,21 +169,29 @@ abstract class LDT
     /**
      * The filter function name was invalid
      */
-    const ERR_LDT_FILTER_FUNCTION_BAD       = 1430;
+    const ERR_FILTER_FUNCTION_BAD   = 1430;
     /**
      * The filter function could not be found
      */
-    const ERR_LDT_FILTER_FUNCTION_NOT_FOUND = 1431;
+    const ERR_FILTER_NOT_FOUND      = 1431;
     /**
-     * Invalid function used to extract a unique value from a complex object
+     * The key was not an acceptable type
      */
-    const ERR_LDT_KEY_FUNCTION_BAD          = 1432;
+    const ERR_KEY_BAD               = 1432;
     /**
-     * Could not find the 'key function' or the input given
-     * to the default key function is invalid. For complex types the form
-     * array('key'=> _value_) is expected.
+     * Key field not found in complex type element
      */
-    const ERR_LDT_KEY_FUNCTION_NOT_FOUND    = 1433;
+    const ERR_KEY_FIELD_NOT_FOUND   = 1433;
+    /**
+    */
+    const ERR_INPUT_USER_MODULE_NOT_FOUND = 1439;
+    /**
+    */
+    const ERR_INPUT_TOO_LARGE       = 1443;
+    /**
+    * LDTs are not enabled for the given namespace
+    */
+    const ERR_NS_LDT_NOT_ENABLED    = 1500;
 
     /**
      * The key for the record containing the LDT
@@ -370,7 +380,7 @@ abstract class LDT
             $rhs = strrpos($this->db->error(), ':LDT');
             $lhs = strrpos($this->db->error(), ': ');
             if ($rhs !== false && $lhs !== false) {
-                $this->errorno = (int) substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2)));
+                $this->errorno = (int) ltrim(substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2))), "\x30");
                 $this->error = substr($this->db->error(), $rhs + 1);
                 return true;
             }

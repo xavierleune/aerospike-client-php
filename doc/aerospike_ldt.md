@@ -10,8 +10,7 @@ For each LDT type there is a matching concrete subclass:
 
 * [\Aerospike\LDT\LList](aerospike_llist.md) - The Aerospike [Large Ordered List](http://www.aerospike.com/docs/guide/llist.html) class
 
-The following LDT types have been [deprecated](https://discuss.aerospike.com/t/aerospike-server-ce-3-5-2-february-13-2015/975),
-with their functionality rolled into LList.
+The following LDT types have been permanently removed after being [deprecated](https://discuss.aerospike.com/t/aerospike-server-ce-3-5-2-february-13-2015/975).
 * [\Aerospike\LDT\LSet](aerospike_lset.md) - The Aerospike [Large Set](http://www.aerospike.com/docs/guide/lset.html) class
 * [\Aerospike\LDT\LMap](aerospike_lmap.md) - The Aerospike [Large Map](http://www.aerospike.com/docs/guide/lmap.html) class
 * [\Aerospike\LDT\LStack](aerospike_lstack.md) - The Aerospike [Large Stack](http://www.aerospike.com/docs/guide/lstack.html) class
@@ -39,19 +38,22 @@ abstract \Aerospike\LDT
      *  src/include/aerospike/as_status.h
      */
     const OK                        =    0; // Success
-    const ERR_INPUT_PARAM           = 1409; // Generic input parameter error
+    const ERR_LDT                   = 1300; // Generic LDT error
     const ERR_INTERNAL              = 1400; // Generic server-side error
-    const ERR_NOT_FOUND             = 1401; // Element not found
+    const ERR_NOT_FOUND             =  125; // Element not found
     const ERR_UNIQUE_KEY            = 1402; // Duplicate element written when 'unique key' set
     const ERR_INSERT                = 1403; // Generic error for insertion op
     const ERR_SEARCH                = 1404; // Generic error for search op
     const ERR_DELETE                = 1405; // Generic error for delete op
+    const ERR_VERSION               = 1406;
+    const ERR_CAPACITY_EXCEEDED     = 1408;
+    const ERR_INPUT_PARAM           = 1409; // Generic input parameter error
     const ERR_TYPE_MISMATCH         = 1410; // LDT type mismatched for the bin
     const ERR_NULL_BIN_NAME         = 1411; // The LDT bin name is null
     const ERR_BIN_NAME_NOT_STRING   = 1412; // The LDT bin name must be a string
     const ERR_BIN_NAME_TOO_LONG     = 1413; // The LDT bin name exceeds 14 chars
     const ERR_TOO_MANY_OPEN_SUBRECS = 1414; // Server-side error: open subrecs
-    const ERR_TOP_REC_NOT_FOUND     = 1415; // record containing the LDT not found
+    const ERR_TOP_REC_NOT_FOUND     =    2; // record containing the LDT not found
     const ERR_SUB_REC_NOT_FOUND     = 1416; // Server-side error: subrec not found
     const ERR_BIN_DOES_NOT_EXIST    = 1417; // LDT bin does not exist
     const ERR_BIN_ALREADY_EXISTS    = 1418; // Collision creating LDT at bin
@@ -65,6 +67,13 @@ abstract \Aerospike\LDT
     const ERR_SUBREC_CLOSE          = 1426; // Error while closing the sub record
     const ERR_TOPREC_UPDATE         = 1427; // Error while updating the top record
     const ERR_TOPREC_CREATE         = 1428; // Error while creating the top record
+    const ERR_FILTER_FUNCTION_BAD   = 1430; // Filter function name is invalid
+    const ERR_FILTER_NOT_FOUND      = 1431; // Filter function could not be found
+    const ERR_KEY_BAD               = 1432; // Element key is not an acceptable type
+    const ERR_KEY_FIELD_NOT_FOUND   = 1433; // A field 'key' was not found in the complex type
+    const ERR_INPUT_USER_MODULE_NOT_FOUND = 1439;
+    const ERR_INPUT_TOO_LARGE       = 1443;
+    const ERR_NS_LDT_NOT_ENABLED    = 1500; // LDTs are not enabled for the given namespace
 
 
     protected __construct ( Aerospike $db, array $key, string $bin, int $type )
@@ -80,4 +89,3 @@ abstract \Aerospike\LDT
 ```
 
 ### [Aerospike Class](aerospike.md)
-
