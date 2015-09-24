@@ -185,7 +185,17 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 if (isset($args['c']) || isset($args['clean'])) {
     $start = __LINE__;
-    echo colorize("Removing a range of elements with values between 0 and 12000 from the LDT ≻", 'black', true);
+    echo colorize("Removing a list of elements from the LDT ≻", 'black', true);
+    $status = $tri_primes->removeMany($primes);
+    if ($status === Aerospike::OK) {
+        echo success();
+    } else {
+        echo standard_fail($db);
+    }
+    if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+    $start = __LINE__;
+    echo colorize("Removing any elements remaining in the range between 0 and 12000 from the LDT ≻", 'black', true);
     $status = $tri_primes->removeRange(0, 12000);
     if ($status === Aerospike::OK) {
         echo success();

@@ -81,7 +81,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function addMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'add_all', array($this->bin, $values));
+        $status = $this->db->apply($this->key, 'llist', 'add', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -114,7 +114,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function updateMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'update_all', array($this->bin, $values));
+        $status = $this->db->apply($this->key, 'llist', 'update', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -341,7 +341,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function removeMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'remove_all', array($this->bin, $values));
+        $status = $this->db->apply($this->key, 'llist', 'remove', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
