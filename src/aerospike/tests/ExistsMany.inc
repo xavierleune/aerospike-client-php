@@ -82,7 +82,13 @@ class ExistsMany extends AerospikeTestCommon
         $i = 0;
         foreach ($metadata as $metadata_key=>$value) {
             if (strcmp($my_keys[$i]["key"], $metadata_key) || ($i == 1 && $value)) {
-                return Aerospike::ERR_CLIENT;
+                if($metadata[$i]["metadata"] == NULL)
+                {
+                    if(strcmp($value["key"]["key"],$my_keys[1]["key"]))
+                    {
+                        return Aerospike::ERR_CLIENT;
+                    }
+                }
             }
             $i++;
         }
