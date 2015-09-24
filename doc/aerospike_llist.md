@@ -6,7 +6,7 @@ lists. It can access data at any point in the collection, while still being
 capable of growing the collection to virtually any size.
 
 For an example of LList usage see
-[examples/ldt/llist.php](https://github.com/aerospike/aerospike-client-php/blob/master/examples/ldt/llist.php)
+[examples/ldt/map_elements.php](https://github.com/aerospike/aerospike-client-php/blob/master/examples/ldt/map_elements.php)
 
 ```php
 

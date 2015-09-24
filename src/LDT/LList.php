@@ -168,7 +168,7 @@ class LList extends LDT
      * @param array $elements matched
      * @param string|null $module the name of the UDF module containing the optional filter function
      * @param string|null $function name of the UDF filter function to apply
-     * @param array $args optional arguments for the filter function
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
     public function find($value, &$elements, $module=null, $function=null, array $args=array()) {
@@ -194,7 +194,7 @@ class LList extends LDT
      * @param array $elements matched
      * @param string|null $module the name of the UDF module containing the optional filter function
      * @param string|null $function name of the UDF filter function to apply
-     * @param array $args optional arguments for the filter function
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
     public function findFirst($count, &$elements, $module=null, $function=null, array $args=array()) {
@@ -220,7 +220,7 @@ class LList extends LDT
      * @param array $elements matched
      * @param string|null $module the name of the UDF module containing the optional filter function
      * @param string|null $function name of the UDF filter function to apply
-     * @param array $args optional arguments for the filter function
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
     public function findLast($count, &$elements, $module=null, $function=null, array $args=array()) {
@@ -249,11 +249,11 @@ class LList extends LDT
      * @param array $elements matched
      * @param string|null $module the name of the UDF module containing the optional filter function
      * @param string|null $function name of the UDF filter function to apply
-     * @param array $args optional arguments for the filter function
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
     public function findRange($min, $max, &$elements, $module=null, $function=null, array $args=array()) {
-        if (!is_int($min) && !is_null($min) && !is_int($max) && !is_null($max)) {
+        if (is_array($min) || is_array($max) || is_object($min) || is_object($max)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
@@ -274,7 +274,7 @@ class LList extends LDT
      * @param array $elements returned
      * @param string|null $module the name of the UDF module containing the optional filter function
      * @param string|null $function name of the UDF filter function to apply
-     * @param array $args optional arguments for the filter function
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
     public function scan(&$elements, $module=null, $function=null, array $args=array()) {
@@ -322,8 +322,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function removeRange($min=null, $max=null) {
-        if ((!is_string($min) && !is_int($min) && !is_null($min)) ||
-            (!is_string($max) && !is_int($max) && !is_null($max))) {
+        if (is_array($min) || is_array($max) || is_object($min) || is_object($max)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_RANGE_TYPE_INVALID;
             return $this->errorno;

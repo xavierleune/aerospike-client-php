@@ -55,12 +55,12 @@ if (!$db->isConnected()) {
 echo success();
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Adding a record to test.vehicles with PK=M4G000 ≻", 'black', true);
+echo colorize("Adding a record to test.numbers with PK='primes' ≻", 'black', true);
 $start = __LINE__;
-$key = $db->initKey("test", "vehicles", "M4G000");
-$vehicle = array("make" => "Mazda", "model" => "CX-3", "year" => 2014, "color" => "red");
+$key = $db->initKey("test", "numbers", "primes");
+$primes = array("types" => 1);
 $options = array(Aerospike::OPT_POLICY_KEY => Aerospike::POLICY_KEY_SEND);
-$status = $db->put($key, $vehicle, 0, $options);
+$status = $db->put($key, $primes, 0, $options);
 if ($status === Aerospike::OK) {
     echo success();
 } else {
@@ -68,21 +68,21 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Instantiating an LList representing bin 'rental_history' of the given record ≻", 'black', true);
+echo colorize("Instantiating an LList representing centered triangular primes ≻", 'black', true);
 $start = __LINE__;
 require_once(realpath(__DIR__ . '/../../autoload.php'));
-$rental_history = new \Aerospike\LDT\LList($db, $key, 'rental_history');
-if ($rental_history->errorno() === Aerospike::OK) {
+$tri_primes = new \Aerospike\LDT\LList($db, $key, 'triangular');
+if ($tri_primes->errorno() === Aerospike::OK) {
     echo success();
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Checking if the server actually has an LList at bin 'rental_history' of the record ≻", 'black', true);
+echo colorize("Checking if the server actually has an LList at bin 'triangular' of the record ≻", 'black', true);
 $start = __LINE__;
-if (!$rental_history->isLDT()) {
-    echo fail("No LList exists yet at bin 'rental_history' of record {$key['key']}. Adding elements will initialize it.");
+if (!$tri_primes->isLDT()) {
+    echo fail("No LList exists yet at bin 'triangular' of record {$key['key']}. Adding elements will initialize it.");
 } else {
     echo success();
 }
@@ -90,33 +90,23 @@ if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start
 
 echo colorize("Add an element to the record's LList bin ≻", 'black', true);
 $start = __LINE__;
-$date = new DateTime();
-$date->setDate(2014, 6, 18);
-$rental_event = array('key' => 0, 'clientid' => 100100123, 'date' => $date->getTimestamp());
-$status = $rental_history->add($rental_event);
+$prime = 19;
+$status = $tri_primes->add($prime);
 if ($status === Aerospike::OK) {
     echo success();
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
 echo colorize("Add several other elements to the record's LList bin ≻", 'black', true);
 $start = __LINE__;
-$i = 1;
-$values = array();
-while ($i < 6) {
-    $interval = new DateInterval('P7D');
-    $date = $date->add($interval);
-    $re_clientid = $rental_event['clientid'] + 2;
-    $values[] = array('key' => $i, 'clientid' => $re_clientid, 'date' => $date->getTimestamp());
-    $i++;
-}
-$status = $rental_history->addMany($values);
+$primes = array(31, 109, 199, 409, 571, 631, 829, 1489, 1999, 2341, 2971, 3529, 4621, 4789, 7039, 7669, 8779, 9721, 10459, 10711);
+$status = $tri_primes->addMany($primes);
 if ($status === Aerospike::OK) {
     echo success();
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
@@ -133,49 +123,36 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Update the LList element with 'key' 0 ≻", 'black', true);
-$start = __LINE__;
-$date = new DateTime();
-$date->setDate(2013, 7, 12);
-$rental_event = array('key' => 0, 'clientid' => 100100123, 'date' => $date->getTimestamp());
-$status = $rental_history->update($rental_event);
-if ($status === Aerospike::OK) {
-    echo success();
-} else {
-    echo standard_fail($rental_history);
-}
-if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
-
 echo colorize("Counting the elements in the record's LList bin ≻", 'black', true);
 $start = __LINE__;
-$status = $rental_history->size($num_elements);
+$status = $tri_primes->size($num_elements);
 if ($status === Aerospike::OK) {
     echo success();
     echo colorize("There are $num_elements elements in the LList\n", 'green');
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Get the elements for keys 0-3 in the record's LList bin ≻", 'black', true);
+echo colorize("Get the triangular primes whose value is between 100 and 200 ≻", 'black', true);
 $start = __LINE__;
-$status = $rental_history->findRange(0, 3, $elements);
+$status = $tri_primes->findRange(100, 200, $elements);
 if ($status === Aerospike::OK) {
     echo success();
     var_dump($elements);
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Find the LList element with 'key' 4 ≻", 'black', true);
+echo colorize("Find if 681 is in the triangular prime LList ≻", 'black', true);
 $start = __LINE__;
-$status = $rental_history->find(array('key' => 4), $elements);
+$status = $tri_primes->exists(681, $res);
 if ($status === Aerospike::OK) {
     echo success();
-    var_dump($elements);
+    var_dump($res);
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
@@ -195,21 +172,21 @@ if ($status == Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
-echo colorize("Scan the LList for elements which have even-valued keys", 'black', true);
+echo colorize("Use the range_filter function to find values between 6000 and 8000", 'black', true);
 $start = __LINE__;
-$status = $rental_history->scan($elements, 'keyfilters', 'even_filter');
+$status = $tri_primes->scan($elements, 'keyfilters', 'range_filter', array(6000, 8000));
 if ($status === Aerospike::OK) {
     echo success();
     var_dump($elements);
 } else {
-    echo standard_fail($rental_history);
+    echo standard_fail($tri_primes);
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
 if (isset($args['c']) || isset($args['clean'])) {
     $start = __LINE__;
-    echo colorize("Removing a range of elements with key 0-5 from the LDT ≻", 'black', true);
-    $status = $rental_history->removeRange(0, 5);
+    echo colorize("Removing a range of elements with values between 0 and 12000 from the LDT ≻", 'black', true);
+    $status = $tri_primes->removeRange(0, 12000);
     if ($status === Aerospike::OK) {
         echo success();
     } else {
@@ -219,7 +196,7 @@ if (isset($args['c']) || isset($args['clean'])) {
 
     $start = __LINE__;
     echo colorize("Destroying the LDT ≻", 'black', true);
-    $status = $rental_history->destroy();
+    $status = $tri_primes->destroy();
     if ($status === Aerospike::OK) {
         echo success();
     } else {
