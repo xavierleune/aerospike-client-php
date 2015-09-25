@@ -178,7 +178,11 @@ class LList extends LDT
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -204,7 +208,11 @@ class LList extends LDT
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -230,7 +238,11 @@ class LList extends LDT
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -259,7 +271,11 @@ class LList extends LDT
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
