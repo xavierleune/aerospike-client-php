@@ -898,9 +898,20 @@ static void ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array, void *er
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
+/*
+ ********************************************************************************************************
+ * Adds a double to PHP asson array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The sting value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function
+ *                              with encountered error if any.
+ *
+ *******************************************************************************************************
+ */
 static void ADD_DEFAULT_ASSOC_DOUBLE(void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-    printf("ADD_DEFAULT_ASSOC_DOUBLE.\n" );
     if (key == NULL) {
         zval* double_zval_p = NULL;
         ALLOC_INIT_ZVAL(double_zval_p);
@@ -1676,16 +1687,13 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_DOUBLE(void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
-    printf("AS_DEFAULT_PUT_ASSOC_DOUBLE.\n" );
     if (!(as_record_set_double((as_record *)array, (const char*)key,
-                    (double) Z_LVAL_PP((zval**)value)))) {
-        printf("Did this fail?\n" );
+                    (double) Z_DVAL_PP((zval**)value)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to an double");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Unable to set record to int");
         goto exit;
     }
-    printf("It did succeed.\n");
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 exit:
     return;
@@ -1710,7 +1718,6 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value,
 {
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
-    printf( "AS_DEFAULT_PUT_ASSOC_BYTES.\n" );
 
     serialize_based_on_serializer_policy(serializer_policy, bytes,
             (zval **) value, error_p TSRMLS_CC);
@@ -1740,7 +1747,6 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
-    printf("AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES.\n" );
     if (does_server_support_double && is_datatype_double)
     {
         AS_DEFAULT_PUT_ASSOC_DOUBLE (key, value, array, static_pool, 
@@ -1770,7 +1776,6 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_INT64(void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-    printf( "AS_DEFAULT_PUT_ASSOC_INT64.\n" );
     if (!(as_record_set_int64((as_record *)array, (const char*)key,
                     (int64_t) Z_LVAL_PP((zval**) value)))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to an int");
