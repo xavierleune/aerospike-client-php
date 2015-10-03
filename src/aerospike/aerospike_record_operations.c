@@ -95,9 +95,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                     goto exit;
                 }
             } else {
-                printf("coming here.\n");
                 if (!as_operations_add_write_double(ops, bin_name_p, double_offset)) {
-                    printf("Not writing?\n");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
                     goto exit;
@@ -364,7 +362,6 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
                         } else if (IS_DOUBLE == Z_TYPE_PP(each_operation) && aerospike_has_double((as_object_p ))) {
-                            printf("IS DOUBLE.\n");
                             double_offset = (double) Z_DVAL_PP(each_operation);
                         } else {
                             status = AEROSPIKE_ERR_CLIENT;
