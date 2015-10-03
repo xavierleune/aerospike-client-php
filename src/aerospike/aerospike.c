@@ -78,6 +78,15 @@ static zend_object_handlers Aerospike_handlers;
 int persist;
 extern ps_module ps_mod_aerospike;
 
+/*
+ *******************************************************************************************************
+ * Flag used to indicate if the server supports as_double data type,
+ * and if the data is float expected to convert to as_double.
+ *******************************************************************************************************
+ */
+bool does_server_support_double = false;
+bool is_datatype_double = false;
+
 PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.connect_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, connect_timeout, zend_aerospike_globals, aerospike_globals)

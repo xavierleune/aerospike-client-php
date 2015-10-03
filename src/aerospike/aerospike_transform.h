@@ -99,8 +99,6 @@
 #define FETCH_VALUE_GET(val) as_val_type(val)
 #define FETCH_VALUE_PUT(val) Z_TYPE_PP(val)
 
-extern bool is_datatype_double;
-
 /*
  * Macro Expansion for data type LONG for method PUT:
  * ************************************************************************
@@ -455,7 +453,7 @@ do {                                                                           \
                 array, err, static_pool, label)                                \
         EXPAND_CASE_GET(level, method, action, BYTES, key, value,              \
                 array, err, static_pool, label)                                \
-        EXPAND_CASE_GET(level, method, action, DOUBLE, key, value,              \
+        EXPAND_CASE_GET(level, method, action, DOUBLE, key, value,             \
                 array, err, static_pool, label)                                \
         default:                                                               \
             ((as_error *) err)->code = AEROSPIKE_ERR_PARAM;                    \
@@ -685,9 +683,10 @@ do {                                                                           \
         serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_DOUBLE(key, value, array, static_pool,       \
-           serializer_policy, err)                                             \
-    AS_LIST_PUT_APPEND_BYTES(key, value, array, static_pool,                   \
-        serializer_policy, err TSRMLS_CC)
+            serializer_policy, err)                                            \
+    is_datatype_double = true;                                                 \
+    AS_LIST_PUT_APPEND_DOUBLE_BYTES(key, value, array, static_pool,            \
+            serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_PUT_APPEND_BOOL(key, value, array, static_pool,         \
            serializer_policy, err)                                             \
@@ -819,7 +818,7 @@ do {                                                                           \
     ADD_LIST_APPEND_STRING(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_DOUBLE(key, value, array, static_pool, err)  \
-    ADD_LIST_APPEND_BYTES(key, value, &array, err TSRMLS_CC)
+    ADD_LIST_APPEND_DOUBLE(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_LIST(key, value, array, static_pool, err)    \
     ADD_LIST_APPEND_LIST(key, value, &array, err TSRMLS_CC)
@@ -883,7 +882,7 @@ do {                                                                           \
 
 #define AEROSPIKE_DEFAULT_GET_ASSOC_BYTES(key, value, array, static_pool,      \
         err)                                                                   \
-    ADD_DEFAULT_ASSOC_BYTES(key, value, array, err TSRMLS_CC)
+    ADD_DEFAULT_ASSOC_BYTES(key, value, array, err TSRMLS_CC)                  \
 
 /*
  *******************************************************************************************************
@@ -909,7 +908,7 @@ do {                                                                           \
     ADD_MAP_ASSOC_STRING(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_DOUBLE(key, value, array, static_pool, err)    \
-    ADD_MAP_ASSOC_BYTES(key, value, &array, err TSRMLS_CC)
+    ADD_MAP_ASSOC_DOUBLE(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_ASSOC_LIST(key, value, array, static_pool, err)      \
     ADD_MAP_ASSOC_LIST(key, value, &array, err TSRMLS_CC)
@@ -957,7 +956,7 @@ do {                                                                           \
 
 #define AEROSPIKE_MAP_GET_INDEX_DOUBLE(key, value, array, static_pool,         \
         err)                                                                   \
-    ADD_MAP_INDEX_BYTES(key, value, &array, err TSRMLS_CC)
+    ADD_MAP_INDEX_DOUBLE(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_LIST(key, value, array, static_pool,           \
         err)                                                                   \

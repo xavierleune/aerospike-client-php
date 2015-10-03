@@ -33,6 +33,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 char* bin_name_p,
                                 char* str,
                                 u_int64_t offset,
+                                double double_offset,
                                 u_int32_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
@@ -87,8 +88,16 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
                     goto exit;
                 }
-            } else {
+            } else if (offset) {
                 if (!as_operations_add_write_int64(ops, bin_name_p, offset)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
+                    DEBUG_PHP_EXT_DEBUG("Unable to write");
+                    goto exit;
+                }
+            } else {
+                printf("coming here.\n");
+                if (!as_operations_add_write_double(ops, bin_name_p, double_offset)) {
+                    printf("Not writing?\n");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
                     goto exit;
@@ -242,6 +251,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
     as_record*          get_rec = NULL;
     aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
     as_policy_operate   operate_policy;
+    double              double_offset = 0.0;
     /*
      * TODO: serializer_policy is not used right now.
      * Need to pass on serializer_policy to aerospike_record_operations_ops
@@ -263,7 +273,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
     if (AEROSPIKE_OK != aerospike_record_operations_ops(as_object_p, as_key_p,
                                                       options_p, error_p,
                                                       bin_name_p, str,
-                                                      offset, time_to_live, operation,
+                                                      offset, double_offset, time_to_live, operation,
                                                       &ops, &get_rec TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
@@ -300,6 +310,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     char*                       str;
     zval **                     operation;
     int                         offset = 0;
+    double                      double_offset = 0.0;
     long                        l_offset = 0;
     int                         op;
     zval**                      each_operation;
@@ -352,6 +363,9 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                             each_operation_back = each_operation;
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
+                        } else if (IS_DOUBLE == Z_TYPE_PP(each_operation) && aerospike_has_double((as_object_p ))) {
+                            printf("IS DOUBLE.\n");
+                            double_offset = (double) Z_DVAL_PP(each_operation);
                         } else {
                             status = AEROSPIKE_ERR_CLIENT;
                             goto exit;
@@ -379,7 +393,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
                             as_key_p, options_p, error_p, bin_name_p, str,
-                            offset, ttl, op, &ops, &temp_rec TSRMLS_CC))) {
+                            offset, double_offset, ttl, op, &ops, &temp_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
             }
