@@ -8,6 +8,6 @@ After 10 milliseconds the whole record will be get removed from the database.
 --FILE--
 <?php
 include dirname(__FILE__)."/../../astestframework/astest-phpt-loader.inc";
-aerospike_phpt_runtest("Remove", "bug_CLIENT_511");
+aerospike_phpt_runtest("Remove", "bug_CLIENT_510");
 --EXPECT--
 OK
