@@ -16,7 +16,7 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.22}
+export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.24}
 export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 if [[ ! -d $CLIENTREPO_3X || ! `ls $CLIENTREPO_3X/package/aerospike-client-c-devel-${AEROSPIKE_C_CLIENT}* 2> /dev/null` ]]; then
     rm -rf $CLIENTREPO_3X/package
@@ -26,7 +26,7 @@ else
 fi
 scripts/aerospike-client-c.sh
 if [ $? -gt 0 ]; then
-    exit 1
+    exit 2
 fi
 
 LOGLEVEL="PHP_EXT_AS_LOG_LEVEL_OFF"
@@ -138,9 +138,30 @@ fi
 make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include -I$CLIENTREPO_3X/include/ck" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
-    exit 2
+    exit 3
 fi
 scripts/test-cleanup.sh
+
+if [ ! -d /usr/local/aerospike ] && [ ! -d /opt/aerospike ]; then
+    LUA_SYSPATH=/usr/local/aerospike/lua
+    LUA_USRPATH=/usr/local/aerospike/usr-lua
+elif [ -d /usr/local/aerospike ]; then
+    LUA_SYSPATH=/usr/local/aerospike/lua
+    LUA_USRPATH=/usr/local/aerospike/usr-lua
+elif [ -d /opt/aerospike ]; then
+    LUA_SYSPATH=/opt/aerospike/lua
+    LUA_USRPATH=/opt/aerospike/usr-lua
+fi
+if [ ! -d $LUA_SYSPATH ]; then
+    mkdir -p $LUA_SYSPATH
+    if [ $? -gt 0 ] ; then
+        echo "Failed to create a directory for the user-defined function files.  Please run:"
+        code "sudo mkdir $LUA_SYSPATH"
+        exit 4
+    fi
+    mkdir -p $LUA_USRPATH
+fi
+cp $CLIENTREPO_3X/lua/*.lua $LUA_SYSPATH
 
 headline()
 {
@@ -163,27 +184,8 @@ config()
     INI_PATH=`echo $2|cut -d '>' -f2`
     echo "$1 file at $INI_PATH with the directive:"
     code "extension=aerospike.so"
-    if [ -f /opt/aerospike/lua/aerospike.lua ]; then
-        code "aerospike.udf.lua_system_path=/opt/aerospike/lua"
-        code "aerospike.udf.lua_user_path=/opt/aerospike/usr-lua"
-        if [ ! -d /opt/aerospike/usr-lua ]; then
-            mkdir /opt/aerospike/usr-lua
-            if [ $? -gt 0 ] ; then
-                echo "Failed to create a directory for the user-defined function files.  Please run:"
-                code "sudo mkdir /opt/aerospike/usr-lua/"
-            fi
-        fi
-    elif [ -f /usr/local/aerospike/lua/aerospike.lua ]; then
-        code "aerospike.udf.lua_system_path=/usr/local/aerospike/lua"
-        code "aerospike.udf.lua_user_path=/usr/local/aerospike/usr-lua"
-        if [ ! -d /usr/local/aerospike/usr-lua ]; then
-            mkdir /usr/local/aerospike/usr-lua
-            if [ $? -gt 0 ] ; then
-                echo "Failed to create a directory for the user-defined function files.  Please run:"
-                code "sudo mkdir /usr/local/aerospike/usr-lua/"
-            fi
-        fi
-    fi
+    code "aerospike.udf.lua_system_path=$LUA_SYSPATH"
+    code "aerospike.udf.lua_user_path=$LUA_USRPATH"
     echo ""
     echo "If you are using a web server such as Apache or Nginx you will need"
     echo "to copy aerospike.ini to the configuration include directory of the"

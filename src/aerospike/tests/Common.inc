@@ -193,6 +193,7 @@ abstract class AerospikeTestCommon extends ASTestFramework
             return Aerospike::OK;
         } else {
             return $this->db->register($module_path, $module_alias);
+            copy($module_path, ini_get('aerospike.udf.lua_user_path').'/'.$module_alias);
         }
     }
 
