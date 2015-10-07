@@ -37,6 +37,7 @@
 #include "ext/session/php_session.h"
 
 #include "aerospike/aerospike.h"
+#include "aerospike/aerospike_batch.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"

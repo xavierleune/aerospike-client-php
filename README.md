@@ -79,7 +79,7 @@ This will download the Aerospike C client SDK if necessary into
 
 To install the PHP extension do:
 
-    sudo make install
+    make install
     php -i | grep ".ini "
 
 Now edit the php.ini file.  If PHP is configured --with-config-file-scan-dir
