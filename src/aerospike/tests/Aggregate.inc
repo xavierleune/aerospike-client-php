@@ -26,19 +26,6 @@ class Aggregate extends AerospikeTestCommon
         $key = $this->db->initKey("test", "demo", "Get_key3");
         $this->db->put($key,array("first_name"=>"ellie", "age"=>32));
         $this->keys[] = $key;
-        $key = $this->db->initKey("test", "demo", "Get_key_float");
-        $this->db->put($key,array("first_name"=>"john", "age"=>29.5));
-        $this->keys[] = $key;
-        $key = $this->db->initKey("test", "demo", "Get_key1_float");
-        $this->db->put($key,array("first_name"=>"smith", "age"=>27.5));
-        $this->keys[] = $key;
-        $key = $this->db->initKey("test", "demo", "Get_key2_float");
-        $this->db->put($key,array("first_name"=>"adam", "age"=>22.5));
-        $this->keys[] = $key;
-        $key = $this->db->initKey("test", "demo", "Get_key3_float");
-        $this->db->put($key,array("first_name"=>"ellie", "age"=>32.5));
-        $this->keys[] = $key;
-
         $this->ensureIndex('test', 'demo', 'age', 'demo_age_idx', Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
     }
 
@@ -665,8 +652,10 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_aggregate.lua", "test_aggregate.lua");
         $where = $this->db->predicateBetween("age", 0, 50);
-        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate", "double_group_count", array("first_name"), $returned);
-        var_dump($returned);
+        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate", "double_group_count", array("first_name", "age", 2.2), $returned);
+        if ($status != Aerospike::OK) {
+            return($this->db->errorno());
+        }
         return Aerospike::OK;
     }
 }
