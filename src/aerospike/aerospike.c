@@ -101,7 +101,11 @@ ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 static void aerospike_check_close_and_destroy(void *hashtable_element) {
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In destructor function");
+#if PHP_VERSION_ID < 70000
     aerospike_ref *as_ref_p = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+#else
+    aerospike_ref *as_ref_p = ((zend_resource *) hashtable_element)->ptr;
+#endif
     as_error error;
     if (as_ref_p) {
         if (as_ref_p->ref_hosts_entry > 1) {
@@ -457,6 +461,7 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
  * Aerospike class new method
  ********************************************************************
  */
+#if PHP_VERSION_ID < 70000
 static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
 {
     zend_object_value retval = {0};
@@ -478,6 +483,24 @@ static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
     }
     return (retval);
 }
+#else
+
+static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
+{
+    Aerospike_object *intern_obj_p;
+    if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object) + zend_object_properties_size(ce)))) {
+        zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
+        object_properties_init((zend_object*) &(intern_obj_p->std), ce);
+        
+        intern_obj_p->std.handlers = &Aerospike_handlers;
+        intern_obj_p->as_ref_p = NULL;
+    } else {
+        DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+    }
+    return &(intern_obj_p->std);
+}
+
+#endif
 
 /*
  ********************************************************************
@@ -1817,7 +1840,11 @@ PHP_METHOD(Aerospike, getKeyDigest)
         RETURN_NULL();
     }
 
+#if PHP_VERSION_ID < 70000
     ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
+#else
+    ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE);
+#endif
     as_key_destroy(&key);
 }
 /* }}} */
@@ -1827,11 +1854,16 @@ PHP_METHOD(Aerospike, getKeyDigest)
 PHP_METHOD(Aerospike, setDeserializer)
 {
     as_status              status = AEROSPIKE_OK;
-
+#if PHP_VERSION_ID < 70000
     if (user_deserializer_call_info.function_name &&
             (Z_ISREF_P(user_deserializer_call_info.function_name))) {
         RETURN_TRUE;
     }
+#else
+    if (Z_ISREF_P(&(user_deserializer_call_info.function_name))) {
+        RETURN_TRUE;
+    }
+#endif
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
                 &user_deserializer_call_info,
                 &user_deserializer_call_info_cache,
@@ -1842,7 +1874,11 @@ PHP_METHOD(Aerospike, setDeserializer)
     }
 
     is_user_deserializer_registered = 1;
+#if PHP_VERSION_ID < 70000
     Z_ADDREF_P(user_deserializer_call_info.function_name);
+#else
+    Z_ADDREF_P(&(user_deserializer_call_info.function_name));
+#endif
     RETURN_TRUE;
 }
 /* }}} */
@@ -1853,8 +1889,12 @@ PHP_METHOD(Aerospike, setSerializer)
 {
     as_status              status = AEROSPIKE_OK;
 
+#if PHP_VERSION_ID < 70000
     if (user_serializer_call_info.function_name &&
             (Z_ISREF_P(user_serializer_call_info.function_name))) {
+#else
+    if (Z_ISREF_P(&(user_serializer_call_info.function_name))) {
+#endif
         /*
          * once set the same serializer would be used. Incase a new 
          * serializer is to be given, then we would have to unref the older
@@ -1873,7 +1913,11 @@ PHP_METHOD(Aerospike, setSerializer)
     }
 
     is_user_serializer_registered = 1;
+#if PHP_VERSION_ID < 70000
     Z_ADDREF_P(user_serializer_call_info.function_name);
+#else
+    Z_ADDREF_P(&(user_serializer_call_info.function_name));
+#endif
     RETURN_TRUE;
 }
 /* }}} */
@@ -1973,8 +2017,17 @@ PHP_METHOD(Aerospike, predicateEquals)
     }
 
     array_init(return_value);
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+#else
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+#endif
+
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, OP, "=", sizeof("=") - 1, 1);
+#else
+    add_assoc_stringl(return_value, OP, "=", sizeof("=") - 1);
+#endif
 
     switch(Z_TYPE_P(val_p)) {
         case IS_LONG:
@@ -1986,7 +2039,11 @@ PHP_METHOD(Aerospike, predicateEquals)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
+#if PHP_VERSION_ID < 70000
             add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
+#else
+            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p));
+#endif
             break;
         default:
             zval_dtor(return_value);
@@ -2018,8 +2075,17 @@ PHP_METHOD(Aerospike, predicateBetween)
     }
 
     array_init(return_value);
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+#else 
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+#endif
+
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
+#else
+    add_assoc_stringl(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1);
+#endif
     MAKE_STD_ZVAL(minmax_arr);
     array_init_size(minmax_arr, 2);
     add_next_index_long(minmax_arr, min_p);
@@ -2054,9 +2120,19 @@ PHP_METHOD(Aerospike, predicateContains)
     }
 
     array_init(return_value);
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+#else
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+#endif
+
     add_assoc_long(return_value, INDEX_TYPE, index_type);
+
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, OP, "CONTAINS", sizeof("CONTAINS") - 1, 1);
+#else
+    add_assoc_stringl(return_value, OP, "CONTAINS", sizeof("CONTAINS") - 1);
+#endif
     /*
      * Add index type.
      */
@@ -2070,7 +2146,11 @@ PHP_METHOD(Aerospike, predicateContains)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
+#if PHP_VERSION_ID < 70000
             add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
+#else
+            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p));
+#endif
             break;
         default:
             zval_dtor(return_value);
@@ -2114,9 +2194,17 @@ PHP_METHOD(Aerospike, predicateRange)
     }
 
     array_init(return_value);
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+#else
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+#endif
     add_assoc_long(return_value, INDEX_TYPE, index_type);
+#if PHP_VERSION_ID < 70000
     add_assoc_stringl(return_value, OP, "RANGE", sizeof("RANGE") - 1, 1);
+#else
+    add_assoc_stringl(return_value, OP, "RANGE", sizeof("RANGE") - 1);
+#endif
     MAKE_STD_ZVAL(minmax_arr);
     array_init_size(minmax_arr, 2);
     /*
@@ -2132,7 +2220,11 @@ PHP_METHOD(Aerospike, predicateRange)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
+#if PHP_VERSION_ID < 70000
             add_next_index_string(minmax_arr, Z_STRVAL_P(min_p), 1);
+#else
+            add_next_index_string(minmax_arr, Z_STRVAL_P(min_p));
+#endif
             break;
         default:
             zval_ptr_dtor(&minmax_arr);
@@ -2153,7 +2245,11 @@ PHP_METHOD(Aerospike, predicateRange)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
+#if PHP_VERSION_ID < 70000
             add_next_index_string(minmax_arr, Z_STRVAL_P(max_p), 1);
+#else 
+            add_next_index_string(minmax_arr, Z_STRVAL_P(max_p));
+#endif
             break;
         default:
             zval_ptr_dtor(&minmax_arr);
@@ -4293,7 +4389,11 @@ PHP_METHOD(Aerospike, setLogHandler)
 
     as_log_set_callback((as_log_callback)&aerospike_helper_log_callback);
     is_callback_registered = 1;
+#if PHP_VERSION_ID < 70000
     Z_ADDREF_P(func_call_info.function_name);
+#else
+    Z_ADDREF_P(&(func_call_info.function_name));
+#endif
     PHP_EXT_RESET_AS_ERR_IN_CLASS();
     RETURN_TRUE;
 }
@@ -4309,8 +4409,14 @@ PHP_METHOD(Aerospike, setLogHandler)
    Displays the error message associated with the last operation */
 PHP_METHOD(Aerospike, error)
 {
+#if PHP_VERSION_ID < 70000
     char *error_msg = Z_STRVAL_P(zend_read_property(Aerospike_ce, getThis(), "error", strlen("error"), 1 TSRMLS_CC));
     RETURN_STRINGL(error_msg, strlen(error_msg), 1);
+#else
+    zval rv;
+    char *error_msg = Z_STRVAL_P(zend_read_property(Aerospike_ce, getThis(), "error", strlen("error"), 1, &rv TSRMLS_CC));
+    RETURN_STRINGL(error_msg, strlen(error_msg));
+#endif
 }
 /* }}} */
 
@@ -4318,7 +4424,12 @@ PHP_METHOD(Aerospike, error)
    Displays the status code associated with the last operation */
 PHP_METHOD(Aerospike, errorno)
 {
+#if PHP_VERSION_ID < 70000
     int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1 TSRMLS_CC));
+#else
+    zval rv;
+    int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1, &rv TSRMLS_CC));
+#endif
     RETURN_LONG(error_code);
 }
 /* }}} */
@@ -4341,11 +4452,19 @@ PHP_MINIT_FUNCTION(aerospike)
         return FAILURE;
     }
 
+#if PHP_VERSION_ID < 70000
     Aerospike_ce->create_object = Aerospike_object_new;
+#else
+    Aerospike_ce->create_object = Aerospike_object_new_php7;
+#endif
 
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
+#if PHP_VERSION_ID < 70000
     Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+#else
+    Aerospike_ce->ce_flags |= ZEND_ACC_FINAL;
+#endif
 #ifdef ZTS
     ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
 #else
@@ -4411,6 +4530,7 @@ PHP_RINIT_FUNCTION(aerospike)
  */
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
+#if PHP_VERSION_ID < 70000
     if (user_serializer_call_info.function_name) {
         if (1 == Z_REFCOUNT_P(user_serializer_call_info.function_name)) {
             zval_ptr_dtor(&user_serializer_call_info.function_name);
@@ -4427,6 +4547,34 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
             DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
         }
     }
+#else
+    if (1 == Z_REFCOUNT_P(&(user_serializer_call_info.function_name))) {
+        zval_ptr_dtor(&user_serializer_call_info.function_name);
+        if(Z_ISREF_P(&(user_serializer_call_info.function_name)))
+        {
+#if PHP_VERSION_ID < 70000
+            ZVAL_UNREF(user_serializer_call_info.function_name);
+#else
+            ZVAL_UNREF(&(user_serializer_call_info.function_name));
+#endif
+        }
+    } else {
+        DEBUG_PHP_EXT_ERROR("leak for user serializer function");
+    }
+    if (1 == Z_REFCOUNT_P(&(user_deserializer_call_info.function_name))) {
+        zval_ptr_dtor(&user_deserializer_call_info.function_name);
+        if(Z_ISREF_P(&(user_serializer_call_info.function_name)))
+        {
+#if PHP_VERSION_ID < 70000
+            ZVAL_UNREF(user_serializer_call_info.function_name);
+#else
+            ZVAL_UNREF(&(user_serializer_call_info.function_name));
+#endif
+        }
+    } else {
+        DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+    }
+#endif
 
     DEBUG_PHP_EXT_DEBUG("Inside rshutdown of this build");
     return SUCCESS;
