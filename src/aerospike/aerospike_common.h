@@ -822,3 +822,110 @@ extern as_status
 aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
         zval* roles_p, zval* options_p TSRMLS_DC);
 #endif
+
+
+/*
+ ******************************************************************************************************
+ * Macros for PHP version 7.
+ ******************************************************************************************************
+ */
+
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
+    /*
+     ******************************************************************************************************
+     * Macro to copy char* in zval.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, x, ifDuplicate)    \
+        ZVAL_STRINGL(return_value, digest_p, x, ifDuplicate)                  
+    /*
+     ******************************************************************************************************
+     * Macro to verify Address reference
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_Z_ADDREF_P(reference) \
+        Z_ADDREF_P(reference)
+
+    /*
+     ******************************************************************************************************
+     * Macro to check if the reference pointer is valid.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_Z_ISREF_P(reference) \
+        Z_ISREF_P(reference)
+
+    /*
+     ******************************************************************************************************
+     * Macro to append string at specified key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_length, ifDuplicate) \
+        add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_length, ifDuplicate)
+
+    /*
+     ******************************************************************************************************
+     * Macro to append string at next index key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_NEXT_STRING(minmax_arr, str, ifDuplicate) \
+        add_next_index_string(minmax_arr, str, ifDuplicate)
+
+    /*
+     ******************************************************************************************************
+     * Macro to unref zval.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
+        ZVAL_UNREF(zval_pointer)
+
+#else   /* Else if the version is greater than of equal to 70000 */                                                                  
+
+    /*
+     ******************************************************************************************************
+     * Macro to copy char* in zval.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, SIZE, ifDuplicate) \
+        ZVAL_STRINGL(return_value, digest_p, SIZE)                            
+
+    /*
+     ******************************************************************************************************
+     * Macro to verify Address reference
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_Z_ADDREF_P(function_name) \
+        Z_ADDREF_P(&(function_name))
+
+    /*
+     ******************************************************************************************************
+     * Macro to check if the reference pointer is valid.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_Z_ISREF_P(reference) \
+        Z_ISREF_P(&(reference))
+
+    /*
+     ******************************************************************************************************
+     * Macro to append string at specified key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_length, ifDuplicate) \
+        add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_length)
+
+    /*
+     ******************************************************************************************************
+     * Macro to append string at next index key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_NEXT_STRING(minmax_arr, str, ifDuplicate) \
+        add_next_index_string(minmax_arr, str)
+
+    /*
+     ******************************************************************************************************
+     * Macro to unref zval.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
+        ZVAL_UNREF(&(zval_pointer))
+#endif
+
