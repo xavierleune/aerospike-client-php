@@ -22,22 +22,31 @@
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
  *******************************************************************************************************
  */
-#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
+//#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
+#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(Z_OBJ_P(getThis()))
 
 /*
  *******************************************************************************************************
- * MACRO TO ITERATE OVER A HASHTABLE.
+ * MACRO TO ITERATE OVER A HASHTABLE FOR PHP7 Compatibility.
  *
  * @param ht            Hashtable pointer.
  * @param position      HashPosition.
  * @param datavalue     zval ** which shall be populated with the current data.
  *******************************************************************************************************
  */
-#define foreach_hashtable(ht, position, datavalue)               \
+/*#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)     \
     for (zend_hash_internal_pointer_reset_ex(ht, &position);     \
          zend_hash_get_current_data_ex(ht,                       \
-                (void **) &datavalue, &position) == SUCCESS;     \
+                (void **) datavalue, &position) == SUCCESS;      \
          zend_hash_move_forward_ex(ht, &position))
+#else
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)     \
+    for (zend_hash_internal_pointer_reset_ex(ht, &position);     \
+         *datavalue = zend_hash_get_current_data_ex(ht,          \
+             &position) == SUCCESS;                              \
+         zend_hash_move_forward_ex(ht, &position))
+#endif*/
 
 /*
  *******************************************************************************************************
@@ -878,6 +887,39 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
 #define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
         ZVAL_UNREF(zval_pointer)
 
+    /*
+     ******************************************************************************************************
+     * Macro to find value at specific index.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value, label)                     \
+    if ( FAILURE == (zend_hash_index_find(Z_ARRVAL_P(options_p),                    \
+                    index, (void **) &gen_policy_p))) {                             \
+        goto label;                                                                 \
+    }
+
+    /*
+     ******************************************************************************************************
+     * Macro to fetch a value from current index.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
+        index, if_duplicate, pos, failed)                                           \
+    if (zend_hash_get_current_key_ex(ht, (char **) key, key_len, if_duplicate,      \
+                index, pos) != HASH_KEY_IS_LONG) {                                  \
+        *failed = 1;                                                                \
+    }
+
+    /*
+     *******************************************************************************************************
+     * Macro to iterate over a hashtable.
+     *******************************************************************************************************
+    */
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
+    for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
+         zend_hash_get_current_data_ex(ht,                                          \
+                (void **) datavalue, &position) == SUCCESS;                         \
+         zend_hash_move_forward_ex(ht, &position))
 #else   /* Else if the version is greater than of equal to 70000 */                                                                  
 
     /*
@@ -927,5 +969,38 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      */
 #define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
         ZVAL_UNREF(&(zval_pointer))
+
+    /*
+     ******************************************************************************************************
+     * Macro to find value at specific index.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value, label)                     \
+    if (NULL == (*value = zend_hash_index_find(Z_ARRVAL_P(options_p),               \
+                    index))) {                                                      \
+        goto label;                                                                 \
+    }
+
+    /*
+     ******************************************************************************************************
+     * Macro to fetch a value from current index.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
+        index, if_duplicate, pos, failed)                                           \
+    if (zend_hash_get_current_key_ex(ht, key, index, pos) != HASH_KEY_IS_LONG) {    \
+        *failed = 1;                                                                \
+    }
+
+    /*
+     *******************************************************************************************************
+     * Macro to iterate over a hashtable.
+     *******************************************************************************************************
+    */
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
+    for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
+         *datavalue = zend_hash_get_current_data_ex(ht,                             \
+             &position) == SUCCESS;                                                 \
+         zend_hash_move_forward_ex(ht, &position))
 #endif
 
