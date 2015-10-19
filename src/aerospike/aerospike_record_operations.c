@@ -33,6 +33,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 char* bin_name_p,
                                 char* str,
                                 u_int64_t offset,
+                                double double_offset,
                                 u_int32_t time_to_live,
                                 u_int64_t operation,
                                 as_operations* ops,
@@ -58,10 +59,18 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             }
             break;
         case AS_OPERATOR_INCR:
-            if (!as_operations_add_incr(ops, bin_name_p, offset)) {
-                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to increment");
-                DEBUG_PHP_EXT_DEBUG("Unable to increment");
-                goto exit;
+            if (offset) {
+                if (!as_operations_add_incr(ops, bin_name_p, offset)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to increment");
+                    DEBUG_PHP_EXT_DEBUG("Unable to increment");
+                    goto exit;
+                }
+            } else {
+                if (!as_operations_add_incr_double(ops, bin_name_p, double_offset)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to increment");
+                    DEBUG_PHP_EXT_DEBUG("Unable to increment");
+                    goto exit;
+                }
             }
             break;
         case AS_OPERATOR_TOUCH:
@@ -87,8 +96,14 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
                     goto exit;
                 }
-            } else {
+            } else if (offset) {
                 if (!as_operations_add_write_int64(ops, bin_name_p, offset)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
+                    DEBUG_PHP_EXT_DEBUG("Unable to write");
+                    goto exit;
+                }
+            } else {
+                if (!as_operations_add_write_double(ops, bin_name_p, double_offset)) {
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
                     goto exit;
@@ -103,7 +118,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
     }
 
 exit:
-     return error_p->code;
+    return error_p->code;
 }
 
 /*
@@ -121,10 +136,10 @@ exit:
  *******************************************************************************************************
  */
 extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
-                                                    as_key* as_key_p,
-                                                    as_error *error_p,
-                                                    zval* metadata_p,
-                                                    zval* options_p TSRMLS_DC)
+        as_key* as_key_p,
+        as_error *error_p,
+        zval* metadata_p,
+        zval* options_p TSRMLS_DC)
 {
     as_policy_read              read_policy;
     as_record*                  record_p = NULL;
@@ -143,7 +158,7 @@ extern as_status aerospike_record_operations_exists(aerospike* as_object_p,
     }
 
     if (AEROSPIKE_OK != aerospike_key_exists(as_object_p, error_p,
-                    &read_policy, as_key_p, &record_p)) {
+                &read_policy, as_key_p, &record_p)) {
         goto exit;
     }
 
@@ -171,11 +186,11 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status
+    extern as_status
 aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
-                                   as_key* as_key_p,
-                                   as_error *error_p,
-                                   zval* options_p)
+        as_key* as_key_p,
+        as_error *error_p,
+        zval* options_p)
 {
     as_policy_remove            remove_policy;
     aerospike*                  as_object_p = aerospike_obj_p->as_ref_p->as_p;
@@ -201,13 +216,13 @@ exit:
     return error_p->code;
 }
 
-static as_status
+    static as_status
 aerospike_record_initialization(aerospike* as_object_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                as_policy_operate* operate_policy,
-                                int8_t* serializer_policy TSRMLS_DC)
+        as_key* as_key_p,
+        zval* options_p,
+        as_error* error_p,
+        as_policy_operate* operate_policy,
+        int8_t* serializer_policy TSRMLS_DC)
 {
     as_policy_operate_init(operate_policy);
 
@@ -224,24 +239,25 @@ aerospike_record_initialization(aerospike* as_object_p,
         goto exit;
     }
 exit:
-     return error_p->code;
+    return error_p->code;
 }
 
-extern as_status
+    extern as_status
 aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                char* bin_name_p,
-                                char* str,
-                                u_int64_t offset,
-                                u_int64_t time_to_live,
-                                u_int64_t operation)
+        as_key* as_key_p,
+        zval* options_p,
+        as_error* error_p,
+        char* bin_name_p,
+        char* str,
+        u_int64_t offset,
+        u_int64_t time_to_live,
+        u_int64_t operation)
 {
     as_operations       ops;
     as_record*          get_rec = NULL;
     aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
     as_policy_operate   operate_policy;
+    double              double_offset = 0.0;
     /*
      * TODO: serializer_policy is not used right now.
      * Need to pass on serializer_policy to aerospike_record_operations_ops
@@ -253,40 +269,40 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
     as_operations_inita(&ops, 1);
     get_generation_value(options_p, &ops.gen, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != aerospike_record_initialization(as_object_p, as_key_p,
-                                                      options_p, error_p,
-                                                      &operate_policy,
-                                                      &serializer_policy TSRMLS_CC)) {
+                options_p, error_p,
+                &operate_policy,
+                &serializer_policy TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("Initialization returned error");
         goto exit;
     }
 
     if (AEROSPIKE_OK != aerospike_record_operations_ops(as_object_p, as_key_p,
-                                                      options_p, error_p,
-                                                      bin_name_p, str,
-                                                      offset, time_to_live, operation,
-                                                      &ops, &get_rec TSRMLS_CC)) {
+                options_p, error_p,
+                bin_name_p, str,
+                offset, double_offset, time_to_live, operation,
+                &ops, &get_rec TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
     }
 
     aerospike_key_operate(as_object_p, error_p,
-                    &operate_policy, as_key_p, &ops, NULL);
+            &operate_policy, as_key_p, &ops, NULL);
 
 exit: 
-     if (get_rec) {
-         as_record_destroy(get_rec);
-     }
-     as_operations_destroy(&ops);
-     return error_p->code;
+    if (get_rec) {
+        as_record_destroy(get_rec);
+    }
+    as_operations_destroy(&ops);
+    return error_p->code;
 }
 
-extern as_status
+    extern as_status
 aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                zval* returned_p,
-                                HashTable* operations_array_p)
+        as_key* as_key_p,
+        zval* options_p,
+        as_error* error_p,
+        zval* returned_p,
+        HashTable* operations_array_p)
 {
     as_operations               ops;
     as_record*                  get_rec = NULL;
@@ -300,6 +316,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     char*                       str;
     zval **                     operation;
     int                         offset = 0;
+    double                      double_offset = 0.0;
     long                        l_offset = 0;
     int                         op;
     zval**                      each_operation;
@@ -317,8 +334,8 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                                                       options_p, error_p,
                                                       &operate_policy,
                                                       &serializer_policy TSRMLS_CC))) {
-            DEBUG_PHP_EXT_ERROR("Initialization returned error");
-            goto exit;
+        DEBUG_PHP_EXT_ERROR("Initialization returned error");
+        goto exit;
     }
 
     foreach_hashtable(operations_array_p, pointer, operation) {
@@ -335,11 +352,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                 ulong options_index;
                 char* options_key;
                 if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key, 
-                        &options_key_len, &options_index, 0, &each_pointer)
-                                != HASH_KEY_IS_STRING) {
+                            &options_key_len, &options_index, 0, &each_pointer)
+                        != HASH_KEY_IS_STRING) {
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                        "Unable to set policy: Invalid Policy Constant Key");
+                            "Unable to set policy: Invalid Policy Constant Key");
                     goto exit;
                 } else {
                     if (!strcmp(options_key, "op") && (IS_LONG == Z_TYPE_PP(each_operation))) {
@@ -352,6 +369,8 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                             each_operation_back = each_operation;
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
+                        } else if (IS_DOUBLE == Z_TYPE_PP(each_operation) && aerospike_has_double((as_object_p ))) {
+                            double_offset = (double) Z_DVAL_PP(each_operation);
                         } else {
                             status = AEROSPIKE_ERR_CLIENT;
                             goto exit;
@@ -379,7 +398,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
                             as_key_p, options_p, error_p, bin_name_p, str,
-                            offset, ttl, op, &ops, &temp_rec TSRMLS_CC))) {
+                            offset, double_offset, ttl, op, &ops, &temp_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
             }
@@ -404,19 +423,19 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             if (!as_record_foreach(get_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
                         &foreach_record_callback_udata)) {
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                           "Unable to get bins of a record");
+                        "Unable to get bins of a record");
                 DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
             }
         }
-     }
+    }
 
 exit: 
-     if (get_rec) {
-         foreach_record_callback_udata.udata_p = NULL;
-         as_record_destroy(get_rec);
-     }
-     as_operations_destroy(&ops);
-     return status;
+    if (get_rec) {
+        foreach_record_callback_udata.udata_p = NULL;
+        as_record_destroy(get_rec);
+    }
+    as_operations_destroy(&ops);
+    return status;
 }
 
 /*
@@ -432,12 +451,12 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status
+    extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
-                                       as_key* as_key_p,
-                                       zval* bins_p,
-                                       as_error* error_p,
-                                       zval* options_p)
+        as_key* as_key_p,
+        zval* bins_p,
+        as_error* error_p,
+        zval* options_p)
 {
     as_status           status = AEROSPIKE_OK;
     as_record           rec;
@@ -470,15 +489,15 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
                 goto exit;
             }
         } else {
-             status = AEROSPIKE_ERR_CLIENT;
-             goto exit;
+            status = AEROSPIKE_ERR_CLIENT;
+            goto exit;
         }
     }
 
     get_generation_value(options_p, &rec.gen, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (status = aerospike_key_put(as_object_p, error_p,
                     NULL, as_key_p, &rec))) {
-         goto exit;
+        goto exit;
     }
 
 exit:
@@ -500,12 +519,12 @@ exit:
  *
  *******************************************************************************************************
  */
-extern as_status
+    extern as_status
 aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
-                              zval* key_record_p,
-                              zval* metadata_p,
-                              zval* options_p,
-                              as_error* error_p)
+        zval* key_record_p,
+        zval* metadata_p,
+        zval* options_p,
+        as_error* error_p)
 {
     as_status              status = AEROSPIKE_OK;
     as_key                 as_key_for_put_record;
@@ -521,7 +540,7 @@ aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
     }
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
-             ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                 "input parameters (type) for exist/getMetdata function not proper.");
         DEBUG_PHP_EXT_ERROR("input parameters (type) for exist/getMetdata function not proper.");

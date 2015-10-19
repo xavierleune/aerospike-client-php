@@ -2735,5 +2735,37 @@ function testMixedTypesWithDefaultSerializer()
             return $this->db->errorno();
         }
     }
+
+    /**
+     * @test
+     * Basic PUT with bin as float.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_001)
+     */
+    function normal_001()
+    {
+        $key = $this->db->initKey("test", "demo", "put_float");
+        $status = $this->db->put($key,  array("float"=>3.145));
+        $this->keys[] = $key;
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        $status = $this->db->get($key, $return);
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        if (abs($return["bins"]["float"] - 3.145) > 0.00001)
+        {
+            return Aerospike::ERR_CLIENT;
+        }
+        return $status;
+    }
 }
 ?>

@@ -53,6 +53,7 @@ zend_fcall_info_cache user_serializer_call_info_cache;
 zval                  *user_serializer_callback_retval_p;
 uint32_t              is_user_serializer_registered = 0;
 
+
 /* 
  *******************************************************************************************************
  * PHP Userland Deserializer callback.
@@ -393,6 +394,26 @@ static void ADD_LIST_APPEND_BOOL(void *key, void *value, void *array, void *err 
 }
 
 /*
+ ******************************************************************************************************
+ * Appends a double to PHP indexed array: list.
+ *
+ * @param key                  The key for the array (NULL).
+ * @param value                The double value to be appended to the PHP
+ *                             array.
+ * @param array                The PHP array to be appended to.
+ * @param err                  The as_error to be populated by the function with
+ *                             encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void ADD_LIST_APPEND_DOUBLE(void *key, void *value, void *array, void *err TSRMLS_DC)
+{
+    add_next_index_double(*((zval **)array),
+            (double) as_double_get((as_double *) value));
+    PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
+}
+
+/*
  *******************************************************************************************************
  * Appends a long to PHP indexed array: list.
  *
@@ -563,6 +584,25 @@ static void ADD_MAP_ASSOC_LONG(void *key, void *value, void *array, void *err TS
 
 /*
  *******************************************************************************************************
+ * Adds a long to PHP assoc array: mao with string key.
+ *
+ * @param key                   The key for the assoc array.
+ * @param value                 The float value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function
+ *                              with encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void ADD_MAP_ASSOC_DOUBLE(void *key, void *value, void *array, void *err TSRMLS_DC)
+{
+    add_assoc_double(*((zval **) array), as_string_get((as_string *)key),
+        (double) as_double_get((as_double *)value));
+    PHP_EXT_SET_AS_ERR((as_error *)err, AEROSPIKE_OK, DEFAULT_ERROR);
+}
+
+/*
+ *******************************************************************************************************
  * Adds a string to PHP assoc array: map with string key.
  *
  * @param key                   The key for the assoc array.
@@ -705,6 +745,25 @@ static void ADD_MAP_INDEX_LONG(void *key, void *value, void *array, void *err TS
     add_index_long(*((zval **) array), (uint) as_integer_get((as_integer *) key),
             (long) as_integer_get((as_integer *) value));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
+}
+
+/*
+ *******************************************************************************************************
+ * Adds a float to PHP assoc array at specified index: map with integer key.
+ *
+ * @param key                   The index at which value is to be added in the
+ *                              assoc array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function
+ *                              with encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void ADD_MAP_INDEX_DOUBLE(void *key, void *value, void *array, void *err TSRMLS_DC)
+{
+    add_index_double(*((zval **) array), (double) as_double_get((as_double *) key),
+            (double) as_double_get((as_double *) value));
+    PHP_EXT_SET_AS_ERR((as_error *)err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
 /*
@@ -885,6 +944,33 @@ static void ADD_DEFAULT_ASSOC_LONG(void *key, void *value, void *array, void *er
     } else {
        add_assoc_long(((zval *) array),  (char *) key,
                (long) as_integer_get((as_integer *) value));
+    }
+    PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
+}
+
+/*
+ ********************************************************************************************************
+ * Adds a double to PHP assoc array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The sting value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function
+ *                              with encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void ADD_DEFAULT_ASSOC_DOUBLE(void *key, void *value, void *array, void *err TSRMLS_DC)
+{
+    if (key == NULL) {
+        zval* double_zval_p = NULL;
+        ALLOC_INIT_ZVAL(double_zval_p);
+        ZVAL_DOUBLE(double_zval_p, (double)as_double_get((as_double *)value));
+        zval_dtor((zval *)array);
+        ZVAL_ZVAL((zval *)array, double_zval_p, 1, 1);
+    } else {
+        add_assoc_double(((zval *) array), (char *)key,
+                (double) as_double_get((as_double *) value));
     }
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -1467,6 +1553,38 @@ static void AS_SET_ERROR_CASE(void* key, void* value, void* array,
 
 /*
  *******************************************************************************************************
+ * Appends an float to a list.
+ *
+ * @param key                   The key for the array.
+ * @param value                 The float value to be appended to the
+ *                              as_arraylist
+ * @param array                 The as_arraylist to be appended to.
+ * @param static_pool           The static pool.
+ * @param searilizer_policy     The serializer policy for put.
+ * @param error_p               The as_error to be populated by the function
+ *                              with encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void AS_LIST_PUT_APPEND_DOUBLE(void* key, void *value, void *array,
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
+{
+    if (AEROSPIKE_OK != (error_p->code = 
+                as_arraylist_append_double((as_arraylist *)array,
+                    (double)Z_DVAL_PP((zval**) value)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
+        PHP_EXT_SET_AS_ERR(error_p, error_p->code,
+                "Unable to append integer to list");
+        goto exit;
+    }
+    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
+
+exit:
+    return;
+}
+
+/*
+ *******************************************************************************************************
  * Appends an integer to a list.
  *
  * @param key                   The key for the array.
@@ -1633,6 +1751,36 @@ exit:
     return;
 }
 
+
+/*
+ *******************************************************************************************************
+ * Sets a float value in a record.
+ *
+ * @param key                  The bin name to which bytes value is to be set.
+ * @param value                The float value to be set in record.
+ * @param array                The as_record to which float value is to be set.
+ * @param static_pool          The static pool.
+ * @param serializer_policy    The serializer policy for put.
+ * @param error_p              The as_error to be populated by the function with
+ *                             encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+static void AS_DEFAULT_PUT_ASSOC_DOUBLE(void* key, void* value, void* array,
+        void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
+{
+    if (!(as_record_set_double((as_record *)array, (const char*)key,
+                    (double) Z_DVAL_PP((zval**)value)))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to an double");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Unable to set record to int");
+        goto exit;
+    }
+    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
+exit:
+    return;
+}
+
 /*
  *******************************************************************************************************
  * Sets a bytes value in a record.
@@ -1667,6 +1815,28 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(void* key, void* value,
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 
+exit:
+    return;
+}
+
+/*
+ ******************************************************************************************************
+ * Stub function to check if server supports double data type and the current
+ * data is of that type. If yes then call the corresponding DOUBLE function
+ * else call the regular BYTES function to serialize the data.
+ ******************************************************************************************************
+ */
+static void AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(void* key, void* value, void* array,
+        void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
+{
+    if (does_server_support_double && is_datatype_double)
+    {
+        AS_DEFAULT_PUT_ASSOC_DOUBLE (key, value, array, static_pool, 
+                serializer_policy, error_p TSRMLS_DC);
+    } else {
+        AS_DEFAULT_PUT_ASSOC_BYTES (key, value, array, static_pool,
+                serializer_policy, error_p TSRMLS_DC);
+    }
 exit:
     return;
 }
@@ -1934,6 +2104,8 @@ static void AS_MAP_PUT_ASSOC_BYTES(void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 static void AS_LIST_PUT_APPEND_BYTES(void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
+static void AS_LIST_PUT_APPEND_DOUBLE_BYTES(void *key, void *value, void *array,
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 
 /*
  *******************************************************************************************************
@@ -2076,6 +2248,28 @@ static void AS_LIST_PUT_APPEND_ARRAY(void *key, void *value, void *store,
 {
     AEROSPIKE_PROCESS_ARRAY(LIST, APPEND, exit, key, value, store,
             error_p, static_pool, serializer_policy);
+exit:
+    return;
+}
+
+/*
+ ******************************************************************************************************
+ * Stub function to check if server supports double data type and the current
+ * data is of that type. If yes then call the corresponding DOUBLE function,
+ * else call the regular BYTYES fucntion to serialize the data.
+ ******************************************************************************************************
+ */
+static void AS_LIST_PUT_APPEND_DOUBLE_BYTES(void *key, void *value, void *array,
+        void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
+{
+    if (does_server_support_double && is_datatype_double)
+    {
+        AS_LIST_PUT_APPEND_DOUBLE (key, value, array, static_pool,
+                serializer_policy, error_p TSRMLS_DC);
+    } else {
+        AS_LIST_PUT_APPEND_BYTES (key, value, array, static_pool,
+                serializer_policy, error_p TSRMLS_DC);
+    }
 exit:
     return;
 }
@@ -2799,6 +2993,7 @@ aerospike_transform_iterate_records(zval **record_pp,
                                     as_record* as_record_p,
                                     as_static_pool* static_pool,
                                     int8_t serializer_policy,
+                                    bool server_support_double,
                                     as_error *error_p TSRMLS_DC)
 {
     char*              key = NULL;
@@ -2808,6 +3003,7 @@ aerospike_transform_iterate_records(zval **record_pp,
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to put record");
         goto exit;
     }
+    does_server_support_double = server_support_double;
 
     /* switch case statements for put for zend related data types */
     AS_DEFAULT_PUT(key, record_pp, as_record_p, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -2847,6 +3043,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_record                   record;
     int16_t                     init_record = 0;
     uint16_t                    gen_value = 0;
+    bool                        server_support_double = false;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
@@ -2871,8 +3068,10 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
+    server_support_double = aerospike_has_double (as_object_p);
+
     aerospike_transform_iterate_records(record_pp, &record, &static_pool,
-            serializer_policy, error_p TSRMLS_CC);
+            serializer_policy, server_support_double, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
         goto exit;

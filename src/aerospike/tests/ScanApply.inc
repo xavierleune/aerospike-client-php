@@ -11,7 +11,7 @@ class ScanApply extends AerospikeTestCommon
      * TODO: Remove these constants and map with actual Aerospike class
      * constants.
      */
-    private $ages = array(29, 27, 22, 32, 35);
+    private $ages = array(29, 27, 22, 32, 35, 32.5);
 
 
     protected function setUp() {
@@ -36,6 +36,9 @@ class ScanApply extends AerospikeTestCommon
         $this->keys[] = $key;
         $key = $this->db->initKey("test", "demo", "Get_key4");
         $this->db->put($key, array("first_name"=>"mitchell", "age"=>($this->ages[4])));
+        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "Get_Float");
+        $this->db->put($key, array("first_name"=>"mitchell", "age"=>($this->ages[5])));
         $this->keys[] = $key;
     }
 
@@ -553,6 +556,39 @@ class ScanApply extends AerospikeTestCommon
             return Aerospike::ERR_CLIENT;
         }
         return $status;
+    }
+    /**
+     * @test
+     * ScanApply - Modify record with float value.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_001)
+     *
+     * @test_plans{1.1}
+     */
+    function normal_001()
+    {
+        $status = $this->db->scanApply("test", "demo", "test_transform", "mytransform", array(20.1), $scan_id);
+        if ($status != Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        do {
+            time_nanosleep(0, 5000000); // pause 5ms
+            $status = $this->db->scanInfo($scan_id, $info);
+            if ($status != Aerospike::OK) {
+                return $this->db->errorno();
+            }
+        } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
+        $status = $this->db->get($this->keys[5], $get_record, array('age'));
+        var_dump($get_record);
+        // if(52.6 != $get_record['bins']['age']) {
+        return Aerospike::OK;
     }
 }
 ?>

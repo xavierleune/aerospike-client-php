@@ -274,6 +274,15 @@ extern zval                  *user_deserializer_callback_retval_p;
 extern uint32_t              is_user_deserializer_registered;
 
 /*
+ *******************************************************************************************************
+ * Flag used to indicate if the server supports as_double data type,
+ * and if the data is float expected to convert to as_double.
+ *******************************************************************************************************
+ */
+extern bool does_server_support_double;
+extern bool is_datatype_double;
+
+/*
  ****************************************************************************
  * A wrapper for the two structs zend_fcall_info and zend_fcall_info_cache
  * that allows for userland function callbacks from within a C-callback
