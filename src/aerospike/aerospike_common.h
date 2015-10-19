@@ -882,11 +882,19 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
 
     /*
      ******************************************************************************************************
-     * Macro to append string at next index key.
+     * Macro to append string at next index key which is a int.
      ******************************************************************************************************
      */
 #define AEROSPIKE_ADD_NEXT_STRING(minmax_arr, str, ifDuplicate) \
         add_next_index_string(minmax_arr, str, ifDuplicate)
+
+    /*
+     ******************************************************************************************************
+     * Macro to append string at indexed key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_INDEX_STRINGL(z_value, index_key, str, str_length, ifDuplicate) \
+        add_index_stringl(z_value, index_key, str, str_length, ifDuplicate)
 
     /*
      ******************************************************************************************************
@@ -913,11 +921,9 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      ******************************************************************************************************
      */
 #define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
-        index, if_duplicate, pos, failed)                                           \
-    if (zend_hash_get_current_key_ex(ht, (char **) key, key_len, if_duplicate,      \
-                index, pos) != HASH_KEY_IS_LONG) {                                  \
-        *failed = 1;                                                                \
-    }
+        index, if_duplicate, pos)                                                   \
+    zend_hash_get_current_key_ex(ht, (char **) key, key_len, if_duplicate,          \
+                index, pos)                                   
 
     /*
      *******************************************************************************************************
@@ -929,6 +935,30 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
          zend_hash_get_current_data_ex(ht,                                          \
                 (void **) datavalue, &position) == SUCCESS;                         \
          zend_hash_move_forward_ex(ht, &position))
+
+    /*
+     *******************************************************************************************************
+     * Macro to append string at next index key which is a long.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_NEXT_STRINGL(z_val, value, len, ifDuplicate) \
+        add_next_index_stringl(z_val, value, len, ifDuplicate)
+
+    /*
+     *******************************************************************************************************
+     * Macro to find key in hastable
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_FIND(ht, key, len, zv_ptr) \
+        zend_hash_find(ht, key, len, zv_ptr)
+
+    /*
+     *******************************************************************************************************
+     * Macro to add key in hastable
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
+        zend_hash_add(ht, key, len, data, data_size, dest)
 #else   /* Else if the version is greater than of equal to 70000 */                                                                  
 
     /*
@@ -960,8 +990,16 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      * Macro to append string at specified key.
      ******************************************************************************************************
      */
-#define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_length, ifDuplicate) \
-        add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_length)
+#define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, str, bin_name_p, bin_name_length, ifDuplicate) \
+        add_assoc_stringl(return_value, str, bin_name_p, bin_name_length)
+
+    /*
+     ******************************************************************************************************
+     * Macro to append string at indexed key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_INDEX_STRINGL(z_value, index_key, str, str_length, ifDuplicate) \
+        add_index_stringl(z_value, index_key, str, str_length)
 
     /*
      ******************************************************************************************************
@@ -996,10 +1034,8 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      ******************************************************************************************************
      */
 #define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
-        index, if_duplicate, pos, failed)                                           \
-    if (zend_hash_get_current_key_ex(ht, key, index, pos) != HASH_KEY_IS_LONG) {    \
-        *failed = 1;                                                                \
-    }
+        index, if_duplicate, pos)                                                   \
+    zend_hash_get_current_key_ex(ht, key, index, pos)                   
 
     /*
      *******************************************************************************************************
@@ -1008,8 +1044,32 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
     */
 #define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
     for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
-         *datavalue = zend_hash_get_current_data_ex(ht,                             \
-             &position) == SUCCESS;                                                 \
+         (*datavalue = zend_hash_get_current_data_ex(ht,                            \
+             &position)) == SUCCESS;                                                \
          zend_hash_move_forward_ex(ht, &position))
+
+    /*
+     *******************************************************************************************************
+     * Macro to append string at next index key which is a long.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_NEXT_STRINGL(z_val, value, len, ifDuplicate) \
+        add_next_index_stringl(z_val, value, len)
+
+    /*
+     *******************************************************************************************************
+     * Macro to find key in hastable
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_FIND(ht, key, len, zv_ptr) \
+        zend_hash_find(ht, zend_string_init(key, strlen(key), 0))
+
+    /*
+     *******************************************************************************************************
+     * Macro to add key in hastable
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
+        zend_hash_add_new(ht, zend_string_init(key, strlen(key), 0), z_val)
 #endif
 
