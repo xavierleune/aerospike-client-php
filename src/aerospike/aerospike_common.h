@@ -894,11 +894,8 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      * Macro to find value at specific index.
      ******************************************************************************************************
      */
-#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value, label)                     \
-    if ( FAILURE == (zend_hash_index_find(Z_ARRVAL_P(options_p),                    \
-                    index, (void **) &gen_policy_p))) {                             \
-        goto label;                                                                 \
-    }
+#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value)                            \
+    zend_hash_index_find(ht, index, (void **) value)                                \
 
     /*
      ******************************************************************************************************
@@ -1050,11 +1047,8 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      * Macro to find value at specific index.
      ******************************************************************************************************
      */
-#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value, label)                     \
-    if (NULL == (*value = zend_hash_index_find(Z_ARRVAL_P(options_p),               \
-                    index))) {                                                      \
-        goto label;                                                                 \
-    }
+#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value)                            \
+    zend_hash_index_find(ht, index)                                                 \
 
     /*
      ******************************************************************************************************

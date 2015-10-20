@@ -115,14 +115,50 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
     zval*                   gen_value_p = NULL;
 
     if (options_p) {
-        AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_GEN,
-                &gen_policy_p, exit);
+#if PHP_VERSION_ID < 70000
+        if (FAILURE == AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_GEN,
+                &gen_policy_p))
+#else
+        if (NULL == (gen_policy_p = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_GEN,
+                &gen_policy_p)))
+#endif
+        {
+            goto exit;
+        }
+
         if (Z_TYPE_P(gen_policy_p) != IS_ARRAY) {
             error_p->code = AEROSPIKE_ERR_PARAM;
             goto exit;
         }
-        AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(gen_policy_p), 1,
-                &gen_value_p, exit);
+#if PHP_VERSION_ID < 70000
+        if (FAILURE == AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(gen_policy_p), 1,
+                &gen_value_p))
+#else
+        if (NULL == (gen_value_p = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(gen_policy_p), 1,
+                &gen_value_p)))
+#endif
+        {
+            goto exit;
+        }
+
+        if (gen_value_p && (Z_TYPE_P(gen_value_p) != IS_LONG)) {
+            error_p->code = AEROSPIKE_ERR_PARAM;
+            goto exit;
+        }
+
+        if (gen_value_p) {
+            *generation_value_p = Z_LVAL_P(gen_value_p);
+        }
+    } 
+
+exit:
+    return;
+}
+
+
+
+/*
+ *******************************************************************************************************
         
         if (gen_value_p && (Z_TYPE_P(gen_value_p) != IS_LONG)) {
             error_p->code = AEROSPIKE_ERR_PARAM;
@@ -497,8 +533,17 @@ set_policy_ex(as_config *as_config_p,
                     }
                     break;
                 case OPT_POLICY_GEN:
-                    AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_value), 0,
-                            &gen_policy_p, exit);
+#if PHP_VERSION_ID < 70000
+                    if (FAIURE == AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_value), 0,
+                            &gen_policy_p))
+#else
+                    if (NULL == (gen_policy_p = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_value), 0,
+                            &gen_policy_p)))
+#endif
+                    {
+                        goto exit;
+                    }
+
                     if (Z_TYPE_P(gen_policy_p) != IS_LONG) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
