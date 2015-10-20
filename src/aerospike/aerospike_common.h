@@ -22,31 +22,11 @@
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
  *******************************************************************************************************
  */
-//#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
-#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(Z_OBJ_P(getThis()))
-
-/*
- *******************************************************************************************************
- * MACRO TO ITERATE OVER A HASHTABLE FOR PHP7 Compatibility.
- *
- * @param ht            Hashtable pointer.
- * @param position      HashPosition.
- * @param datavalue     zval ** which shall be populated with the current data.
- *******************************************************************************************************
- */
-/*#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
-#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)     \
-    for (zend_hash_internal_pointer_reset_ex(ht, &position);     \
-         zend_hash_get_current_data_ex(ht,                       \
-                (void **) datavalue, &position) == SUCCESS;      \
-         zend_hash_move_forward_ex(ht, &position))
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
+#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
 #else
-#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)     \
-    for (zend_hash_internal_pointer_reset_ex(ht, &position);     \
-         *datavalue = zend_hash_get_current_data_ex(ht,          \
-             &position) == SUCCESS;                              \
-         zend_hash_move_forward_ex(ht, &position))
-#endif*/
+#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(Z_OBJ_P(getThis()))
+#endif
 
 /*
  *******************************************************************************************************
@@ -259,7 +239,12 @@ typedef struct foreach_callback_info_udata_t {
  */
 extern zend_fcall_info       func_call_info;
 extern zend_fcall_info_cache func_call_info_cache;
+
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 extern zval                  *func_callback_retval_p;
+#else
+extern zval                  func_callback_retval_p;
+#endif
 extern uint32_t              is_callback_registered;
 
 /*
@@ -922,8 +907,8 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      */
 #define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
         index, if_duplicate, pos)                                                   \
-    zend_hash_get_current_key_ex(ht, (char **) key, key_len, if_duplicate,          \
-                index, pos)                                   
+    zend_hash_get_current_key_ex(ht, (char **) key, key_len, index,                 \
+            if_duplicate, pos)
 
     /*
      *******************************************************************************************************
@@ -959,6 +944,49 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      */
 #define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
         zend_hash_add(ht, key, len, data, data_size, dest)
+    
+    /*
+     *******************************************************************************************************
+     * Macro to invoke callback function.
+     *******************************************************************************************************
+    */
+#define INVOKE_CALLBACK_FUNCTION(level, func, file, line)                           \
+    int16_t   iter = 0;                                                             \
+    zval**    params[4];                                                            \
+    zval*     z_func = NULL;                                                        \
+    zval*     z_file = NULL;                                                        \
+    zval*     z_line = NULL;                                                        \
+    zval*     z_level = NULL;                                                       \
+                                                                                    \
+    ALLOC_INIT_ZVAL(z_level);                                                       \
+    ZVAL_LONG(z_level, level);                                                      \
+    params[0] = &z_level;                                                           \
+                                                                                    \
+    ALLOC_INIT_ZVAL(z_func);                                                        \
+    ZVAL_STRING(z_func, func, 1);                                                   \
+    params[1] = &z_func;                                                            \
+                                                                                    \
+    ALLOC_INIT_ZVAL(z_file);                                                        \
+    ZVAL_STRING(z_file, file, 1);                                                   \
+    params[2] = &z_file;                                                            \
+                                                                                    \
+    ALLOC_INIT_ZVAL(z_line);                                                        \
+    ZVAL_LONG(z_line, line);                                                        \
+    params[3] = &z_line;                                                            \
+                                                                                    \
+    func_call_info.param_count = 4;                                                 \
+    func_call_info.params = params;                                                 \
+    func_call_info.retval_ptr_ptr = &func_callback_retval_p;                        \
+                                                                                    \
+    if (zend_call_function(&func_call_info,                                         \
+                &func_call_info_cache TSRMLS_CC) == SUCCESS &&                      \
+            func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {      \
+    } else {                                                                        \
+    }                                                                               \
+                                                                                    \
+    for (iter = 0; iter < 4; iter++) {                                              \
+        zval_ptr_dtor(params[iter]);                                                \
+    }
 #else   /* Else if the version is greater than of equal to 70000 */                                                                  
 
     /*
@@ -1015,7 +1043,7 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      ******************************************************************************************************
      */
 #define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
-        ZVAL_UNREF(&(zval_pointer))
+    ZVAL_UNREF(&(zval_pointer))
 
     /*
      ******************************************************************************************************
@@ -1044,8 +1072,8 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
     */
 #define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
     for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
-         (*datavalue = zend_hash_get_current_data_ex(ht,                            \
-             &position)) == SUCCESS;                                                \
+         *datavalue = zend_hash_get_current_data_ex(ht,                             \
+             &position);                                                            \
          zend_hash_move_forward_ex(ht, &position))
 
     /*
@@ -1071,5 +1099,43 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      */
 #define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
         zend_hash_add_new(ht, zend_string_init(key, strlen(key), 0), z_val)
-#endif
 
+    /*
+     *******************************************************************************************************
+     * Macro to invoke callback function.
+     *******************************************************************************************************
+    */
+#define INVOKE_CALLBACK_FUNCTION(level, func, file, line)                           \
+    int16_t   iter = 0;                                                             \
+    zval      params[4];                                                            \
+    zval      z_func;                                                               \
+    zval      z_file;                                                               \
+    zval      z_line;                                                               \
+    zval      z_level;                                                              \
+                                                                                    \
+    ZVAL_LONG(&z_level, level);                                                     \
+    params[0] = z_level;                                                            \
+                                                                                    \
+    ZVAL_STRING(&z_func, func);                                                     \
+    params[1] = z_func;                                                             \
+                                                                                    \
+    ZVAL_STRING(&z_file, file);                                                     \
+    params[2] = z_file;                                                             \
+                                                                                    \
+    ZVAL_LONG(&z_line, line);                                                       \
+    params[3] = z_line;                                                             \
+                                                                                    \
+    func_call_info.param_count = 4;                                                 \
+    func_call_info.params = params;                                                 \
+    func_call_info.retval = &func_callback_retval_p;                                \
+                                                                                    \
+    if (zend_call_function(&func_call_info,                                         \
+                &func_call_info_cache TSRMLS_CC) == SUCCESS &&                      \
+            func_call_info.retval) {                                                \
+    } else {                                                                        \
+    }                                                                               \
+                                                                                    \
+    for (iter = 0; iter < 4; iter++) {                                              \
+        zval_ptr_dtor(&params[iter]);                                               \
+    }
+#endif

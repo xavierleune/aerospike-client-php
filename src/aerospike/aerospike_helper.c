@@ -21,8 +21,13 @@
  */
 zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
-zval                  *func_callback_retval_p;
 uint32_t              is_callback_registered;
+
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+zval                  *func_callback_retval_p = NULL;
+#else
+zval                  func_callback_retval_p;
+#endif
 
 /*
  *******************************************************************************************************
@@ -68,44 +73,7 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
     }
 
     if (is_callback_registered) { 
-        int16_t   iter = 0;
-        zval**    params[4];
-        zval*     z_func = NULL;
-        zval*     z_file = NULL;
-        zval*     z_line = NULL; 
-        zval*     z_level = NULL;
-        func_callback_retval_p = NULL;
-
-        ALLOC_INIT_ZVAL(z_level);
-        ZVAL_LONG(z_level, level);
-        params[0] = &z_level;
-
-        ALLOC_INIT_ZVAL(z_func);
-        ZVAL_STRING(z_func, func, 1);
-        params[1] = &z_func;
-
-        ALLOC_INIT_ZVAL(z_file);
-        ZVAL_STRING(z_file, file, 1);
-        params[2] = &z_file;
-
-        ALLOC_INIT_ZVAL(z_line);
-        ZVAL_LONG(z_line, line);
-        params[3] = &z_line;
-
-        func_call_info.param_count = 4;
-        func_call_info.params = params;
-        func_call_info.retval_ptr_ptr = &func_callback_retval_p;
-   
-        if (zend_call_function(&func_call_info, &func_call_info_cache TSRMLS_CC) == SUCCESS && 
-            func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {
-                //TODO: COPY_PZVAL_TO_ZVAL(*return_value, *func_call_info.retval_ptr_ptr);
-        } else {
-                // TODO: Handle failure in zend_call_function
-        }
-
-        for (iter = 0; iter < 4; iter++) {
-            zval_ptr_dtor(params[iter]);
-        }
+        INVOKE_CALLBACK_FUNCTION(level, func, file, line);
     }
 
     return true;
@@ -125,23 +93,41 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
 extern void
 aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 {
+    aerospike_global_error error_t = AEROSPIKE_G(error_g);
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     zval*    err_code_p = NULL;
     zval*    err_msg_p = NULL;
-    aerospike_global_error error_t = AEROSPIKE_G(error_g);
 
     MAKE_STD_ZVAL(err_code_p);
     MAKE_STD_ZVAL(err_msg_p);
-
+    
     if (error_t.reset) {
-        ZVAL_STRINGL(err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
+        AEROSPIKE_ZVAL_STRINGL(err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
         ZVAL_LONG(err_code_p, DEFAULT_ERRORNO);
     } else {
-        ZVAL_STRINGL(err_msg_p, error_t.error.message, strlen(error_t.error.message), 1);
+        AEROSPIKE_ZVAL_STRINGL(err_msg_p, error_t.error.message, strlen(error_t.error.message), 1);
         ZVAL_LONG(err_code_p, error_t.error.code);
     }
 
     zend_update_property(ce_p, object_p, "error", strlen("error"), err_msg_p TSRMLS_CC);
     zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), err_code_p TSRMLS_CC);
+#else
+    zval     err_code_p;
+    zval     err_msg_p;
+    
+    array_init(&err_code_p);
+    array_init(&err_msg_p);
+    if (error_t.reset) {
+        AEROSPIKE_ZVAL_STRINGL(&err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
+        ZVAL_LONG(&err_code_p, DEFAULT_ERRORNO);
+    } else {
+        AEROSPIKE_ZVAL_STRINGL(&err_msg_p, error_t.error.message, strlen(error_t.error.message), 1);
+        ZVAL_LONG(&err_code_p, error_t.error.code);
+    }
+
+    zend_update_property(ce_p, object_p, "error", strlen("error"), &err_msg_p TSRMLS_CC);
+    zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), &err_code_p TSRMLS_CC);
+#endif
 
     zval_ptr_dtor(&err_code_p);
     zval_ptr_dtor(&err_msg_p);
@@ -169,6 +155,7 @@ do {                                                                          \
  * This macro is defined to register a new resource and to add hash to it.
  *******************************************************************************************************
  */
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
 #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                 \
 do {                                                                           \
     ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                                  \
@@ -191,8 +178,33 @@ do {                                                                           \
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
     }                                                                          \
 } while(0)
-
-
+#else
+/*
+ * Required or not??
+ * le = (zend_resource *) zend_hash_update(persistent_list, alias, &new_le);
+ * */
+#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                 \
+do {                                                                           \
+    ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                                  \
+    ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,           \
+            val_persist);                                                      \
+    new_le.ptr = as_object_p->as_ref_p;                                        \
+    new_le.type = val_persist;                                                 \
+    if (new_flag) {                                                            \
+        pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
+        zend_hash_str_add_new(persistent_list, alias, alias_len,               \
+                (zval *) &new_le);                                             \
+        ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;                     \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
+    } else {                                                                   \
+        pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
+        zend_hash_update(persistent_list, zend_string_init(alias,              \
+                    strlen(alias), 0), (zval*) &new_le);                       \
+        ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;                     \
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
+    }                                                                          \
+} while(0)
+#endif
 /*
  *******************************************************************************************************
  * This macro is defined to match the config details with the stored object
@@ -248,7 +260,11 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         HashTable *persistent_list,
                                         int val_persist TSRMLS_DC)
 {
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     zend_rsrc_list_entry *le, new_le;
+#else
+    zend_resource *le, new_le;
+#endif
     zval* rsrc_result = NULL;
     as_status status = AEROSPIKE_OK;
     int itr_user = 0, itr_stored = 0;
@@ -281,8 +297,9 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         strcat(alias_to_search, ":");
         strcat(alias_to_search, conf->user);
         pthread_rwlock_rdlock(&AEROSPIKE_G(aerospike_mutex));
-        if (zend_hash_find(persistent_list, alias_to_search,
-                strlen(alias_to_search), (void **) &le) == SUCCESS) {
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+        if (AEROSPIKE_ZEND_HASH_FIND(persistent_list, alias_to_search,
+                    strlen(alias_to_search), (void **) &le) == SUCCESS) {
             if (alias_to_search) {
                 efree(alias_to_search);
                 alias_to_search = NULL;
@@ -291,6 +308,18 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
             tmp_ref = le->ptr;
             goto use_existing;
         }
+#else
+        if (NULL != (le = (zend_resource *) AEROSPIKE_ZEND_HASH_FIND(persistent_list,
+                        alias_to_search, strlen(alias_to_search), (void **) &le))) {
+            if (alias_to_search) {
+                efree(alias_to_search);
+                alias_to_search = NULL;
+            }
+            pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
+            tmp_ref = le->ptr;
+            goto use_existing;
+        }
+#endif
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
         if (alias_to_search) {
             efree(alias_to_search);
@@ -322,8 +351,13 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
         strcat(alias_to_hash, ":");
         strcat(alias_to_hash, conf->user);
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
         zend_hash_add(persistent_list, alias_to_hash,
                 strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
+#else
+        zend_hash_add_new(persistent_list, zend_string_init(alias_to_hash, strlen(alias_to_hash), 0),
+                (zval *) &new_le);
+#endif
         ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
         efree(alias_to_hash);
@@ -406,12 +440,19 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 {
     as_status               status = AEROSPIKE_OK;
     as_error                error;
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     zval                    *record_p = NULL;
-    zval                    **args[1];
     zval                    *retval = NULL;
+    zval                    **args[1];
+    zval                    *outer_container_p = NULL;
+#else
+    zval                    record_p;
+    zval                    retval;
+    zval                    args[1];
+    zval                    outer_container_p;
+#endif
     bool                    do_continue = true;
     foreach_callback_udata  foreach_record_callback_udata;
-    zval                    *outer_container_p = NULL;
     userland_callback       *user_func_p = (userland_callback *) udata;
 
     TSRMLS_FETCH_FROM_CTX(user_func_p->ts);
@@ -427,10 +468,15 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     }
 
     pthread_rwlock_wrlock(&AEROSPIKE_G(query_cb_mutex));
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     MAKE_STD_ZVAL(record_p);
     array_init(record_p);
-
     foreach_record_callback_udata.udata_p = record_p;
+#else
+    array_init(&record_p);
+    foreach_record_callback_udata.udata_p = &record_p;
+#endif
+
     foreach_record_callback_udata.error_p = &error;
     if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
         &foreach_record_callback_udata)) {
@@ -440,11 +486,21 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return true;
     }
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     MAKE_STD_ZVAL(outer_container_p);
     array_init(outer_container_p);
+#else
+    array_init(&outer_container_p);
+#endif
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
-                    &(current_as_rec->key), outer_container_p, NULL, false TSRMLS_CC))) {
+                    &(current_as_rec->key), outer_container_p, NULL, false TSRMLS_CC)))
+#else
+    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
+                    &(current_as_rec->key), &outer_container_p, NULL, false TSRMLS_CC)))
+#endif
+    {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);
@@ -452,7 +508,12 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         return true;
     }
 
-    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, record_p)) {
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, record_p))
+#else
+    if (0 != add_assoc_zval(&outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, &record_p))
+#endif
+    {
         DEBUG_PHP_EXT_DEBUG("Unable to get a record");
         zval_ptr_dtor(&record_p);
         zval_ptr_dtor(&outer_container_p);
@@ -464,10 +525,15 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
      * Call the userland function with the array representing the record.
      */
 
-    args[0] = &outer_container_p;
     user_func_p->fci.param_count = 1;
     user_func_p->fci.params = args;
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+    args[0] = &outer_container_p;
     user_func_p->fci.retval_ptr_ptr = &retval;
+#else
+    args[0] = outer_container_p;
+    user_func_p->fci.retval = &retval;
+#endif
 
     if (zend_call_function(&user_func_p->fci, &user_func_p->fcc TSRMLS_CC) == FAILURE) {
         DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
@@ -479,6 +545,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 
     zval_ptr_dtor(&outer_container_p);
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     if (retval) {
         if ((Z_TYPE_P(retval) == IS_BOOL) && !Z_BVAL_P(retval)) {
             do_continue = false;
@@ -487,6 +554,15 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
         }
         zval_ptr_dtor(&retval);
     }
+#else
+    if (Z_TYPE_P(&retval) == IS_FALSE) {
+        do_continue = false;
+    } else if (Z_TYPE_P(&retval) == IS_TRUE) {
+        do_continue = true;
+    }
+    zval_ptr_dtor(&retval);
+#endif
+
     pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
     return do_continue;
 }
