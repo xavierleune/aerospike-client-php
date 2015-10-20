@@ -1750,10 +1750,10 @@ static void AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(void* key, void* value, void* arra
     if (does_server_support_double && is_datatype_double)
     {
         AS_DEFAULT_PUT_ASSOC_DOUBLE (key, value, array, static_pool, 
-                serializer_policy, error_p TSRMLS_DC);
+                serializer_policy, error_p TSRMLS_CC);
     } else {
         AS_DEFAULT_PUT_ASSOC_BYTES (key, value, array, static_pool,
-                serializer_policy, error_p TSRMLS_DC);
+                serializer_policy, error_p TSRMLS_CC);
     }
 exit:
     return;
