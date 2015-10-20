@@ -199,7 +199,7 @@ config()
 echo "----------------------------------------------------------------------"
 headline "Installing the Aerospike PHP Extension"
 echo "To install the extension run inside src/aerospike:"
-code "sudo make install"
+code "make install"
 
 HAS_PHP_CONF_D=`php -i 2>&1 | grep "Scan this dir for additional .ini files"`
 if [ $? -eq 0 ] ; then
