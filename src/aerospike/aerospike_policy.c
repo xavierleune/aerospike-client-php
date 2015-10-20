@@ -275,7 +275,6 @@ set_policy_ex(as_config *as_config_p,
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
         //zval**              options_value;
-        int                 failed = 0;
         zval*               options_value;
         int	                scan_percentage = 0;
         uint16_t            options_passed_for_write = 0x0;
@@ -292,9 +291,8 @@ set_policy_ex(as_config *as_config_p,
         AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, &options_value) {
             uint options_key_len;
             ulong options_index;
-            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
-                    &options_key_len, &options_index, 0, &options_pointer, &failed);
-            if (failed) {
+            if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
+                    &options_key_len, &options_index, 0, &options_pointer)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                         "Unable to set policy: Invalid Policy Constant Key");
@@ -910,7 +908,6 @@ set_config_policies(as_config *as_config_p,
         HashPosition        options_pointer;
         //zval**              options_value;
         zval*               options_value;
-        int                 failed = 0;
 #if PHP_VERSION_ID < 70000
         int8_t*             options_key;
 #else
@@ -921,9 +918,8 @@ set_config_policies(as_config *as_config_p,
             uint options_key_len;
             ulong options_index;
 
-            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
-                    &options_key_len, &options_index, 0, &options_pointer, &failed);
-            if (failed) {
+            if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
+                    &options_key_len, &options_index, 0, &options_pointer)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                         "Unable to set policy: Invalid Policy Constant Key");
