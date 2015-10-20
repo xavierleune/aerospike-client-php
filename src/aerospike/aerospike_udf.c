@@ -232,7 +232,12 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
 
     if ((*args_pp)) {
         as_arraylist_inita(&args_list,
-                zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+#if PHP_VERSION_ID < 70000
+                zend_hash_num_elements(Z_ARRVAL_PP(args_pp))
+#else
+                zend_hash_num_elements(Z_ARRVAL_P(*args_pp))
+#endif
+                );
         args_list_p = &args_list;
         AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
     }
@@ -316,7 +321,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
         zval* module_p = NULL;
         MAKE_STD_ZVAL(module_p);
         array_init(module_p);
-        add_assoc_stringl(module_p, UDF_MODULE_NAME, udf_files.entries[i].name,
+        AEROSPIKE_ADD_ASSOC_STRINGL(module_p, UDF_MODULE_NAME, udf_files.entries[i].name,
                 strlen(udf_files.entries[i].name), 1);
         add_assoc_long(module_p, UDF_MODULE_TYPE,
                 (udf_files.entries[i].type));
@@ -374,7 +379,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    ZVAL_STRINGL(udf_code_p, (char*) udf_file.content.bytes, udf_file.content.size, 1);
+    AEROSPIKE_ZVAL_STRINGL(udf_code_p, (char*) udf_file.content.bytes, udf_file.content.size, 1);
 exit:
     if (init_udf_file) {
         as_udf_file_destroy(&udf_file);
