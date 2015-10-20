@@ -71,11 +71,11 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                 (FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
                                            (void **) &val_pp))
 #else
-                (NULL == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
+                (*op_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
                         (void **) &op_pp)) ||
-                (NULL == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
+                (*bin_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
                                            (void **) &bin_pp)) ||
-                (NULL == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
+                (*val_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
                                            (void **) &val_pp))
 #endif
                 
@@ -668,9 +668,19 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         zval **bin_names_pp = NULL;
         AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
             if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
+#if PHP_VERSION_ID < 70000
                 convert_to_string_ex(bin_names_pp);
+#else
+                convert_to_string_ex(*bin_names_pp);
+#endif
             }
-            if (!as_query_select(&query, Z_STRVAL_PP(bin_names_pp))) {
+            if (
+#if PHP_VERSION_ID < 70000
+                    !as_query_select(&query, Z_STRVAL_PP(bin_names_pp))
+#else
+                    !as_query_select(&query, Z_STRVAL_P(*bin_names_pp))
+#endif
+                    ) {
                 DEBUG_PHP_EXT_DEBUG("Unable to apply filter bins to the query");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                         "Unable to apply filter bins to the query");
