@@ -2188,7 +2188,11 @@ PHP_METHOD(Aerospike, predicateRange)
             AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(min_p), 1);
             break;
         default:
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&minmax_arr);
+#else
+            zval_ptr_dtor(minmax_arr);
+#endif
             zval_dtor(return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
             RETURN_NULL();
@@ -2209,7 +2213,11 @@ PHP_METHOD(Aerospike, predicateRange)
             AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(max_p), 1);
             break;
         default:
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&minmax_arr);
+#else
+            zval_ptr_dtor(minmax_arr);
+#endif
             zval_dtor(return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
             RETURN_NULL();

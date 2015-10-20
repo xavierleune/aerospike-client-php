@@ -1035,7 +1035,7 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
      */
 #define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
         index, if_duplicate, pos)                                                   \
-    zend_hash_get_current_key_ex(ht, key, index, pos)                   
+    zend_hash_get_current_key_ex(ht, (zend_string**)key, index, pos)                   
 
     /*
      *******************************************************************************************************

@@ -100,7 +100,7 @@
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define FETCH_VALUE_PUT(val) Z_TYPE_PP(val)
 #else
-#define FETCH_VALUE_PUT(val) Z_TYPE_P(val)
+#define FETCH_VALUE_PUT(val) Z_TYPE_P(*val)
 #endif
 
 /*
@@ -215,6 +215,8 @@
  * These methods will generalise the key generation.
  *******************************************************************************************************
  */
+
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */ 
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
             AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len,   \
@@ -227,10 +229,25 @@
                 PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
             }                                                                  
-
+#else
+#define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
+        static_pool, err, label)                                               \
+            zend_string* z_str = zend_string_init(key, strlen(key), 0);        \
+            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, &z_str, &key_len,  \
+                    &index, 0, &pointer);                                      \
+            if ((char*)key == NULL) {                                          \
+                err->code = AEROSPIKE_ERR_CLIENT;                              \
+                goto label;                                                    \
+            }                                                                  \
+            if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
+                PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
+                goto label;                                                    \
+            }                                                                  
+#endif
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
         err, label)                                                            \
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */ 
 #define AS_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,       \
         err, label)                                                            \
 do {                                                                           \
@@ -252,6 +269,30 @@ do {                                                                           \
         goto label;                                                            \
     }                                                                          \
 } while(0);
+#else
+#define AS_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,       \
+        err, label)                                                            \
+do {                                                                           \
+    char *local_key;                                                           \
+    zend_string* z_str = zend_string_init(local_key, strlen(local_key), 0);    \
+    uint key_type = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable,          \
+            &z_str, &key_len, &index, 0, &pointer);               \
+    if (key_type == HASH_KEY_IS_STRING) {                                      \
+        as_string *map_str;                                                    \
+        GET_STR_POOL(map_str, static_pool, err, label);                        \
+        as_string_init(map_str, local_key, false);                             \
+        key = (as_val*) (map_str);                                             \
+    } else if (key_type == HASH_KEY_IS_LONG) {                                 \
+        as_integer *map_int;                                                   \
+        GET_INT_POOL(map_int, static_pool, err, label);                        \
+        as_integer_init(map_int, index);                                       \
+        key = (as_val*) map_int;                                               \
+    } else {                                                                   \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map");    \
+        goto label;                                                            \
+    }                                                                          \
+} while(0);
+#endif
 
 /* 
  *******************************************************************************************************
@@ -412,7 +453,7 @@ do {                                                                           \
     zval **dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
-    hashtable = Z_ARRVAL_PP((zval**) value);                                   \
+    hashtable = Z_ARRVAL_P((zval*) *value);                                   \
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
@@ -621,6 +662,7 @@ do {                                                                           \
  * After iteration, it will set those values to the parent store.
  *******************************************************************************************************
  */
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
@@ -663,6 +705,51 @@ do {                                                                           \
             goto label;                                                        \
         }                                                                      \
     }                                                                          
+#else
+#define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
+                                err, static_pool, serializer_policy)           \
+    HashTable *hashtable;                                                      \
+    HashPosition pointer;                                                      \
+    char *inner_key = NULL;                                                    \
+    void *inner_store;                                                         \
+    uint inner_key_len;                                                        \
+    ulong index;                                                               \
+    uint key_iterator = 0;                                                     \
+    hashtable = Z_ARRVAL_P((zval*)value);                                      \
+    zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
+    zend_string* z_str = zend_string_init(inner_key, strlen(inner_key), 0);    \
+    TRAVERSE_KEYS(hashtable, z_str, inner_key_len, index, pointer,             \
+            key_iterator)                                                      \
+    if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
+        AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
+                err, label);                                                   \
+        AEROSPIKE_##level##_PUT_##action##_LIST(inner_key,                     \
+                        value, inner_store, static_pool,                       \
+                            serializer_policy, err);                           \
+        if (AEROSPIKE_OK != (err->code)) {                                     \
+            goto label;                                                        \
+        }                                                                      \
+        AEROSPIKE_##level##_SET_##action##_LIST(store,                         \
+                       inner_store, key, err);                                 \
+        if(AEROSPIKE_OK != (err->code)) {                                      \
+            goto label;                                                        \
+        }                                                                      \
+    } else {                                                                   \
+        AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
+                err, label);                                                   \
+        AEROSPIKE_##level##_PUT_##action##_MAP(inner_key,                      \
+                        value, inner_store, static_pool,                       \
+                            serializer_policy, err);                           \
+        if (AEROSPIKE_OK != (err->code)) {                                     \
+            goto label;                                                        \
+        }                                                                      \
+        AEROSPIKE_##level##_SET_##action##_MAP(store,                          \
+                       inner_store, key, err);                                 \
+        if (AEROSPIKE_OK != (err->code)) {                                     \
+            goto label;                                                        \
+        }                                                                      \
+    }                                                                          
+#endif
 /*
  *******************************************************************************************************
  * End of macro for special implementation of Array.

@@ -1698,7 +1698,12 @@ static void AS_LIST_PUT_APPEND_STR(void *key, void *value, void *array,
 {
     if (AEROSPIKE_OK != (error_p->code =
                 as_arraylist_append_str((as_arraylist *) array,
-                        Z_STRVAL_PP((zval**) value)))) {
+#if PHP_VERSION_ID < 70000
+                        Z_STRVAL_PP((zval**) value)
+#else
+                        Z_STRVAL_P((zval*) value)
+#endif
+                        ))) {
         DEBUG_PHP_EXT_DEBUG("Unable to append string to list");
         PHP_EXT_SET_AS_ERR(error_p, error_p->code,
                 "Unable to append string to list");
@@ -1954,7 +1959,14 @@ static void AS_DEFAULT_PUT_ASSOC_STR(void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_str((as_record *)array, (const char*)key,
-                    (char *) Z_STRVAL_PP((zval**) value)))) {
+                    (char *) 
+#if PHP_VERSION_ID < 70000
+                    Z_STRVAL_PP((zval**) value)
+#else
+                    Z_STRVAL_P((zval*) value)
+#endif
+                    
+                    ))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record to a string");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Unable to set record to a string");
@@ -2064,7 +2076,13 @@ static void AS_MAP_PUT_ASSOC_STR(void *key, void *value, void *store,
 {
     as_string   *map_str;
     GET_STR_POOL(map_str, static_pool, error_p, exit);
-    as_string_init(map_str, Z_STRVAL_PP((zval**)value), false);
+    as_string_init(map_str, 
+#if PHP_VERSION_ID < 70000
+            Z_STRVAL_PP((zval**)value), 
+#else
+            Z_STRVAL_P((zval*)value), 
+#endif
+            false);
     if (AEROSPIKE_OK != ((error_p->code) =
                 as_hashmap_set((as_hashmap*)store, (as_val *) key,
                         (as_val *)(map_str)))) {
@@ -2593,14 +2611,24 @@ aerospike_transform_config_callback(HashTable* ht_p,
     if (PHP_IS_ARRAY(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS,
             PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
+#if PHP_VERSION_ID < 70000
             status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_PP(value_pp),
                     data_p);
+#else
+            status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_P(*value_pp),
+                    data_p);
+#endif
     } else if (PHP_IS_STRING(key_data_type_u32) && 
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_USER, PHP_AS_KEY_DEFINE_FOR_USER_LEN,
             key_p, key_len_u32 -1)) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
+#if PHP_VERSION_ID < 70000
                 status = aerospike_transform_set_user_in_config(Z_STRVAL_PP(value_pp),
                         ((transform_zval_config_into *) data_p)->user);
+#else
+                status = aerospike_transform_set_user_in_config(Z_STRVAL_P(*value_pp),
+                        ((transform_zval_config_into *) data_p)->user);
+#endif
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping users as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
@@ -2609,8 +2637,13 @@ aerospike_transform_config_callback(HashTable* ht_p,
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD,
             PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
+#if PHP_VERSION_ID < 70000
                 status = aerospike_transform_set_password_in_config(Z_STRVAL_PP(value_pp),
                         ((transform_zval_config_into *) data_p)->pass);
+#else
+                status = aerospike_transform_set_password_in_config(Z_STRVAL_P(*value_pp),
+                        ((transform_zval_config_into *) data_p)->pass);
+#endif
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping password as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
@@ -2709,11 +2742,21 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_ADDR,
             PHP_AS_KEY_DEFINE_FOR_ADDR_LEN, key_p, key_len_u32 - 1)) {
         if (set_as_config) {
+#if PHP_VERSION_ID < 70000
             AS_CONFIG_ITER_MAP_SET_ADDR(addrport_transform_iter_map_p,
                     pestrndup(Z_STRVAL_PP(value_pp), Z_STRLEN_PP(value_pp), 1));
+#else
+            AS_CONFIG_ITER_MAP_SET_ADDR(addrport_transform_iter_map_p,
+                    pestrndup(Z_STRVAL_P(*value_pp), Z_STRLEN_P(*value_pp), 1));
+#endif
         } else {
+#if PHP_VERSION_ID < 70000
             memcpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
                     Z_STRVAL_PP(value_pp), Z_STRLEN_PP(value_pp) + 1);
+#else
+            memcpy(addrport_transform_iter_map_p->transform_result.ip_port_p,
+                    Z_STRVAL_P(*value_pp), Z_STRLEN_P(*value_pp) + 1);
+#endif
         }
     } else if (PHP_IS_LONG(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT,
@@ -2728,7 +2771,11 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
     } else if (PHP_IS_STRING(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PORT,
                  PHP_AS_KEY_DEFINE_FOR_PORT_LEN, key_p, key_len_u32 - 1)) {
+#if PHP_VERSION_ID < 70000
         port = atoi(Z_STRVAL_PP(value_pp));
+#else
+        port = atoi(Z_STRVAL_P(*value_pp));
+#endif
         if (port < 0 || port > 65535) {
             status = AEROSPIKE_ERR_PARAM;
             goto exit;
@@ -2795,10 +2842,17 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
         goto exit;
     }
 
+#if PHP_VERSION_ID < 70000
     if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(Z_ARRVAL_PP(retdata_pp),
                                                                  addrport_data_pp,
                                                                  &aerospike_transform_addrport_callback,
                                                                  (void *) &addrport_transform_iter_map_p))) {
+#else
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(Z_ARRVAL_P(*retdata_pp),
+                                                                 addrport_data_pp,
+                                                                 &aerospike_transform_addrport_callback,
+                                                                 (void *) &addrport_transform_iter_map_p))) {
+#endif
         goto exit;
     }
 
@@ -2917,11 +2971,19 @@ aerospike_add_key_params(as_key* as_key_p, u_int32_t key_type, const char* names
             break;
         case IS_STRING:
             if (!is_digest) {
+#if PHP_VERSION_ID < 70000
                 as_key_init_str(as_key_p, namespace_p, set_p, Z_STRVAL_PP(key_pp));
+#else
+                as_key_init_str(as_key_p, namespace_p, set_p, Z_STRVAL_P(*key_pp));
+#endif
             } else {
                 if (Z_STRLEN_PP(key_pp)) {
                     as_digest_value digest = {0};
+#if PHP_VERSION_ID < 70000
                     memcpy((char *) digest, Z_STRVAL_PP(key_pp), Z_STRLEN_PP(key_pp));
+#else
+                    memcpy((char *) digest, Z_STRVAL_P(*key_pp), Z_STRLEN_P(*key_pp));
+#endif
                     as_key_init_digest(as_key_p, namespace_p, set_p, digest);
                 } else {
                     status = AEROSPIKE_ERR_CLIENT;
@@ -2969,10 +3031,18 @@ aerospike_transform_putkey_callback(HashTable* ht_p,
 
     if (PHP_IS_STRING(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_NS, PHP_AS_KEY_DEFINE_FOR_NS_LEN, key_p, key_len_u32 - 1)) {
+#if PHP_VERSION_ID < 70000
         as_put_key_data_map_p->namespace_p = (int8_t*) Z_STRVAL_PP(retdata_pp);
+#else
+        as_put_key_data_map_p->namespace_p = (int8_t*) Z_STRVAL_P(*retdata_pp);
+#endif
     } else if(PHP_IS_STRING(key_data_type_u32) &&
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_SET, PHP_AS_KEY_DEFINE_FOR_SET_LEN, key_p, key_len_u32 - 1)) {
+#if PHP_VERSION_ID < 70000
         as_put_key_data_map_p->set_p = (int8_t*) Z_STRVAL_PP(retdata_pp);
+#else
+        as_put_key_data_map_p->set_p = (int8_t*) Z_STRVAL_P(*retdata_pp);
+#endif
     } else if(/*PHP_IS_STRING(key_data_type_u32) &&  -- need to check on the type*/
              PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_KEY, PHP_AS_KEY_DEFINE_FOR_KEY_LEN, key_p, key_len_u32 - 1)) {
         as_put_key_data_map_p->key_pp = retdata_pp;
@@ -3207,7 +3277,11 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
     AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
         switch (Z_TYPE_PP(bin_names)) {
             case IS_STRING:
+#if PHP_VERSION_ID < 70000
                 select[sel_cnt++] = Z_STRVAL_PP(bin_names);
+#else
+                select[sel_cnt++] = Z_STRVAL_P(*bin_names);
+#endif
                 break;
             default:
                 status = AEROSPIKE_ERR_PARAM;
@@ -3596,11 +3670,19 @@ aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_rec
 exit:
     if (AEROSPIKE_OK != status) {
         if (key_container_p) {
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&key_container_p);
+#else
+            zval_ptr_dtor(key_container_p);
+#endif
         }
 
         if (metadata_container_p) {
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&metadata_container_p);
+#else
+            zval_ptr_dtor(metadata_container_p);
+#endif
         }
     }
 
@@ -3676,11 +3758,19 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
 exit:
     if (AEROSPIKE_OK != status) {
         if (key_container_p) {
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&key_container_p);
+#else
+            zval_ptr_dtor(key_container_p);
+#endif
         }
 
         if (metadata_container_p) {
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&metadata_container_p);
+#else
+            zval_ptr_dtor(metadata_container_p);
+#endif
         }
     }
 
@@ -3773,7 +3863,11 @@ exit:
 
     if (AEROSPIKE_OK != status) {
         if (get_record_p) {
+#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&get_record_p);
+#else
+            zval_ptr_dtor(get_record_p);
+#endif
         }
     }
 
