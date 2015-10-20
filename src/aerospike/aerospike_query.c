@@ -40,46 +40,91 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
     zval**              val_pp = NULL;
     zval**              index_type_pp = NULL;
 
+    zend_string* z_bin = zend_string_init(BIN, strlen(BIN), 0);
+    zend_string* z_op  = zend_string_init(OP, strlen(OP), 0);
+    zend_string* z_val = zend_string_init(VAL, strlen(VAL), 0);
+
     if (predicate_ht_p && (zend_hash_num_elements(predicate_ht_p) != 0)) {
-        if ((!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
+        if (
+#if PHP_VERSION_ID < 70000
+                (!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
                 (!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
-                (!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))) {
+                (!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))
+#else
+                (!zend_hash_exists(predicate_ht_p, z_bin)) ||
+                (!zend_hash_exists(predicate_ht_p, z_op))  ||
+                (!zend_hash_exists(predicate_ht_p, z_val))
+#endif
+                ) {
             DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Predicate is expected to include the keys 'bin','op', and 'val'.");
             goto exit;
         }
 
-        if (    (FAILURE == zend_hash_find(predicate_ht_p, OP, sizeof(OP),
+        if (    
+#if PHP_VERSION_ID < 70000
+                (FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
                         (void **) &op_pp)) ||
-                (FAILURE == zend_hash_find(predicate_ht_p, BIN, sizeof(BIN),
+                (FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
                                            (void **) &bin_pp)) ||
-                (FAILURE == zend_hash_find(predicate_ht_p, VAL, sizeof(VAL),
-                                           (void **) &val_pp))) {
+                (FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
+                                           (void **) &val_pp))
+#else
+                (NULL == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
+                        (void **) &op_pp)) ||
+                (NULL == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
+                                           (void **) &bin_pp)) ||
+                (NULL == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
+                                           (void **) &val_pp))
+#endif
+                
+                ) {
             DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', 'val'.");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Predicate is expected to include the keys 'bin','op', 'val'.");
             goto exit;
         }
 
+#if PHP_VERSION_ID < 70000
         convert_to_string_ex(op_pp);
         convert_to_string_ex(bin_pp);
+#else
+        convert_to_string_ex(*op_pp);
+        convert_to_string_ex(*bin_pp);
+#endif
         //convert_to_string_ex(index_type_pp);
+#if PHP_VERSION_ID < 70000
         if (strncmp(Z_STRVAL_PP(op_pp), "=", 1) == 0) {
+#else
+        if (strncmp(Z_STRVAL_P(*op_pp), "=", 1) == 0) {
+#endif
             switch(Z_TYPE_PP(val_pp)) {
                 case IS_STRING:
+#if PHP_VERSION_ID < 70000
                     convert_to_string_ex(val_pp);
                     if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
                                 as_equals(STRING, Z_STRVAL_PP(val_pp)))) {
+#else
+                    convert_to_string_ex(*val_pp);
+                    if (!as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                as_equals(STRING, Z_STRVAL_P(*val_pp)))) {
+#endif
                         DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                 "Unable to set query predicate");
                     }
                     break;
                 case IS_LONG:
+#if PHP_VERSION_ID < 70000
                     convert_to_long_ex(val_pp);
                     if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
                                 as_equals(NUMERIC, Z_LVAL_PP(val_pp)))) {
+#else
+                    convert_to_long_ex(*val_pp);
+                    if (!as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                as_equals(NUMERIC, Z_LVAL_P(*val_pp)))) {
+#endif
                         DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                 "Unable to set query predicate");
@@ -91,20 +136,49 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                             "Predicate 'val' must be either string or integer.");
                     goto exit;
             }
-        } else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0) {
+        } 
+#if PHP_VERSION_ID < 70000
+                    else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0) 
+#else
+                    else if (strncmp(Z_STRVAL_P(*op_pp), "BETWEEN", 7) == 0) 
+#endif
+                    {
             bool between_unpacked = false;
             if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
+#if PHP_VERSION_ID < 70000
                 convert_to_array_ex(val_pp);
+#else
+                convert_to_array_ex(*val_pp);
+#endif
                 zval **min_pp;
                 zval **max_pp;
-                if ((zend_hash_index_find(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
-                        (zend_hash_index_find(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)) {
+                if (
+#if PHP_VERSION_ID < 70000
+                        (AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
+                        (AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
+#else
+                        (*min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(*val_pp), 0, (void **) &min_pp)) &&
+                        (*max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(*val_pp), 1, (void **) &max_pp))
+#endif
+                        ) {
+#if PHP_VERSION_ID < 70000
                     convert_to_long_ex(min_pp);
                     convert_to_long_ex(max_pp);
+#else
+                    convert_to_long_ex(*min_pp);
+                    convert_to_long_ex(*max_pp);
+#endif
                     if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
                         between_unpacked = true;
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_range(DEFAULT, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_range(DEFAULT, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_range(DEFAULT, NUMERIC, Z_LVAL_P(*min_pp), Z_LVAL_P(*max_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
@@ -118,35 +192,77 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                         "Predicate BETWEEN 'op' requires an array of (min,max) integers.");
                 goto exit;
             }
-        } else if (strncmp(Z_STRVAL_PP(op_pp), "CONTAINS", 8) == 0) {
-            if ((FAILURE == zend_hash_find(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-                                           (void **) &index_type_pp))) {
+        } else if (
+#if PHP_VERSION_ID < 70000
+                strncmp(Z_STRVAL_PP(op_pp), "CONTAINS", 8) == 0
+#else
+                strncmp(Z_STRVAL_P(*op_pp), "CONTAINS", 8) == 0
+#endif
+                ) {
+            if (
+#if PHP_VERSION_ID < 70000
+                    (FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+                                           (void **) &index_type_pp))
+#else
+                    (*index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+                                           (void **) &index_type_pp))
+#endif
+                    ) {
                 DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Predicate is expected to include 'index_type'.");
                 goto exit;
             }
+#if PHP_VERSION_ID < 70000
             convert_to_long_ex(index_type_pp);
+#else
+            convert_to_long_ex(*index_type_pp);
+#endif
             switch(Z_TYPE_PP(val_pp)) {
                 case IS_STRING:
+#if PHP_VERSION_ID < 70000
                     convert_to_string_ex(val_pp);
+#else
+                    convert_to_string_ex(*val_pp);
+#endif
                     if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_contains(MAPVALUES , STRING, Z_STRVAL_PP(val_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(MAPVALUES , STRING, Z_STRVAL_PP(val_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_contains(MAPVALUES , STRING, Z_STRVAL_P(*val_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
                     } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_contains(MAPKEYS , STRING, Z_STRVAL_PP(val_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(MAPKEYS , STRING, Z_STRVAL_PP(val_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_contains(MAPKEYS , STRING, Z_STRVAL_P(*val_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
                     } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_contains(LIST , STRING, Z_STRVAL_PP(val_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(LIST , STRING, Z_STRVAL_PP(val_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_contains(LIST , STRING, Z_STRVAL_P(*val_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
@@ -159,24 +275,49 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                     }
                     break;
                 case IS_LONG:
+#if PHP_VERSION_ID < 70000
                     convert_to_long_ex(val_pp);
+#else
+                    convert_to_long_ex(*val_pp);
+#endif
                     if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_contains(MAPVALUES , NUMERIC, Z_LVAL_PP(val_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(MAPVALUES , NUMERIC, Z_LVAL_PP(val_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_contains(MAPVALUES , NUMERIC, Z_LVAL_P(*val_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
                     } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_contains(MAPKEYS , NUMERIC, Z_LVAL_PP(val_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(MAPKEYS , NUMERIC, Z_LVAL_PP(val_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_contains(MAPKEYS , NUMERIC, Z_LVAL_P(*val_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
                         }
                     } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
-                        if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
-                                    as_contains(LIST , NUMERIC, Z_LVAL_PP(val_pp)))) {
+                        if (
+#if PHP_VERSION_ID < 70000
+                                !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                                    as_contains(LIST , NUMERIC, Z_LVAL_PP(val_pp)))
+#else
+                                !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                    as_contains(LIST , NUMERIC, Z_LVAL_P(*val_pp)))
+#endif
+                                ) {
                             DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                     "Unable to set query predicate");
@@ -194,9 +335,22 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                             "Predicate 'val' must be either string or integer.");
                     goto exit;
             }
-        } else if (strncmp(Z_STRVAL_PP(op_pp), "RANGE", 5) == 0) {
-            if ((FAILURE == zend_hash_find(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-                                           (void **) &index_type_pp))) {
+        } else if (
+#if PHP_VERSION_ID < 70000
+                strncmp(Z_STRVAL_PP(op_pp), "RANGE", 5) == 0
+#else
+                strncmp(Z_STRVAL_P(*op_pp), "RANGE", 5) == 0
+#endif
+                ) {
+            if (
+#if PHP_VERSION_ID < 70000
+                    (FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+                                           (void **) &index_type_pp))
+#else
+                    (*index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+                                           (void **) &index_type_pp))
+#endif
+                    ) {
                 DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                     "Predicate is expected to include 'index_type'.");
@@ -204,36 +358,78 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
             }
             bool between_unpacked = false;
             if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
+#if PHP_VERSION_ID < 70000
                 convert_to_array_ex(val_pp);
                 convert_to_long_ex(index_type_pp);
+#else
+                convert_to_array_ex(*val_pp);
+                convert_to_long_ex(*index_type_pp);
+#endif
                 zval **min_pp;
                 zval **max_pp;
-                if ((zend_hash_index_find(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
-                        (zend_hash_index_find(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)) {
+                if (
+#if PHP_VERSION_ID < 70000
+                        (AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
+                        (AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
+#else
+                        (*min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(*val_pp), 0, (void **) &min_pp)) &&
+                        (*max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(*val_pp), 1, (void **) &max_pp))
+#endif
+                        ) {
+#if PHP_VERSION_ID < 70000
                     convert_to_long_ex(min_pp);
                     convert_to_long_ex(max_pp);
+#else
+                    convert_to_long_ex(*min_pp);
+                    convert_to_long_ex(*max_pp);
+#endif
                     if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
                         between_unpacked = true;
                         if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
-                            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                            if (
+#if PHP_VERSION_ID < 70000
+                                    !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
                                         as_range(MAPVALUES, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
-                                        AS_INDEX_TYPE_MAPVALUES)) {
+                                        AS_INDEX_TYPE_MAPVALUES)
+#else
+                                    !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                        as_range(MAPVALUES, NUMERIC, Z_LVAL_P(*min_pp), Z_LVAL_P(*max_pp)),
+                                        AS_INDEX_TYPE_MAPVALUES)
+#endif
+                                    
+                                    ) {
                                 DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                         "Unable to set query predicate");
                             }
                         } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
-                            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                            if (
+#if PHP_VERSION_ID < 70000
+                                    !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
                                         as_range(MAPKEYS, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
-                                        AS_INDEX_TYPE_MAPVALUES)) {
+                                        AS_INDEX_TYPE_MAPVALUES)
+#else
+                                    !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                        as_range(MAPKEYS, NUMERIC, Z_LVAL_P(*min_pp), Z_LVAL_P(*max_pp)),
+                                        AS_INDEX_TYPE_MAPVALUES)
+#endif
+                                    ) {
                                 DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                         "Unable to set query predicate");
                             }
                         } else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
-                            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
+                            if (
+#if PHP_VERSION_ID < 70000
+                                    !as_query_where(query_p, Z_STRVAL_PP(bin_pp),
                                         as_range(LIST, NUMERIC, Z_LVAL_PP(min_pp), Z_LVAL_PP(max_pp)),
-                                        AS_INDEX_TYPE_MAPVALUES)) {
+                                        AS_INDEX_TYPE_MAPVALUES)
+#else
+                                    !as_query_where(query_p, Z_STRVAL_P(*bin_pp),
+                                        as_range(LIST, NUMERIC, Z_LVAL_P(*min_pp), Z_LVAL_P(*max_pp)),
+                                        AS_INDEX_TYPE_MAPVALUES)
+#endif
+                                    ) {
                                 DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
                                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                         "Unable to set query predicate");
@@ -330,11 +526,21 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
         as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
         HashPosition pos;
         zval **bin_names_pp = NULL;
-        foreach_hashtable(bins_ht_p, pos, bin_names_pp) {
+        AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
             if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
+#if PHP_VERSION_ID < 70000
                 convert_to_string_ex(bin_names_pp);
+#else
+                convert_to_string_ex(*bin_names_pp);
+#endif
             }
-            if (!as_query_select(&query, Z_STRVAL_PP(bin_names_pp))) {
+            if (
+#if PHP_VERSION_ID < 70000
+                    !as_query_select(&query, Z_STRVAL_PP(bin_names_pp))
+#else
+                    !as_query_select(&query, Z_STRVAL_P(*bin_names_pp))
+#endif
+                    ) {
                 DEBUG_PHP_EXT_DEBUG("Unable to apply filter bins to the query");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                         "Unable to apply filter bins to the query");
@@ -418,8 +624,13 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     }
 
     if ((*args_pp)) {
+#if PHP_VERSION_ID < 70000
         as_arraylist_init(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)), 0);
+#else
+        as_arraylist_init(&args_list,
+                zend_hash_num_elements(Z_ARRVAL_P(*args_pp)), 0);
+#endif
         args_list_p = &args_list;
         AS_LIST_PUT(NULL, args_pp, &args_list, &udf_pool,
                 serializer_policy, error_p TSRMLS_CC);
@@ -455,7 +666,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
         HashPosition pos;
         zval **bin_names_pp = NULL;
-        foreach_hashtable(bins_ht_p, pos, bin_names_pp) {
+        AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
             if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
                 convert_to_string_ex(bin_names_pp);
             }
