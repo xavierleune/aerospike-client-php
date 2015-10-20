@@ -338,21 +338,32 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    foreach_hashtable(operations_array_p, pointer, operation) {
+    AEROSPIKE_FOREACH_HASHTABLE(operations_array_p, pointer, operation) {
         as_record *temp_rec = NULL;
 
         if (IS_ARRAY == Z_TYPE_PP(operation)) {
+#if PHP_VERSION_ID < 70000
             each_operation_array_p = Z_ARRVAL_PP(operation);
+#else
+            each_operation_array_p = Z_ARRVAL_P(*operation);
+#endif
             str = NULL;
             op = 0;
             ttl = 0;
             bin_name_p = NULL;
-            foreach_hashtable(each_operation_array_p, each_pointer, each_operation) {
+            AEROSPIKE_FOREACH_HASHTABLE(each_operation_array_p, each_pointer, each_operation) {
                 uint options_key_len;
                 ulong options_index;
                 char* options_key;
-                if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key, 
+                zend_string* z_str = zend_string_init(options_key, strlen(options_key), 0);
+                if (
+#if PHP_VERSION_ID < 70000
+                        AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(each_operation_array_p, (char **) &options_key, 
                             &options_key_len, &options_index, 0, &each_pointer)
+#else
+                        AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(each_operation_array_p, &z_str, 
+                            &options_key_len, &options_index, 0, &each_pointer)
+#endif
                         != HASH_KEY_IS_STRING) {
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
@@ -362,10 +373,18 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                     if (!strcmp(options_key, "op") && (IS_LONG == Z_TYPE_PP(each_operation))) {
                         op = (uint32_t) Z_LVAL_PP(each_operation);
                     } else if (!strcmp(options_key, "bin") && (IS_STRING == Z_TYPE_PP(each_operation))) {
+#if PHP_VERSION_ID < 70000
                         bin_name_p = (char *) Z_STRVAL_PP(each_operation);
+#else
+                        bin_name_p = (char *) Z_STRVAL_P(*each_operation);
+#endif
                     } else if (!strcmp(options_key, "val")) {
                         if (IS_STRING == Z_TYPE_PP(each_operation)) {
+#if PHP_VERSION_ID < 70000
                             str = (char *) Z_STRVAL_PP(each_operation);
+#else
+                            str = (char *) Z_STRVAL_P(*each_operation);
+#endif
                             each_operation_back = each_operation;
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
@@ -388,7 +407,14 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
             if (op == AS_OPERATOR_INCR) {
                 if (str) {
                     l_offset = (long) offset;
-                    if  (!(is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0))) {
+                    if  (!(
+#if PHP_VERSION_ID < 70000
+                                is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0)
+#else
+                                is_numeric_string(Z_STRVAL_P(*each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0)
+#endif
+                                
+                                )) {
                         status = AEROSPIKE_ERR_PARAM;
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
                         DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
@@ -482,9 +508,15 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
     }
 
 
-    foreach_hashtable(bins_array_p, pointer, bin_names) {
+    AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
         if (IS_STRING == Z_TYPE_PP(bin_names)) {
-            if (!(as_record_set_nil(&rec, Z_STRVAL_PP(bin_names)))) {
+            if (!(
+#if PHP_VERSION_ID < 70000
+                        as_record_set_nil(&rec, Z_STRVAL_PP(bin_names))
+#else
+                        as_record_set_nil(&rec, Z_STRVAL_P(*bin_names))
+#endif
+                        )) {
                 status = AEROSPIKE_ERR_CLIENT;
                 goto exit;
             }
