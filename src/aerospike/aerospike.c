@@ -641,6 +641,7 @@ PHP_METHOD(Aerospike, close)
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
             !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -693,6 +694,7 @@ PHP_METHOD(Aerospike, reconnect)
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
             !(aerospike_obj_p->as_ref_p->as_p)) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -752,6 +754,8 @@ PHP_METHOD(Aerospike, get)
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -838,6 +842,7 @@ PHP_METHOD(Aerospike, put)
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -900,6 +905,7 @@ PHP_METHOD(Aerospike, getNodes)
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
@@ -948,6 +954,7 @@ PHP_METHOD(Aerospike, info)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1006,6 +1013,7 @@ PHP_METHOD(Aerospike, infoMany)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
@@ -1065,6 +1073,7 @@ PHP_METHOD(Aerospike, existsMany)
     zval*                   metadata_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    as_error_init(&error);
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -1131,6 +1140,7 @@ PHP_METHOD(Aerospike, getMany)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1193,6 +1203,7 @@ PHP_METHOD(Aerospike, operate)
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1276,6 +1287,7 @@ PHP_METHOD(Aerospike, append)
     long                   append_str_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1352,6 +1364,7 @@ PHP_METHOD(Aerospike, remove)
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1412,6 +1425,7 @@ PHP_METHOD(Aerospike, exists)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1456,6 +1470,7 @@ PHP_METHOD(Aerospike, getMetadata)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1517,6 +1532,7 @@ PHP_METHOD(Aerospike, prepend)
     long                   prepend_str_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1597,6 +1613,7 @@ PHP_METHOD(Aerospike, increment)
     int                    bin_name_len;
     long                   offset = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    as_error_init(&error);
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -1685,6 +1702,7 @@ PHP_METHOD(Aerospike, touch)
     long                   time_to_live;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1761,6 +1779,7 @@ PHP_METHOD(Aerospike, initKey)
     zend_bool              is_digest = false;
 
 
+    as_error_init(&error);
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz|b", &ns_p, &ns_p_length,
                 &set_p, &set_p_length, &pk_p, &is_digest)) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::initKey() expects parameter 1,3 to be a non-empty strings");
@@ -1798,6 +1817,7 @@ PHP_METHOD(Aerospike, getKeyDigest)
     zval                    *pk_p = NULL;
     char                    *digest_p = NULL;
 
+    as_error_init(&error);
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz", &ns_p, &ns_p_length,
                 &set_p, &set_p_length, &pk_p)) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Aerospike::getKeyDigest() expects parameter 1-2 to be a non-empty strings and parameter 3 to be non-empty string/integer");
@@ -2184,6 +2204,7 @@ PHP_METHOD(Aerospike, query)
     Aerospike_object*           aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     userland_callback           user_func = {0};
 
+    as_error_init(&error);
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
     if (!aerospike_obj_p) {
@@ -2266,6 +2287,7 @@ PHP_METHOD(Aerospike, aggregate)
     HashTable*              bins_ht_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     /*
      * TODO:
      * Add support for optional filter bins by simply adding it as second last
@@ -2379,6 +2401,7 @@ PHP_METHOD(Aerospike, scan)
     HashTable*              bins_ht_p = NULL;
     userland_callback       user_func = {0};
 
+    as_error_init(&error);
     /*
      * initialized to 'no error' (status AEROSPIKE_OK, empty message)
      */
@@ -2457,6 +2480,7 @@ PHP_METHOD(Aerospike, scanApply)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -2557,6 +2581,7 @@ PHP_METHOD(Aerospike, scanInfo)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -2633,6 +2658,7 @@ PHP_METHOD(Aerospike, register)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -2703,6 +2729,7 @@ PHP_METHOD(Aerospike, deregister)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT; 
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -2777,6 +2804,7 @@ PHP_METHOD(Aerospike, apply)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -2893,6 +2921,7 @@ PHP_METHOD(Aerospike, listRegistered)
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -2955,6 +2984,7 @@ PHP_METHOD(Aerospike, getRegistered)
     zval*                  udf_code_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    as_error_init(&error);
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -3040,6 +3070,7 @@ PHP_METHOD(Aerospike, createIndex)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3116,6 +3147,7 @@ PHP_METHOD(Aerospike, addIndex)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3185,6 +3217,7 @@ PHP_METHOD(Aerospike, dropIndex)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3265,6 +3298,7 @@ PHP_METHOD(Aerospike, createUser)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3330,6 +3364,7 @@ PHP_METHOD(Aerospike, dropUser)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3396,6 +3431,7 @@ PHP_METHOD(Aerospike, changePassword)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3463,6 +3499,7 @@ PHP_METHOD(Aerospike, setPassword)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3529,6 +3566,7 @@ PHP_METHOD(Aerospike, grantRoles)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3595,6 +3633,7 @@ PHP_METHOD(Aerospike, revokeRoles)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3661,6 +3700,7 @@ PHP_METHOD(Aerospike, queryUser)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3727,6 +3767,7 @@ PHP_METHOD(Aerospike, queryUsers)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+    as_error_init(&error);
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -3789,6 +3830,7 @@ PHP_METHOD(Aerospike, createRole)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
@@ -3863,6 +3905,7 @@ PHP_METHOD(Aerospike, dropRole)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -3929,6 +3972,7 @@ PHP_METHOD(Aerospike, grantPrivileges)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -4007,6 +4051,7 @@ PHP_METHOD(Aerospike, revokePrivileges)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -4084,6 +4129,7 @@ PHP_METHOD(Aerospike, queryRole)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -4161,6 +4207,7 @@ PHP_METHOD(Aerospike, queryRoles)
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -4225,6 +4272,7 @@ PHP_METHOD(Aerospike, setLogLevel)
     long                   log_level;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -4269,6 +4317,7 @@ PHP_METHOD(Aerospike, setLogHandler)
     uint32_t               ret_val = -1;
     is_callback_registered = 0;
 
+    as_error_init(&error);
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
