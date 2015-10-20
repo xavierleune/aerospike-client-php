@@ -2874,8 +2874,10 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
 #else
         if (*tmp == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
                     ip_port, strlen(ip_port), (void**)&tmp)) {
+            zval* z_temp;
+            ZVAL_STRING(z_temp, ip_port);
             if (*tmp != zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
-                        ip_port, strlen(ip_port), NULL)) {
+                        ip_port, strlen(ip_port), z_temp)) {
 #endif
                 status = AEROSPIKE_ERR_CLIENT;
                 goto exit;
@@ -3442,7 +3444,11 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
              * Optionally NOT NULL in case of get().
              * Always NULL in case of scan().
              */
-            AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp, exit);
+#if PHP_VERSION_ID < 70000
+            AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(&options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
+#else
+            *key_policy_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
+#endif
         } else {
             /*
              * Options not given, Then copy
