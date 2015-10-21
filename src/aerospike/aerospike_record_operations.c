@@ -581,11 +581,18 @@ aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
     }
 
     if (PHP_TYPE_ISNOTARR(metadata_p)) {
+#if PHP_VERSION_ID < 70000
         zval*         metadata_arr_p = NULL;
 
         MAKE_STD_ZVAL(metadata_arr_p);
         array_init(metadata_arr_p);
         ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1);
+#else
+        zval          metadata_arr_p;
+        
+        array_init(&metadata_arr_p);
+        ZVAL_ZVAL(metadata_p, &metadata_arr_p, 1, 1);
+#endif
     }
 
     if (AEROSPIKE_OK != (status =

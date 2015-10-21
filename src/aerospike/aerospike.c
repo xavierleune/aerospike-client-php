@@ -2062,7 +2062,11 @@ PHP_METHOD(Aerospike, predicateBetween)
     int                    bin_name_len = 0;
     long                   min_p;
     long                   max_p;
-    zval                   *minmax_arr;
+#if PHP_VERSION_ID < 70000
+    zval                   *minmax_arr = NULL;
+#else
+    zval                    minmax_arr;
+#endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll",
                 &bin_name_p, &bin_name_len, &min_p, &max_p)) {
@@ -2079,11 +2083,18 @@ PHP_METHOD(Aerospike, predicateBetween)
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
 
+#if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(minmax_arr);
     array_init_size(minmax_arr, 2);
     add_next_index_long(minmax_arr, min_p);
     add_next_index_long(minmax_arr, max_p);
     add_assoc_zval(return_value, VAL, minmax_arr);
+#else
+    array_init_size(&minmax_arr, 2);
+    add_next_index_long(&minmax_arr, min_p);
+    add_next_index_long(&minmax_arr, max_p);
+    add_assoc_zval(return_value, VAL, &minmax_arr);
+#endif
 }
 /* }}} */
 
@@ -2151,7 +2162,11 @@ PHP_METHOD(Aerospike, predicateRange)
     long                   index_type;
     zval                   *min_p = NULL;
     zval                   *max_p = NULL;
+#if PHP_VERSION_ID < 70000
     zval                   *minmax_arr = NULL;
+#else
+    zval                   minmax_arr;
+#endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slzz",
                 &bin_name_p, &bin_name_len, &index_type, &min_p, &max_p)) {
@@ -2179,14 +2194,22 @@ PHP_METHOD(Aerospike, predicateRange)
     add_assoc_long(return_value, INDEX_TYPE, index_type);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "RANGE", sizeof("RANGE") - 1, 1);
 
+#if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(minmax_arr);
     array_init_size(minmax_arr, 2);
+#else
+    array_init_size(&minmax_arr, 2);
+#endif
     /*
      * Range min value
      */
     switch(Z_TYPE_P(min_p)) {
         case IS_LONG:
+#if PHP_VERSION_ID < 70000
             add_next_index_long(minmax_arr, Z_LVAL_P(min_p));
+#else
+            add_next_index_long(&minmax_arr, Z_LVAL_P(min_p));
+#endif
             break;
         case IS_STRING:
             if (Z_STRLEN_P(min_p) == 0) {
@@ -2194,13 +2217,17 @@ PHP_METHOD(Aerospike, predicateRange)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
+#if PHP_VERSION_ID < 70000
             AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(min_p), 1);
+#else
+            AEROSPIKE_ADD_NEXT_STRING(&minmax_arr, Z_STRVAL_P(min_p), 1);
+#endif
             break;
         default:
 #if PHP_VERSION_ID < 70000
-            zval_ptr_dtor(&minmax_arr);
-#else
             zval_ptr_dtor(minmax_arr);
+#else
+            zval_ptr_dtor(&minmax_arr);
 #endif
             zval_dtor(return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
@@ -2211,7 +2238,11 @@ PHP_METHOD(Aerospike, predicateRange)
      */
     switch(Z_TYPE_P(max_p)) {
         case IS_LONG:
+#if PHP_VERSION_ID < 70000
             add_next_index_long(minmax_arr, Z_LVAL_P(max_p));
+#else
+            add_next_index_long(&minmax_arr, Z_LVAL_P(max_p));
+#endif
             break;
         case IS_STRING:
             if (Z_STRLEN_P(min_p) == 0) {
@@ -2219,19 +2250,27 @@ PHP_METHOD(Aerospike, predicateRange)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
+#if PHP_VERSION_ID < 70000
             AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(max_p), 1);
+#else
+            AEROSPIKE_ADD_NEXT_STRING(&minmax_arr, Z_STRVAL_P(max_p), 1);
+#endif
             break;
         default:
 #if PHP_VERSION_ID < 70000
-            zval_ptr_dtor(&minmax_arr);
-#else
             zval_ptr_dtor(minmax_arr);
+#else
+            zval_ptr_dtor(&minmax_arr);
 #endif
             zval_dtor(return_value);
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
             RETURN_NULL();
     }
+#if PHP_VERSION_ID < 70000
     add_assoc_zval(return_value, VAL, minmax_arr);
+#else
+    add_assoc_zval(return_value, VAL, &minmax_arr);
+#endif
 }
 /* }}} */
 

@@ -318,6 +318,7 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
         if ((language != -1) && (udf_files.entries[i].type != language)) {
                 continue;
         }
+#if PHP_VERSION_ID < 70000
         zval* module_p = NULL;
         MAKE_STD_ZVAL(module_p);
         array_init(module_p);
@@ -326,6 +327,15 @@ aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
         add_assoc_long(module_p, UDF_MODULE_TYPE,
                 (udf_files.entries[i].type));
         add_next_index_zval(array_of_modules_p, module_p);
+#else
+        zval module_p;
+        array_init(&module_p);
+        AEROSPIKE_ADD_ASSOC_STRINGL(&module_p, UDF_MODULE_NAME, udf_files.entries[i].name,
+                strlen(udf_files.entries[i].name), 1);
+        add_assoc_long(&module_p, UDF_MODULE_TYPE,
+                (udf_files.entries[i].type));
+        add_next_index_zval(array_of_modules_p, &module_p);
+#endif
     }
 
 exit:
