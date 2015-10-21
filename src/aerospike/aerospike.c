@@ -1531,7 +1531,11 @@ exit:
 PHP_METHOD(Aerospike, getHeader)
 {
     zval *object = getThis();
+#if PHP_VERSION_ID < 70000
     Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+#else
+    Aerospike_object *intern = (Aerospike_object *) Z_OBJ_P(object TSRMLS_CC);
+#endif
 
     /*** TO BE IMPLEMENTED ***/
 
