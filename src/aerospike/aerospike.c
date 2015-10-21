@@ -108,7 +108,12 @@ PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
-static void aerospike_check_close_and_destroy(void *hashtable_element) {
+#if PHP_VERSION_ID < 70000
+static void aerospike_check_close_and_destroy(void *hashtable_element)
+#else
+static void aerospike_check_close_and_destroy(zval *hashtable_element)
+#endif
+{
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In destructor function");
 #if PHP_VERSION_ID < 70000
