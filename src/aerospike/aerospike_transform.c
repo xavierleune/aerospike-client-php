@@ -1689,9 +1689,9 @@ static void AS_DEFAULT_PUT_ASSOC_DOUBLE(void* key, void* value, void* array,
 {
     if (!(as_record_set_double((as_record *)array, (const char*)key,
                     (double) Z_DVAL_PP((zval**)value)))) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set record to an double");
+        DEBUG_PHP_EXT_DEBUG("Unable to set record to a double");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                "Unable to set record to int");
+                "Unable to set record to a double");
         goto exit;
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
