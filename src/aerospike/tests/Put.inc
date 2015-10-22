@@ -2735,5 +2735,55 @@ function testMixedTypesWithDefaultSerializer()
             return $this->db->errorno();
         }
     }
+    
+    /**
+     * @test
+     * put() with no data
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (bug_CLIENT_69)
+     *
+     * @test_plans{1.1}
+     */
+    function bug_CLIENT_69()
+    {
+        $key = $this->db->initKey("test", "demo", "no_data");
+        $status = $this->db->put($key,  array());
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return $status;
+    }
+    
+    /**
+     * @test
+     * put() with bin name only
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (edge_001)
+     *
+     * @test_plans{1.1}
+     */
+    function edge_001()
+    {
+        $key = $this->db->initKey("test", "demo", "bin_name");
+        $status = $this->db->put($key,  array("binA"));
+        if ($status !== Aerospike::OK) {
+            return $this->db->errorno();
+        }
+        return $status;
+    }
 }
 ?>

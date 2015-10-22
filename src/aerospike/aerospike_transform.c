@@ -2937,6 +2937,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_record                   record;
     int16_t                     init_record = 0;
     uint16_t                    gen_value = 0;
+    int                         num_of_bins = 0;
     bool                        server_support_double = false;
 
     if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
@@ -2945,7 +2946,15 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_PP(record_pp)));
+    num_of_bins = zend_hash_num_elements(Z_ARRVAL_PP(record_pp));
+    if (num_of_bins < 1) {
+        error_p->code = AEROSPIKE_ERR_PARAM;
+        DEBUG_PHP_EXT_DEBUG("Record must be given at least one bin => val pair");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Record must be given at least one bin => val pair");
+        goto exit;
+    }
+
+    as_record_inita(&record, num_of_bins);
     init_record = 1;
 
     set_policy(&as_object_p->config, NULL, &write_policy, NULL, NULL, NULL, NULL, NULL,
