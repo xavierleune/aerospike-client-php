@@ -577,6 +577,10 @@ extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p,
         as_error *error_p TSRMLS_DC);
 
+extern as_status
+get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p,
+        as_error *error_p TSRMLS_DC);
+
 /*
  *******************************************************************************************************
  * Extern declarations of helper functions.

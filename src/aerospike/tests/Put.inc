@@ -2755,9 +2755,6 @@ function testMixedTypesWithDefaultSerializer()
     {
         $key = $this->db->initKey("test", "demo", "no_data");
         $status = $this->db->put($key,  array());
-        var_dump($status);
-        echo "*****************\n";
-        var_dump($this->db->error(), $this->db->errorno());
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }
@@ -2783,9 +2780,6 @@ function testMixedTypesWithDefaultSerializer()
     {
         $key = $this->db->initKey("test", "demo", "bin_name");
         $status = $this->db->put($key,  array("binA"));
-        var_dump($status);
-        echo "*****************\n";
-        var_dump($this->db->error(), $this->db->errorno());
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }

@@ -132,13 +132,47 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
         if (gen_value_pp) {
             *generation_value_p = Z_LVAL_PP(gen_value_pp);
         }
-    } 
-
+    }
 exit:
     return;
 }
 
+/*
+ *******************************************************************************************************
+ * Function for setting the relevant aerospike policies by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param options_p             The optional parameters.
+ * @param generation_value_p    The generation value to be set into put record.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *******************************************************************************************************
+ */
+extern as_status
+get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p TSRMLS_DC)
+{
+    zval**                  ttl_value_pp = NULL;
 
+    if (options_p) {
+        if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
+            //error_p->code = AEROSPIKE_ERR_CLIENT;
+            goto exit;
+        }
+        if (Z_TYPE_PP(ttl_value_pp) != IS_LONG) {
+            DEBUG_PHP_EXT_DEBUG("OPT_TTL should be of type integer");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "OPT_TTL should be of type integer");
+            goto exit;
+        }
+
+        if (ttl_value_pp) {
+            *ttl_value_p = Z_LVAL_PP(ttl_value_pp);
+        }
+    } 
+
+exit:
+    return error_p->code;
+}
 
 /*
  *******************************************************************************************************
@@ -570,6 +604,8 @@ set_policy_ex(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_REPLICA");
                         goto exit;
                     }
+                    break;
+                case OPT_TTL:
                     break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
