@@ -5,6 +5,9 @@ Large Ordered List (llist) is optimized for searching and updating sorted
 lists. It can access data at any point in the collection, while still being
 capable of growing the collection to virtually any size.
 
+For an example of LList usage see
+[examples/ldt/map_elements.php](https://github.com/aerospike/aerospike-client-php/blob/master/examples/ldt/map_elements.php)
+
 ```php
 
 \Aerospike\LDT\LList extends \Aerospike\LDT
@@ -15,9 +18,10 @@ capable of growing the collection to virtually any size.
     public int update ( int|string|array $value )
     public int updateMany ( array $values )
     public int exists ( int|string $value, boolean &$res )
-    public int find ( int|string $value, array &$elements )
-    public int findFirst ( int $count, array &$elements )
-    public int findLast ( int $count, array &$elements )
+    public int existsMany ( array $values )
+    public int find ( int|string $value, array &$elements [, string $module=null [, string $function=null [, array $args=array()]]] )
+    public int findFirst ( int $count, array &$elements [, string $module=null [, string $function=null [, array $args=array()]]] )
+    public int findLast ( int $count, array &$elements [, string $module=null [, string $function=null [, array $args=array()]]] )
     public int findRange ( int|string|null $min, int|string|null $max, array &$elements )
     public int scan ( array &$elements [, string $module=null [, string $function=null [, array $args=array()]]] )
     public int remove ( int|string $value )
@@ -31,10 +35,10 @@ capable of growing the collection to virtually any size.
     public int errorno ( void )
     public int size ( int &$num_elements )
     public int config ( array &$config )
+    public void setPageSize ( int $size )
     public int destroy ( void )
 }
 ```
 
 ### [Aerospike Class](aerospike.md)
 ### [Aerospike LDT Abstract Class](aerospike_ldt.md)
-

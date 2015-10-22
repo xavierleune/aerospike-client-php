@@ -1,44 +1,69 @@
 
 # Security Methods
 
+### [Aerospike::createRole](aerospike_createrole.md)
+```
+public int Aerospike::createRole ( string $role, array $privileges [, array $options ] )
+```
+
+### [Aerospike::grantPrivileges](aerospike_grantprivileges.md)
+```
+public int Aerospike::grantPrivileges ( string $role, array $privileges [, array $options ] )
+```
+
+### [Aerospike::revokePrivileges](aerospike_revokeprivileges.md)
+```
+public int Aerospike::revokePrivileges ( string $role, array $privileges [, array $options ] )
+```
+
+### [Aerospike::queryRole](aerospike_queryrole.md)
+```
+public int Aerospike::queryRole ( string $role, array &$privileges [, array $options ] )
+```
+
+### [Aerospike::queryRoles](aerospike_queryroles.md)
+```
+public int Aerospike::queryRoles ( array &$roles [, array $options ] )
+```
+
+### [Aerospike::dropRole](aerospike_droprole.md)
+```
+public int Aerospike::dropRole ( string $role [, array $options ] )
+```
+
 ### [Aerospike::createUser](aerospike_createuser.md)
 ```
 public int Aerospike::createUser ( string $user, string $password, array $roles [, array $options ] )
 ```
 
-### [Aerospike::dropUser](aerospike_dropuser.md)
-```
-public int Aerospike::dropUser ( string $user [, array $options ] )
-```
-
 ### [Aerospike::changePassword](aerospike_changepassword.md)
 ```
-public int changePassword ( string $user, string $password [, array $options ] )
+public int Aerospike::changePassword ( string $user, string $password [, array $options ] )
 ```
 
 ### [Aerospike::grantRoles](aerospike_grantroles.md)
 ```
-public int grantRoles ( string $user, array $roles [, array $options ] )
+public int Aerospike::grantRoles ( string $user, array $roles [, array $options ] )
 ```
 
 ### [Aerospike::revokeRoles](aerospike_revokeroles.md)
 ```
-public int revokeRoles ( string $user, array $roles [, array $options ] )
-```
-
-### [Aerospike::replaceRoles](aerospike_replaceroles.md)
-```
-public int replaceRoles ( string $user, array $roles [, array $options ] )
+public int Aerospike::revokeRoles ( string $user, array $roles [, array $options ] )
 ```
 
 ### [Aerospike::queryUser](aerospike_queryuser.md)
 ```
-public int queryUser ( string $user, array &$roles [, array $options ] )
+public int Aerospike::queryUser ( string $user, array &$roles [, array $options ] )
 ```
 
 ### [Aerospike::queryUsers](aerospike_queryusers.md)
 ```
-public int queryUsers ( array &$roles [, array $options ] )
+public int Aerospike::queryUsers ( array &$roles [, array $options ] )
+```
+
+### [Aerospike::dropUser](aerospike_dropuser.md)
+```
+public int Aerospike::dropUser ( string $user [, array $options ] )
 ```
 
 ## Example
@@ -92,4 +117,3 @@ array(2) {
     }
 }
 ```
-

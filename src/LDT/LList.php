@@ -81,7 +81,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function addMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'add_all', array($this->bin, $values));
+        $status = $this->db->apply($this->key, 'llist', 'add', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -114,7 +114,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function updateMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'update_all', array($this->bin, $values));
+        $status = $this->db->apply($this->key, 'llist', 'update', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -141,97 +141,141 @@ class LList extends LDT
     }
 
     /**
+     * Finds whether any elements match a list of values.
+     * The elements checked must be consistently the same type
+     * (string, integer, array).
+     *
+     * @param array $values
+     * @param array $res an array of element => boolean key-value pairs
+     * @return int status code of the operation
+     */
+    public function existsMany(array $values) {
+        $status = $this->db->apply($this->key, 'llist', 'exists', array($this->bin, $values), $res);
+        $this->processStatusCode($status);
+        return $this->errorno;
+    }
+
+    /**
      * Finds the elements matching the given value in the LList.
      * Atomic elements (integer, string) will be directly compared. In complex
      * types (array) the value of a key named 'key' is used for comparison.
      *
+     * An optional UDF filter function can be applied to the elements found.
+     * The filter function returns nil to filter out the element, otherwise it
+     * may transform the element before returning it.
+     *
      * @param int|string $value
      * @param array $elements matched
+     * @param string|null $module the name of the UDF module containing the optional filter function
+     * @param string|null $function name of the UDF filter function to apply
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
-    public function find($value, &$elements) {
+    public function find($value, &$elements, $module=null, $function=null, array $args=array()) {
         if (!is_string($value) && !is_int($value) && !is_array($value)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
-    }
-
-    /**
-     * @deprecated use findFirst instead
-     */
-    public function find_first($count, &$elements) {
-        return $this->findFirst($count, $elements);
     }
 
     /**
      * Finds the first N elements in the LList.
      *
+     * An optional UDF filter function can be applied to the elements found.
+     * The filter function returns nil to filter out the element, otherwise it
+     * may transform the element before returning it.
+     *
      * @param int $count
      * @param array $elements matched
+     * @param string|null $module the name of the UDF module containing the optional filter function
+     * @param string|null $function name of the UDF filter function to apply
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
-    public function findFirst($count, &$elements) {
+    public function findFirst($count, &$elements, $module=null, $function=null, array $args=array()) {
         if (!is_int($count)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
 
     /**
-     * @deprecated use findLast instead
-     */
-    public function find_last($count, &$elements) {
-        return $this->findLast($count, $elements);
-    }
-
-    /**
      * Finds the lasst N elements in the LList.
+     *
+     * An optional UDF filter function can be applied to the elements found.
+     * The filter function returns nil to filter out the element, otherwise it
+     * may transform the element before returning it.
      *
      * @param int $count
      * @param array $elements matched
+     * @param string|null $module the name of the UDF module containing the optional filter function
+     * @param string|null $function name of the UDF filter function to apply
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
-    public function findLast($count, &$elements) {
+    public function findLast($count, &$elements, $module=null, $function=null, array $args=array()) {
         if (!is_int($count)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
 
     /**
      * Finds the elements whose key is between min and max.
-     *
      * A null $min gets all elements less than or equal to $max.
      * A null $max gets all elements greater than or equal to $min.
+     *
+     * An optional UDF filter function can be applied to the elements found.
+     * The filter function returns nil to filter out the element, otherwise it
+     * may transform the element before returning it.
      *
      * @param int|string|null $min
      * @param int|string|null $max
      * @param array $elements matched
+     * @param string|null $module the name of the UDF module containing the optional filter function
+     * @param string|null $function name of the UDF filter function to apply
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
-    public function findRange($min, $max, &$elements) {
-        if (!is_int($min) && !is_null($min) && !is_int($max) && !is_null($max)) {
+    public function findRange($min, $max, &$elements, $module=null, $function=null, array $args=array()) {
+        if (is_array($min) || is_array($max) || is_object($min) || is_object($max)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
         $elements = array();
-        $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max), $elements);
+        if (!is_null($module) && !is_null($function)) {
+            $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max, $module, $function, $args), $elements);
+        } else {
+            $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max), $elements);
+        }
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -246,13 +290,13 @@ class LList extends LDT
      * @param array $elements returned
      * @param string|null $module the name of the UDF module containing the optional filter function
      * @param string|null $function name of the UDF filter function to apply
-     * @param array $args optional arguments for the filter function
+     * @param array $args optional arguments for the filter function, passed as a map to the filter function
      * @return int status code of the operation
      */
     public function scan(&$elements, $module=null, $function=null, array $args=array()) {
         $elements = array();
         if (!is_null($module) && !is_null($function)) {
-            $status = $this->db->apply($this->key, 'llist', 'filter', array($this->bin, $module, $function, $args), $elements);
+            $status = $this->db->apply($this->key, 'llist', 'filter', array($this->bin, null, $module, $function, $args), $elements);
         } else {
             $status = $this->db->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
         }
@@ -294,8 +338,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function removeRange($min=null, $max=null) {
-        if ((!is_string($min) && !is_int($min) && !is_null($min)) ||
-            (!is_string($max) && !is_int($max) && !is_null($max))) {
+        if (is_array($min) || is_array($max) || is_object($min) || is_object($max)) {
             $this->errorno = self::ERR_INPUT_PARAM;
             $this->error = self::MSG_RANGE_TYPE_INVALID;
             return $this->errorno;
@@ -314,7 +357,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function removeMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'remove_all', array($this->bin, $values));
+        $status = $this->db->apply($this->key, 'llist', 'remove', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }

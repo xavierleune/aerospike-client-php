@@ -190,10 +190,18 @@ abstract class AerospikeTestCommon extends ASTestFramework
 
     protected function ensureUdfModule($module_path, $module_alias) {
         if ($this->has_module($module_alias)) {
+            if (!file_exists(ini_get('aerospike.udf.lua_user_path').'/'.$module_alias)) {
+                $this->copy_module($module_path, $module_alias);
+            }
             return Aerospike::OK;
         } else {
+            $this->copy_module($module_path, $module_alias);
             return $this->db->register($module_path, $module_alias);
         }
+    }
+
+    private function copy_module($module_path, $module_alias) {
+        copy($module_path, ini_get('aerospike.udf.lua_user_path').'/'.$module_alias);
     }
 
     private function has_module($module_alias) {

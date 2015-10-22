@@ -26,7 +26,7 @@ Array:
     set => set name
     key => the primary index key
     digest => a RIPEMD-160 hash of the key, and always present
-  meta => Array
+  metadata => Array
     ttl => time in seconds until the record expires
     generation => reflects the number of times the record has been altered
   bins => Array of bin-name => value pairs
@@ -88,7 +88,7 @@ array(3) {
     ["key"]=>
     NULL
   }
-  ["meta"]=>
+  ["metadata"]=>
   array(2) {
     ["generation"]=>
     int(3)
@@ -142,7 +142,7 @@ array(3) {
     ["key"]=>
     NULL
   }
-  ["meta"]=>
+  ["metadata"]=>
   array(2) {
     ["generation"]=>
     int(3)

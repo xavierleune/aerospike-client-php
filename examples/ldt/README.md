@@ -9,30 +9,24 @@ namespace test {
 ```
 
 ### Large Ordered List Operations
-`llist.php` gives an example of large ordered list (LList) operations.
+`string_elements.php` gives an example of large ordered list (LList) operations
+on an LList with elements of type string.
 
 ```bash
-php llist.php --host=192.168.119.3 -a -c
+php string_elements.php --host=192.168.119.3 -a -c
 ```
 
-### Large Set
-`lset.php` gives an example of large set (LSet) operations.
+`integer_elements.php` gives an example of large ordered list (LList) operations
+on an LList with elements of type integer.
 
 ```bash
-php lset.php --host=192.168.119.3 -a -c
+php integer_elements.php --host=192.168.119.3 -a -c
 ```
 
-### Large Map
-`lmap.php` gives an example of large map (LMap) operations.
+`map_elements.php` gives an example of large ordered list (LList) operations
+on an LList with elements of type map.
 
 ```bash
-php lmap.php --host=192.168.119.3 -a -c
-```
-
-### Large Stack
-`lstack.php` gives an example of large stack (LStack) operations.
-
-```bash
-php lstack.php --host=192.168.119.3 -a -c
+php map_elements.php --host=192.168.119.3 -a -c
 ```
 

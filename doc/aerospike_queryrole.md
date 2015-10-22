@@ -39,7 +39,7 @@ if (!$db->isConnected()) {
    exit(1);
 }
 
-$res = $db->grantPrivileges("example_role", array(array("code": Aerospike::READ)));
+$res = $db->grantPrivileges("example_role", array(array("code": Aerospike::PRIV_READ)));
 if ($res == Aerospike::OK) {
     echo "read privileges successfully granted to role";
     $res = $db->queryRole("example_role", $privileges);
@@ -80,4 +80,3 @@ array(2) {
   }
 }
 ```
-

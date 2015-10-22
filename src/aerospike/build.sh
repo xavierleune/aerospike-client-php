@@ -16,8 +16,10 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.22}
+export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.24}
 export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
+export LUA_SYSPATH=${LUA_SYSPATH:-/usr/local/aerospike/lua}
+export LUA_USRPATH=${LUA_USRPATH:-/usr/local/aerospike/usr-lua}
 if [[ ! -d $CLIENTREPO_3X || ! `ls $CLIENTREPO_3X/package/aerospike-client-c-devel-${AEROSPIKE_C_CLIENT}* 2> /dev/null` ]]; then
     rm -rf $CLIENTREPO_3X/package
     echo "Downloading Aerospike C Client SDK $AEROSPIKE_C_CLIENT"
@@ -26,7 +28,7 @@ else
 fi
 scripts/aerospike-client-c.sh
 if [ $? -gt 0 ]; then
-    exit 1
+    exit 2
 fi
 
 LOGLEVEL="PHP_EXT_AS_LOG_LEVEL_OFF"
@@ -138,9 +140,27 @@ fi
 make clean all "CFLAGS=$CFLAGS" "EXTRA_INCLUDES+=-I$CLIENTREPO_3X/include -I$CLIENTREPO_3X/include/ck" "EXTRA_LDFLAGS=$LDFLAGS"
 if [ $? -gt 0 ] ; then
     echo "The build has failed...exiting"
-    exit 2
+    exit 3
 fi
 scripts/test-cleanup.sh
+
+if [ ! -d $LUA_SYSPATH ]; then
+    mkdir -p $LUA_SYSPATH
+    if [ $? -gt 0 ] ; then
+        echo "Failed to create a directory for the system lua files.  Please run:"
+        code "sudo mkdir $LUA_SYSPATH"
+        exit 4
+    fi
+fi
+cp $CLIENTREPO_3X/lua/*.lua $LUA_SYSPATH
+
+if [ ! -d $LUA_USRPATH ]; then
+    mkdir -p $LUA_USRPATH
+    if [ $? -gt 0 ] ; then
+        echo "Failed to create a directory for the user-defined function files.  Please run:"
+        code "sudo mkdir $LUA_USRPATH"
+    fi
+fi
 
 headline()
 {
@@ -163,31 +183,8 @@ config()
     INI_PATH=`echo $2|cut -d '>' -f2`
     echo "$1 file at $INI_PATH with the directive:"
     code "extension=aerospike.so"
-    if [ -f /opt/aerospike/client-php/sys-lua/aerospike.lua ]; then
-        code "aerospike.udf.lua_system_path=/opt/aerospike/client-php/sys-lua"
-        if [ -d /opt/aerospike/client-php/usr-lua ]; then
-            code "aerospike.udf.lua_user_path=/opt/aerospike/client-php/usr-lua"
-            if [ ! -f /opt/aerospike/client-php/usr-lua/test_transform.lua ]; then
-                cp ./tests/lua/*.lua /opt/aerospike/client-php/usr-lua/
-                if [ $? -gt 0 ] ; then
-                    echo "Failed to copy the Lua user files.  Please run:"
-                    code "sudo cp tests/lua/*.lua /opt/aerospike/client-php/usr-lua/"
-                fi
-            fi
-        fi
-    elif [ -f /usr/local/aerospike/client-php/sys-lua/aerospike.lua ]; then
-        code "aerospike.udf.lua_system_path=/usr/local/aerospike/client-php/sys-lua"
-        if [ -d /usr/local/aerospike/client-php/usr-lua ]; then
-            code "aerospike.udf.lua_user_path=/usr/local/aerospike/client-php/usr-lua"
-            if [ ! -f /usr/local/aerospike/client-php/usr-lua/test_transform.lua ]; then
-                cp ./tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/
-                if [ $? -gt 0 ] ; then
-                    echo "Failed to copy the Lua user files.  Please run:"
-                    code "sudo cp tests/lua/*.lua /usr/local/aerospike/client-php/usr-lua/"
-                fi
-            fi
-        fi
-    fi
+    code "aerospike.udf.lua_system_path=$LUA_SYSPATH"
+    code "aerospike.udf.lua_user_path=$LUA_USRPATH"
     echo ""
     echo "If you are using a web server such as Apache or Nginx you will need"
     echo "to copy aerospike.ini to the configuration include directory of the"
@@ -201,7 +198,7 @@ config()
 echo "----------------------------------------------------------------------"
 headline "Installing the Aerospike PHP Extension"
 echo "To install the extension run inside src/aerospike:"
-code "sudo make install"
+code "make install"
 
 HAS_PHP_CONF_D=`php -i 2>&1 | grep "Scan this dir for additional .ini files"`
 if [ $? -eq 0 ] ; then
