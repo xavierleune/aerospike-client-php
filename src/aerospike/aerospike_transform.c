@@ -3367,7 +3367,11 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
         as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC)
 {
+#if PHP_VERSION_ID < 70000
     zval *number_zval = NULL;
+#else
+    zval  number_zval;
+#endif
     as_status       status = AEROSPIKE_OK;
 
     if (!ns_p || !set_p || !return_value) {
@@ -3432,7 +3436,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
          * pk_p == NULL in case of get() or scan().
          */
 
-        zval **key_policy_pp = NULL;
+        zval *key_policy_pp = NULL;
 
         if (!record_key_p) {
             status = AEROSPIKE_ERR_CLIENT;
@@ -3447,7 +3451,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
 #if PHP_VERSION_ID < 70000
             AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(&options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
 #else
-            *key_policy_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
+            key_policy_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_KEY, (void **) &key_policy_pp);
 #endif
         } else {
             /*
@@ -3455,14 +3459,25 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
              * it from as_config.
              */
             if (as_config_p) {
+#if PHP_VERSION_ID < 70000
             MAKE_STD_ZVAL(number_zval);
+#endif
+
+#if PHP_VERSION_ID < 70000
             ZVAL_LONG(number_zval, as_config_p->policies.read.key);
+#else
+            ZVAL_LONG(&number_zval, as_config_p->policies.read.key);
+#endif
+#if PHP_VERSION_ID < 70000
+            key_policy_pp = number_zval;
+#else
             key_policy_pp = &number_zval;
+#endif
             }
         }
 
         if ((!record_key_p->valuep) || (get_flag && ((!key_policy_pp) || (key_policy_pp &&
-                    Z_LVAL_PP(key_policy_pp) == AS_POLICY_KEY_DIGEST)))) {
+                    Z_LVAL_P(key_policy_pp) == AS_POLICY_KEY_DIGEST)))) {
             if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
                 DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
                 status = AEROSPIKE_ERR_CLIENT;
@@ -3493,13 +3508,11 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
     }
 
 exit:
-    if (number_zval) {
 #if PHP_VERSION_ID < 70000
-        zval_ptr_dtor(&number_zval);
-#else 
+    if (number_zval) {
         zval_ptr_dtor(number_zval);
-#endif
     }
+#endif
 
     return status;
 }
@@ -3637,8 +3650,13 @@ aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_rec
         as_key* record_key_p, zval* outer_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
+#if PHP_VERSION_ID < 70000
     zval*               metadata_container_p = NULL;
     zval*               key_container_p = NULL;
+#else
+    zval                metadata_container_p;
+    zval                key_container_p;
+#endif
     zval*               bins_container_p = NULL;
 
     if (!get_record_p || !record_key_p || ! outer_container_p) {
@@ -3647,49 +3665,78 @@ aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_rec
         goto exit; 
     }
 
+#if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(key_container_p);
+#endif
+#if PHP_VERSION_ID < 70000
     array_init(key_container_p);
+#else
+    array_init(&key_container_p);
+#endif
+#if PHP_VERSION_ID < 70000
     status = aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
+#else
+    status = aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, &key_container_p, options_p, get_flag TSRMLS_CC);
+#endif
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
         goto exit;
     }
 
+#if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(metadata_container_p);
+#endif
+#if PHP_VERSION_ID < 70000
     array_init(metadata_container_p);
+#else
+    array_init(&metadata_container_p);
+#endif
+#if PHP_VERSION_ID < 70000
     status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
+#else
+    status = aerospike_get_record_metadata(get_record_p, &metadata_container_p TSRMLS_CC);
+#endif
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
         goto exit;
     }
 
-    if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
+    if (0 != 
+#if PHP_VERSION_ID < 70000
+            add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)
+#else
+            add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, &key_container_p)
+#endif
+            ) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
         status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
-    if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
+    if (0 != 
+#if PHP_VERSION_ID < 70000
+            add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)
+#else
+            add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, &metadata_container_p)
+#endif
+            ) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
         status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 exit:
     if (AEROSPIKE_OK != status) {
-        if (key_container_p) {
 #if PHP_VERSION_ID < 70000
+        if (key_container_p) {
             zval_ptr_dtor(&key_container_p);
-#else
-            zval_ptr_dtor(key_container_p);
-#endif
         }
 
         if (metadata_container_p) {
-#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&metadata_container_p);
-#else
-            zval_ptr_dtor(metadata_container_p);
-#endif
         }
+#else
+        zval_ptr_dtor(&key_container_p);
+        zval_ptr_dtor(&metadata_container_p);
+#endif
     }
 
     return status;
@@ -3716,8 +3763,13 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
         as_key* record_key_p, zval* outer_container_p, zval* options_p, bool nullflag, bool get_flag TSRMLS_DC)
 {
     as_status           status = AEROSPIKE_OK;
+#if PHP_VERSION_ID < 70000
     zval*               metadata_container_p = NULL;
     zval*               key_container_p = NULL;
+#else
+    zval                metadata_container_p;
+    zval                key_container_p;
+#endif
     zval*               bins_container_p = NULL;
 
     if (!get_record_p || !record_key_p || ! outer_container_p) {
@@ -3726,30 +3778,64 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
         goto exit; 
     }
 
+#if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(key_container_p);
+#endif
+#if PHP_VERSION_ID < 70000
     array_init(key_container_p);
-    status = aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
+#else
+    array_init(&key_container_p);
+#endif
+    status = 
+#if PHP_VERSION_ID < 70000
+        aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
+#else
+        aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, &key_container_p, options_p, get_flag TSRMLS_CC);
+#endif
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record");
         goto exit;
     }
 
+#if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(metadata_container_p);
+#endif
+
+#if PHP_VERSION_ID < 70000
     array_init(metadata_container_p);
+#else
+    array_init(&metadata_container_p);
+#endif
+#if PHP_VERSION_ID < 70000
     status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
+#else
+    status = aerospike_get_record_metadata(get_record_p, &metadata_container_p TSRMLS_CC);
+#endif
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
         goto exit;
     }
 
-    if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
+    if (0 != 
+#if PHP_VERSION_ID < 70000
+            add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)
+#else
+            add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, &key_container_p)
+#endif
+            ) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record");
         status = AEROSPIKE_ERR_CLIENT;
         goto exit;
     }
 
     if (!nullflag) {
-        if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
+        if (0 != 
+#if PHP_VERSION_ID < 70000
+                add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)
+#else
+                add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, &metadata_container_p)
+#endif
+                ) {
             DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record");
             status = AEROSPIKE_ERR_CLIENT;
             goto exit;
@@ -3763,21 +3849,18 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
     }
 exit:
     if (AEROSPIKE_OK != status) {
-        if (key_container_p) {
 #if PHP_VERSION_ID < 70000
+        if (key_container_p) {
             zval_ptr_dtor(&key_container_p);
-#else
-            zval_ptr_dtor(key_container_p);
-#endif
         }
 
         if (metadata_container_p) {
-#if PHP_VERSION_ID < 70000
             zval_ptr_dtor(&metadata_container_p);
-#else
-            zval_ptr_dtor(metadata_container_p);
-#endif
         }
+#else
+        zval_ptr_dtor(&key_container_p);
+        zval_ptr_dtor(&metadata_container_p);
+#endif
     }
 
     return status;

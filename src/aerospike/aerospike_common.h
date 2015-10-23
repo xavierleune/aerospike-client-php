@@ -883,6 +883,13 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
 
     /*
      ******************************************************************************************************
+     * Macro to append string at indexed key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_INDEX_STRING(z_value, index_key, str, ifDuplicate) \
+        add_index_string(z_value, index_key, str, ifDuplicate)
+    /*
+     ******************************************************************************************************
      * Macro to unref zval.
      ******************************************************************************************************
      */
@@ -1026,6 +1033,13 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
 #define AEROSPIKE_ADD_INDEX_STRINGL(z_value, index_key, str, str_length, ifDuplicate) \
         add_index_stringl(z_value, index_key, str, str_length)
 
+    /*
+     ******************************************************************************************************
+     * Macro to append string at indexed key.
+     ******************************************************************************************************
+     */
+#define AEROSPIKE_ADD_INDEX_STRING(z_value, index_key, str, ifDuplicate) \
+        add_index_string(z_value, index_key, str)
     /*
      ******************************************************************************************************
      * Macro to append string at next index key.

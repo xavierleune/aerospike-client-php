@@ -615,6 +615,7 @@ do {                                                                           \
 #define AS_ASSOC_MAP_TO_DEFAULT(key, value, array, err)                        \
     AS_STORE_ITERATE(GET, DEFAULT, ASSOC, MAP, key, value, array, err)
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_STORE_ITERATE(method, level, action, datatype, key, value, array,   \
         err)                                                                   \
 do {                                                                           \
@@ -631,6 +632,23 @@ do {                                                                           \
     ADD_##level##_##action##_ZVAL(array, key,                                  \
             foreach_##datatype##_callback_udata.udata_p)                       \
 } while(0);
+#else
+#define AS_STORE_ITERATE(method, level, action, datatype, key, value, array,   \
+        err)                                                                   \
+do {                                                                           \
+    zval store;                                                                \
+    array_init(&store);                                                        \
+    foreach_callback_udata  foreach_##datatype##_callback_udata;               \
+    foreach_##datatype##_callback_udata.udata_p = &store;                      \
+    foreach_##datatype##_callback_udata.error_p = (as_error *) err;            \
+    AS_##datatype##_FOREACH((AS_##datatype##_DATATYPE*) value,                 \
+            (AS_##datatype##_FOREACH_CALLBACK)                                 \
+            AS_##datatype##_##method##_CALLBACK,                               \
+            &foreach_##datatype##_callback_udata);                             \
+    ADD_##level##_##action##_ZVAL(array, key,                                  \
+            foreach_##datatype##_callback_udata.udata_p)                       \
+} while(0);
+#endif
 
 /* 
  *******************************************************************************************************

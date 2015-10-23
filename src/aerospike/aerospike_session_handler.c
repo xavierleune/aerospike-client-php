@@ -268,7 +268,11 @@ PS_READ_FUNC(aerospike)
        goto exit; 
     }
 
+#if PHP_VERSION_ID < 70000
     as_key_init_str(&key_get, session_p->ns_p, session_p->set_p, key);
+#else
+    as_key_init_str(&key_get, session_p->ns_p, session_p->set_p, ZSTR_VAL(key));
+#endif
     init_key = 1;
 
     if (AEROSPIKE_OK != aerospike_key_get(session_p->aerospike_obj_p->as_ref_p->as_p,
@@ -284,8 +288,14 @@ PS_READ_FUNC(aerospike)
          goto exit;
     }
 
+#if PHP_VERSION_ID < 70000
     *val = estrndup(session_data_p, strlen(session_data_p));
     *vallen = strlen(session_data_p);
+#else
+    zend_string*        z_str = zend_string_init(session_data_p, strlen(session_data_p), 0);
+    *val = zend_string_copy(z_str);
+    zend_string_release(z_str);
+#endif
 
 exit:
     if (init_key) {
@@ -324,23 +334,45 @@ PS_WRITE_FUNC(aerospike)
        goto exit; 
     }
 
-    if (key == NULL || !strcmp(key, "")) {
+    if (key == NULL || 
+#if PHP_VERSION_ID < 70000
+            !strcmp(key, "")
+#else
+            !strcmp(ZSTR_VAL(key), "")
+#endif
+            ) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid Session ID");
         DEBUG_PHP_EXT_ERROR("Invalid Session ID");
         goto exit;
     }
 
-    if (val == NULL || !strcmp(val, "")) {
+    if (val == NULL || 
+#if PHP_VERSION_ID < 70000
+            !strcmp(val, "")
+#else
+            !strcmp(ZSTR_VAL(val), "")
+#endif
+            ) {
         DEBUG_PHP_EXT_DEBUG("Empty session data");
         goto exit;
     }
 
+#if PHP_VERSION_ID < 70000
     as_key_init_str(&key_put, session_p->ns_p, session_p->set_p, key);
+#else
+    as_key_init_str(&key_put, session_p->ns_p, session_p->set_p, ZSTR_VAL(key));
+#endif
     init_key = 1;
 
     as_record_inita(&record, 1);
     init_record = 1;
-    if (!as_record_set_str(&record, AEROSPIKE_SESSION_BIN, val)) {
+    if (
+#if PHP_VERSION_ID < 70000
+            !as_record_set_str(&record, AEROSPIKE_SESSION_BIN, val)
+#else
+            !as_record_set_str(&record, AEROSPIKE_SESSION_BIN, ZSTR_VAL(val))
+#endif
+            ) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to set record");
         DEBUG_PHP_EXT_ERROR("Unable to set record");
         goto exit;
@@ -386,7 +418,11 @@ PS_DESTROY_FUNC(aerospike)
        goto exit; 
     }
 
+#if PHP_VERSION_ID < 70000
     as_key_init_str(&key_remove, session_p->ns_p, session_p->set_p, key);
+#else
+    as_key_init_str(&key_remove, session_p->ns_p, session_p->set_p, ZSTR_VAL(key));
+#endif
     init_key = 1;
 
     if (AEROSPIKE_OK !=
