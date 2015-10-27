@@ -186,14 +186,14 @@ do {                                                                           \
 #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)                 \
 do {                                                                           \
     ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                                  \
-    ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,           \
-            val_persist);                                                      \
+    ZVAL_RES(&rsrc_result, zend_register_resource(as_object_p->as_ref_p->as_p, \
+            val_persist));                                                     \
     new_le.ptr = as_object_p->as_ref_p;                                        \
     new_le.type = val_persist;                                                 \
     if (new_flag) {                                                            \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
-        zend_hash_str_add_new(persistent_list, alias, alias_len,               \
-                (zval *) &new_le);                                             \
+        zend_hash_add_new_ptr(persistent_list,                                 \
+                zend_string_init(alias, alias_len, 0), (void *) &new_le);      \
         ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;                     \
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
     } else {                                                                   \
@@ -262,10 +262,12 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 {
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     zend_rsrc_list_entry *le, new_le;
+    zval* rsrc_result = NULL;
 #else
     zend_resource *le, new_le;
+    zval rsrc_result;
+    array_init(&rsrc_result);
 #endif
-    zval* rsrc_result = NULL;
     as_status status = AEROSPIKE_OK;
     int itr_user = 0, itr_stored = 0;
     aerospike_ref *tmp_ref = NULL;
@@ -479,7 +481,7 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 
     foreach_record_callback_udata.error_p = &error;
     if (!as_record_foreach(current_as_rec, (as_rec_foreach_callback) AS_DEFAULT_GET,
-        &foreach_record_callback_udata)) {
+                &foreach_record_callback_udata)) {
         DEBUG_PHP_EXT_WARNING("stream callback failed to transform the as_record to an array zval.");
         zval_ptr_dtor(&record_p);
         pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
@@ -497,29 +499,29 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
     if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
                     &(current_as_rec->key), outer_container_p, NULL, false TSRMLS_CC)))
 #else
-    if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
-                    &(current_as_rec->key), &outer_container_p, NULL, false TSRMLS_CC)))
+        if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(NULL, current_as_rec,
+                        &(current_as_rec->key), &outer_container_p, NULL, false TSRMLS_CC)))
 #endif
-    {
-        DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
-        zval_ptr_dtor(&record_p);
-        zval_ptr_dtor(&outer_container_p);
-        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
-        return true;
-    }
+        {
+            DEBUG_PHP_EXT_DEBUG("Unable to get a record and metadata");
+            zval_ptr_dtor(&record_p);
+            zval_ptr_dtor(&outer_container_p);
+            pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
+            return true;
+        }
 
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, record_p))
 #else
-    if (0 != add_assoc_zval(&outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, &record_p))
+        if (0 != add_assoc_zval(&outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, &record_p))
 #endif
-    {
-        DEBUG_PHP_EXT_DEBUG("Unable to get a record");
-        zval_ptr_dtor(&record_p);
-        zval_ptr_dtor(&outer_container_p);
-        pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
-        return true;
-    }
+        {
+            DEBUG_PHP_EXT_DEBUG("Unable to get a record");
+            zval_ptr_dtor(&record_p);
+            zval_ptr_dtor(&outer_container_p);
+            pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
+            return true;
+        }
 
     /*
      * Call the userland function with the array representing the record.
@@ -717,12 +719,12 @@ parse_save_path(char *save_path, aerospike_session *session_p,
     char        port[INET_PORT];
     int16_t     iter_host = 0;
     char        *copy = NULL;
-    
+
     copy = (char *) emalloc(strlen(save_path) + 1);
     strncpy(copy, save_path, strlen(save_path) + 1);
-    
+
     tok = strtok_r(copy, SAVE_PATH_DELIMITER, &saved);
-    
+
     if (tok == NULL) {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                 "Could not read SAVE_PATH settings");

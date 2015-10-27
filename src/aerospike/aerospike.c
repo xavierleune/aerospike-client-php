@@ -4557,7 +4557,7 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
         }
     }
 #else
-    if (1 == Z_REFCOUNT_P(&(user_serializer_call_info.function_name))) {
+    /*if (1 == Z_REFCOUNT_P(&(user_serializer_call_info.function_name))) {
         zval_ptr_dtor(&user_serializer_call_info.function_name);
         if(Z_ISREF_P(&(user_serializer_call_info.function_name)))
         {
@@ -4574,7 +4574,7 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
         }
     } else {
         DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
-    }
+    }*/
 #endif
 
     DEBUG_PHP_EXT_DEBUG("Inside rshutdown of this build");
