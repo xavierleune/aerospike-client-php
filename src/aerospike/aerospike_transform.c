@@ -3343,7 +3343,11 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
     HashPosition         hashPosition_p = NULL;
     zval*                key_record_p = NULL;
     u_int64_t            index_u64 = 0;
+#if PHP_VERSION_ID < 70000
     zval**               keyData_pp = NULL;
+#else
+    zval*                keyData_pp = NULL;
+#endif
 
 
     if ((!ht_p) || (!as_key_p) || (!as_key_p) || (!set_val_p)) {
@@ -3536,15 +3540,24 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
     uint                sel_cnt = 0;
     const char          *select[bins_count];
     HashPosition        pointer;
+#if PHP_VERSION_ID < 70000
     zval                **bin_names;
+#else
+    zval                *bin_names = NULL;
+#endif
     
     AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
-        switch (Z_TYPE_PP(bin_names)) {
+#if PHP_VERSION_ID < 70000
+        switch (Z_TYPE_PP(bin_names))
+#else
+        switch (Z_TYPE_P(bin_names))
+#endif
+        {
             case IS_STRING:
 #if PHP_VERSION_ID < 70000
                 select[sel_cnt++] = Z_STRVAL_PP(bin_names);
 #else
-                select[sel_cnt++] = Z_STRVAL_P(*bin_names);
+                select[sel_cnt++] = Z_STRVAL_P(bin_names);
 #endif
                 break;
             default:
