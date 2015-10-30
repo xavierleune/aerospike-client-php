@@ -33,6 +33,7 @@
 
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 #define GEN_POLICY_PHP_INI INI_STR("aerospike.key_gen") ? (uint32_t) atoi(INI_STR("aerospike.key_gen")) : 0
+#define USE_BATCH_DIRECT_PHP_INI INI_STR("aerospike.use_batch_direct") ? (bool) atoi(INI_STR("aerospike.use_batch_direct")) : 0
 
 /*
  *******************************************************************************************************
@@ -936,6 +937,11 @@ set_config_policies(as_config *as_config_p,
         *serializer_opt = ini_value;
     }
 
+    ini_value = USE_BATCH_DIRECT_PHP_INI;
+    if (ini_value && as_config_p) {
+        as_config_p->policies.batch.use_batch_direct = ini_value;
+    }
+
     if (options_p != NULL) {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -1060,6 +1066,14 @@ set_config_policies(as_config *as_config_p,
                     }
                     *serializer_opt = (int8_t)Z_LVAL_PP(options_value);
                     break;
+                 case USE_BATCH_DIRECT:
+                    if ((Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set USE_BATCH_DIRECT : Incorrect Value type for USE_BATCH_DIRECT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set USE_BATCH_DIRECT:Incorrect Value type for USE_BATCH_DIRECT");
+                        goto exit;
+                    }
+                    as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_PP(options_value);
             }
         }
     }

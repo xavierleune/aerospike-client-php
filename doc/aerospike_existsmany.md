@@ -15,6 +15,11 @@ of the *keys*.
 If the key exists its metadata will be returned in the *metadata* variable,
 and non-existent records will have a NULL.
 
+*Note* that the protocol existsMany() will use (batch-direct or batch-index) is
+configurable through the config parameter Aerospike::USE\_BATCH\_DIRECT or
+`php.ini` config parameter `aerospike.use_batch_direct`. By default batch-index
+is used with servers that support it (version >= 3.6.0).
+
 ## Parameters
 
 **keys** an array of initialized keys, each an array with keys ['ns','set','key'] or ['ns','set','digest'].
