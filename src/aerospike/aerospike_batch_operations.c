@@ -318,7 +318,7 @@ cleanup:
         }
     }
 exit:
-
+    as_batch_read_destroy(&records);
     return error_p->code;
 }
 
@@ -697,9 +697,9 @@ cleanup:
             zval_ptr_dtor(&get_record_p);
         }
     }
-    as_batch_read_destroy(&records);
 
 exit:
+    as_batch_read_destroy(&records);
     return error_p->code;
 }
 
