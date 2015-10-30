@@ -15,6 +15,11 @@ consisting of *key*, *metadata* and *bins* (see: [get()](aerospike_get.md)).
 Non-existent records will have NULL for their *metadata* and *bins* fields.
 The bins returned can be filtered by passing an array of bin names.
 
+*Note* that the protocol getMany() will use (batch-direct or batch-index) is
+configurable through the config parameter Aerospike::USE\_BATCH\_DIRECT or
+`php.ini` config parameter `aerospike.use_batch_direct`. By default batch-index
+is used with servers that support it (version >= 3.6.0).
+
 ## Parameters
 
 **keys** an array of initialized keys, each key an array with keys ['ns','set','key'] or ['ns','set','digest'].

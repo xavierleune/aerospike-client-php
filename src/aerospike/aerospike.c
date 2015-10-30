@@ -94,6 +94,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.use_batch_direct", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, use_batch_direct, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -1108,7 +1109,8 @@ PHP_METHOD(Aerospike, existsMany)
     zval_dtor(metadata_p);
     array_init(metadata_p);
 
-    if (aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
+    if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
+        aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
         status = aerospike_batch_operations_exists_many_new(aerospike_obj_p->as_ref_p->as_p,
                 &error, keys_p, metadata_p,
                 options_p TSRMLS_CC);
@@ -1169,7 +1171,8 @@ PHP_METHOD(Aerospike, getMany)
     zval_dtor(records_p);
     array_init(records_p);
 
-    if (aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
+    if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
+        aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
         if (AEROSPIKE_OK != (status = aerospike_batch_operations_get_many_new(aerospike_obj_p->as_ref_p->as_p,
                         &error, keys_p, records_p, filter_bins_p, options_p TSRMLS_CC))){
             DEBUG_PHP_EXT_ERROR("getMany() function returned an error");

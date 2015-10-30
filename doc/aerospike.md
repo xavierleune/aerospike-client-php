@@ -72,6 +72,7 @@ final class Aerospike
     const OPT_POLICY_CONSISTENCY; // set to one of Aerospike::POLICY_CONSISTENCY_*
     const OPT_POLICY_COMMIT_LEVEL;// set to one of Aerospike::POLICY_COMMIT_LEVEL_*
     const OPT_TTL;                // record ttl, value in seconds
+    const USE_BATCH_DIRECT;       // batch-direct or batch-index protocol. default: 0
 
     // Aerospike Status Codes:
     //

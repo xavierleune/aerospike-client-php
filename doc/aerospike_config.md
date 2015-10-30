@@ -16,6 +16,7 @@ The following configuration options in php.ini
 | aerospike.shm.max_nodes | 16 |
 | aerospike.shm.max_namespaces | 8 |
 | aerospike.shm.takeover_threshold_sec | 30 |
+| aerospike.use_batch_direct | 0 |
 
 Here is a description of the configuration directives:
 
@@ -51,6 +52,9 @@ Here is a description of the configuration directives:
 
 **aerospike.shm.takeover_threshold_sec integer**
     Take over shared memory cluster tending if the cluster hasn't been tended by this threshold in seconds.
+
+**aerospike.use_batch_direct**
+    Use the batch-direct (1) or batch-index (0) protocol for batch read operations.
 
 ## See Also
 
