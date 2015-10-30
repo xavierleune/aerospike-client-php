@@ -1109,7 +1109,8 @@ PHP_METHOD(Aerospike, existsMany)
     zval_dtor(metadata_p);
     array_init(metadata_p);
 
-    if (aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
+    if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
+        aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
         status = aerospike_batch_operations_exists_many_new(aerospike_obj_p->as_ref_p->as_p,
                 &error, keys_p, metadata_p,
                 options_p TSRMLS_CC);
@@ -1170,7 +1171,8 @@ PHP_METHOD(Aerospike, getMany)
     zval_dtor(records_p);
     array_init(records_p);
 
-    if (aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
+    if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
+        aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
         if (AEROSPIKE_OK != (status = aerospike_batch_operations_get_many_new(aerospike_obj_p->as_ref_p->as_p,
                         &error, keys_p, records_p, filter_bins_p, options_p TSRMLS_CC))){
             DEBUG_PHP_EXT_ERROR("getMany() function returned an error");
