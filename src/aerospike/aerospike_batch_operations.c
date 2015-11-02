@@ -315,7 +315,6 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
         }
 cleanup:
         if( record_metadata_p) {
-            printf("Destroying.\n");
             zval_ptr_dtor(&record_metadata_p);
         }
     }
