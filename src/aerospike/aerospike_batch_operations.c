@@ -264,8 +264,6 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 
         MAKE_STD_ZVAL(record_metadata_p);
         array_init(record_metadata_p);
-        ALLOC_INIT_ZVAL(get_record_p);
-        array_init(get_record_p);
         /*        if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
                   record_batch->record.gen)) {
                   DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
@@ -281,7 +279,6 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
                   "Unable to get ttl of a record");
                   goto cleanup;
                   }*/
-        foreach_record_callback_udata.udata_p = get_record_p;
         foreach_record_callback_udata.error_p = metadata_callback.error_p;
         foreach_record_callback_udata.obj = metadata_callback.obj;
 
@@ -290,7 +287,7 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
         } else if (record_batch->result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
             null_flag = true;
         } else {
-            return false;
+            goto cleanup;
         }
 
         populate_result_for_get_exists_many_new ((as_key *) (&(record_batch->key)),
@@ -309,16 +306,20 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
             goto cleanup;
         }
 
+        if (record_batch->bin_names) {
+            efree(record_batch->bin_names);
+        }
+
         if(metadata_callback.error_p->code == AEROSPIKE_OK){
             continue;
         }
 cleanup:
-        if( record_metadata_p && (AEROSPIKE_OK != metadata_callback.error_p->code)) {
+        if( record_metadata_p) {
             zval_ptr_dtor(&record_metadata_p);
         }
     }
-exit:
     as_batch_read_destroy(&records);
+exit:
     return error_p->code;
 }
 
@@ -636,14 +637,14 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 
         MAKE_STD_ZVAL(record_p_local);
         array_init(record_p_local);
-        ALLOC_INIT_ZVAL(get_record_p);
-        array_init(get_record_p);
-
-        foreach_record_callback_udata.udata_p = get_record_p;
         foreach_record_callback_udata.error_p = batch_get_callback_udata.error_p;
         foreach_record_callback_udata.obj = batch_get_callback_udata.obj;
 
         if (record_batch->result == AEROSPIKE_OK) {
+            ALLOC_INIT_ZVAL(get_record_p);
+            array_init(get_record_p);
+
+            foreach_record_callback_udata.udata_p = get_record_p;
             null_flag = false;
         } else {
             null_flag = true;
@@ -686,6 +687,9 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
                 goto cleanup;
             }
         }
+        if (record_batch->bin_names) {
+            efree(record_batch->bin_names);
+        }
 
         if (batch_get_callback_udata.error_p->code == AEROSPIKE_OK) {
             continue;
@@ -695,6 +699,9 @@ cleanup:
         foreach_record_callback_udata.udata_p = NULL;
         if (get_record_p) {
             zval_ptr_dtor(&get_record_p);
+        }
+        if (record_p_local) {
+            zval_ptr_dtor(&record_p_local);
         }
     }
 
