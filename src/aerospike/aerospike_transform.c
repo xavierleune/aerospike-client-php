@@ -3466,12 +3466,14 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
         goto exit;
     }
 
-    MAKE_STD_ZVAL(metadata_container_p);
-    array_init(metadata_container_p);
-    status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
-    if (status != AEROSPIKE_OK) {
-        DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
-        goto exit;
+    if (!nullflag) {
+        MAKE_STD_ZVAL(metadata_container_p);
+        array_init(metadata_container_p);
+        status = aerospike_get_record_metadata(get_record_p, metadata_container_p TSRMLS_CC);
+        if (status != AEROSPIKE_OK) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record");
+            goto exit;
+        }
     }
 
     if (0 != add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
