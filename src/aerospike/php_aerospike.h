@@ -27,7 +27,7 @@
 
 #ifndef PHP_AEROSPIKE_H
 #define PHP_AEROSPIKE_H 1
-#define PHP_AEROSPIKE_VERSION "3.4.3"
+#define PHP_AEROSPIKE_VERSION "3.4.4"
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 #ifdef ZTS
 #include "TSRM.h"
@@ -53,6 +53,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int key_policy;
     int key_gen;
     zend_bool shm_use;
+    zend_bool use_batch_direct;
     int shm_max_nodes;
     int shm_max_namespaces;
     int shm_takeover_threshold_sec;
