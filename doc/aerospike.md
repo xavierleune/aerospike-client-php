@@ -221,7 +221,6 @@ final class Aerospike
     public int prepend ( array $key, string $bin, string $value [, array $options ] )
     public int operate ( array $key, array $operations [, array &$returned ] )
     public int getMetadata ( array $key, array &$metadata [, array $options ] )
-    public function getHeader()
 
     // unsupported type handler methods
     public static setSerializer ( callback $serialize_cb )
@@ -273,7 +272,8 @@ final class Aerospike
     public int revokeRoles ( string $user, array $roles [, array $options ] )
     public int queryUser ( string $user, array &$roles [, array $options ] )
     public int queryUsers ( array &$roles [, array $options ] )
-    public int dropUser ( string $user [, array $options ] )}
+    public int dropUser ( string $user [, array $options ] )
+}
 ```
 
 ### [Runtime Configuration](aerospike_config.md)
