@@ -220,6 +220,8 @@ final class Aerospike
     public int append ( array $key, string $bin, string $value [, array $options ] )
     public int prepend ( array $key, string $bin, string $value [, array $options ] )
     public int operate ( array $key, array $operations [, array &$returned ] )
+    public int getMetadata ( array $key, array &$metadata [, array $options ] )
+    public function getHeader()
 
     // unsupported type handler methods
     public static setSerializer ( callback $serialize_cb )
@@ -250,10 +252,11 @@ final class Aerospike
     // admin methods
     public int addIndex ( string $ns, string $set, string $bin, string $name, int $index_type, int $data_type [, array $options ] )
     public int dropIndex ( string $ns, string $name [, array $options ] )
+    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name ) // deprecated
 
     // info methods
-    public int info ( string $request, string &$response [, array $host [, array options ] ] )
-    public array infoMany ( string $request [, array $config [, array options ]] )
+    public int info ( string $request, string &$response [, array $host [, array $options ] ] )
+    public array infoMany ( string $request [, array $config [, array $options ]] )
     public array getNodes ( void )
 
     // security methods
@@ -270,8 +273,7 @@ final class Aerospike
     public int revokeRoles ( string $user, array $roles [, array $options ] )
     public int queryUser ( string $user, array &$roles [, array $options ] )
     public int queryUsers ( array &$roles [, array $options ] )
-    public int dropUser ( string $user [, array $options ] )
-}
+    public int dropUser ( string $user [, array $options ] )}
 ```
 
 ### [Runtime Configuration](aerospike_config.md)
