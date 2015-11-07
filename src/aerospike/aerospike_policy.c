@@ -805,6 +805,32 @@ set_policy_scan(as_config *as_config_p,
             serializer_policy_p, as_scan_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the queryApply policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param write_policy_p        The as_policy_write to be passed in case of
+ *                              batch operations.
+ * @param options_p             The user's optional policy options to be used if
+ *                              set, else default.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_query_apply(as_config *as_config_p,
+        as_policy_write *write_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(as_config_p, NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+}
+
+
 /*
  *******************************************************************************************************
  * Wrapper function for setting the batch policy by using the user's
