@@ -57,6 +57,8 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int shm_max_nodes;
     int shm_max_namespaces;
     int shm_takeover_threshold_sec;
+    int max_threads;
+    int thread_pool_size;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     int persistent_ref_count;

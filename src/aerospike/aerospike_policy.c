@@ -34,6 +34,8 @@
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 #define GEN_POLICY_PHP_INI INI_STR("aerospike.key_gen") ? (uint32_t) atoi(INI_STR("aerospike.key_gen")) : 0
 #define USE_BATCH_DIRECT_PHP_INI INI_STR("aerospike.use_batch_direct") ? (bool) atoi(INI_STR("aerospike.use_batch_direct")) : 0
+#define MAX_THREADS_PHP_INI INI_STR("aerospike.max_threads") ? (uint32_t) atoi(INI_STR("aerospike.max_threads")) : 0
+#define THREAD_POOL_SIZE_PHP_INI INI_STR("aerospike.thread_pool_size") ? (uint32_t) atoi(INI_STR("aerospike.thread_pool_size")) : 0
 
 /*
  *******************************************************************************************************
@@ -942,6 +944,16 @@ set_config_policies(as_config *as_config_p,
         as_config_p->policies.batch.use_batch_direct = ini_value;
     }
 
+    ini_value = MAX_THREADS_PHP_INI;
+    if (ini_value && as_config_p) {
+        as_config_p->max_threads = ini_value;
+    }
+    
+    ini_value = THREAD_POOL_SIZE_PHP_INI;
+    if (ini_value && as_config_p) {
+        as_config_p->thread_pool_size = ini_value;
+    }
+    
     if (options_p != NULL) {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -1074,6 +1086,30 @@ set_config_policies(as_config *as_config_p,
                         goto exit;
                     }
                     as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_PP(options_value);
+                    break;
+                case MAX_THREADS:
+                    if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value type for MAX_THREADS");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set policy: Invalid Value type for MAX_THREADS");
+                        goto exit;
+                    }
+                    as_config_p->max_threads = (uint32_t) Z_LVAL_PP(options_value);
+                    break;
+                case THREAD_POOL_SIZE:
+                    if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value type for THREAD_POOL_SIZE");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set policy: Invalid Value type for THREAD_POOL_SIZE");
+                        goto exit;
+                    }
+                    as_config_p->thread_pool_size = (uint32_t) Z_LVAL_PP(options_value);
+                    break;
+                default:
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                            "Unable to set policy: Invalid Policy Constant Key");
+                    goto exit;
             }
         }
     }
