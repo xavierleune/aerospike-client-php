@@ -2,6 +2,7 @@
 #define __AEROSPIKE_POLICY_H__
 
 #include "aerospike/as_scan.h"
+#include "aerospike/as_job.h"
 #include "aerospike/as_admin.h"
 /*
  *******************************************************************************************************
@@ -100,6 +101,7 @@ AerospikeConstants aerospike_constants[] = {
     { AS_SCAN_STATUS_INPROGRESS 		    ,   "SCAN_STATUS_INPROGRESS" 		    },
     { AS_SCAN_STATUS_ABORTED 		        ,   "SCAN_STATUS_ABORTED" 		        },
     { AS_SCAN_STATUS_COMPLETED 		        ,   "SCAN_STATUS_COMPLETED" 		    },
+    { AS_JOB_STATUS_COMPLETED 		        ,   "JOB_STATUS_COMPLETED"   		    },
     { AS_POLICY_KEY_DIGEST 		            ,   "POLICY_KEY_DIGEST" 		        },
     { AS_POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
     { AS_POLICY_GEN_IGNORE                  ,   "POLICY_GEN_IGNORE"                 },
