@@ -80,6 +80,7 @@
 #define SHM_MAX_NODES_PHP_INI INI_INT("aerospike.shm.max_nodes") ? INI_INT("aerospike.shm.max_nodes") : 16
 #define SHM_MAX_NAMESPACES_PHP_INI INI_INT("aerospike.shm.max_namespaces") ? INI_INT("aerospike.shm.max_namespaces") : 8
 #define SHM_TAKEOVER_THRESHOLD_SEC_PHP_INI INI_INT("aerospike.shm.takeover_threshold_sec") ? INI_INT("aerospike.shm.takeover_threshold_sec") : 30
+#define SHM_KEY_PHP_INI INI_INT("aerospike.shm.key") ? INI_INT("aerospike.shm.key") : 0xA5000000
 
 /*
  *******************************************************************************************************
@@ -135,6 +136,8 @@
 #define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN         8
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
+#define PHP_AS_KEY_DEFINE_FOR_SHM                     "shm"
+#define PHP_AS_KEY_DEFINE_FOR_SHM_LEN                 3
 
 #define INET_ADDRSTRLEN 16
 #define INET6_ADDRSTRLEN 46
@@ -595,7 +598,9 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         bool persist_flag,
                                         as_config* conf,
                                         HashTable *persistent_list,
-                                        int persist TSRMLS_DC);
+                                        int val_persist TSRMLS_DC,
+                                        HashTable *shm_key_list,
+                                        int *shm_key_counter);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);

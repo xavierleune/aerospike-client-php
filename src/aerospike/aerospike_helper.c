@@ -222,6 +222,96 @@ do {                                                                          \
 } while(0)
 
 #define MAX_PORT_SIZE 6
+bool
+is_unique_shm_key(int shm_key,HashTable *shm_key_list){
+
+    HashPosition     hashPosition_p = NULL;
+    zval*           keyData_pp = NULL;
+
+   for (zend_hash_internal_pointer_reset_ex(shm_key_list, &hashPosition_p); 
+                      zend_hash_get_current_data_ex(shm_key_list,
+                                          (void **) &keyData_pp, &hashPosition_p) == SUCCESS;
+                               zend_hash_move_forward_ex(shm_key_list, &hashPosition_p))
+   {
+        if(keyData_pp!=NULL && Z_TYPE_P(keyData_pp) == IS_LONG) {
+            if(Z_LVAL_P(keyData_pp) == shm_key){
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/*
+ *******************************************************************************************************
+ * Function to set shm key from shm_key list or gnerate a new unique shm key
+ *
+ * @param conf                      The as_config to be used for creating/retrieving aerospike object.
+ * @param shm_key_list              The hashtable pointing to the zend global shm key list.
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+extern as_status
+set_shm_key_from_alias_hash_or_generate(
+                                        as_config* conf,
+                                        HashTable *shm_key_list,
+                                        int* shm_key_counter)
+{
+    zend_rsrc_list_entry *le, new_le;
+    zval* rsrc_result = NULL;
+    as_status status = AEROSPIKE_OK;
+    int itr_user = 0, itr_stored = 0;
+    aerospike_ref *tmp_ref = NULL;
+    char *alias_to_search = NULL;
+    char *alias_to_hash = NULL;
+    char port[MAX_PORT_SIZE];
+    int alias_length = 0;
+    bool found_shm_key = false;
+    int shm_key = -1;
+    for (itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+        alias_length += strlen(conf->hosts[itr_user].addr) + strlen(conf->user) + MAX_PORT_SIZE + 3;
+    }
+    alias_to_search =(char*) emalloc(alias_length);
+    memset( alias_to_search, '\0', alias_length);
+    for (itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+        sprintf(port, "%d", conf->hosts[itr_user].port);
+        strcat(alias_to_search, conf->hosts[itr_user].addr);
+        strcat(alias_to_search, ":");
+        strcat(alias_to_search, port);
+        strcat(alias_to_search, ":");
+        strcat(alias_to_search, conf->user);
+        strcat(alias_to_search, ";");
+    }
+    pthread_rwlock_rdlock(&AEROSPIKE_G(aerospike_mutex));
+    if (zend_hash_find(shm_key_list, alias_to_search,
+           strlen(alias_to_search), (void **) &le) == SUCCESS) {
+        if((le->ptr)!=NULL){
+            conf->shm_key= (int*)(le->ptr);
+        }
+    }
+    else{
+        if(!(is_unique_shm_key(conf->shm_key,shm_key_list))){
+            while(true) {
+                //generating unique shm_key
+                if(is_unique_shm_key(*shm_key_counter,shm_key_list)) {
+                    conf->shm_key=*shm_key_counter;
+                    break;
+                } else{
+                    *shm_key_counter++;
+                }
+            }
+        }
+        //storing shm_key against the host:port:user; in the config
+        zend_hash_add(shm_key_list, alias_to_search,
+            strlen(alias_to_search), (void *) &conf->shm_key, sizeof(zend_rsrc_list_entry), NULL);
+    }
+    if (alias_to_search) {
+        efree(alias_to_search);
+        alias_to_search = NULL;
+    }
+    return (status);
+}
 
 /*
  *******************************************************************************************************
@@ -236,6 +326,7 @@ do {                                                                          \
  *                                  aerospike object.
  * @param conf                      The as_config to be used for creating/retrieving aerospike object.
  * @param persistent_list           The hashtable pointing to the zend global persistent list.
+ * @param shm_key_list              The hashtable pointing to the zend global shm key list.
  * @param val_persist               The resource handler for persistent list.
  *
  * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
@@ -246,7 +337,9 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         bool persist_flag,
                                         as_config* conf,
                                         HashTable *persistent_list,
-                                        int val_persist TSRMLS_DC)
+                                        int val_persist TSRMLS_DC,
+                                        HashTable *shm_key_list,
+                                        int *shm_key_counter)
 {
     zend_rsrc_list_entry *le, new_le;
     zval* rsrc_result = NULL;
@@ -343,6 +436,13 @@ use_existing:
     DEBUG_PHP_EXT_DEBUG("\nCount is: %d",as_object_p->as_ref_p->ref_as_p);
     goto exit;
 exit:
+    set_shm_key_from_alias_hash_or_generate(
+            //as_object_p,
+                                        //persist_flag,
+                                        conf,//persistent_list,
+                                        //val_persist TSRMLS_DC,
+                                        shm_key_list, shm_key_counter);
+
     if (alias_to_search) {
         efree(alias_to_search);
         alias_to_search = NULL;
@@ -525,6 +625,7 @@ aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
         config_p->shm_max_nodes = (uint32_t) SHM_MAX_NODES_PHP_INI;
         config_p->shm_max_namespaces = (uint32_t) SHM_MAX_NAMESPACES_PHP_INI;
         config_p->shm_takeover_threshold_sec = (uint32_t) SHM_TAKEOVER_THRESHOLD_SEC_PHP_INI;
+        config_p->shm_key = (uint32_t) SHM_KEY_PHP_INI;
     } else {
         config_p->use_shm = false;
     }
