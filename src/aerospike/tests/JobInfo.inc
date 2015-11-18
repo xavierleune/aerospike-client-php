@@ -51,7 +51,7 @@ class JobInfo extends AerospikeTestCommon
     {
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $this->db->jobInfo($this->job_id, $job_info);
+            $status = $this->db->jobInfo($this->job_id, Aerospike::JOB_QUERY, $job_info);
         } while($job_info['status'] != Aerospike::JOB_STATUS_COMPLETED);
 
         $this->db->get($this->keys[1], $get_record1);
@@ -81,7 +81,7 @@ class JobInfo extends AerospikeTestCommon
     {
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $this->db->jobInfo($this->job_id, $job_info, array(Aerospike::OPT_READ_TIMEOUT=>5822));
+            $status = $this->db->jobInfo($this->job_id, Aerospike::JOB_QUERY, $job_info, array(Aerospike::OPT_READ_TIMEOUT=>5822));
         } while($job_info['status'] != Aerospike::JOB_STATUS_COMPLETED);
         
         $this->db->get($this->keys[1], $get_record1);
@@ -112,7 +112,7 @@ class JobInfo extends AerospikeTestCommon
         do {
             time_nanosleep(0, 5000000); // pause 5ms
             $job_info = "info";
-            $status = $this->db->jobInfo($this->job_id, $job_info);
+            $status = $this->db->jobInfo($this->job_id, Aerospike::JOB_QUERY, $job_info);
         } while($job_info['status'] != Aerospike::JOB_STATUS_COMPLETED);
         
         $this->db->get($this->keys[1], $get_record1);
@@ -140,7 +140,7 @@ class JobInfo extends AerospikeTestCommon
      */
     function error_001()
     {
-        $status = $this->db->jobInfo($this->job_id, $job_info);
+        $status = $this->db->jobInfo($this->job_id, Aerospike::JOB_QUERY, $job_info);
         if ($status != Aerospike::OK) {
             return Aerospike::ERR_PARAM;
         }

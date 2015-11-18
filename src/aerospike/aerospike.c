@@ -364,7 +364,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, scanApply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, queryApply, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, jobInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, jobInfo, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
 
     /*
      ********************************************************************
@@ -2762,13 +2762,15 @@ exit:
 }
 /* }}} */
 
-/* {{{ proto int Aerospike::jobInfo ( int job_id, array &info [, array $options
+/* {{{ proto int Aerospike::jobInfo ( int job_id, string module, array &info [, array $options
  * ])
  * Gets the status of a background job triggered by queryApply() */
 PHP_METHOD(Aerospike, jobInfo)
 {
     as_status           status = AEROSPIKE_OK;
     as_error            error;
+    char*               module_p = NULL;
+    int                 module_len = -1;
     long                job_id = -1;
     zval*               job_info_p = NULL;
     zval*               options_p = NULL;
@@ -2790,12 +2792,20 @@ PHP_METHOD(Aerospike, jobInfo)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz|z",
-                &job_id, &job_info_p, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz|z",
+                &job_id, &module_p, &module_len, &job_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "Unable to parse parameters for jobInfo()");
         DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for jobInfo()");
+        goto exit;
+    }
+
+    if ((!strcmp(module_p, "query")) && (!strcmp(module_p,"scan"))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Wrong JOB specified");
+        DEBUG_PHP_EXT_ERROR("Wrong JOB specified");
         goto exit;
     }
 
@@ -2818,6 +2828,7 @@ PHP_METHOD(Aerospike, jobInfo)
     if (AEROSPIKE_OK != 
             (status = aerospike_job_get_info(aerospike_obj_p->as_ref_p->as_p,
                                              &error, job_id, job_info_p,
+                                             module_p,
                                              options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("jobInfo returned as error");
         goto exit;

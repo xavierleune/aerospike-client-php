@@ -50,7 +50,7 @@ class QueryApply extends AerospikeTestCommon
 
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $this->db->jobInfo($job_id, $job_info);
+            $status = $this->db->jobInfo($job_id, Aerospike::JOB_QUERY, $job_info);
             if ($status != Aerospike::OK) {
                 return Aerospike::ERR_CLIENT;
             }
@@ -90,7 +90,7 @@ class QueryApply extends AerospikeTestCommon
         
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $this->db->jobInfo($job_id, $job_info);
+            $status = $this->db->jobInfo($job_id, Aerospike::JOB_QUERY, $job_info);
             if ($status != Aerospike::OK) {
                 return Aerospike::ERR_CLIENT;
             }
@@ -130,7 +130,7 @@ class QueryApply extends AerospikeTestCommon
         
         do {
             time_nanosleep(0, 5000000); // pause 5ms
-            $status = $this->db->jobInfo($job_id, $job_info);
+            $status = $this->db->jobInfo($job_id, Aerospike::JOB_QUERY,$job_info);
             if ($status != Aerospike::OK) {
                 return Aerospike::ERR_CLIENT;
             }

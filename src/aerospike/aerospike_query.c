@@ -294,11 +294,10 @@ exit:
  */
 extern as_status
 aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
-        uint64_t job_id, zval* job_info_p, zval* options_p TSRMLS_DC)
+        uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC)
 {
     as_job_info             job_info;
     as_policy_info          info_policy;
-    as_query                query;
 
     set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
             NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
@@ -307,10 +306,8 @@ aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    as_query_where_inita(&query, 1);
-
-    if (AEROSPIKE_OK != (aerospike_query_info(as_object_p, error_p, 
-                    &info_policy, &query, job_id, &job_info))) {
+    if (AEROSPIKE_OK != (aerospike_job_info(as_object_p, error_p, 
+                    &info_policy, module_p, job_id, false, &job_info))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }

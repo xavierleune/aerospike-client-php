@@ -26,7 +26,7 @@ enum Aerospike_constants {
     OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
     OPT_POLICY_COMMIT_LEVEL,  /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
     OPT_TTL,                  /* set to time-to-live of the record in seconds */
-    USE_BATCH_DIRECT          /* use new batch index protocol if server supports it*/
+    USE_BATCH_DIRECT,         /* use new batch index protocol if server supports it*/
 };
 
 /*
@@ -113,12 +113,12 @@ AerospikeConstants aerospike_constants[] = {
     { AS_POLICY_CONSISTENCY_LEVEL_ALL       ,   "POLICY_CONSISTENCY_ALL"            },
     { AS_POLICY_COMMIT_LEVEL_ALL            ,   "POLICY_COMMIT_LEVEL_ALL"           },
     { AS_POLICY_COMMIT_LEVEL_MASTER         ,   "POLICY_COMMIT_LEVEL_MASTER"        },
-	{ AS_PRIVILEGE_USER_ADMIN               ,   "PRIV_USER_ADMIN" },
-    { AS_PRIVILEGE_SYS_ADMIN                ,   "PRIV_SYS_ADMIN" },
-    { AS_PRIVILEGE_READ                     ,   "PRIV_READ"},
-    { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"},
-    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"},
-    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"}
+	{ AS_PRIVILEGE_USER_ADMIN               ,   "PRIV_USER_ADMIN"                   },
+    { AS_PRIVILEGE_SYS_ADMIN                ,   "PRIV_SYS_ADMIN"                    },
+    { AS_PRIVILEGE_READ                     ,   "PRIV_READ"                         },
+    { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"                   },
+    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"               },
+    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"                   }
 };
 /*
  *******************************************************************************************************

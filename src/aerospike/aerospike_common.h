@@ -659,6 +659,9 @@ extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
         uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC);
 
+extern as_status
+aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
+        uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC);
 /*
  ******************************************************************************************************
  * Extern declarations of query functions.

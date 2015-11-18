@@ -93,6 +93,9 @@ as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
                         aerospike_constants[i].constantno TSRMLS_CC);
     }
 
+    zend_declare_class_constant_stringl (Aerospike_ce, "JOB_QUERY", strlen("JOB_QUERY"), "query", strlen("query") TSRMLS_CC);
+    zend_declare_class_constant_stringl (Aerospike_ce, "JOB_SCAN", strlen("JOB_SCAN"), "scan", strlen("scan") TSRMLS_CC);
+
 exit:
     return status;
 }
