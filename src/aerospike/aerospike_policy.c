@@ -13,7 +13,7 @@
 #define CONNECT_TIMEOUT_PHP_INI INI_STR("aerospike.connect_timeout") ? (uint32_t) atoi(INI_STR("aerospike.connect_timeout")) : 0
 #define READ_TIMEOUT_PHP_INI INI_STR("aerospike.read_timeout") ? (uint32_t) atoi(INI_STR("aerospike.read_timeout")) : 0
 #define WRITE_TIMEOUT_PHP_INI INI_STR("aerospike.write_timeout") ? (uint32_t) atoi(INI_STR("aerospike.write_timeout")) : 0
-#define SHM_KEY_PHP_INI INI_STR("aerospike.shm.key") ? (uint32_t) atoi(INI_STR("aerospike.shm.key") : 0xA5000000
+//#define SHM_KEY_PHP_INI INI_STR("aerospike.shm.key") ? (uint32_t) atoi(INI_STR("aerospike.shm.key") : 0xA5000000
 #define LOG_PATH_PHP_INI INI_STR("aerospike.log_path") ? INI_STR("aerospike.log_path") : NULL
 #define LOG_LEVEL_PHP_INI INI_STR("aerospike.log_level") ? INI_STR("aerospike.log_level") : NULL
 #define SERIALIZER_PHP_INI(serializer_ini)                     \

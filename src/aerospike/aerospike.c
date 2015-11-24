@@ -91,7 +91,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.key", "0xA5000000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_key, zend_aerospike_globals, aerospike_globals)
+   //STD_PHP_INI_ENTRY("aerospike.shm.key", "0xA5000000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_key, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
@@ -133,13 +133,15 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
     }
 }
 
-/*
- *
- *Custom dtor for hashtable
- *
- */
-static void hashtable_dtor(void *p) {
-        return;
+/* Shared memory key persistent list destruction */
+static void shm_key_hashtable_dtor(void *hashtable_element)
+{
+    TSRMLS_FETCH();
+    DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
+    struct set_get_data *shm_key_ptr = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+    if (shm_key_ptr) {
+        pefree(shm_key_ptr, 1);
+    }
 }
 
 /* Triggered at the beginning of a thread */
@@ -155,9 +157,10 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
     } else {
         AEROSPIKE_G(persistent_ref_count)++;
     }
+
     if ((!(AEROSPIKE_G(shm_key_list_g))) || (AEROSPIKE_G(shm_key_ref_count) < 1)) {
         AEROSPIKE_G(shm_key_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
-        zend_hash_init(AEROSPIKE_G(shm_key_list_g), 1000, NULL, &hashtable_dtor, 1);
+        zend_hash_init(AEROSPIKE_G(shm_key_list_g), 1000, NULL, &shm_key_hashtable_dtor, 1);
         AEROSPIKE_G(shm_key_ref_count) = 1;
     } else {
         AEROSPIKE_G(shm_key_ref_count)++;
@@ -538,7 +541,8 @@ PHP_METHOD(Aerospike, __construct)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     persistent_list =      (AEROSPIKE_G(persistent_list_g));
     shm_key_list =         (AEROSPIKE_G(shm_key_list_g));
-    int *shm_key_counter =  &(AEROSPIKE_G(shm_key_counter));
+
+
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -601,12 +605,13 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
     if (AEROSPIKE_OK != (status = aerospike_helper_object_from_alias_hash(aerospike_obj_p,
-                    persistent_connection, &config, persistent_list, persist TSRMLS_CC, shm_key_list, shm_key_counter))){
+                    persistent_connection, &config, persistent_list, persist TSRMLS_CC, shm_key_list))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find object from alias");
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
         goto exit;
     }
+    aerospike_obj_p->as_ref_p->as_p->config.shm_key = config.shm_key;
     /* Connect to the cluster */
     if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
             (AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error)))) {

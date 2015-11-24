@@ -327,6 +327,16 @@ typedef struct _transform_zval_config_into {
     char                                    pass[AS_PASSWORD_HASH_SIZE];
 } transform_zval_config_into;
 
+/*
+ *******************************************************************************************************
+ * Structure to store shared memory key.
+ *******************************************************************************************************
+ */
+typedef struct _shared_memory_key
+{
+    int key;
+} shared_memory_key;
+
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, const char * file, uint32_t line, const char * fmt, ...);
 extern int parseLogParameters(as_log *as_log_p);
@@ -599,8 +609,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         as_config* conf,
                                         HashTable *persistent_list,
                                         int val_persist TSRMLS_DC,
-                                        HashTable *shm_key_list,
-                                        int *shm_key_counter);
+                                        HashTable *shm_key_list);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);

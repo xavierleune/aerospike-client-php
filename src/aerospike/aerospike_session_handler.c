@@ -146,7 +146,6 @@ PS_OPEN_FUNC(aerospike)
     aerospike_session*      session_p = NULL;
     HashTable*              persistent_list = AEROSPIKE_G(persistent_list_g);
     HashTable*              shm_key_list = AEROSPIKE_G(shm_key_list_g);
-    int*                    shm_key_counter = &AEROSPIKE_G(shm_key_counter);
     int                     iter_host = 0;
 
     DEBUG_PHP_EXT_INFO("In PS_OPEN_FUNC");
@@ -174,7 +173,7 @@ PS_OPEN_FUNC(aerospike)
             aerospike_helper_object_from_alias_hash(session_p->aerospike_obj_p,
                                                               true, &config,
                                                               persistent_list,
-                                                              persist TSRMLS_CC,shm_key_list,shm_key_counter)) {
+                                                              persist TSRMLS_CC,shm_key_list)) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to find object from alias");
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
         goto exit;
