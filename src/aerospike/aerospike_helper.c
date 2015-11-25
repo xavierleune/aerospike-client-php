@@ -297,6 +297,7 @@ set_shm_key_from_alias_hash_or_generate(
     if (zend_hash_num_elements(shm_key_list) == 0) {
         shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
         shm_key_ptr->key = conf->shm_key;
+        ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
         new_shm_entry.ptr = shm_key_ptr;
         new_shm_entry.type = 1;
         zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
@@ -324,6 +325,7 @@ set_shm_key_from_alias_hash_or_generate(
 
         shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
         shm_key_ptr->key = conf->shm_key;
+        ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
         new_shm_entry.ptr = shm_key_ptr;
         new_shm_entry.type = 1;
         zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
