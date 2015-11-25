@@ -2533,13 +2533,14 @@ aerospike_transform_config_callback(HashTable* ht_p,
     } else if (PHP_IS_ARRAY(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_SHM,
             PHP_AS_KEY_DEFINE_FOR_SHM_LEN, key_p, key_len_u32 - 1)) {
+        if ((((transform_zval_config_into *) data_p)->transform_result).as_config_p->use_shm) {
             if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
-                status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp),
-                         data_p);
+                status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p);
             } else {
                 DEBUG_PHP_EXT_DEBUG("Skipping shm as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
             }
+        }
     } else {
         status = AEROSPIKE_ERR_PARAM;
         goto exit;

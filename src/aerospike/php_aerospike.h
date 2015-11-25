@@ -90,6 +90,7 @@ PHP_MINFO_FUNCTION(aerospike);
 
 PHP_METHOD(Aerospike, __construct);
 PHP_METHOD(Aerospike, __destruct);
+PHP_METHOD(Aerospike, shm_key);
 
 /*
  * Cluster Management APIs:

@@ -321,6 +321,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, __destruct, NULL, ZEND_ACC_DTOR | ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, shm_key, NULL, ZEND_ACC_PUBLIC)
 
     /*
      ********************************************************************
@@ -628,6 +629,27 @@ exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto array Aerospike::shm_key( void )
+   Function which returns the shm_key which is set and returns NULL if shm is not configured */
+PHP_METHOD(Aerospike, shm_key)
+{
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
+            !(aerospike_obj_p->as_ref_p->as_p)) {
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        RETURN_NULL();
+    }
+    if (aerospike_obj_p->as_ref_p->as_p->config.use_shm &&
+            aerospike_obj_p->as_ref_p->as_p->config.shm_key) {
+        uint64_t a = (unsigned int) aerospike_obj_p->as_ref_p->as_p->config.shm_key;
+        RETURN_LONG(a);
+    } else {
+        RETURN_NULL();
+    }
 }
 /* }}} */
 
