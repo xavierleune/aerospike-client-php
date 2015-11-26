@@ -25,12 +25,7 @@ enum Aerospike_constants {
     OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
     OPT_POLICY_COMMIT_LEVEL,  /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
     OPT_TTL,                  /* set to time-to-live of the record in seconds */
-    USE_BATCH_DIRECT,         /* use new batch index protocol if server supports it*/
-    SHM_KEY,                  /* Shared memory identifier*/
-    SHM_MAX_NODES,            /* Shared memory maximum number of server nodes allowed */
-    SHM_MAX_NAMESPACES,       /* Shared memory maximum number of namespaces allowed. */
-    SHM_TAKEOVER_THRESHOLD_SEC  /*Take over shared memory cluster tending if the cluster hasn't been tended by this
-                                   threshold in seconds */
+    USE_BATCH_DIRECT          /* use new batch index protocol if server supports it*/
 };
 
 /*
@@ -121,11 +116,7 @@ AerospikeConstants aerospike_constants[] = {
     { AS_PRIVILEGE_READ                     ,   "PRIV_READ"},
     { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"},
     { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"},
-    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"},
-    { SHM_KEY                               ,   "SHM_KEY"},
-    { SHM_MAX_NODES                         ,   "SHM_MAX_NODES"},
-    { SHM_MAX_NAMESPACES                    ,   "SHM_MAX_NAMESPACES"},
-    { SHM_TAKEOVER_THRESHOLD_SEC            ,   "SHM_TAKEOVER_THRESHOLD_SEC"}
+    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"}
 };
 /*
  *******************************************************************************************************

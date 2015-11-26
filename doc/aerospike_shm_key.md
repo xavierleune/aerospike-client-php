@@ -20,7 +20,7 @@ If shared memory isn't configured then it will return NULL.
 <?php
 
 $config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)),
-        "shm"=>array(Aerospike::SHM_KEY=>0xA5000001));
+        "shm"=>array("shm_key"=>0xA5000001));
 $opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 8000, Aerospike::OPT_WRITE_TIMEOUT => 1500);
 $db = new Aerospike($config, true, $opts);
 if (!$db->isConnected()) {

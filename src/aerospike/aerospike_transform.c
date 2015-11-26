@@ -2344,56 +2344,53 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p)
             int8_t* options_key;
             if (zend_hash_get_current_key_ex(ht_shm, (char **) &options_key,
                         &options_key_len, &options_index, 0, &options_pointer)
-                    != HASH_KEY_IS_LONG) {
+                    != HASH_KEY_IS_STRING) {
                 status = AEROSPIKE_ERR_PARAM;
                 DEBUG_PHP_EXT_DEBUG("Unable to set shared memory parameters");
                 goto exit;
             }
+
             zval ** data;
-            switch((int) options_index) {
-                case SHM_KEY:
-                    if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
-                        if (Z_TYPE_PP(data) != IS_LONG) {
-                            status = AEROSPIKE_ERR_PARAM;
-                            DEBUG_PHP_EXT_DEBUG("Unable to set shared memory key");
-                            goto exit;
-                        }
-                        (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_key = Z_LVAL_PP(data);
+            if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_KEY) == 0) {
+                if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+                    if (Z_TYPE_PP(data) != IS_LONG) {
+                        status = AEROSPIKE_ERR_PARAM;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set shared memory key");
+                        goto exit;
                     }
-                    break;
-                case SHM_MAX_NODES:
-                    if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
-                        if (Z_TYPE_PP(data) != IS_LONG) {
-                            status = AEROSPIKE_ERR_PARAM;
-                            DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max nodes");
-                            goto exit;
-                        }
-                        (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_nodes = Z_LVAL_PP(data);
+                    (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_key = Z_LVAL_PP(data);
+                }
+            } else if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NODES) == 0) {
+                if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+                    if (Z_TYPE_PP(data) != IS_LONG) {
+                        status = AEROSPIKE_ERR_PARAM;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max nodes");
+                        goto exit;
                     }
-                    break;
-                case SHM_MAX_NAMESPACES:
-                    if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
-                        if (Z_TYPE_PP(data) != IS_LONG) {
-                            status = AEROSPIKE_ERR_PARAM;
-                            DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
-                            goto exit;
-                        }
-                        (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_namespaces = Z_LVAL_PP(data);
+                    (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_nodes = Z_LVAL_PP(data);
+                }
+            } else if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NAMESPACES) == 0) {
+                if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+                    if (Z_TYPE_PP(data) != IS_LONG) {
+                        status = AEROSPIKE_ERR_PARAM;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
+                        goto exit;
                     }
-                    break;
-                case SHM_TAKEOVER_THRESHOLD_SEC:
-                    if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
-                        if (Z_TYPE_PP(data) != IS_LONG) {
-                            DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
-                            goto exit;
-                        }
-                        (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_takeover_threshold_sec = Z_LVAL_PP(data);
+                    (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_namespaces = Z_LVAL_PP(data);
+                }
+            } else if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_TAKEOVER_THRESHOLD_SEC) == 0) {
+                if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+                    if (Z_TYPE_PP(data) != IS_LONG) {
+                        status = AEROSPIKE_ERR_PARAM;
+                        DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
+                        goto exit;
                     }
-                    break;
-                default:
-                    status = AEROSPIKE_ERR_PARAM;
-                    DEBUG_PHP_EXT_DEBUG("Invalid shared memory configuration parameter");
-                    goto exit;
+                    (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_takeover_threshold_sec = Z_LVAL_PP(data);
+                }
+            } else {
+                status = AEROSPIKE_ERR_PARAM;
+                DEBUG_PHP_EXT_DEBUG("Unable to set shared memory parameter : Invalid shm config parameter");
+                goto exit;
             }
         }
     }
@@ -2533,13 +2530,12 @@ aerospike_transform_config_callback(HashTable* ht_p,
     } else if (PHP_IS_ARRAY(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_SHM,
             PHP_AS_KEY_DEFINE_FOR_SHM_LEN, key_p, key_len_u32 - 1)) {
-        if ((((transform_zval_config_into *) data_p)->transform_result).as_config_p->use_shm) {
-            if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
-                status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p);
-            } else {
-                DEBUG_PHP_EXT_DEBUG("Skipping shm as zval config is to be transformed into host_lookup");
-                status = AEROSPIKE_OK;
-            }
+        (((transform_zval_config_into *) data_p)->transform_result).as_config_p->use_shm = true;
+        if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
+            status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p);
+        } else {
+            DEBUG_PHP_EXT_DEBUG("Skipping shm as zval config is to be transformed into host_lookup");
+            status = AEROSPIKE_OK;
         }
     } else {
         status = AEROSPIKE_ERR_PARAM;

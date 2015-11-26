@@ -403,7 +403,7 @@ class Connection extends AerospikeTestCommon
      */
     function normal_002() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)),
-            "shm"=>array(Aerospike::SHM_KEY=>123));
+            "shm"=>array("shm_key"=>123));
         $db = new Aerospike($config);
         if ($db->errorno() != Aerospike::OK) {
             return Aerospike::ERR_CLIENT;
@@ -467,7 +467,7 @@ class Connection extends AerospikeTestCommon
      */
     function normal_004() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)),
-            "shm"=>array(Aerospike::SHM_KEY=>0xA5000000));
+            "shm"=>array("shm_key"=>0xA5000000));
         $db = new Aerospike($config);
         if ($db->errorno() != Aerospike::OK) {
             return Aerospike::ERR_CLIENT;

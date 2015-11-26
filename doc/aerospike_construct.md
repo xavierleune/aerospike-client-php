@@ -31,6 +31,12 @@ cluster and manage its connections to them.
   - *port*
 - *user*
 - *pass*
+- *shm*
+  - *shm_key* Shared memory identifier
+  - *shm_max_nodes* Shared memory maximum number of namespaces allowed
+  - *shm_max_namespaces* Shared memory maximum number of namespaces allowed
+  - *shm_takeover_threshold_sec* Take over shared memory cluster tending if the
+  cluster hasn't been tended by this threshold in seconds
 
 **persistent_connection** whether the C-client will persist between requests.
 
