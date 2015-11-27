@@ -233,7 +233,7 @@ do {                                                                          \
  * @returns 1 if paased shm key is unique. Otherwise 0.
  *******************************************************************************************************
  */
-int is_unique_shm_key(int shm_key_to_match, HashTable *shm_key_list)
+int is_unique_shm_key(int shm_key_to_match, HashTable *shm_key_list TSRMLS_DC)
 {
     HashPosition        options_pointer;
     void*              options_value;
@@ -261,11 +261,11 @@ int is_unique_shm_key(int shm_key_to_match, HashTable *shm_key_list)
  * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-extern as_status
+static as_status
 set_shm_key_from_alias_hash_or_generate(
                                         as_config* conf,
                                         HashTable *shm_key_list,
-                                        int* shm_key_counter)
+                                        int* shm_key_counter TSRMLS_DC)
 {
     zend_rsrc_list_entry *le, new_shm_entry;
     zval* rsrc_result = NULL;
@@ -311,10 +311,10 @@ set_shm_key_from_alias_hash_or_generate(
             conf->shm_key = ((shared_memory_key *)(le->ptr))->key;
         }
     } else {
-        if (!(is_unique_shm_key(conf->shm_key, shm_key_list))) {
+        if (!(is_unique_shm_key(conf->shm_key, shm_key_list TSRMLS_CC))) {
             while (true) {
                 //generating unique shm_key
-                if (is_unique_shm_key(*shm_key_counter, shm_key_list)) {
+                if (is_unique_shm_key(*shm_key_counter, shm_key_list TSRMLS_CC)) {
                     conf->shm_key = *shm_key_counter;
                     break;
                 } else{
@@ -468,7 +468,7 @@ use_existing:
 exit:
     if (conf->use_shm) {
         status = set_shm_key_from_alias_hash_or_generate(conf,shm_key_list,
-                &shm_key_counter);
+                &shm_key_counter TSRMLS_CC);
     }
 
     if (alias_to_search) {
