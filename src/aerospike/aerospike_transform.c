@@ -2351,7 +2351,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p)
             }
 
             zval ** data;
-            if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_KEY) == 0) {
+            if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_KEY) == 0) {
                 if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
                     if (Z_TYPE_PP(data) != IS_LONG) {
                         status = AEROSPIKE_ERR_PARAM;
@@ -2360,7 +2360,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p)
                     }
                     (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_key = Z_LVAL_PP(data);
                 }
-            } else if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NODES) == 0) {
+            } else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NODES) == 0) {
                 if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
                     if (Z_TYPE_PP(data) != IS_LONG) {
                         status = AEROSPIKE_ERR_PARAM;
@@ -2369,7 +2369,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p)
                     }
                     (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_nodes = Z_LVAL_PP(data);
                 }
-            } else if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NAMESPACES) == 0) {
+            } else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NAMESPACES) == 0) {
                 if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
                     if (Z_TYPE_PP(data) != IS_LONG) {
                         status = AEROSPIKE_ERR_PARAM;
@@ -2378,7 +2378,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p)
                     }
                     (((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_namespaces = Z_LVAL_PP(data);
                 }
-            } else if (strcmp(options_key, PHP_AS_KEY_DEFINE_FOR_SHM_TAKEOVER_THRESHOLD_SEC) == 0) {
+            } else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_TAKEOVER_THRESHOLD_SEC) == 0) {
                 if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
                     if (Z_TYPE_PP(data) != IS_LONG) {
                         status = AEROSPIKE_ERR_PARAM;

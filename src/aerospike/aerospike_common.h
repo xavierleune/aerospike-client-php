@@ -611,9 +611,9 @@ extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         bool persist_flag,
                                         as_config* conf,
+                                        HashTable *shm_key_list,
                                         HashTable *persistent_list,
-                                        int val_persist TSRMLS_DC,
-                                        HashTable *shm_key_list);
+                                        int val_persist TSRMLS_DC);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);

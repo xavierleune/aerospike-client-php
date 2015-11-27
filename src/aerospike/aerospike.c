@@ -606,7 +606,7 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
     if (AEROSPIKE_OK != (status = aerospike_helper_object_from_alias_hash(aerospike_obj_p,
-                    persistent_connection, &config, persistent_list, persist TSRMLS_CC, shm_key_list))) {
+                    persistent_connection, &config, shm_key_list, persistent_list, persist TSRMLS_CC))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find object from alias");
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");

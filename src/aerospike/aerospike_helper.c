@@ -367,9 +367,9 @@ extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         bool persist_flag,
                                         as_config* conf,
+                                        HashTable *shm_key_list,
                                         HashTable *persistent_list,
-                                        int val_persist TSRMLS_DC,
-                                        HashTable *shm_key_list)
+                                        int val_persist TSRMLS_DC)
 {
     zend_rsrc_list_entry *le, new_le;
     zval* rsrc_result = NULL;
