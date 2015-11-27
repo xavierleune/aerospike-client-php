@@ -2327,7 +2327,7 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p)
+aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRMLS_DC)
 {
     as_status      status = AEROSPIKE_OK;
 
@@ -2532,7 +2532,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
             PHP_AS_KEY_DEFINE_FOR_SHM_LEN, key_p, key_len_u32 - 1)) {
         (((transform_zval_config_into *) data_p)->transform_result).as_config_p->use_shm = true;
         if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
-            status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p);
+            status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p TSRMLS_CC);
         } else {
             DEBUG_PHP_EXT_DEBUG("Skipping shm as zval config is to be transformed into host_lookup");
             status = AEROSPIKE_OK;
