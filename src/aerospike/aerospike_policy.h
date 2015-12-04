@@ -25,9 +25,7 @@ enum Aerospike_constants {
     OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
     OPT_POLICY_COMMIT_LEVEL,  /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
     OPT_TTL,                  /* set to time-to-live of the record in seconds */
-    USE_BATCH_DIRECT,         /* use new batch index protocol if server supports it*/
-    MAX_THREADS,              /* Estimate of incoming threads concurrently using synchronous methods in the client instance */
-    THREAD_POOL_SIZE          /* Number of threads stored in underlying thread pool that is used in batch/scan/query commands */
+    USE_BATCH_DIRECT          /* use new batch index protocol if server supports it*/
 };
 
 /*
@@ -82,8 +80,6 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_POLICY_COMMIT_LEVEL               ,   "OPT_POLICY_COMMIT_LEVEL"           },
     { OPT_TTL                               ,   "OPT_TTL"                           },
     { USE_BATCH_DIRECT                      ,   "USE_BATCH_DIRECT"                  },
-    { MAX_THREADS                           ,   "MAX_THREADS"                       },
-    { THREAD_POOL_SIZE                      ,   "THREAD_POOL_SIZE"                  },
     { AS_POLICY_RETRY_NONE                  ,   "POLICY_RETRY_NONE"                 },
     { AS_POLICY_RETRY_ONCE                  ,   "POLICY_RETRY_ONCE"                 },
     { AS_POLICY_EXISTS_IGNORE               ,   "POLICY_EXISTS_IGNORE"              },

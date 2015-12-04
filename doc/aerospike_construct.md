@@ -31,6 +31,8 @@ cluster and manage its connections to them.
   - *port*
 - *user*
 - *pass*
+- *max_threads*
+- *thread_pool_size*
 
 **persistent_connection** whether the C-client will persist between requests.
 
