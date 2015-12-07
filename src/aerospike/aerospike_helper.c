@@ -513,7 +513,7 @@ aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p)
         return true;
     }
 
-    AS_AGGREGATE_GET(NULL, val_p, (foreach_callback_udata *) udata_p);
+    AS_AGGREGATE_GET(((foreach_callback_udata*)udata_p)->obj->as_ref_p->as_p, NULL, val_p, (foreach_callback_udata *) udata_p);
 exit:
     return true;
 }

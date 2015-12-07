@@ -386,7 +386,7 @@ exit:
  ******************************************************************************************************
  */
 extern as_status
-aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
+aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* return_value_p,
@@ -402,7 +402,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     foreach_callback_udata      aggregate_result_callback_udata;
     bool                        return_value_assoc = false;
 
-    if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) ||
+    if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) ||
             (!args_pp && (!(*args_pp))) || (!namespace_p) || (!set_p) ||
             (!predicate_ht_p) || (!return_value_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate query aggregation");
@@ -410,7 +410,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, NULL, NULL, &query_policy,
+    set_policy(&as_object_p->as_ref_p->as_p->config, NULL, NULL, NULL, NULL, NULL, NULL, &query_policy,
         &serializer_policy, options_p, error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -421,7 +421,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
         as_arraylist_init(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)), 0);
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, args_pp, &args_list, &udf_pool,
+        AS_LIST_PUT(as_object_p->as_ref_p->as_p, NULL, args_pp, &args_list, &udf_pool,
                 serializer_policy, error_p TSRMLS_CC);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
@@ -450,6 +450,7 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
     return_value_assoc = true;
     aggregate_result_callback_udata.udata_p = return_value_p;
     aggregate_result_callback_udata.error_p = error_p;
+    aggregate_result_callback_udata.obj     = as_object_p;
 
     if (bins_ht_p) {
         as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
@@ -467,14 +468,14 @@ aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
             }
         }
 
-        if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p, error_p,
+        if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p->as_ref_p->as_p, error_p,
                         &query_policy, &query,
                         aerospike_helper_aggregate_callback,
                         &aggregate_result_callback_udata))) {
             DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;
         }
-    } else if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p, error_p,
+    } else if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p->as_ref_p->as_p, error_p,
                     &query_policy, &query, aerospike_helper_aggregate_callback,
                     &aggregate_result_callback_udata))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);

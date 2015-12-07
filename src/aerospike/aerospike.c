@@ -2372,7 +2372,7 @@ PHP_METHOD(Aerospike, aggregate)
     array_init(returned_p);
 
     if (AEROSPIKE_OK !=
-            (status = aerospike_query_aggregate(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_query_aggregate(aerospike_obj_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
