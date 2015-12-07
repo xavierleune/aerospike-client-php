@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex - correct arguments for integer index
+addIndex() and dropIndex() - correct arguments for integer index
 
 --FILE--
 <?php

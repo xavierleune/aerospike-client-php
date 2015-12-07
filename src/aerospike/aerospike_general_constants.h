@@ -31,8 +31,6 @@ typedef struct Aerospike_General_String_Constants {
  *******************************************************************************************************
  */
 static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
-    { AS_INDEX_STRING,      "INDEX_TYPE_STRING"  },
-    { AS_INDEX_NUMERIC,     "INDEX_TYPE_INTEGER" },
     { AS_INDEX_STRING,      "INDEX_STRING"       },
     { AS_INDEX_NUMERIC,     "INDEX_NUMERIC"      },
     { AS_INDEX_TYPE_DEFAULT,"INDEX_TYPE_DEFAULT" },

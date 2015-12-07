@@ -144,7 +144,6 @@ PHP_METHOD(Aerospike, setLogHandler);
  * Secondary Index APIs:
  */
 
-PHP_METHOD(Aerospike, createIndex);
 PHP_METHOD(Aerospike, addIndex);
 PHP_METHOD(Aerospike, dropIndex);
 

@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex - Invalid index type, will use string index type by default
+addIndex() and dropIndex() - Invalid index type, will use string index type by default
 
 --SKIPIF--
 <?php

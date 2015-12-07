@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex- index with same name on same integer bin recreated.
+addIndex() and dropIndex()- index with same name on same integer bin recreated.
 
 --FILE--
 <?php
