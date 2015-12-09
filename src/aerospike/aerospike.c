@@ -366,6 +366,16 @@ static zend_function_entry Aerospike_class_functions[] =
 
     /*
      ********************************************************************
+     * GeoJSON APIs:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, predicateGeoWithinGeoJSONRegion, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoWithinRadius, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoContainsGeoJSONPoint, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoContainsPoint, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+    /*
+     ********************************************************************
      * UDF APIs:
      ********************************************************************
      */
@@ -2640,6 +2650,118 @@ exit:
 }
 /* }}} */
 
+/*
+ *******************************************************************************************************
+ *  GeoJSON APIs:
+ *******************************************************************************************************
+ */
+/* {{{ proto array Aerospike::predicateGeoWithinGeoJSONRegion( string bin,
+ * string region).
+ * Helper which builds the "WHITHIN REGION' predicate */
+PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
+{
+    as_status               status = AEROSPIKE_OK;
+    char                    *bin_name_p = NULL;
+    char                    *region_p = NULL;
+    int                     region_len = 0;
+    int                     bin_name_len = 0;
+    zval                    *val_p;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                &bin_name_p, &bin_name_len, &region_p, &region_len)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithingGeoJSONRegion");
+        RETURN_NULL();
+    }
+
+    if (bin_name_len == 0 || region_len == 0) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateGeoWithinGeoJSONRegion() expects parameter 1 to be a non-empty string.");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    add_assoc_stringl(return_value, VAL, region_p, region_len, 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoWithinRadius( string bin, double long, double $lat,
+ * float $radiusMeter).
+ * Helper which builds the "WITHIN RADIUS" predicate */
+PHP_METHOD(Aerospike, predicateGeoWithinRadius)
+{
+    as_status               status = AEROSPIKE_OK;
+    double                  longitude;
+    double                  latitude;
+    double                  radius;
+    char                    *bin_name_p = NULL;
+    int                     bin_name_len = 0;
+    char                    geo_value[1024];
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
+                &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithinRadius");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
+
+    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoContainsGeoJSONPoint(string bin, string
+ * Point).
+ * Helper which build the "CONRAINS POINT" predicate */
+PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
+{
+    as_status                 status = AEROSPIKE_OK;
+    char                      *bin_name_p = NULL;
+    int                       bin_name_len = 0;
+    char                      *geoPoint_p = NULL;
+    int                       geoPoint_len = 0;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                &bin_name_p, &bin_name_len, &geoPoint_p, &geoPoint_len)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoContainsGeoJSONPoint");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len, 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoContainsPoint(string bin, double long,
+ * double lat, double radiusMeter).
+ * Helper which build the "CONTAINS POINT" predicate */
+PHP_METHOD(Aerospike, predicateGeoContainsPoint)
+{
+    as_status               status = AEROSPIKE_OK;
+    char                    *bin_name_p = NULL;
+    int                     bin_name_len = 0;
+    double                  longitude;
+    double                  latitude;
+    double                  radius;
+    char                    geo_value[1024];
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
+                &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoContainsPoint");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius); 
+
+    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+}
 /*
  *******************************************************************************************************
  *  User Defined Function (UDF) APIs:

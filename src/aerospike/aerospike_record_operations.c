@@ -1,4 +1,6 @@
 #include "php.h"
+#include "ext/standard/php_var.h"
+#include "ext/standard/php_smart_str.h"
 #include "aerospike/as_status.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
@@ -32,6 +34,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                                 as_error* error_p,
                                 char* bin_name_p,
                                 char* str,
+                                char* geoStr,
                                 u_int64_t offset,
                                 u_int32_t time_to_live,
                                 u_int64_t operation,
@@ -87,7 +90,13 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
                     goto exit;
                 }
-            } else {
+            } else if (geoStr) {
+                if (!as_operations_add_write_geojson_str(ops, bin_name_p, geoStr)) {
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
+                    DEBUG_PHP_EXT_DEBUG("Unable to write");
+                    goto exit;
+                }
+            }else {
                 if (!as_operations_add_write_int64(ops, bin_name_p, offset)) {
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
                     DEBUG_PHP_EXT_DEBUG("Unable to write");
@@ -267,7 +276,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 
     if (AEROSPIKE_OK != aerospike_record_operations_ops(as_object_p, as_key_p,
                                                       options_p, error_p,
-                                                      bin_name_p, str,
+                                                      bin_name_p, str, NULL,
                                                       offset, time_to_live, operation,
                                                       &ops, &get_rec TSRMLS_CC)) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
@@ -305,6 +314,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
     HashTable*                  each_operation_array_p = NULL;
     char*                       bin_name_p;
     char*                       str;
+    char*                       geoStr;
     zval **                     operation;
     int                         offset = 0;
     long                        l_offset = 0;
@@ -338,6 +348,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
         if (IS_ARRAY == Z_TYPE_PP(operation)) {
             each_operation_array_p = Z_ARRVAL_PP(operation);
             str = NULL;
+            geoStr = NULL;
             op = 0;
             ttl = 0;
             bin_name_p = NULL;
@@ -363,6 +374,29 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                             each_operation_back = each_operation;
                         } else if (IS_LONG == Z_TYPE_PP(each_operation)) {
                             offset = (uint32_t) Z_LVAL_PP(each_operation);
+                        } else if (IS_OBJECT == Z_TYPE_PP(each_operation)) {
+                            const char* name;
+                            int name_len, dup;
+                            dup = zend_get_object_classname(*((zval**)each_operation),
+                                    &name, &name_len TSRMLS_DC);
+                            if((!strcmp(name, GEOJSONCLASS)) 
+                                    && (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p))
+                                    && op == AS_OPERATOR_WRITE) {
+                                int result;
+                                zval* retval = NULL, fname;
+                                ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
+                                result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+                                        0, NULL, 0, NULL TSRMLS_CC);
+                                geoStr = Z_STRVAL_P(retval);
+                            }
+                            else {
+                                status = AEROSPIKE_ERR_CLIENT;
+                                DEBUG_PHP_EXT_DEBUG("Invalid operation on GeoJSON datatype OR Old version of server, "
+                                        "GeoJSON not supported on this server");
+                                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid operation on GeoJSON "
+                                        "datatype OR Old version of server, GeoJSON not supported on this server");
+                                goto exit;
+                            }
                         } else {
                             status = AEROSPIKE_ERR_CLIENT;
                             goto exit;
@@ -389,7 +423,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                 }
             }
             if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(as_object_p,
-                            as_key_p, options_p, error_p, bin_name_p, str,
+                            as_key_p, options_p, error_p, bin_name_p, str, geoStr,
                             offset, ttl, op, &ops, &temp_rec TSRMLS_CC))) {
                 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
                 goto exit;
