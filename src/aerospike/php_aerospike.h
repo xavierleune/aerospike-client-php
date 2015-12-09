@@ -57,9 +57,13 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int shm_max_nodes;
     int shm_max_namespaces;
     int shm_takeover_threshold_sec;
+    int shm_key;
+    int shm_key_counter;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
+    HashTable *shm_key_list_g;
     int persistent_ref_count;
+    int shm_key_ref_count;
     pthread_rwlock_t aerospike_mutex;
     pthread_rwlock_t query_cb_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
@@ -86,6 +90,7 @@ PHP_MINFO_FUNCTION(aerospike);
 
 PHP_METHOD(Aerospike, __construct);
 PHP_METHOD(Aerospike, __destruct);
+PHP_METHOD(Aerospike, shm_key);
 
 /*
  * Cluster Management APIs:
