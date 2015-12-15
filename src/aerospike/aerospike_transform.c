@@ -28,17 +28,17 @@
  * Forward declarations of certain helper methods for PUT/GET.
  *******************************************************************************************************
  */
-void AS_DEFAULT_PUT(aerospike* as, void *key, void *value, as_record *record,
+void AS_DEFAULT_PUT(Aerospike_object* as, void *key, void *value, as_record *record,
                     void *static_pool, int8_t serializer_policy,
                     as_error *error_p TSRMLS_DC);
-void AS_LIST_PUT(aerospike* as, void *key, void *value, void *store,
+void AS_LIST_PUT(Aerospike_object* as, void *key, void *value, void *store,
                  void *static_pool, int8_t serializer_policy,
                  as_error *error_p TSRMLS_DC);
-void AS_MAP_PUT(aerospike* as, void *key, void *value, void *store,
+void AS_MAP_PUT(Aerospike_object* as, void *key, void *value, void *store,
                 void *static_pool, int8_t serializer_policy,
                 as_error *error_p TSRMLS_DC);
-bool AS_LIST_GET_CALLBACK(aerospike* as, as_val *value, void *array);
-bool AS_MAP_GET_CALLBACK(aerospike* as, as_val *key, as_val *value, void *array);
+bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
+bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
 static as_status
 aerospike_transform_iteratefor_addr_port(HashTable* ht_p,
         void* as_config_p);
@@ -376,7 +376,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_NULL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_null(*((zval **) array));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -394,7 +394,7 @@ static void ADD_LIST_APPEND_NULL(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BOOL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_bool(*((zval **) array),
             (int8_t) as_boolean_get((as_boolean *) value));
@@ -413,7 +413,7 @@ static void ADD_LIST_APPEND_BOOL(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LONG(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_long(*((zval **) array),
             (long) as_integer_get((as_integer *) value));
@@ -432,7 +432,7 @@ static void ADD_LIST_APPEND_LONG(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_STRING(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_stringl(*((zval **) array),
             as_string_get((as_string *) value),
@@ -452,7 +452,7 @@ static void ADD_LIST_APPEND_STRING(aerospike* as, void *key, void *value, void *
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_REC(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -469,7 +469,7 @@ static void ADD_LIST_APPEND_REC(aerospike* as, void *key, void *value, void *arr
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_PAIR(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -486,7 +486,7 @@ static void ADD_LIST_APPEND_PAIR(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BYTES(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     zval        *unserialized_zval = NULL;
 
@@ -526,7 +526,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_NULL(aerospike *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_NULL(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_assoc_null(*((zval **) array), as_string_get((as_string *) key));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -544,7 +544,7 @@ static void ADD_MAP_ASSOC_NULL(aerospike *as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_BOOL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_assoc_bool(*((zval **) array), as_string_get((as_string *) key),
             (int) as_boolean_get((as_boolean *) value));
@@ -563,7 +563,7 @@ static void ADD_MAP_ASSOC_BOOL(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_LONG(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_assoc_long(*((zval **) array),  as_string_get((as_string *) key),
             (long) as_integer_get((as_integer *) value));
@@ -582,7 +582,7 @@ static void ADD_MAP_ASSOC_LONG(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_STRING(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_assoc_stringl(*((zval **) array), as_string_get((as_string *) key),
             as_string_get((as_string *) value),
@@ -602,7 +602,7 @@ static void ADD_MAP_ASSOC_STRING(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_REC(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -619,7 +619,7 @@ static void ADD_MAP_ASSOC_REC(aerospike* as, void *key, void *value, void *array
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_PAIR(aerospike *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_PAIR(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -636,7 +636,7 @@ static void ADD_MAP_ASSOC_PAIR(aerospike *as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_BYTES(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     zval        *unserialized_zval = NULL;
 
@@ -672,7 +672,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_NULL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_index_null(*((zval **) array), (uint) as_integer_get((as_integer *) key));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -690,7 +690,7 @@ static void ADD_MAP_INDEX_NULL(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_BOOL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_index_bool(*((zval **) array), (uint) as_integer_get((as_integer *) key),
             (int) as_boolean_get((as_boolean *) value));
@@ -709,7 +709,7 @@ static void ADD_MAP_INDEX_BOOL(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_LONG(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_index_long(*((zval **) array), (uint) as_integer_get((as_integer *) key),
             (long) as_integer_get((as_integer *) value));
@@ -728,7 +728,7 @@ static void ADD_MAP_INDEX_LONG(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_STRING(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_index_stringl(*((zval**)array), (uint) as_integer_get((as_integer *) key),
             as_string_get((as_string *) value),
@@ -748,7 +748,7 @@ static void ADD_MAP_INDEX_STRING(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_REC(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -765,7 +765,7 @@ static void ADD_MAP_INDEX_REC(aerospike* as, void *key, void *value, void *array
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_PAIR(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -782,7 +782,7 @@ static void ADD_MAP_INDEX_PAIR(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_BYTES(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     zval        *unserialized_zval = NULL;
 
@@ -822,7 +822,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_NULL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     /*
      * key will be NULL in case of UDF methods.
@@ -848,7 +848,7 @@ static void ADD_DEFAULT_ASSOC_NULL(aerospike* as, void *key, void *value, void *
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_BOOL(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     /*
      * key will be NULL in case of UDF methods.
@@ -879,7 +879,7 @@ static void ADD_DEFAULT_ASSOC_BOOL(aerospike* as, void *key, void *value, void *
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_LONG(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     /*
      * key will be NULL in case of UDF methods.
@@ -910,7 +910,7 @@ static void ADD_DEFAULT_ASSOC_LONG(aerospike* as, void *key, void *value, void *
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_DOUBLE(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_DOUBLE(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     if (key == NULL) {
         zval* double_zval_p = NULL;
@@ -937,7 +937,7 @@ static void ADD_DEFAULT_ASSOC_DOUBLE(aerospike* as, void *key, void *value, void
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_STRING(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     /*
      * key will be NULL in case of UDF methods.
@@ -970,7 +970,7 @@ static void ADD_DEFAULT_ASSOC_STRING(aerospike* as, void *key, void *value, void
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_REC(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -987,7 +987,7 @@ static void ADD_DEFAULT_ASSOC_REC(aerospike* as, void *key, void *value, void *a
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_PAIR(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -1005,7 +1005,7 @@ static void ADD_DEFAULT_ASSOC_PAIR(aerospike* as, void *key, void *value, void *
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_GEOJSON(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     int result;
     zval* retval = NULL, fname;
@@ -1040,7 +1040,7 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(aerospike* as, void *key, void *value, voi
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_BYTES(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     zval        *unserialized_zval = NULL;
 
@@ -1088,7 +1088,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_MAP(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_MAP_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1106,7 +1106,7 @@ static void ADD_LIST_APPEND_MAP(aerospike* as, void *key, void *value, void *arr
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LIST(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_LIST_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1124,7 +1124,7 @@ static void ADD_LIST_APPEND_LIST(aerospike* as, void *key, void *value, void *ar
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_MAP(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_ASSOC_MAP_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1142,7 +1142,7 @@ static void ADD_MAP_ASSOC_MAP(aerospike* as, void *key, void *value, void *array
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_ASSOC_LIST(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_ASSOC_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_ASSOC_LIST_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1160,7 +1160,7 @@ static void ADD_MAP_ASSOC_LIST(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_MAP(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_INDEX_MAP_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1178,7 +1178,7 @@ static void ADD_MAP_INDEX_MAP(aerospike* as, void *key, void *value, void *array
  *
  *******************************************************************************************************
  */
-static void ADD_MAP_INDEX_LIST(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_MAP_INDEX_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_INDEX_LIST_TO_MAP(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1196,7 +1196,7 @@ static void ADD_MAP_INDEX_LIST(aerospike* as, void *key, void *value, void *arra
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_MAP(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     if ((NULL == key)) {
         zval_dtor((zval *)array);
@@ -1217,7 +1217,7 @@ static void ADD_DEFAULT_ASSOC_MAP(aerospike* as, void *key, void *value, void *a
  *
  *******************************************************************************************************
  */
-static void ADD_DEFAULT_ASSOC_LIST(aerospike* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_DEFAULT_ASSOC_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     if (NULL == key) {
         zval_dtor((zval *)array);
@@ -1250,7 +1250,7 @@ extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array)
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
     TSRMLS_FETCH();
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(aerospike_object->as_ref_p->as_p, ((foreach_callback_udata *) array)->error_p,
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_DEFAULT_ASSOC(aerospike_object, ((foreach_callback_udata *) array)->error_p,
             NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
 
 exit:
@@ -1268,12 +1268,12 @@ exit:
  * @return true if the callback succeeds. Otherwise false.
  *******************************************************************************************************
  */
-bool AS_LIST_GET_CALLBACK(aerospike* as, as_val *value, void *array)
+bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
     TSRMLS_FETCH();
-    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(as, ((foreach_callback_udata *) array)->error_p,
+    AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(aerospike_object, ((foreach_callback_udata *) array)->error_p,
             NULL, NULL, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
 
 exit:
@@ -1291,17 +1291,17 @@ exit:
 * @return true if the callback succeeds. Otherwise false.
 *******************************************************************************************************
 */
-bool AS_MAP_GET_CALLBACK(aerospike* as, as_val *key, as_val *value, void *array)
+bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
     TSRMLS_FETCH();
     if (FETCH_VALUE_GET(key) == AS_INTEGER) {
-        AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(as, ((foreach_callback_udata *) array)->error_p,
+        AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_INDEX(aerospike_object, ((foreach_callback_udata *) array)->error_p,
                 NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p,
                 exit);
     } else {
-        AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(as, ((foreach_callback_udata *) array)->error_p,
+        AEROSPIKE_WALKER_SWITCH_CASE_GET_MAP_ASSOC(aerospike_object, ((foreach_callback_udata *) array)->error_p,
                 NULL, (void *) key, (void *) value, ((foreach_callback_udata *) array)->udata_p,
                 exit);
     }
@@ -1340,7 +1340,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_SET_APPEND_LIST(aerospike* as, void* outer_store, void* inner_store,
+static void AS_LIST_SET_APPEND_LIST(Aerospike_object* as, void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != ((error_p->code) =
@@ -1370,7 +1370,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_SET_APPEND_MAP(aerospike* as, void* outer_store, void* inner_store,
+static void AS_LIST_SET_APPEND_MAP(Aerospike_object* as, void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != ((error_p->code) =
@@ -1399,7 +1399,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_SET_ASSOC_LIST(aerospike* as, void* outer_store, void* inner_store,
+static void AS_DEFAULT_SET_ASSOC_LIST(Aerospike_object* as, void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_list((as_record *)outer_store, (const char *)bin_name,
@@ -1427,7 +1427,7 @@ exit:
  * @return true if the callback succeeds. Otherwise false.
  *******************************************************************************************************
  */
-extern bool AS_AGGREGATE_GET(aerospike* as, const char *key, const as_val *value, void *array)
+extern bool AS_AGGREGATE_GET(Aerospike_object* as, const char *key, const as_val *value, void *array)
 {
     as_status status = AEROSPIKE_OK;
     Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
@@ -1451,7 +1451,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_SET_ASSOC_MAP(aerospike* as, void* outer_store, void* inner_store,
+static void AS_DEFAULT_SET_ASSOC_MAP(Aerospike_object* as, void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_map((as_record *)outer_store, (const char *)bin_name,
@@ -1479,7 +1479,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_MAP_SET_ASSOC_LIST(aerospike* as, void* outer_store, void* inner_store,
+static void AS_MAP_SET_ASSOC_LIST(Aerospike_object* as, void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != ((error_p->code) =
@@ -1508,7 +1508,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_MAP_SET_ASSOC_MAP(aerospike* as, void* outer_store, void* inner_store,
+static void AS_MAP_SET_ASSOC_MAP(Aerospike_object* as, void* outer_store, void* inner_store,
         void* bin_name, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != ((error_p->code) =
@@ -1531,7 +1531,7 @@ exit:
  *******************************************************************************************************
  */
 
-static void AS_SET_ERROR_CASE(aerospike* as, void* key, void* value, void* array,
+static void AS_SET_ERROR_CASE(Aerospike_object* as, void* key, void* value, void* array,
                               void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Error");
@@ -1551,7 +1551,7 @@ static void AS_SET_ERROR_CASE(aerospike* as, void* key, void* value, void* array
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_INT64(aerospike* as, void* key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_INT64(Aerospike_object* as, void* key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != (error_p->code =
@@ -1582,7 +1582,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_STR(aerospike* as, void *key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_STR(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != (error_p->code =
@@ -1612,7 +1612,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_NULL(aerospike* as, void *key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (AEROSPIKE_OK != (error_p->code =
@@ -1643,7 +1643,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_LIST(aerospike* as, void *key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_LIST_PUT(as, key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -1663,7 +1663,7 @@ static void AS_LIST_PUT_APPEND_LIST(aerospike* as, void *key, void *value, void 
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_MAP(aerospike* as, void *key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_MAP_PUT(as, key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -1689,7 +1689,7 @@ static void AS_LIST_PUT_APPEND_MAP(aerospike* as, void *key, void *value, void *
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_NIL(aerospike* as, void* key, void* value, void* array,
+static void AS_DEFAULT_PUT_ASSOC_NIL(Aerospike_object* as, void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!as_record_set_nil((as_record *)array,
@@ -1720,7 +1720,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_DOUBLE(aerospike* as, void* key, void* value, void* array,
+static void AS_DEFAULT_PUT_ASSOC_DOUBLE(Aerospike_object* as, void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
     if (!(as_record_set_double((as_record *)array, (const char*)key,
@@ -1750,7 +1750,7 @@ exit:
  *                              with encountered error if any.
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_GEOJSON(aerospike* as, void* key, void* value, void* array,
+static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
     int result;
@@ -1785,7 +1785,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_BYTES(aerospike* as, void* key, void* value,
+static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* value,
         void* array, void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_bytes     *bytes;
@@ -1796,7 +1796,7 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(aerospike* as, void* key, void* value,
 
     dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_DC);
 
-    if((!strcmp(name, GEOJSONCLASS)) && (aerospike_has_geo(as))) {
+    if((!strcmp(name, GEOJSONCLASS)) && (as->hasGeoJSON)) {
         AS_DEFAULT_PUT_ASSOC_GEOJSON(as, key, value, array, static_pool, serializer_policy,
                 error_p TSRMLS_CC);
     } else {
@@ -1827,7 +1827,7 @@ exit:
  * else call the regular BYTES function to serialize the data.
  ******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(aerospike* as, void* key, void* value, void* array,
+static void AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(Aerospike_object* as, void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
     if (does_server_support_double && is_datatype_double)
@@ -1856,7 +1856,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_INT64(aerospike* as, void* key, void* value, void* array,
+static void AS_DEFAULT_PUT_ASSOC_INT64(Aerospike_object* as, void* key, void* value, void* array,
         void* static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_int64((as_record *)array, (const char*)key,
@@ -1886,7 +1886,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_STR(aerospike* as, void *key, void *value, void *array,
+static void AS_DEFAULT_PUT_ASSOC_STR(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     if (!(as_record_set_str((as_record *)array, (const char*)key,
@@ -1916,7 +1916,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_LIST(aerospike* as, void *key, void *value, void *array,
+static void AS_DEFAULT_PUT_ASSOC_LIST(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_LIST_PUT(as, key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -1936,7 +1936,7 @@ static void AS_DEFAULT_PUT_ASSOC_LIST(aerospike* as, void *key, void *value, voi
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_MAP(aerospike* as, void *key, void *value, void *array,
+static void AS_DEFAULT_PUT_ASSOC_MAP(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_MAP_PUT(as, key, value, array, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -1962,7 +1962,7 @@ static void AS_DEFAULT_PUT_ASSOC_MAP(aerospike* as, void *key, void *value, void
  *
  *******************************************************************************************************
  */
-static void AS_MAP_PUT_ASSOC_INT64(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_INT64(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_integer  *map_int;
@@ -1995,7 +1995,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_MAP_PUT_ASSOC_STR(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_STR(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_string   *map_str;
@@ -2028,7 +2028,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_MAP_PUT_ASSOC_MAP(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_MAP(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_MAP_PUT(as, key, value, store, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -2048,7 +2048,7 @@ static void AS_MAP_PUT_ASSOC_MAP(aerospike* as, void *key, void *value, void *st
  *
  *******************************************************************************************************
  */
-static void AS_MAP_PUT_ASSOC_LIST(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_LIST(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AS_LIST_PUT(as, key, value, store, static_pool, serializer_policy, error_p TSRMLS_CC);
@@ -2068,7 +2068,7 @@ static void AS_MAP_PUT_ASSOC_LIST(aerospike* as, void *key, void *value, void *s
  *
  *******************************************************************************************************
  */
-static void AS_MAP_PUT_ASSOC_BYTES(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_bytes     *bytes;
@@ -2093,16 +2093,16 @@ exit:
     return;
 }
 
-static void AS_DEFAULT_PUT_ASSOC_ARRAY(aerospike* as, void *key, void *value, void *store,
+static void AS_DEFAULT_PUT_ASSOC_ARRAY(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
-static void AS_MAP_PUT_ASSOC_ARRAY(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_ARRAY(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
-static void AS_LIST_PUT_APPEND_ARRAY(aerospike* as, void *key, void *value, void *store,
+static void AS_LIST_PUT_APPEND_ARRAY(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
-static void AS_DEFAULT_PUT_ASSOC_BYTES(aerospike* as, void *key, void *value, void *store, void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
-static void AS_MAP_PUT_ASSOC_BYTES(aerospike* as, void *key, void *value, void *store,
+static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *store, void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
+static void AS_MAP_PUT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
-static void AS_LIST_PUT_APPEND_BYTES(aerospike* as, void *key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 
 /*
@@ -2126,7 +2126,7 @@ static void AS_LIST_PUT_APPEND_BYTES(aerospike* as, void *key, void *value, void
  *
  *******************************************************************************************************
  */
-void AS_DEFAULT_PUT(aerospike* as, void *key, void *value, as_record *record_p, void *static_pool,
+void AS_DEFAULT_PUT(Aerospike_object* as, void *key, void *value, as_record *record_p, void *static_pool,
         int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(as, error_p, static_pool,
@@ -2149,7 +2149,7 @@ exit:
  *
  *******************************************************************************************************
  */
-extern void AS_LIST_PUT(aerospike *as, void *key, void *value, void *store, void *static_pool,
+extern void AS_LIST_PUT(Aerospike_object *as, void *key, void *value, void *store, void *static_pool,
         int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(as, error_p, static_pool,
@@ -2172,7 +2172,7 @@ exit:
  *
  *******************************************************************************************************
  */
-void AS_MAP_PUT(aerospike* as, void *key, void *value, void *store, void *static_pool,
+void AS_MAP_PUT(Aerospike_object* as, void *key, void *value, void *store, void *static_pool,
         int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_val *map_key = NULL;
@@ -2196,7 +2196,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_DEFAULT_PUT_ASSOC_ARRAY(aerospike* as, void *key, void *value, void *store,
+static void AS_DEFAULT_PUT_ASSOC_ARRAY(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_PROCESS_ARRAY(as, DEFAULT, ASSOC, exit, key, value, store,
@@ -2219,7 +2219,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_MAP_PUT_ASSOC_ARRAY(aerospike* as, void *key, void *value, void *store,
+static void AS_MAP_PUT_ASSOC_ARRAY(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_PROCESS_ARRAY(as, MAP, ASSOC, exit, key, value, store,
@@ -2242,7 +2242,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_ARRAY(aerospike* as, void *key, void *value, void *store,
+static void AS_LIST_PUT_APPEND_ARRAY(Aerospike_object* as, void *key, void *value, void *store,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     AEROSPIKE_PROCESS_ARRAY(as, LIST, APPEND, exit, key, value, store,
@@ -2265,7 +2265,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void AS_LIST_PUT_APPEND_BYTES(aerospike* as, void* key, void *value, void *array,
+static void AS_LIST_PUT_APPEND_BYTES(Aerospike_object* as, void* key, void *value, void *array,
         void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
     as_bytes     *bytes;
@@ -2966,7 +2966,7 @@ exit:
  *******************************************************************************************************
  */
     static void
-aerospike_transform_iterate_records(aerospike* as, zval **record_pp,
+aerospike_transform_iterate_records(Aerospike_object* as, zval **record_pp,
         as_record* as_record_p,
         as_static_pool* static_pool,
         int8_t serializer_policy,
@@ -3006,7 +3006,7 @@ exit:
  *******************************************************************************************************
  */
     extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p,
+aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
         zval **record_pp,
         as_key* as_key_p,
         as_error *error_p,
@@ -3023,7 +3023,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     int                         num_of_bins = 0;
     bool                        server_support_double = false;
 
-    if ((!record_pp) || (!as_key_p) || (!error_p) || (!as_object_p)) {
+    if ((!record_pp) || (!as_key_p) || (!error_p) || (!aerospike_object_p->as_ref_p->as_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to put record");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to put record");
         goto exit;
@@ -3040,7 +3040,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
     as_record_inita(&record, num_of_bins);
     init_record = 1;
 
-    set_policy(&as_object_p->config, NULL, &write_policy, NULL, NULL, NULL, NULL, NULL,
+    set_policy(&aerospike_object_p->as_ref_p->as_p->config, NULL, &write_policy, NULL, NULL, NULL, NULL, NULL,
             &serializer_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -3054,9 +3054,9 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
         goto exit;
     }
 
-    server_support_double = aerospike_has_double (as_object_p);
+    server_support_double = aerospike_has_double (aerospike_object_p->as_ref_p->as_p);
 
-    aerospike_transform_iterate_records(as_object_p, record_pp, &record, 
+    aerospike_transform_iterate_records(aerospike_object_p, record_pp, &record, 
             &static_pool, serializer_policy, server_support_double,
             error_p TSRMLS_CC);
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -3066,7 +3066,7 @@ aerospike_transform_key_data_put(aerospike* as_object_p,
 
     record.gen = gen_value;
     record.ttl = ttl_u32;
-    aerospike_key_put(as_object_p, error_p, &write_policy, as_key_p, &record);
+    aerospike_key_put(aerospike_object_p->as_ref_p->as_p, error_p, &write_policy, as_key_p, &record);
 
 exit:
     /* clean up the as_* objects that were initialised */
@@ -3098,7 +3098,7 @@ exit:
  *******************************************************************************************************
  */
     extern as_status
-aerospike_transform_filter_bins_exists(aerospike *as_object_p,
+aerospike_transform_filter_bins_exists(Aerospike_object *as_object_p,
         HashTable *bins_array_p,
         as_record **get_record_p,
         as_error *error_p,
@@ -3125,7 +3125,7 @@ aerospike_transform_filter_bins_exists(aerospike *as_object_p,
 
     select[bins_count] = NULL;
     if (AEROSPIKE_OK != (status =
-                aerospike_key_select(as_object_p, error_p, read_policy_p,
+                aerospike_key_select(as_object_p->as_ref_p->as_p, error_p, read_policy_p,
                     get_rec_key_p, select, get_record_p))) {
         goto exit;
     }
@@ -3645,7 +3645,7 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 
     if (bins_p != NULL) {
         if (AEROSPIKE_OK != (status =
-                    aerospike_transform_filter_bins_exists(as_object_p,
+                    aerospike_transform_filter_bins_exists(aerospike_obj_p,
                         Z_ARRVAL_P(bins_p), &get_record, error_p,
                         get_rec_key_p, &read_policy))) {
             goto exit;

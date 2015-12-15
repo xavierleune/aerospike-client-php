@@ -125,7 +125,7 @@ exit:
  ******************************************************************************************************
  */
 extern as_status
-aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
+aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
         char* module_p, char* function_p, zval** args_pp, char* namespace_p,
         char* set_p, zval* scan_id_p, zval* options_p, bool block,
         int8_t* serializer_policy_p TSRMLS_DC)
@@ -165,7 +165,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
     scan_p = &scan;
     as_scan_init(scan_p, namespace_p, set_p);
 
-    set_policy_scan(&as_object_p->config, &scan_policy, &serializer_policy, scan_p,
+    set_policy_scan(&as_object_p->as_ref_p->as_p->config, &scan_policy, &serializer_policy, scan_p,
             options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
@@ -181,14 +181,14 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p,
+    if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p->as_ref_p->as_p,
             error_p, &scan_policy, scan_p, &scan_id))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 
     if (block) {
-        set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+        set_policy(&as_object_p->as_ref_p->as_p->config, NULL, NULL, NULL, NULL, &info_policy,
                 NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 
         if (AEROSPIKE_OK != (error_p->code)) {
@@ -196,7 +196,7 @@ aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
             goto exit;
         }
 
-        if (AEROSPIKE_OK != aerospike_scan_wait(as_object_p,
+        if (AEROSPIKE_OK != aerospike_scan_wait(as_object_p->as_ref_p->as_p,
                 error_p, &info_policy, scan_id, 0)) {
             DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;

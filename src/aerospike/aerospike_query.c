@@ -421,7 +421,7 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
         as_arraylist_init(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)), 0);
         args_list_p = &args_list;
-        AS_LIST_PUT(as_object_p->as_ref_p->as_p, NULL, args_pp, &args_list, &udf_pool,
+        AS_LIST_PUT(as_object_p, NULL, args_pp, &args_list, &udf_pool,
                 serializer_policy, error_p TSRMLS_CC);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");

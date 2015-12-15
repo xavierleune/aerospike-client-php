@@ -234,7 +234,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         as_arraylist_inita(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
-        AS_LIST_PUT(aerospike_obj_p->as_ref_p->as_p, NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
+        AS_LIST_PUT(aerospike_obj_p, NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
     }
 
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,

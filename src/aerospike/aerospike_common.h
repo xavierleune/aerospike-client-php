@@ -209,6 +209,8 @@ typedef struct Aerospike_object {
     aerospike_ref *as_ref_p;
     u_int16_t is_conn_16;
     int8_t serializer_opt;
+    bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported 
+                                or not */
 #ifdef ZTS
     void ***ts;
 #endif
@@ -482,7 +484,7 @@ do {                                                                            
  *******************************************************************************************************
  */
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);
-extern bool AS_AGGREGATE_GET(aerospike* as, const char *key, const as_val *value, void *array);
+extern bool AS_AGGREGATE_GET(Aerospike_object* as, const char *key, const as_val *value, void *array);
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
@@ -493,7 +495,7 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
         void* config_p);
 
 extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p,
+aerospike_transform_key_data_put(Aerospike_object* as_object_p,
                                  zval **record_pp,
                                  as_key* as_key_p,
                                  as_error *error_p,
@@ -518,7 +520,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
         as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
 
-extern void AS_LIST_PUT(aerospike* as, void *key, void *value, void *store, void *static_pool,
+extern void AS_LIST_PUT(Aerospike_object* as, void *key, void *value, void *store, void *static_pool,
         int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 /*
  *******************************************************************************************************
@@ -658,7 +660,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
         HashTable* bins_ht_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
 
 extern as_status
-aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
+aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char* namespace_p,
         char* set_p, zval* scan_id_p, zval *options_p, bool block, int8_t* serializer_policy_p TSRMLS_DC);
 

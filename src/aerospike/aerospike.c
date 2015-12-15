@@ -596,6 +596,13 @@ PHP_METHOD(Aerospike, __construct)
     /* connection is established, set the connection flag now */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 
+    /* Checking if the GeoJSON feature is supported for this given cluster. */
+    if (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
+        aerospike_obj_p->hasGeoJSON = true;
+    } else {
+        aerospike_obj_p->hasGeoJSON = false;
+    }
+
     DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object");
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -893,7 +900,7 @@ PHP_METHOD(Aerospike, put)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p->as_ref_p->as_p,
+    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p,
                     &record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
@@ -2570,7 +2577,7 @@ PHP_METHOD(Aerospike, scanApply)
     zval_dtor(scan_id_p);
     ZVAL_LONG(scan_id_p, 0);
     if (AEROSPIKE_OK !=
-            (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_scan_run_background(aerospike_obj_p,
                                                     &error, module_p, function_name_p,
                                                     &args_p, namespace_p, set_p,
                                                     scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {

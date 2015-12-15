@@ -380,7 +380,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                             dup = zend_get_object_classname(*((zval**)each_operation),
                                     &name, &name_len TSRMLS_DC);
                             if((!strcmp(name, GEOJSONCLASS)) 
-                                    && (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p))
+                                    && (aerospike_obj_p->has_geo)
                                     && op == AS_OPERATOR_WRITE) {
                                 int result;
                                 zval* retval = NULL, fname;
