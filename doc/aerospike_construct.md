@@ -31,6 +31,8 @@ cluster and manage its connections to them.
   - *port*
 - *user*
 - *pass*
+- *max_threads*
+- *thread_pool_size*
 - *shm*
   - *shm_key* Shared memory identifier
   - *shm_max_nodes* Shared memory maximum number of namespaces allowed

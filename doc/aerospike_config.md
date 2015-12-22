@@ -12,6 +12,8 @@ The following configuration options in php.ini
 | aerospike.serializer | php |
 | aerospike.udf.lua_system_path | /opt/aerospike/lua |
 | aerospike.udf.lua_user_path | /opt/aerospike/usr-lua |
+| aerospike.max_threads | 300 |
+| aerospike.thread_pool_size | 16 |
 | aerospike.shm.use | false |
 | aerospike.shm.max_nodes | 16 |
 | aerospike.shm.max_namespaces | 8 |
@@ -40,6 +42,12 @@ Here is a description of the configuration directives:
 
 **aerospike.udf.lua_user_path string**
     Path to the user-defined Lua function modules
+
+**aerospike.udf.max_threads integer**
+    Size of the synchronous connection pool for each server node
+
+**aerospike.udf.thread_pool_size integer**
+    Number of threads stored in underlying thread pool that is used in batch/scan/query commands
 
 **aerospike.shm.use boolean**
     Indicates if shared memory should be used for cluster tending. Recommended for multi-process cases such as FPM. One of { true, false }

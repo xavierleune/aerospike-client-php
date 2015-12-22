@@ -54,6 +54,8 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int key_gen;
     zend_bool shm_use;
     zend_bool use_batch_direct;
+    int max_threads;
+    int thread_pool_size;
     int shm_max_nodes;
     int shm_max_namespaces;
     int shm_takeover_threshold_sec;

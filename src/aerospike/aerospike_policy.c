@@ -1103,6 +1103,12 @@ set_config_policies(as_config *as_config_p,
                         goto exit;
                     }
                     as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_PP(options_value);
+                    break;
+                default:
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                            "Unable to set policy: Invalid Policy Constant Key");
+                    goto exit;
             }
         }
     }

@@ -2527,6 +2527,24 @@ aerospike_transform_config_callback(HashTable* ht_p,
                 DEBUG_PHP_EXT_DEBUG("Skipping password as zval config is to be transformed into host_lookup");
                 status = AEROSPIKE_OK;
             }
+    } else if (PHP_IS_LONG(key_data_type_u32) &&
+            PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_MAX_THREADS,
+                PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN, key_p, key_len_u32 -1)) {
+        if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
+            (((transform_zval_config_into *) data_p)->transform_result).as_config_p->max_threads = Z_LVAL_PP(value_pp);
+        } else {
+            DEBUG_PHP_EXT_DEBUG("Skipping max_threads as zval config is to be transformed into host_lookup");
+            status = AEROSPIKE_OK;
+        }
+    } else if (PHP_IS_LONG(key_data_type_u32) &&
+            PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE,
+                PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE_LEN, key_p, key_len_u32 -1)) {
+        if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
+            (((transform_zval_config_into *) data_p)->transform_result).as_config_p->thread_pool_size = Z_LVAL_PP(value_pp);
+        } else {
+            DEBUG_PHP_EXT_DEBUG("Skipping thread_pool_size as zval config is to be transformed into host_lookup");
+            status = AEROSPIKE_OK;
+        }
     } else if (PHP_IS_ARRAY(key_data_type_u32) &&
         PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_SHM,
             PHP_AS_KEY_DEFINE_FOR_SHM_LEN, key_p, key_len_u32 - 1)) {

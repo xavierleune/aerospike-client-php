@@ -72,6 +72,15 @@
 
 /*
  *******************************************************************************************************
+ * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR MAX_THREADS AND THREAD_POOL_SIZE IF
+ * SPECIFIED, ELSE RETURN DEFAULTS.
+ *******************************************************************************************************
+ */
+#define MAX_THREADS_PHP_INI INI_STR("aerospike.max_threads") ? (uint32_t) atoi(INI_STR("aerospike.max_threads")) : 0
+#define THREAD_POOL_SIZE_PHP_INI INI_STR("aerospike.thread_pool_size") ? (uint32_t) atoi(INI_STR("aerospike.thread_pool_size")) : 0
+
+/*
+ *******************************************************************************************************
  * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR SHM CONFIGURATION IF
  * SPECIFIED, ELSE RETURN DEFAULTS.
  *******************************************************************************************************
@@ -136,6 +145,10 @@
 #define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN               8
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                       "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN                   4
+#define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS                   "max_threads"
+#define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN               11
+#define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE              "thread_pool_size"
+#define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE_LEN          16
 #define PHP_AS_KEY_DEFINE_FOR_SHM                           "shm"
 #define PHP_AS_KEY_DEFINE_FOR_SHM_LEN                       3
 #define PHP_AS_KEY_DEFINE_FOR_SHM_KEY                       "shm_key"
