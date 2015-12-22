@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex - Invalid namespace
+addIndex() and dropIndex() - Invalid namespace
 
 --FILE--
 <?php

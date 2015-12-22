@@ -91,6 +91,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.shm.key", "0xA5000000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_key, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
@@ -132,6 +133,17 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
     }
 }
 
+/* Shared memory key persistent list destruction */
+static void shm_key_hashtable_dtor(void *hashtable_element)
+{
+    TSRMLS_FETCH();
+    DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
+    struct set_get_data *shm_key_ptr = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+    if (shm_key_ptr) {
+        pefree(shm_key_ptr, 1);
+    }
+}
+
 /* Triggered at the beginning of a thread */
 static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
 {
@@ -144,6 +156,14 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
         AEROSPIKE_G(persistent_ref_count) = 1;
     } else {
         AEROSPIKE_G(persistent_ref_count)++;
+    }
+
+    if ((!(AEROSPIKE_G(shm_key_list_g))) || (AEROSPIKE_G(shm_key_ref_count) < 1)) {
+        AEROSPIKE_G(shm_key_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
+        zend_hash_init(AEROSPIKE_G(shm_key_list_g), 1000, NULL, &shm_key_hashtable_dtor, 1);
+        AEROSPIKE_G(shm_key_ref_count) = 1;
+    } else {
+        AEROSPIKE_G(shm_key_ref_count)++;
     }
 }
 
@@ -160,6 +180,18 @@ static void aerospike_globals_dtor(zend_aerospike_globals *globals TSRMLS_DC)
             AEROSPIKE_G(persistent_ref_count) = 0;
         } else {
             AEROSPIKE_G(persistent_ref_count)--;
+        }
+    }
+    if (globals->shm_key_list_g) {
+        if (AEROSPIKE_G(shm_key_ref_count) == 1) {
+            DEBUG_PHP_EXT_DEBUG("Shm Key Ref count is working");
+            zend_hash_clean(AEROSPIKE_G(shm_key_list_g));
+            zend_hash_destroy(AEROSPIKE_G(shm_key_list_g));
+            pefree(AEROSPIKE_G(shm_key_list_g), 1);
+            AEROSPIKE_G(shm_key_list_g) = NULL;
+            AEROSPIKE_G(shm_key_ref_count) = 0;
+        } else {
+            AEROSPIKE_G(shm_key_ref_count)--;
         }
     }
 }
@@ -289,6 +321,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, __destruct, NULL, ZEND_ACC_DTOR | ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, shm_key, NULL, ZEND_ACC_PUBLIC)
 
     /*
      ********************************************************************
@@ -345,7 +378,6 @@ static zend_function_entry Aerospike_class_functions[] =
      *  Secondary Index APIs:
      ********************************************************************
      */
-    PHP_ME(Aerospike, createIndex, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, addIndex, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, dropIndex, NULL, ZEND_ACC_PUBLIC)
 
@@ -507,8 +539,12 @@ PHP_METHOD(Aerospike, __construct)
     zend_bool              persistent_connection = true;
     char*                  ini_value = NULL;
     HashTable              *persistent_list;
+    HashTable              *shm_key_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     persistent_list =      (AEROSPIKE_G(persistent_list_g));
+    shm_key_list =         (AEROSPIKE_G(shm_key_list_g));
+
+
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -571,12 +607,13 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
     if (AEROSPIKE_OK != (status = aerospike_helper_object_from_alias_hash(aerospike_obj_p,
-                    persistent_connection, &config, persistent_list, persist TSRMLS_CC))){
+                    persistent_connection, &config, shm_key_list, persistent_list, persist TSRMLS_CC))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find object from alias");
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
         goto exit;
     }
+    aerospike_obj_p->as_ref_p->as_p->config.shm_key = config.shm_key;
     /* Connect to the cluster */
     if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
             (AEROSPIKE_OK != (status = aerospike_connect(aerospike_obj_p->as_ref_p->as_p, &error)))) {
@@ -593,6 +630,27 @@ exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto array Aerospike::shm_key( void )
+   Function which returns the shm_key which is set and returns NULL if shm is not configured */
+PHP_METHOD(Aerospike, shm_key)
+{
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
+            !(aerospike_obj_p->as_ref_p->as_p)) {
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        RETURN_NULL();
+    }
+    if (aerospike_obj_p->as_ref_p->as_p->config.use_shm &&
+            aerospike_obj_p->as_ref_p->as_p->config.shm_key) {
+        uint64_t a = (unsigned int) aerospike_obj_p->as_ref_p->as_p->config.shm_key;
+        RETURN_LONG(a);
+    } else {
+        RETURN_NULL();
+    }
 }
 /* }}} */
 
@@ -3254,81 +3312,6 @@ exit:
  *  Secondary Index APIs:
  *******************************************************************************************************
  */
-
-/* {{{ proto int Aerospike::createIndex( string ns, string set, string bin, int type, string name [, array options ] )
-   Creates a secondary index on a bin of a specified set */
-PHP_METHOD(Aerospike, createIndex)
-{
-    as_status               status = AEROSPIKE_OK;
-    as_error                error;
-    char                    *ns_p = NULL;
-    int                     ns_p_length = 0;
-    char                    *set_p = NULL;
-    int                     set_p_length = 0;
-    char                    *bin_p = NULL;
-    int                     bin_p_length = 0;
-    long                    type = -1;
-    char                    *name_p = NULL;
-    int                     name_p_length = 0;
-    zval*                   options_p = NULL;
-    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-
-    as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "createIndex: Connection not established");
-        DEBUG_PHP_EXT_ERROR("createIndex: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!sls|z",
-                &ns_p, &ns_p_length, &set_p, &set_p_length, &bin_p,
-                &bin_p_length, &type, &name_p, &name_p_length, &options_p)) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Unable to parse parameters for createIndex()");
-        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for createIndex()");
-        goto exit;
-    }
-
-    if (ns_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::createIndex() expects parameters 1,3 and 5 to be non-empty strings");
-        DEBUG_PHP_EXT_ERROR("Aerospike::createIndex() expects parameters 1,3 and 5 to be non-empty strings");
-        goto exit;
-    }
-
-    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for createIndex function not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for createIndex function not proper");
-    }
-
-    if (AEROSPIKE_OK !=
-            (status = aerospike_index_create_php(aerospike_obj_p->as_ref_p->as_p,
-                                                 &error, ns_p, set_p, bin_p, name_p,
-                                                 AS_INDEX_TYPE_DEFAULT, type,
-                                                 options_p TSRMLS_CC))) {
-        DEBUG_PHP_EXT_ERROR("createIndex() function returned an error");
-        goto exit;
-    }
-
-exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
-    RETURN_LONG(status);
-}
-/* }}} */
 
 /* {{{ proto int Aerospike::addIndex( string ns, string set, string bin, string name,
  * int index_type, int data_type [, array options ] )

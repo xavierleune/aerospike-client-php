@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex- correct arguments for string index
+addIndex() and dropIndex()- correct arguments for string index
 
 --FILE--
 <?php

@@ -92,7 +92,7 @@ echo colorize("Add an element to the record's LList bin ≻", 'black', true);
 $start = __LINE__;
 $date = new DateTime();
 $date->setDate(2014, 6, 18);
-$rental_event = array('key' => 0, 'clientid' => 100100123, 'date' => $date->getTimestamp());
+$rental_event = array('key' => 0, 'clientid' => 100100123, 'a' => 1, 'date' => $date->getTimestamp());
 $status = $rental_history->add($rental_event);
 if ($status === Aerospike::OK) {
     echo success();
@@ -133,14 +133,36 @@ if ($status === Aerospike::OK) {
 }
 if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
 
+echo colorize("Show the LList element with 'key' 0 ≻", 'black', true);
+$start = __LINE__;
+$status = $rental_history->find(array('key' => 0), $elements);
+if ($status === Aerospike::OK) {
+    echo success();
+    var_dump($elements);
+} else {
+    echo standard_fail($rental_history);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
 echo colorize("Update the LList element with 'key' 0 ≻", 'black', true);
 $start = __LINE__;
 $date = new DateTime();
 $date->setDate(2013, 7, 12);
-$rental_event = array('key' => 0, 'clientid' => 100100123, 'date' => $date->getTimestamp());
+$rental_event = array('key' => 0, 'clientid' => 100100123, 'z'=>26, 'date' => $date->getTimestamp());
 $status = $rental_history->update($rental_event);
 if ($status === Aerospike::OK) {
     echo success();
+} else {
+    echo standard_fail($rental_history);
+}
+if (isset($args['a']) || isset($args['annotate'])) display_code(__FILE__, $start, __LINE__);
+
+echo colorize("Show the LList element with 'key' 0 after it was updated ≻", 'black', true);
+$start = __LINE__;
+$status = $rental_history->find(array('key' => 0), $elements);
+if ($status === Aerospike::OK) {
+    echo success();
+    var_dump($elements);
 } else {
     echo standard_fail($rental_history);
 }

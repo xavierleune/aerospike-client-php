@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex - Invalid set
+addIndex() and dropIndex() - Invalid set
 
 --FILE--
 <?php
