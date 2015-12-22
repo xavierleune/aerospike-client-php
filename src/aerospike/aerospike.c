@@ -378,7 +378,6 @@ static zend_function_entry Aerospike_class_functions[] =
      *  Secondary Index APIs:
      ********************************************************************
      */
-    PHP_ME(Aerospike, createIndex, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, addIndex, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, dropIndex, NULL, ZEND_ACC_PUBLIC)
 
@@ -3114,81 +3113,6 @@ exit:
  *  Secondary Index APIs:
  *******************************************************************************************************
  */
-
-/* {{{ proto int Aerospike::createIndex( string ns, string set, string bin, int type, string name [, array options ] )
-   Creates a secondary index on a bin of a specified set */
-PHP_METHOD(Aerospike, createIndex)
-{
-    as_status               status = AEROSPIKE_OK;
-    as_error                error;
-    char                    *ns_p = NULL;
-    int                     ns_p_length = 0;
-    char                    *set_p = NULL;
-    int                     set_p_length = 0;
-    char                    *bin_p = NULL;
-    int                     bin_p_length = 0;
-    long                    type = -1;
-    char                    *name_p = NULL;
-    int                     name_p_length = 0;
-    zval*                   options_p = NULL;
-    Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-
-    as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "createIndex: Connection not established");
-        DEBUG_PHP_EXT_ERROR("createIndex: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!sls|z",
-                &ns_p, &ns_p_length, &set_p, &set_p_length, &bin_p,
-                &bin_p_length, &type, &name_p, &name_p_length, &options_p)) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Unable to parse parameters for createIndex()");
-        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for createIndex()");
-        goto exit;
-    }
-
-    if (ns_p_length == 0 || bin_p_length == 0 || name_p_length == 0) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Aerospike::createIndex() expects parameters 1,3 and 5 to be non-empty strings");
-        DEBUG_PHP_EXT_ERROR("Aerospike::createIndex() expects parameters 1,3 and 5 to be non-empty strings");
-        goto exit;
-    }
-
-    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
-                "Input parameters (type) for createIndex function not proper");
-        DEBUG_PHP_EXT_ERROR("Input parameters (type) for createIndex function not proper");
-    }
-
-    if (AEROSPIKE_OK !=
-            (status = aerospike_index_create_php(aerospike_obj_p->as_ref_p->as_p,
-                                                 &error, ns_p, set_p, bin_p, name_p,
-                                                 AS_INDEX_TYPE_DEFAULT, type,
-                                                 options_p TSRMLS_CC))) {
-        DEBUG_PHP_EXT_ERROR("createIndex() function returned an error");
-        goto exit;
-    }
-
-exit:
-    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
-    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
-    RETURN_LONG(status);
-}
-/* }}} */
 
 /* {{{ proto int Aerospike::addIndex( string ns, string set, string bin, string name,
  * int index_type, int data_type [, array options ] )

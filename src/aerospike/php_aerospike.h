@@ -27,7 +27,7 @@
 
 #ifndef PHP_AEROSPIKE_H
 #define PHP_AEROSPIKE_H 1
-#define PHP_AEROSPIKE_VERSION "3.4.5"
+#define PHP_AEROSPIKE_VERSION "3.4.6"
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 #ifdef ZTS
 #include "TSRM.h"
@@ -144,7 +144,6 @@ PHP_METHOD(Aerospike, setLogHandler);
  * Secondary Index APIs:
  */
 
-PHP_METHOD(Aerospike, createIndex);
 PHP_METHOD(Aerospike, addIndex);
 PHP_METHOD(Aerospike, dropIndex);
 
