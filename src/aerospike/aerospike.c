@@ -2557,7 +2557,7 @@ PHP_METHOD(Aerospike, queryApply)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERROR(&error, AEROSPIKE_ERR_CLUSTER,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
                 "queryApply: Connection not established");
         DEBUG_PHP_EXT_ERROR("queryApply : Connection not established");
         goto exit;
@@ -2870,7 +2870,7 @@ PHP_METHOD(Aerospike, jobInfo)
     if (((options_p) && (PHP_TYPE_ISNOTARR(options_p)) &&
                 (PHP_TYPE_ISNOTNULL(options_p)))) {
         status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SER_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
                 "input parameters (type) for jobInfo function are not proper");
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for jobInfo function are not proper");
         goto exit;

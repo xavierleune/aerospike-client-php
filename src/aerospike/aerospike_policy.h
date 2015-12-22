@@ -165,6 +165,12 @@ set_policy_udf_apply(as_config* as_config_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 
+extern void
+set_policy_query_apply(as_config *as_config_p,
+        as_policy_write *write_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
 extern as_status
 declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC);
 #endif /* end of __AEROSPIKE_POLICY_H__ */
