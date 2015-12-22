@@ -394,7 +394,9 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, aggregate, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scan, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanApply, arginfo_sixth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, queryApply, arginfo_seventh_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, scanInfo, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, jobInfo, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
 
     /*
      ********************************************************************
@@ -917,7 +919,7 @@ PHP_METHOD(Aerospike, put)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "aa|la", &key_record_p, &record_p, &ttl_u32, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|la", &key_record_p, &record_p, &ttl_u32, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for put");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for put");
@@ -2519,6 +2521,126 @@ exit:
 }
 /* }}} */
 
+/* {{{ proto in Aerospike::queryApply( string ns, string set, array where,
+ * string module, string function, array args, int &job_id [, array options ] )
+ * Applies a record UDF to each record of a set using a background query */
+PHP_METHOD(Aerospike, queryApply)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    char*                  module_p = NULL;
+    char*                  function_name_p = NULL;
+    char*                  namespace_p = NULL;
+    char*                  set_p = NULL;
+    zval*                  module_zval_p = NULL;
+    zval*                  function_zval_p = NULL;
+    zval*                  namespace_zval_p = NULL;
+    zval*                  set_zval_p = NULL;
+    zval*                  job_id_p = NULL;
+    zval*                  predicate_p = NULL;
+    long                   module_len = 0;
+    long                   function_len = 0;
+    long                   namespace_len = 0;
+    long                   set_len = 0;
+    HashTable*             predicate_ht_p = NULL;
+    zval*                  args_p = NULL;
+    zval*                  options_p = NULL;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "queryApply: Connection not established");
+        DEBUG_PHP_EXT_ERROR("queryApply : Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+                "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
+                &module_zval_p, &function_zval_p, &args_p, &job_id_p,
+                &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for queryApply()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for queryApply()");
+        goto exit;
+    }
+
+    if (((args_p) && (PHP_TYPE_ISNOTARR(args_p)) &&
+                (PHP_TYPE_ISNOTNULL(args_p))) || ((options_p) &&
+                    (PHP_TYPE_ISNOTARR(options_p)) &&
+                    (PHP_TYPE_ISNOTNULL(options_p))) ||
+            (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(function_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(namespace_zval_p)) ||
+            (PHP_TYPE_ISNOTSTR(set_zval_p)) ||
+            (PHP_TYPE_ISNOTARR(predicate_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "input parameters (type) for queryApply function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for queryApply function are not proper");
+        goto exit;
+    }
+
+    if (args_p && PHP_TYPE_ISNULL(args_p)) {
+        args_p = NULL;
+    }
+    
+    if (options_p && PHP_TYPE_ISNULL(options_p)) {
+        options_p = NULL;
+    }
+    module_p = Z_STRVAL_P(module_zval_p);
+    function_name_p = Z_STRVAL_P(function_zval_p);
+    namespace_p = Z_STRVAL_P(namespace_zval_p);
+    set_p = Z_STRVAL_P(set_zval_p);
+
+    module_len = Z_STRLEN_P(module_zval_p);
+    function_len = Z_STRLEN_P(function_zval_p);
+    namespace_len = Z_STRLEN_P(namespace_zval_p);
+    set_len = Z_STRLEN_P(set_zval_p);
+
+    if (module_len == 0 || function_len == 0 || namespace_len == 0 || set_len == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Expects parameter 1,2,4 and 5 to be non-empty strings");
+        goto exit;
+    }
+
+    if ((options_p) && (PHP_TYPE_ISNOTARR(options_p))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Input parameters (type) for queryApply function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for queryApply function not proper");
+    }
+
+    predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
+
+    zval_dtor(job_id_p);
+    ZVAL_LONG(job_id_p, 0);
+    if (AEROSPIKE_OK != 
+            (status = aerospike_query_run_background(aerospike_obj_p->as_ref_p->as_p,
+                                                     &error, module_p, function_name_p,
+                                                     &args_p, namespace_p, set_p,
+                                                     predicate_ht_p,
+                                                     job_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("queryApply returned an error");
+        goto exit;
+    }
+
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+
 /* {{{ proto int Aerospike::scanApply( string ns, string set, string module, string function, array args, int &scan_id [, array options ] )
    Applies a record UDF to each record of a set using a background scan  */
 PHP_METHOD(Aerospike, scanApply)
@@ -2697,6 +2819,83 @@ exit:
     RETURN_LONG(status);
 }
 /* }}} */
+
+/* {{{ proto int Aerospike::jobInfo ( int job_id, string module, array &info [, array $options
+ * ])
+ * Gets the status of a background job triggered by queryApply() */
+PHP_METHOD(Aerospike, jobInfo)
+{
+    as_status           status = AEROSPIKE_OK;
+    as_error            error;
+    char*               module_p = NULL;
+    int                 module_len = -1;
+    long                job_id = -1;
+    zval*               job_info_p = NULL;
+    zval*               options_p = NULL;
+    Aerospike_object*   aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
+                "jobInfo: Connection not established");
+        DEBUG_PHP_EXT_ERROR("jobInfo: Connection not established");
+        goto exit;
+    }
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz|z",
+                &job_id, &module_p, &module_len, &job_info_p, &options_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Unable to parse parameters for jobInfo()");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the parameters for jobInfo()");
+        goto exit;
+    }
+
+    if ((!strcmp(module_p, "query")) && (!strcmp(module_p,"scan"))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "Wrong JOB specified");
+        DEBUG_PHP_EXT_ERROR("Wrong JOB specified");
+        goto exit;
+    }
+
+    if (((options_p) && (PHP_TYPE_ISNOTARR(options_p)) &&
+                (PHP_TYPE_ISNOTNULL(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
+                "input parameters (type) for jobInfo function are not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for jobInfo function are not proper");
+        goto exit;
+    }
+
+    if (options_p && PHP_TYPE_ISNULL(options_p)) {
+        options_p = NULL;
+    }
+
+    zval_dtor(job_info_p);
+    array_init(job_info_p);
+
+    if (AEROSPIKE_OK != 
+            (status = aerospike_job_get_info(aerospike_obj_p->as_ref_p->as_p,
+                                             &error, job_id, job_info_p,
+                                             module_p,
+                                             options_p TSRMLS_CC))) {
+        DEBUG_PHP_EXT_ERROR("jobInfo returned as error");
+        goto exit;
+    }
+exit:
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
 
 /*
  *******************************************************************************************************

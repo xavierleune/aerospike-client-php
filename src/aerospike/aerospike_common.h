@@ -677,11 +677,20 @@ extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
         uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC);
 
+extern as_status
+aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
+        uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC);
 /*
  ******************************************************************************************************
  * Extern declarations of query functions.
  ******************************************************************************************************
  */
+extern as_status
+aerospike_query_run_background(aerospike* as_object_p, as_error* error_p,
+        char *module_p, char *function_p, zval** args_pp, char *namespace_p,
+        char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p, 
+        bool block, int8_t *serializer_policy_p TSRMLS_DC);
+
 extern as_status
 aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
