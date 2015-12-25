@@ -23,8 +23,6 @@
         serializer_ini = SERIALIZER_NONE;                      \
     } else if (!strncmp(serializer_str, "php", 3)) {           \
         serializer_ini = SERIALIZER_PHP;                       \
-    } else if (!strncmp(serializer_str, "json", 4)) {          \
-        serializer_ini = SERIALIZER_JSON;                      \
     } else if (!strncmp(serializer_str, "user", 4)) {          \
         serializer_ini = SERIALIZER_USER;                      \
     } else {                                                   \

@@ -38,7 +38,6 @@ enum Aerospike_constants {
 enum Aerospike_serializer_values {
     SERIALIZER_NONE,
     SERIALIZER_PHP,                                     /* default handler for serializer type */
-    SERIALIZER_JSON,
     SERIALIZER_USER,
 };
 
@@ -90,7 +89,6 @@ AerospikeConstants aerospike_constants[] = {
     { AS_POLICY_EXISTS_CREATE_OR_REPLACE    ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   },
     { SERIALIZER_NONE                       ,   "SERIALIZER_NONE"                   },
     { SERIALIZER_PHP                        ,   "SERIALIZER_PHP"                    },
-    { SERIALIZER_JSON                       ,   "SERIALIZER_JSON"                   },
     { SERIALIZER_USER                       ,   "SERIALIZER_USER"                   },
     { AS_UDF_TYPE_LUA                       ,   "UDF_TYPE_LUA"                      },
     { AS_SCAN_PRIORITY_AUTO 		        ,   "SCAN_PRIORITY_AUTO" 		        },
@@ -101,7 +99,9 @@ AerospikeConstants aerospike_constants[] = {
     { AS_SCAN_STATUS_INPROGRESS 		    ,   "SCAN_STATUS_INPROGRESS" 		    },
     { AS_SCAN_STATUS_ABORTED 		        ,   "SCAN_STATUS_ABORTED" 		        },
     { AS_SCAN_STATUS_COMPLETED 		        ,   "SCAN_STATUS_COMPLETED" 		    },
-    { AS_JOB_STATUS_COMPLETED 		        ,   "JOB_STATUS_COMPLETED"   		    },
+    { AS_JOB_STATUS_UNDEF                   ,   "JOB_STATUS_UNDEF"                  },
+    { AS_JOB_STATUS_INPROGRESS              ,   "JOB_STATUS_INPROGRESS"             },
+    { AS_JOB_STATUS_COMPLETED               ,   "JOB_STATUS_COMPLETED"              },
     { AS_POLICY_KEY_DIGEST 		            ,   "POLICY_KEY_DIGEST" 		        },
     { AS_POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
     { AS_POLICY_GEN_IGNORE                  ,   "POLICY_GEN_IGNORE"                 },

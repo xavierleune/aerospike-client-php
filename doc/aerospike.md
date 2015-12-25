@@ -146,9 +146,9 @@ final class Aerospike
     const SCAN_STATUS_COMPLETED;  // scan completed successfully. deprecated.
 
     // Status values returned by jobInfo()
-    const STATUS_UNDEF;      // the job's status is undefined.
-    const STATUS_INPROGRESS; // the job is currently running.
-    const STATUS_COMPLETED;  // the job completed successfully.
+    const JOB_STATUS_UNDEF;      // the job's status is undefined.
+    const JOB_STATUS_INPROGRESS; // the job is currently running.
+    const JOB_STATUS_COMPLETED;  // the job completed successfully.
 
     // Logger
     const LOG_LEVEL_OFF  ;

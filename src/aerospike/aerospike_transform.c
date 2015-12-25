@@ -240,16 +240,6 @@ static void serialize_based_on_serializer_policy(int32_t serializer_policy,
                 smart_str_free(&buf);
             }
             break;
-        case SERIALIZER_JSON:
-                /*
-                 *   TODO:
-                 *     Handle JSON serialization after support for AS_BYTES_JSON
-                 *     is added in aerospike-client-c
-                 */
-                 DEBUG_PHP_EXT_ERROR("Unable to serialize using standard json serializer");
-                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                         "Unable to serialize using standard json serializer");
-                 goto exit;
         case SERIALIZER_USER:
             DEBUG_PHP_EXT_DEBUG("Should come here");
             if (is_user_serializer_registered) {

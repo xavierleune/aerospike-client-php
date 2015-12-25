@@ -23,7 +23,7 @@ by *job_id*, which was triggered using **Aerospike::scanApply()** or
 Associative Array:
   progress_pct => progress percentage for the job
   records_read => number of records read by the job
-  status => one of Aerospike::STATUS_*
+  status => one of Aerospike::JOB_STATUS_*
 ```
 
 **[options](aerospike.md)** including
@@ -43,31 +43,13 @@ constants.  When non-zero the **Aerospike::error()** and
 ## Examples
 
 ```php
-<?php
 
-$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
-$client = new Aerospike($config, true);
-if (!$client->isConnected()) {
-   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
-   exit(1);
-}
-
-$poll = true;
-while($poll) {
-    $status = $client->jobInfo(1, $info);
-    if ($status == Aerospike::OK) {
-        var_dump($info);
-        if ($info["status"] == Aerospike::STATUS_COMPLETED) {
-            echo "Background job is complete!";
-            $poll = false;
-        }
-    } else {
-        echo "An error occured while retrieving info of job [{$client->errorno()}] {$client->error()}\n";
-        $poll = false;
-    }
-}
-
-?>
+// after a queryApply() where $job_id was set:
+do {
+    time_nanosleep(0, 30000000); // pause 30ms
+    $status = $client->jobInfo($job_id, Aerospike::JOB_QUERY, $job_info);
+    var_dump($job_info);
+} while($job_info['status'] != Aerospike::JOB_STATUS_COMPLETED);
 ```
 
 We expect to see:
