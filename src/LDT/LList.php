@@ -44,13 +44,13 @@ class LList extends LDT
     /**
      * Constructor for the \Aerospike\LDT\LList class.
      *
-     * @param Aerospike $db
+     * @param Aerospike $client
      * @param array $key initialized with Aerospike::initKey()
      * @param string $bin name
      * @see LDT::__construct()
      */
-    public function __construct(Aerospike $db, array $key, $bin) {
-        parent::__construct($db, $key, $bin, LDT::LLIST);
+    public function __construct(Aerospike $client, array $key, $bin) {
+        parent::__construct($client, $key, $bin, LDT::LLIST);
     }
 
     /**
@@ -67,7 +67,7 @@ class LList extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $status = $this->db->apply($this->key, 'llist', 'add', array($this->bin, $value));
+        $status = $this->client->apply($this->key, 'llist', 'add', array($this->bin, $value));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -81,7 +81,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function addMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'add', array($this->bin, $values));
+        $status = $this->client->apply($this->key, 'llist', 'add', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -100,7 +100,7 @@ class LList extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $status = $this->db->apply($this->key, 'llist', 'update', array($this->bin, $value));
+        $status = $this->client->apply($this->key, 'llist', 'update', array($this->bin, $value));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -114,7 +114,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function updateMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'update', array($this->bin, $values));
+        $status = $this->client->apply($this->key, 'llist', 'update', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -134,7 +134,7 @@ class LList extends LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $status = $this->db->apply($this->key, 'llist', 'exists', array($this->bin, $value), $res);
+        $status = $this->client->apply($this->key, 'llist', 'exists', array($this->bin, $value), $res);
         $res = (bool) $res;
         $this->processStatusCode($status);
         return $this->errorno;
@@ -150,7 +150,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function existsMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'exists', array($this->bin, $values), $res);
+        $status = $this->client->apply($this->key, 'llist', 'exists', array($this->bin, $values), $res);
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -179,9 +179,9 @@ class LList extends LDT
         }
         $elements = array();
         if (!is_null($module) && !is_null($function)) {
-            $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value, $module, $function, $args), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find', array($this->bin, $value, $module, $function, $args), $elements);
         } else {
-            $status = $this->db->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find', array($this->bin, $value), $elements);
         }
         $this->processStatusCode($status);
         return $this->errorno;
@@ -209,9 +209,9 @@ class LList extends LDT
         }
         $elements = array();
         if (!is_null($module) && !is_null($function)) {
-            $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count, $module, $function, $args), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find_first', array($this->bin, $count, $module, $function, $args), $elements);
         } else {
-            $status = $this->db->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find_first', array($this->bin, $count), $elements);
         }
         $this->processStatusCode($status);
         return $this->errorno;
@@ -239,9 +239,9 @@ class LList extends LDT
         }
         $elements = array();
         if (!is_null($module) && !is_null($function)) {
-            $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count, $module, $function, $args), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find_last', array($this->bin, $count, $module, $function, $args), $elements);
         } else {
-            $status = $this->db->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find_last', array($this->bin, $count), $elements);
         }
         $this->processStatusCode($status);
         return $this->errorno;
@@ -272,9 +272,9 @@ class LList extends LDT
         }
         $elements = array();
         if (!is_null($module) && !is_null($function)) {
-            $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max, $module, $function, $args), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max, $module, $function, $args), $elements);
         } else {
-            $status = $this->db->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'find_range', array($this->bin, $min, $max), $elements);
         }
         $this->processStatusCode($status);
         return $this->errorno;
@@ -296,9 +296,9 @@ class LList extends LDT
     public function scan(&$elements, $module=null, $function=null, array $args=array()) {
         $elements = array();
         if (!is_null($module) && !is_null($function)) {
-            $status = $this->db->apply($this->key, 'llist', 'filter', array($this->bin, null, $module, $function, $args), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'filter', array($this->bin, null, $module, $function, $args), $elements);
         } else {
-            $status = $this->db->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
+            $status = $this->client->apply($this->key, 'llist', 'scan', array($this->bin), $elements);
         }
         $this->processStatusCode($status);
         return $this->errorno;
@@ -319,7 +319,7 @@ class LList extends LDT
             $this->error = self::MSG_TYPE_NOT_ATOMIC;
             return $this->errorno;
         }
-        $status = $this->db->apply($this->key, 'llist', 'remove', array($this->bin, $value));
+        $status = $this->client->apply($this->key, 'llist', 'remove', array($this->bin, $value));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -343,7 +343,7 @@ class LList extends LDT
             $this->error = self::MSG_RANGE_TYPE_INVALID;
             return $this->errorno;
         }
-        $status = $this->db->apply($this->key, 'llist', 'remove_range', array($this->bin, $min, $max));
+        $status = $this->client->apply($this->key, 'llist', 'remove_range', array($this->bin, $min, $max));
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -357,7 +357,7 @@ class LList extends LDT
      * @return int status code of the operation
      */
     public function removeMany(array $values) {
-        $status = $this->db->apply($this->key, 'llist', 'remove', array($this->bin, $values));
+        $status = $this->client->apply($this->key, 'llist', 'remove', array($this->bin, $values));
         $this->processStatusCode($status);
         return $this->errorno;
     }

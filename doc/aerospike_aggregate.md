@@ -40,12 +40,12 @@ Currently the only UDF language supported is Lua.  See the
 Array:
   bin => bin name
   op => one of Aerospike::OP_EQ, Aerospike::OP_BETWEEN
-  val => scalar integer/string for OP_EQ or array($min, $max) for OP_BETWEEN
+  val => scalar integer/string for OP_EQ or [$min, $max] for OP_BETWEEN
 ```
 *examples:*
 ```
-array("bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo")
-array("bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>array(35,50))
+["bin"=>"name", "op"=>Aerospike::OP_EQ, "val"=>"foo"]
+["bin"=>"age", "op"=>Aerospike::OP_BETWEEN, "val"=>[35,50]]
 ```
 
 **module** the name of the UDF module registered against the Aerospike DB.
@@ -114,21 +114,21 @@ end
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]]];
+$client = new Aerospike($config);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
 // assuming test.users has a bin first_name, show the first name distribution
 // for users in their twenties
 $where = Aerospike::predicateBetween("age", 20, 29);
-$status = $db->aggregate("test", "users", $where, "stream_udf", "group_count", array("first_name"), $names);
+$status = $client->aggregate("test", "users", $where, "stream_udf", "group_count", ["first_name"], $names);
 if ($status == Aerospike::OK) {
     var_dump($names);
 } else {
-    echo "An error occured while running the AGGREGATE [{$db->errorno()}] ".$db->error();
+    echo "An error occured while running the AGGREGATE [{$client->errorno()}] ".$client->error();
 }
 
 ?>

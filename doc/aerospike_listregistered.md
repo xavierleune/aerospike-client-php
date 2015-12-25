@@ -16,7 +16,7 @@ registered with the server.
 
 **modules** filled by an array of module info.
 
-**language** one of *Aerospike::UDF_TYPE_\**.  Optionally filters a subset of
+**language** one of *Aerospike::UDF\_TYPE\_\**.  Optionally filters a subset of
 modules matching the given type.
 
 **[options](aerospike.md)** including
@@ -40,18 +40,18 @@ Array of:
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$status = $db->listRegistered($modules);
+$status = $client->listRegistered($modules);
 if ($status == Aerospike::OK) {
     var_dump($modules);
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

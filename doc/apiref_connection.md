@@ -16,6 +16,11 @@ public Aerospike::__destruct ( void )
 public boolean Aerospike::isConnected ( void )
 ```
 
+### [Aerospike::shmKey](aerospike_shmkey.md)
+```
+public boolean Aerospike::shmKey ( void )
+```
+
 ### [Aerospike::close](aerospike_close.md)
 ```
 public Aerospike::close ( void )
@@ -31,16 +36,16 @@ public Aerospike::reconnect ( void )
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"192.168.1.10", "port"=>3000)));
-$db = new Aerospike($config, false);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"192.168.1.10", "port"=>3000]]];
+$client = new Aerospike($config, false);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$db->close();
-$db->reconnect();
-$db->__destruct();
+$client->close();
+$client->reconnect();
+$client->__destruct();
 
 ?>
 ```

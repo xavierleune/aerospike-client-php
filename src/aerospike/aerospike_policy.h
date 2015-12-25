@@ -2,6 +2,7 @@
 #define __AEROSPIKE_POLICY_H__
 
 #include "aerospike/as_scan.h"
+#include "aerospike/as_job.h"
 #include "aerospike/as_admin.h"
 /*
  *******************************************************************************************************
@@ -25,7 +26,7 @@ enum Aerospike_constants {
     OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
     OPT_POLICY_COMMIT_LEVEL,  /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
     OPT_TTL,                  /* set to time-to-live of the record in seconds */
-    USE_BATCH_DIRECT          /* use new batch index protocol if server supports it*/
+    USE_BATCH_DIRECT,         /* use new batch index protocol if server supports it*/
 };
 
 /*
@@ -100,6 +101,7 @@ AerospikeConstants aerospike_constants[] = {
     { AS_SCAN_STATUS_INPROGRESS 		    ,   "SCAN_STATUS_INPROGRESS" 		    },
     { AS_SCAN_STATUS_ABORTED 		        ,   "SCAN_STATUS_ABORTED" 		        },
     { AS_SCAN_STATUS_COMPLETED 		        ,   "SCAN_STATUS_COMPLETED" 		    },
+    { AS_JOB_STATUS_COMPLETED 		        ,   "JOB_STATUS_COMPLETED"   		    },
     { AS_POLICY_KEY_DIGEST 		            ,   "POLICY_KEY_DIGEST" 		        },
     { AS_POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
     { AS_POLICY_GEN_IGNORE                  ,   "POLICY_GEN_IGNORE"                 },
@@ -111,12 +113,12 @@ AerospikeConstants aerospike_constants[] = {
     { AS_POLICY_CONSISTENCY_LEVEL_ALL       ,   "POLICY_CONSISTENCY_ALL"            },
     { AS_POLICY_COMMIT_LEVEL_ALL            ,   "POLICY_COMMIT_LEVEL_ALL"           },
     { AS_POLICY_COMMIT_LEVEL_MASTER         ,   "POLICY_COMMIT_LEVEL_MASTER"        },
-	{ AS_PRIVILEGE_USER_ADMIN               ,   "PRIV_USER_ADMIN" },
-    { AS_PRIVILEGE_SYS_ADMIN                ,   "PRIV_SYS_ADMIN" },
-    { AS_PRIVILEGE_READ                     ,   "PRIV_READ"},
-    { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"},
-    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"},
-    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"}
+	{ AS_PRIVILEGE_USER_ADMIN               ,   "PRIV_USER_ADMIN"                   },
+    { AS_PRIVILEGE_SYS_ADMIN                ,   "PRIV_SYS_ADMIN"                    },
+    { AS_PRIVILEGE_READ                     ,   "PRIV_READ"                         },
+    { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"                   },
+    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"               },
+    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"                   }
 };
 /*
  *******************************************************************************************************
@@ -160,6 +162,12 @@ extern void
 set_policy_udf_apply(as_config* as_config_p,
         as_policy_apply *apply_policy_p,
         int8_t *serializer_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_query_apply(as_config *as_config_p,
+        as_policy_write *write_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 

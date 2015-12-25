@@ -36,24 +36,24 @@ public array Aerospike::predicateRange ( string $bin, int $index_type, int $min,
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
 $total = 0;
 $in_thirties = 0;
 $where = Aerospike::predicateBetween("age", 30, 39);
-$status = $db->query("test", "users", $where, function ($record) use (&$in_thirties, &$total) {
+$status = $client->query("test", "users", $where, function ($record) use (&$in_thirties, &$total) {
     echo "{$record['bins']['email']} age {$record['bins']['age']}\n";
     $total += (int) $record['bins']['age'];
     $in_thirties++;
     if ($in_thirties >= 10) return false; // stop the stream at the tenth record
-}, array("email", "age"));
+}, ["email", "age"]);
 if ($status == Aerospike::ERR_QUERY) {
-    echo "An error occured while querying[{$db->errorno()}] ".$db->error();
+    echo "An error occured while querying[{$client->errorno()}] ".$client->error();
 else if ($status == Aerospike::ERR_QUERY_ABORTED) {
     echo "Stopped the result stream after {$in_thirties} results\n";
 } else {

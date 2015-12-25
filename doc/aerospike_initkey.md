@@ -46,14 +46,14 @@ or *NULL* on failure.
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
+$key = $client->initKey("test", "users", 1234);
 var_dump($key);
 
 ?>
@@ -76,16 +76,16 @@ array(3) {
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
 $base64_encoded_digest = '7EV9CpdMSNVoWn76A9E33Iu95+M=';
 $digest = base64_decode($base64_encoded_digest);
-$key = $db->initKey("test", "users", $digest, true);
+$key = $client->initKey("test", "users", $digest, true);
 var_dump($key);
 
 ?>

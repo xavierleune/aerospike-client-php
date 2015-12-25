@@ -38,22 +38,22 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => 1234);
+$key = ["ns" => "test", "set" => "users", "key" => 1234];
 $options = array(Aerospike::OPT_TTL => 3600);
-$status = $db->removeBin($key, array("age"), $options);
+$status = $client->removeBin($key, ["age"], $options);
 if ($status == Aerospike::OK) {
     echo "Removed bin 'age' from the record.\n";
 } elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "The database has no record with the given key.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

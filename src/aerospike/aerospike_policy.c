@@ -93,6 +93,9 @@ as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
                         aerospike_constants[i].constantno TSRMLS_CC);
     }
 
+    zend_declare_class_constant_stringl (Aerospike_ce, "JOB_QUERY", strlen("JOB_QUERY"), "query", strlen("query") TSRMLS_CC);
+    zend_declare_class_constant_stringl (Aerospike_ce, "JOB_SCAN", strlen("JOB_SCAN"), "scan", strlen("scan") TSRMLS_CC);
+
 exit:
     return status;
 }
@@ -805,6 +808,32 @@ set_policy_scan(as_config *as_config_p,
             serializer_policy_p, as_scan_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the queryApply policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param write_policy_p        The as_policy_write to be passed in case of
+ *                              batch operations.
+ * @param options_p             The user's optional policy options to be used if
+ *                              set, else default.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_query_apply(as_config *as_config_p,
+        as_policy_write *write_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(as_config_p, NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+}
+
+
 /*
  *******************************************************************************************************
  * Wrapper function for setting the batch policy by using the user's
@@ -1074,6 +1103,12 @@ set_config_policies(as_config *as_config_p,
                         goto exit;
                     }
                     as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_PP(options_value);
+                    break;
+                default:
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                            "Unable to set policy: Invalid Policy Constant Key");
+                    goto exit;
             }
         }
     }

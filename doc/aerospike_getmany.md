@@ -15,7 +15,7 @@ consisting of *key*, *metadata* and *bins* (see: [get()](aerospike_get.md)).
 Non-existent records will have NULL for their *metadata* and *bins* fields.
 The bins returned can be filtered by passing an array of bin names.
 
-*Note* that the protocol getMany() will use (batch-direct or batch-index) is
+**Note** that the protocol getMany() will use (batch-direct or batch-index) is
 configurable through the config parameter Aerospike::USE\_BATCH\_DIRECT or
 `php.ini` config parameter `aerospike.use_batch_direct`. By default batch-index
 is used with servers that support it (version >= 3.6.0).
@@ -44,22 +44,22 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key1 = $db->initKey("test", "users", 1234);
-$key2 = $db->initKey("test", "users", 1235); // this key does not exist
-$key3 = $db->initKey("test", "users", 1236);
+$key1 = $client->initKey("test", "users", 1234);
+$key2 = $client->initKey("test", "users", 1235); // this key does not exist
+$key3 = $client->initKey("test", "users", 1236);
 $keys = array($key1, $key2, $key3);
-$status = $db->getMany($keys, $records);
+$status = $client->getMany($keys, $records);
 if ($status == Aerospike::OK) {
     var_dump($records);
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>
@@ -162,13 +162,13 @@ array(3) {
 // assuming this follows Example #1
 
 // Getting a filtered record
-$filter = array("email");
-$keys = array($key1, $key3);
-$status = $db->getMany($keys, $records, $filter);
+$filter = ["email"];
+$keys = [$key1, $key3];
+$status = $client->getMany($keys, $records, $filter);
 if ($status == Aerospike::OK) {
     var_dump($records);
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

@@ -16,7 +16,7 @@ The callback method must follow the signature
 ```
 public function log_handler ( int $level, string $file, string $function, int $line )
 ```
-with **level** matching one of the *Aerospike::LOG_LEVEL_\** values
+with **level** matching one of the *Aerospike::LOG\_LEVEL\_\** values
 
 ## Parameters
 
@@ -27,14 +27,14 @@ with **level** matching one of the *Aerospike::LOG_LEVEL_\** values
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
-$db->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
-$db->setLogHandler(function ($level, $file, $function, $line) {
+$client->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
+$client->setLogHandler(function ($level, $file, $function, $line) {
     switch ($level) {
         case Aerospike::LOG_LEVEL_ERROR:
             $lvl_str = 'ERROR';

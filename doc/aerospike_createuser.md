@@ -34,15 +34,16 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)),
-        "user"=>"admin", "pass"=>"admin");
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]],
+           "shm"=>[],
+           "user"=>"admin", "pass"=>"admin"];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$res = $db->createUser("john", "mypass@123", array("reader"));
+$res = $client->createUser("john", "mypass@123", array("reader"));
 if ($res == Aerospike::OK) {
     echo "User john successfully created";
 } elseif ($res == Aerospike::ROLE_VIOLATION) {
@@ -50,7 +51,7 @@ if ($res == Aerospike::OK) {
 } elseif ($res == Aerospike::USER_ALREADY_EXISTS) {
     echo "User john already exists";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

@@ -12,7 +12,7 @@ For an example of LList usage see
 
 \Aerospike\LDT\LList extends \Aerospike\LDT
 {
-    public __construct ( Aerospike $db, array $key, string $bin )
+    public __construct ( Aerospike $client, array $key, string $bin )
     public int add ( int|string|array $value )
     public int addMany ( array $values )
     public int update ( int|string|array $value )

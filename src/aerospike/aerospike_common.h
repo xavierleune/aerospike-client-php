@@ -72,14 +72,24 @@
 
 /*
  *******************************************************************************************************
+ * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR MAX_THREADS AND THREAD_POOL_SIZE IF
+ * SPECIFIED, ELSE RETURN DEFAULTS.
+ *******************************************************************************************************
+ */
+#define MAX_THREADS_PHP_INI INI_STR("aerospike.max_threads") ? (uint32_t) atoi(INI_STR("aerospike.max_threads")) : 0
+#define THREAD_POOL_SIZE_PHP_INI INI_STR("aerospike.thread_pool_size") ? (uint32_t) atoi(INI_STR("aerospike.thread_pool_size")) : 0
+
+/*
+ *******************************************************************************************************
  * MACRO TO RETRIEVE THE PHP INI ENTRIES FOR SHM CONFIGURATION IF
  * SPECIFIED, ELSE RETURN DEFAULTS.
  *******************************************************************************************************
  */
-#define SHM_USE_PHP_INI INI_BOOL("aerospike.shm.use") ? INI_BOOL("aerospike.shm.use") : false
+#define SHM_USE_PHP_INI INI_BOOL("aerospike.shm.use") ? INI_INT("aerospike.shm.use") : 0
 #define SHM_MAX_NODES_PHP_INI INI_INT("aerospike.shm.max_nodes") ? INI_INT("aerospike.shm.max_nodes") : 16
 #define SHM_MAX_NAMESPACES_PHP_INI INI_INT("aerospike.shm.max_namespaces") ? INI_INT("aerospike.shm.max_namespaces") : 8
 #define SHM_TAKEOVER_THRESHOLD_SEC_PHP_INI INI_INT("aerospike.shm.takeover_threshold_sec") ? INI_INT("aerospike.shm.takeover_threshold_sec") : 30
+#define SHM_KEY_PHP_INI INI_INT("aerospike.shm.key") ? INI_INT("aerospike.shm.key") : 0xA5000000
 
 /*
  *******************************************************************************************************
@@ -109,32 +119,42 @@
  * EXPECTED KEYS IN INPUT FROM PHP USERLAND.
  *******************************************************************************************************
  */
-#define PHP_AS_KEY_DEFINE_FOR_HOSTS                   "hosts"
-#define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN               5
-#define PHP_AS_KEY_DEFINE_FOR_USER                    "user"
-#define PHP_AS_KEY_DEFINE_FOR_USER_LEN                4
-#define PHP_AS_KEY_DEFINE_FOR_PASSWORD                "pass"
-#define PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN            4
-#define PHP_AS_KEY_DEFINE_FOR_ADDR                    "addr"
-#define PHP_AS_KEY_DEFINE_FOR_ADDR_LEN                4
-#define PHP_AS_KEY_DEFINE_FOR_PORT                    "port"
-#define PHP_AS_KEY_DEFINE_FOR_PORT_LEN                4
-#define PHP_AS_KEY_DEFINE_FOR_NS                      "ns"
-#define PHP_AS_KEY_DEFINE_FOR_NS_LEN                  2
-#define PHP_AS_KEY_DEFINE_FOR_SET                     "set"
-#define PHP_AS_KEY_DEFINE_FOR_SET_LEN                 3
-#define PHP_AS_KEY_DEFINE_FOR_KEY                     "key"
-#define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                 3
-#define PHP_AS_KEY_DEFINE_FOR_DIGEST                  "digest"
-#define PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN              6
-#define PHP_AS_RECORD_DEFINE_FOR_TTL                  "ttl"
-#define PHP_AS_RECORD_DEFINE_FOR_TTL_LEN              3
-#define PHP_AS_RECORD_DEFINE_FOR_GENERATION           "generation"
-#define PHP_AS_RECORD_DEFINE_FOR_GENERATION_LEN       10
-#define PHP_AS_RECORD_DEFINE_FOR_METADATA             "metadata"
-#define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN         8
-#define PHP_AS_RECORD_DEFINE_FOR_BINS                 "bins"
-#define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN             4
+#define PHP_AS_KEY_DEFINE_FOR_HOSTS                         "hosts"
+#define PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN                     5
+#define PHP_AS_KEY_DEFINE_FOR_USER                          "user"
+#define PHP_AS_KEY_DEFINE_FOR_USER_LEN                      4
+#define PHP_AS_KEY_DEFINE_FOR_PASSWORD                      "pass"
+#define PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN                  4
+#define PHP_AS_KEY_DEFINE_FOR_ADDR                          "addr"
+#define PHP_AS_KEY_DEFINE_FOR_ADDR_LEN                      4
+#define PHP_AS_KEY_DEFINE_FOR_PORT                          "port"
+#define PHP_AS_KEY_DEFINE_FOR_PORT_LEN                      4
+#define PHP_AS_KEY_DEFINE_FOR_NS                            "ns"
+#define PHP_AS_KEY_DEFINE_FOR_NS_LEN                        2
+#define PHP_AS_KEY_DEFINE_FOR_SET                           "set"
+#define PHP_AS_KEY_DEFINE_FOR_SET_LEN                       3
+#define PHP_AS_KEY_DEFINE_FOR_KEY                           "key"
+#define PHP_AS_KEY_DEFINE_FOR_KEY_LEN                       3
+#define PHP_AS_KEY_DEFINE_FOR_DIGEST                        "digest"
+#define PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN                    6
+#define PHP_AS_RECORD_DEFINE_FOR_TTL                        "ttl"
+#define PHP_AS_RECORD_DEFINE_FOR_TTL_LEN                    3
+#define PHP_AS_RECORD_DEFINE_FOR_GENERATION                 "generation"
+#define PHP_AS_RECORD_DEFINE_FOR_GENERATION_LEN             10
+#define PHP_AS_RECORD_DEFINE_FOR_METADATA                   "metadata"
+#define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN               8
+#define PHP_AS_RECORD_DEFINE_FOR_BINS                       "bins"
+#define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN                   4
+#define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS                   "max_threads"
+#define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN               11
+#define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE              "thread_pool_size"
+#define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE_LEN          16
+#define PHP_AS_KEY_DEFINE_FOR_SHM                           "shm"
+#define PHP_AS_KEY_DEFINE_FOR_SHM_LEN                       3
+#define PHP_AS_KEY_DEFINE_FOR_SHM_KEY                       "shm_key"
+#define PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NODES                 "shm_max_nodes"
+#define PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NAMESPACES            "shm_max_namespaces"
+#define PHP_AS_KEY_DEFINE_FOR_SHM_TAKEOVER_THRESHOLD_SEC    "shm_takeover_threshold_sec"
 
 #define INET_ADDRSTRLEN 16
 #define INET6_ADDRSTRLEN 46
@@ -323,6 +343,16 @@ typedef struct _transform_zval_config_into {
     char                                    user[AS_USER_SIZE];
     char                                    pass[AS_PASSWORD_HASH_SIZE];
 } transform_zval_config_into;
+
+/*
+ *******************************************************************************************************
+ * Structure to store shared memory key.
+ *******************************************************************************************************
+ */
+typedef struct _shared_memory_key
+{
+    int key;
+} shared_memory_key;
 
 extern bool
 aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, const char * file, uint32_t line, const char * fmt, ...);
@@ -594,8 +624,9 @@ extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         bool persist_flag,
                                         as_config* conf,
+                                        HashTable *shm_key_list,
                                         HashTable *persistent_list,
-                                        int persist TSRMLS_DC);
+                                        int val_persist TSRMLS_DC);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);
@@ -659,11 +690,20 @@ extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
         uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC);
 
+extern as_status
+aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
+        uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC);
 /*
  ******************************************************************************************************
  * Extern declarations of query functions.
  ******************************************************************************************************
  */
+extern as_status
+aerospike_query_run_background(aerospike* as_object_p, as_error* error_p,
+        char *module_p, char *function_p, zval** args_pp, char *namespace_p,
+        char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p, 
+        bool block, int8_t *serializer_policy_p TSRMLS_DC);
+
 extern as_status
 aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
         char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,

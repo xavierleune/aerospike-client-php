@@ -52,15 +52,15 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$client = new Aerospike($config);
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
 if (!$client->isConnected()) {
    echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
 $key = $client->initKey("test", "users", 1234);
-$bins = array("email" => "hey@example.com", "name" => "Hey There");
+$bins = ["email" => "hey@example.com", "name" => "Hey There"];
 // will ensure a record exists at the given key with the specified bins
 $status = $client->put($key, $bins);
 if ($status == Aerospike::OK) {
@@ -70,7 +70,7 @@ if ($status == Aerospike::OK) {
 }
 
 // Updating the record
-$bins = array("name" => "You There", "age" => 33);
+$bins = ["name" => "You There", "age" => 33];
 // will update the name bin, and create a new 'age' bin
 $status = $client->put($key, $bins);
 if ($status == Aerospike::OK) {
@@ -96,7 +96,7 @@ Record updated.
 
 // This time we expect an error due to the record already existing (assuming we
 // already ran Example #1)
-$status = $client->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE)));
+$status = $client->put($key, $bins, 0, [Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE]);
 
 if ($status == Aerospike::OK) {
     echo "Record written.\n";
@@ -123,8 +123,8 @@ The Aerospike server already has a record with the given key.
 // Get the record metadata and note its generation
 $client->exists($key, $metadata);
 $gen = $metadata['generation'];
-$gen_policy = array(Aerospike::POLICY_GEN_EQ, $gen);
-$res = $client->put($key, $bins, 0, array(Aerospike::OPT_POLICY_GEN => $gen_policy));
+$gen_policy = [Aerospike::POLICY_GEN_EQ, $gen];
+$res = $client->put($key, $bins, 0, [Aerospike::OPT_POLICY_GEN => $gen_policy]);
 
 if ($res == Aerospike::OK) {
     echo "Record written.\n";

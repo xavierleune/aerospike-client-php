@@ -32,20 +32,20 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$status = $db->dropIndex("test", "user_email_idx");
+$status = $client->dropIndex("test", "user_email_idx");
 if ($status == Aerospike::OK) {
     echo "Index user_email_idx was dropped from namespace 'test'\n";
 else if ($status == Aerospike::ERR_INDEX_NOT_FOUND) {
     echo "No such index exists.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>
