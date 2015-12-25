@@ -61,7 +61,7 @@ extension:
 
     composer require aerospike/aerospike-client-php "*"
     find vendor/aerospike/aerospike-client-php/ -name "*.sh" -exec chmod +x {} \;
-    cd vendor/aerospike/aerospike-client-php/ && composer run-script post-install-cmd
+    cd vendor/aerospike/aerospike-client-php/ && sudo composer run-script post-install-cmd
 
 ### Building Manually
 
