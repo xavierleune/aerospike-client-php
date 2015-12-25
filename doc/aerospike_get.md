@@ -53,21 +53,21 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
-$status = $db->get($key, $record);
+$key = $client->initKey("test", "users", 1234);
+$status = $client->get($key, $record);
 if ($status == Aerospike::OK) {
     var_dump($record);
 } elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>
@@ -115,13 +115,13 @@ array(3) {
 // assuming this follows Example #1
 
 // Getting a filtered record
-$filter = array("email", "manager");
+$filter = ["email", "manager"];
 unset($record);
-$status = $db->get($key, $record, $filter);
+$status = $client->get($key, $record, $filter);
 if ($status == Aerospike::OK) {
     var_dump($record);
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

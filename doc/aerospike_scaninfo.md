@@ -1,5 +1,5 @@
 
-# Aerospike::scanInfo
+# Aerospike::scanInfo (deprecated)
 
 Aerospike::scanInfo - gets the status of a background scan triggered by scanApply()
 
@@ -11,6 +11,8 @@ public int Aerospike::scanInfo ( integer $scan_id, array &$info [, array $option
 
 **Aerospike::scanInfo()** will return *information* on a background scan identified
 by *scan_id* which was triggered using **Aerospike::scanApply()**.
+
+**Deprecated** in favor of [jobInfo()](aerospike_jobinfo.md)
 
 ## Parameters
 
@@ -42,16 +44,16 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
 $poll = true;
 while($poll) {
-    $status = $db->scanInfo(1, $info);
+    $status = $client->scanInfo(1, $info);
     if ($status == Aerospike::OK) {
         var_dump($info);
         if ($info["status"] == Aerospike::SCAN_STATUS_COMPLETED) {
@@ -59,7 +61,7 @@ while($poll) {
             $poll = false;
         }
     } else {
-        echo "An error occured while retrieving info of scan [{$db->errorno()}] {$db->error()}\n";
+        echo "An error occured while retrieving info of scan [{$client->errorno()}] {$client->error()}\n";
         $poll = false;
     }
 }

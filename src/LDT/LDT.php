@@ -214,10 +214,10 @@ abstract class LDT
      */
     protected $module;
     /**
-     * The database connection class
+     * The Aerospike client instance
      * @var Aerospike
      */
-    protected $db;
+    protected $client;
     /**
      * The error message for the last operation
      * @var string
@@ -234,23 +234,23 @@ abstract class LDT
     /**
      * Constructor for the abstract \Aerospike\LDT class. Inherited by LDT types.
      *
-     * @param Aerospike $db
+     * @param Aerospike $client
      * @param array $key initialized with Aerospike::initKey()
      * @param string $bin name
      * @param int $type of the LDT
      * @see errorno()
      * @see error()
      */
-    protected function __construct(Aerospike $db, array $key, $bin, $type) {
+    protected function __construct(Aerospike $client, array $key, $bin, $type) {
         $this->key = $key;
         $this->bin = $bin;
         $this->type = $type;
         $this->module = $this->getModuleName();
-        $this->db = $db;
-        if (!$db->isConnected()) {
-            if ($db->errorno() !== Aerospike::OK) {
-                $this->errorno = $db->errorno();
-                $this->error = $db->error();
+        $this->client = $client;
+        if (!$client->isConnected()) {
+            if ($client->errorno() !== Aerospike::OK) {
+                $this->errorno = $client->errorno();
+                $this->error = $client->error();
             } else {
                 $this->errorno = Aerospike::ERR_CLUSTER;
                 $this->error = "Aerospike object could not successfully connect to the cluster";
@@ -286,7 +286,7 @@ abstract class LDT
      * @return boolean
      */
     public function isLDT() {
-        $status = $this->db->apply($this->key, $this->module, 'ldt_exists', array($this->bin), $returned);
+        $status = $this->client->apply($this->key, $this->module, 'ldt_exists', array($this->bin), $returned);
         $this->processStatusCode($status);
         if ($status !== Aerospike::OK) {
             return false;
@@ -301,7 +301,7 @@ abstract class LDT
      * @return boolean
      */
     public function isValid() {
-        $status = $this->db->apply($this->key, $this->module, 'ldt_validate', array($this->bin), $returned);
+        $status = $this->client->apply($this->key, $this->module, 'ldt_validate', array($this->bin), $returned);
         $this->processStatusCode($status);
         if ($status !== Aerospike::OK) {
             return false;
@@ -317,7 +317,7 @@ abstract class LDT
      * @return int status code of the operation
      */
     public function size(&$num_elements) {
-        $status = $this->db->apply($this->key, $this->module, 'size', array($this->bin), $num_elements);
+        $status = $this->client->apply($this->key, $this->module, 'size', array($this->bin), $num_elements);
         $this->processStatusCode($status);
         return $status;
     }
@@ -330,7 +330,7 @@ abstract class LDT
      */
     public function config(&$config) {
         $config = array();
-        $status = $this->db->apply($this->key, 'llist', 'config', array($this->bin), $config);
+        $status = $this->client->apply($this->key, 'llist', 'config', array($this->bin), $config);
         $this->processStatusCode($status);
         return $this->errorno;
     }
@@ -348,7 +348,7 @@ abstract class LDT
             $this->error = self::MSG_TYPE_NOT_SUPPORTED;
             return $this->errorno;
         }
-        $status = $this->db->apply($this->key, $this->module, 'setPageSize', array($this->bin, $size));
+        $status = $this->client->apply($this->key, $this->module, 'setPageSize', array($this->bin, $size));
         $this->processStatusCode($status);
         return $status;
     }
@@ -359,7 +359,7 @@ abstract class LDT
      * @return int status code of the operation
      */
     public function destroy() {
-        $status = $this->db->apply($this->key, $this->module, 'destroy', array($this->bin));
+        $status = $this->client->apply($this->key, $this->module, 'destroy', array($this->bin));
         $this->processStatusCode($status);
         return $status;
     }
@@ -377,16 +377,16 @@ abstract class LDT
         }
         if ($status === Aerospike::ERR_UDF) {
             // parse the secondary error code embedded in the error message
-            $rhs = strrpos($this->db->error(), ':LDT');
-            $lhs = strrpos($this->db->error(), ': ');
+            $rhs = strrpos($this->client->error(), ':LDT');
+            $lhs = strrpos($this->client->error(), ': ');
             if ($rhs !== false && $lhs !== false) {
-                $this->errorno = (int) ltrim(substr($this->db->error(), $lhs + 2, ($rhs - ($lhs + 2))), "\x30");
-                $this->error = substr($this->db->error(), $rhs + 1);
+                $this->errorno = (int) ltrim(substr($this->client->error(), $lhs + 2, ($rhs - ($lhs + 2))), "\x30");
+                $this->error = substr($this->client->error(), $rhs + 1);
                 return true;
             }
         }
-        $this->error = $this->db->error();
-        $this->errorno = $this->db->errorno();
+        $this->error = $this->client->error();
+        $this->errorno = $this->client->errorno();
     }
 
     /**

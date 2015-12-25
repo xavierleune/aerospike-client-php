@@ -323,7 +323,7 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, __construct, NULL, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, __destruct, NULL, ZEND_ACC_DTOR | ZEND_ACC_PUBLIC)
-    PHP_ME(Aerospike, shm_key, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, shmKey, NULL, ZEND_ACC_PUBLIC)
 
     /*
      ********************************************************************
@@ -639,7 +639,7 @@ exit:
 
 /* {{{ proto array Aerospike::shm_key( void )
    Function which returns the shm_key which is set and returns NULL if shm is not configured */
-PHP_METHOD(Aerospike, shm_key)
+PHP_METHOD(Aerospike, shmKey)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 

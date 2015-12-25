@@ -376,7 +376,7 @@ class Connection extends AerospikeTestCommon
         if ($db->errorno() != Aerospike::OK) {
             return Aerospike::ERR_CLIENT;
         }
-        $shared_memory_key = $db->shm_key();
+        $shared_memory_key = $db->shmKey();
         if ($shared_memory_key == NULL) {
             return Aerospike::OK;
         }
@@ -408,7 +408,7 @@ class Connection extends AerospikeTestCommon
         if ($db->errorno() != Aerospike::OK) {
             return Aerospike::ERR_CLIENT;
         }
-        $shared_memory_key = $db->shm_key();
+        $shared_memory_key = $db->shmKey();
         if ($shared_memory_key == 123) {
             return Aerospike::OK;
         }
@@ -440,7 +440,7 @@ class Connection extends AerospikeTestCommon
         if ($db->errorno() != Aerospike::OK) {
             return Aerospike::ERR_CLIENT;
         }
-        $shared_memory_key = $db->shm_key();
+        $shared_memory_key = $db->shmKey();
         if ($shared_memory_key == 2768240641) {
             return Aerospike::OK;
         }
@@ -472,7 +472,7 @@ class Connection extends AerospikeTestCommon
         if ($db->errorno() != Aerospike::OK) {
             return Aerospike::ERR_CLIENT;
         }
-        $shared_memory_key = $db->shm_key();
+        $shared_memory_key = $db->shmKey();
         if ($shared_memory_key == 2768240641) {
             return Aerospike::OK;
         }

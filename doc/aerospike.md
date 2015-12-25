@@ -1,10 +1,5 @@
 
 # The Aerospike class
-The Aerospike PHP client API may be described as follows:
-
-## Introduction
-
-The main Aerospike class
 
 ```php
 
@@ -15,7 +10,7 @@ final class Aerospike
     const POLICY_KEY_SEND;   // also send, store, and get the actual (ns,set,key) with each record
 
     // The generation policy can be set using OPT_POLICY_GEN to one of
-    const POLICY_GEN_IGNORE; // write a record, regardless of generation
+    const POLICY_GEN_IGNORE; // write a record, regardless of generation (default)
     const POLICY_GEN_EQ;     // write a record, ONLY if given value is equal to the current record generation
     const POLICY_GEN_GT;     // write a record, ONLY if given value is greater-than the current record generation
 
@@ -27,7 +22,7 @@ final class Aerospike
     // behaving similar to an array in PHP. Setting
     // OPT_POLICY_EXISTS with one of these values will overwrite this.
     // POLICY_EXISTS_IGNORE (aka CREATE_OR_UPDATE) is the default value
-    const POLICY_EXISTS_IGNORE;            // interleave bins of a record if it exists
+    const POLICY_EXISTS_IGNORE;            // interleave bins of a record if it exists (default)
     const POLICY_EXISTS_CREATE;            // create a record ONLY if it DOES NOT exist
     const POLICY_EXISTS_UPDATE;            // update a record ONLY if it exists
     const POLICY_EXISTS_REPLACE;           // replace a record ONLY if it exists
@@ -44,35 +39,34 @@ final class Aerospike
 
     // Determines a handler for writing values of unsupported type into bins
     // Set OPT_SERIALIZER to one of the following:
-    const SERIALIZER_NONE;
-    const SERIALIZER_PHP; // default handler
-    const SERIALIZER_JSON;
-    const SERIALIZER_USER;
+    const SERIALIZER_NONE; // throw an error when serialization is required
+    const SERIALIZER_PHP;  // use the PHP serialize/unserialize functions (default)
+    const SERIALIZER_USER; // use a user-defined serializer
 
     // OPT_SCAN_PRIORITY can be set to one of the following:
-    const SCAN_PRIORITY_AUTO;   //The cluster will auto adjust the scan priority
-    const SCAN_PRIORITY_LOW;    //Low priority scan.
-    const SCAN_PRIORITY_MEDIUM; //Medium priority scan.
-    const SCAN_PRIORITY_HIGH;   //High priority scan.
+    const SCAN_PRIORITY_AUTO;   // the cluster will auto adjust the scan priority
+    const SCAN_PRIORITY_LOW;    // low priority scan.
+    const SCAN_PRIORITY_MEDIUM; // medium priority scan.
+    const SCAN_PRIORITY_HIGH;   // high priority scan.
 
     // Options can be assigned values that modify default behavior
-    const OPT_CONNECT_TIMEOUT;    // value in milliseconds, default: 1000
-    const OPT_READ_TIMEOUT;       // value in milliseconds, default: 1000
-    const OPT_WRITE_TIMEOUT;      // value in milliseconds, default: 1000
+    const OPT_CONNECT_TIMEOUT;    // value in milliseconds (default: 1000)
+    const OPT_READ_TIMEOUT;       // value in milliseconds (default: 1000)
+    const OPT_WRITE_TIMEOUT;      // value in milliseconds (default: 1000)
     const OPT_POLICY_RETRY;       // set to a Aerospike::POLICY_RETRY_* value
     const OPT_POLICY_EXISTS;      // set to a Aerospike::POLICY_EXISTS_* value
     const OPT_SERIALIZER;         // set the unsupported type handler
     const OPT_SCAN_PRIORITY;      // set to a Aerospike::SCAN_PRIORITY_* value
-    const OPT_SCAN_PERCENTAGE;    // integer value 1-100, default: 100
-    const OPT_SCAN_CONCURRENTLY;  // boolean value, default: false
-    const OPT_SCAN_NOBINS;        // boolean value, default: false
+    const OPT_SCAN_PERCENTAGE;    // integer value 1-100 (default: 100)
+    const OPT_SCAN_CONCURRENTLY;  // boolean value (default: false)
+    const OPT_SCAN_NOBINS;        // boolean value (default: false)
     const OPT_POLICY_KEY;         // records store the digest unique ID, optionally also its (ns,set,key) inputs
     const OPT_POLICY_GEN;         // set to array( Aerospike::POLICY_GEN_* [, $gen_value ] )
     const OPT_POLICY_REPLICA;     // set to one of Aerospike::POLICY_REPLICA_*
     const OPT_POLICY_CONSISTENCY; // set to one of Aerospike::POLICY_CONSISTENCY_*
     const OPT_POLICY_COMMIT_LEVEL;// set to one of Aerospike::POLICY_COMMIT_LEVEL_*
     const OPT_TTL;                // record ttl, value in seconds
-    const USE_BATCH_DIRECT;       // batch-direct or batch-index protocol. default: 0
+    const USE_BATCH_DIRECT;       // batch-direct or batch-index protocol (default: 0)
 
     // Aerospike Status Codes:
     //
@@ -145,11 +139,16 @@ final class Aerospike
     const ERR_NOT_AUTHENTICATED;
     const ERR_ROLE_VIOLATION;
 
-    // Status values returned by scanInfo()
-    const SCAN_STATUS_UNDEF;      // Scan status is undefined.
-    const SCAN_STATUS_INPROGRESS; // Scan is currently running.
-    const SCAN_STATUS_ABORTED;    // Scan was aborted due to failure or the user.
-    const SCAN_STATUS_COMPLETED;  // Scan completed successfully.
+    // Status values returned by scanInfo(). Deprecated in favor of jobInfo()
+    const SCAN_STATUS_UNDEF;      // scan status is undefined. deprecated.
+    const SCAN_STATUS_INPROGRESS; // scan is currently running. deprecated.
+    const SCAN_STATUS_ABORTED;    // scan was aborted due to failure or the user. deprecated.
+    const SCAN_STATUS_COMPLETED;  // scan completed successfully. deprecated.
+
+    // Status values returned by jobInfo()
+    const STATUS_UNDEF;      // the job's status is undefined.
+    const STATUS_INPROGRESS; // the job is currently running.
+    const STATUS_COMPLETED;  // the job completed successfully.
 
     // Logger
     const LOG_LEVEL_OFF  ;
@@ -238,7 +237,9 @@ final class Aerospike
     public int apply ( array $key, string $module, string $function[, array $args [, mixed &$returned [, array $options ]]] )
     public int aggregate ( string $ns, string $set, array $where, string $module, string $function, array $args, mixed &$returned [, array $options ] )
     public int scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$scan_id [, array $options ] )
-    public int scanInfo ( integer $scan_id, array &$info [, array $options ] )
+    public int queryApply ( string $ns, string $set, array $where, string $module, string $function, array $args, int &$job_id [, array $options ] )
+    public int jobInfo ( integer $job_id, array &$info [, array $options ] )
+    public int scanInfo ( integer $scan_id, array &$info [, array $options ] ) // DEPRECATED. use jobInfo()
 
     // query and scan methods
     public int query ( string $ns, string $set, array $where, callback $record_cb [, array $select [, array $options ]] )
@@ -251,7 +252,6 @@ final class Aerospike
     // admin methods
     public int addIndex ( string $ns, string $set, string $bin, string $name, int $index_type, int $data_type [, array $options ] )
     public int dropIndex ( string $ns, string $name [, array $options ] )
-    public int createIndex ( string $ns, string $set, string $bin, int $type, string $name ) // deprecated
 
     // info methods
     public int info ( string $request, string &$response [, array $host [, array $options ] ] )
@@ -288,5 +288,6 @@ final class Aerospike
 ### [Large Data Type Methods](aerospike_ldt.md)
 ### [Security Methods](apiref_security.md)
 
-An overview of the development of the client is at the top level
-[README](README.md).
+## Further Reading
+
+- [Client Overview](README.md)

@@ -45,20 +45,20 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
-$options = array(Aerospike::OPT_TTL => 7200);
-$status = $db->increment($key, 'pto', -4, $options);
+$key = $client->initKey("test", "users", 1234);
+$options = [Aerospike::OPT_TTL => 7200];
+$status = $client->increment($key, 'pto', -4, $options);
 if ($status == Aerospike::OK) {
     echo "Decremented four vacation days from the user's PTO balance.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

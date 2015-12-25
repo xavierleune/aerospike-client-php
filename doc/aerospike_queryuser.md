@@ -31,31 +31,32 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)),
-        "user"=>"admin", "pass"=>"admin");
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]],
+           "shm"=>[],
+           "user"=>"admin", "pass"=>"admin"];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$res = $db->grantRoles("john", array("read-write", "sys-admin"));
+$res = $client->grantRoles("john", array("read-write", "sys-admin"));
 if ($res == Aerospike::OK) {
     echo "read-write and sys-admin roles successfully granted to user john";
-    $res = $db->queryUser("john", $roles);
+    $res = $client->queryUser("john", $roles);
     if ($res == Aerospike::OK) {
         var_dump($roles);
     } elseif ($res == Aerospike::INVALID_USER) {
         echo "Invalid user being queried";
     } else {
-        echo "[{$db->errorno()}] ".$db->error();
+        echo "[{$client->errorno()}] ".$client->error();
     }
 } elseif ($res == Aerospike::ROLE_VIOLATION) {
     echo "User does not possess the required role to grant new roles";
 } elseif ($res == Aerospike::INVALID_ROLE) {
     echo "Invalid Role being attempted to be assigned to user john";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

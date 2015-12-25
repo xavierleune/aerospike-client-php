@@ -11,17 +11,18 @@ public Aerospike::__construct ( array $config [, boolean $persistent_connection 
 
 **Aerospike::__construct()** constructs an Aerospike object and connects to the
 cluster defined in *config*.  The **Aerospike::isConnected()** method can be used
-to test whether the connection succeeded. If a config or connection error
-occured the **Aerospike::error()** and **Aerospike::errorno()** methods can be used
+to test whether the connection succeeded. If a config or connection error has
+occured, the **Aerospike::error()** and **Aerospike::errorno()** methods can be used
 to inspect it.
 
-The Aerospike class instance should use persistent connections.  This allows for
-reduced overhead on initializing the cluster and keeping track of the state of
-its nodes.  Subsequent instantiation calls will attempt to reuse the connection.
+In a multiprocess context such as a web server, the class instance should be
+configured to use persistent connections.  This allows for
+reduced overhead, saving on discovery of the cluster topology, fetching its
+partition map, and on opening connections to the nodes.
 
 ## Parameters
 
-**config** an associative array holding the cluster connection information. One
+**config** an array holding the cluster connection information. One
 node or more (for failover) may be defined. Once a connection is established to
 a node of the Aerospike DB the client will retrieve the full list of nodes in the
 cluster and manage its connections to them.
@@ -31,22 +32,22 @@ cluster and manage its connections to them.
   - *port*
 - *user*
 - *pass*
-- *max_threads*
-- *thread_pool_size*
-- *shm*
-  - *shm_key* Shared memory identifier
-  - *shm_max_nodes* Shared memory maximum number of namespaces allowed
-  - *shm_max_namespaces* Shared memory maximum number of namespaces allowed
-  - *shm_takeover_threshold_sec* Take over shared memory cluster tending if the
-  cluster hasn't been tended by this threshold in seconds
+- *shm* optional shared-memory cluster tending parameters.
+Shared-memory cluster tending is enabled if an array (even an empty one) is provided.
+  - *shm_key* explicitly sets the shm key for the cluster. It is otherwise implicitly evaluated per unique hostname, and can be inspected with shmKey(). (default: 0xA5000000)
+  - *shm_max_nodes* maximum number of nodes allowed. Pad so new nodes can be added without configuration changes (default: 16)
+  - *shm_max_namespaces* maximum number of namespaces allowed (default: 8)
+  - *shm_takeover_threshold_sec* take over tending if the cluster hasn't been checked for this many seconds (default: 30)
+- *max_threads* (default: 300)
+- *thread_pool_size* (default: 16)
 
-**persistent_connection** whether the C-client will persist between requests.
+**persistent_connection** whether the connections will persist between requests.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_CONNECT_TIMEOUT**
 - **Aerospike::OPT_READ_TIMEOUT**
 - **Aerospike::OPT_WRITE_TIMEOUT**
-- **[Aerospike::OPT_SERIALIZER](aerospike.md)**.
+- **[Aerospike::OPT_SERIALIZER](aerospike.md)**
 - **[Aerospike::OPT_POLICY_KEY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gaa9c8a79b2ab9d3812876c3ec5d1d50ec)**
 - **[Aerospike::OPT_POLICY_EXISTS](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#ga50b94613bcf416c9c2691c9831b89238)**
 - **[Aerospike::OPT_POLICY_RETRY](http://www.aerospike.com/apidocs/c/db/d65/group__client__policies.html#gaa9730980a8b0eda8ab936a48009a6718)**
@@ -68,11 +69,16 @@ The following only apply to instances created with non-persistent connections:
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250, Aerospike::OPT_WRITE_TIMEOUT => 1500);
-$db = new Aerospike($config, true, $opts);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = [
+  "hosts" => [
+    ["addr" => "localhost", "port" => 3000]
+  ],
+  "shm" => []
+];
+$opts = [Aerospike::OPT_POLICY_KEY => Aerospike::POLICY_KEY_SEND];
+$client = new Aerospike($config, true, $opts);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
@@ -85,3 +91,7 @@ On error we expect to see:
 Aerospike failed to connect[-1]: Unable to connect to server
 ```
 
+## See Also
+
+- The [Aerospike Class](aerospike.md)
+- [Configuration in a Web Server Context](README.md#configuration-in-a-web-server-context)
