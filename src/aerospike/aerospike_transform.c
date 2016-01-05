@@ -1790,13 +1790,15 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
 {
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
-    const char* name;
-    int name_len;
+    const char* name = NULL;
+    int name_len = 0;
     int dup;
 
-    dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_DC);
+    if ((FETCH_VALUE_PUT((zval**)value)) == IS_OBJECT) {
+        dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_DC);
+    }
 
-    if((!strcmp(name, GEOJSONCLASS)) && (as->hasGeoJSON)) {
+    if (name && (!strcmp(name, GEOJSONCLASS)) && (as->hasGeoJSON)) {
         AS_DEFAULT_PUT_ASSOC_GEOJSON(as, key, value, array, static_pool, serializer_policy,
                 error_p TSRMLS_CC);
     } else {
