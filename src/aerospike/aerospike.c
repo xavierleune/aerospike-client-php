@@ -49,6 +49,7 @@
 #include "aerospike/as_status.h"
 #include "aerospike/as_query.h"
 #include "aerospike/as_scan.h"
+
 #include <stdbool.h>
 
 #include "aerospike_common.h"
@@ -690,8 +691,7 @@ PHP_METHOD(Aerospike, isConnected)
         RETURN_FALSE;
     }
 
-	if (aerospike_cluster_is_connected(aerospike_obj_p->as_ref_p->as_p)) {
-    //if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
+    if (aerospike_cluster_is_connected(aerospike_obj_p->as_ref_p->as_p)) {
         RETURN_TRUE;
     } else {
         RETURN_FALSE;
