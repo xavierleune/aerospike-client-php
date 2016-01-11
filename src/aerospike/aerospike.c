@@ -690,7 +690,7 @@ PHP_METHOD(Aerospike, isConnected)
         RETURN_FALSE;
     }
 
-	if (as_cluster_is_connected(aerospike_obj_p->as_ref_p->as_p->cluster)) {
+	if (aerospike_cluster_is_connected(aerospike_obj_p->as_ref_p->as_p)) {
     //if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
         RETURN_TRUE;
     } else {
