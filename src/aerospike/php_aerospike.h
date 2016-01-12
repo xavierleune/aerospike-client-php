@@ -182,6 +182,22 @@ PHP_METHOD(Aerospike, existsMany);
 PHP_METHOD(Aerospike, operate);
 
 /*
+ * List Operations APIs:
+ */
+PHP_METHOD(Aerospike, listAppend);
+PHP_METHOD(Aerospike, listMerge);
+PHP_METHOD(Aerospike, listSize);
+PHP_METHOD(Aerospike, listClear);
+PHP_METHOD(Aerospike, listTrim);
+PHP_METHOD(Aerospike, listInsertItems);
+PHP_METHOD(Aerospike, listGet);
+PHP_METHOD(Aerospike, listGetRange);
+PHP_METHOD(Aerospike, listPop);
+PHP_METHOD(Aerospike, listPopRange);
+PHP_METHOD(Aerospike, listRemove);
+PHP_METHOD(Aerospike, listRemoveRange);
+
+/*
  * Security APIs:
  */
 PHP_METHOD(Aerospike, createUser);
