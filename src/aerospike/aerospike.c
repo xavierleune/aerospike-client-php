@@ -57,6 +57,7 @@
 #include "aerospike_policy.h"
 #include "aerospike_logger.h"
 #include "aerospike_general_constants.h"
+#include "aerospike_transform.h"
 
 bool record_stream_callback(const as_val* p_val, void* udata);
 
@@ -1870,17 +1871,25 @@ exit:
 PHP_METHOD(Aerospike, listAppend)
 {
     as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              record;
+    as_val                 *val = NULL;
+    as_policy_operate      operate_policy;
+    as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
     zval*                  append_val_p;
     zval*                  options_p = NULL;
-    as_error               error;
-    as_key                 as_key_for_listAppend;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
     long                   bin_name_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
@@ -1912,8 +1921,12 @@ PHP_METHOD(Aerospike, listAppend)
         goto exit;
     }
 
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
-                    &as_key_for_listAppend,
+                    &as_key_for_list,
                     &initializeKey))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listAppend function");
@@ -1921,10 +1934,31 @@ PHP_METHOD(Aerospike, listAppend)
         goto exit;
     }
 
+    as_record_inita(&record, 1);
+    array_init(return_value);
+    add_assoc_zval(return_value, bin_name_p, append_val_p);
+
+    aerospike_transform_iterate_records(&return_value, &record, &static_pool,
+            aerospike_obj_p->serializer_opt, true, &error TSRMLS_DC);
+    if (error.code != AEROSPIKE_OK) {
+        goto exit;
+    }
+
+    val = (as_val*) as_record_get(&record, bin_name_p);
+    if (error.code == AEROSPIKE_OK) {
+        as_operations_add_list_append(&ops, bin_name_p, (as_val*) val);
+        status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                &operate_policy, &as_key_for_list, &ops, NULL);
+    }
+
 exit:
     if (initializeKey) {
-        as_key_destroy(&as_key_for_listAppend);
+        as_key_destroy(&as_key_for_list);
     }
+    if (return_value) {
+        zval_dtor(return_value);
+    }
+    as_operations_destroy(&ops);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
@@ -2458,7 +2492,6 @@ PHP_METHOD(Aerospike, listGet)
     } else {
         MAKE_STD_ZVAL(element_p);
     }
-    array_init(element_p);
 
     if (rec && rec->bins.size) {
         list_get_callback_udata.udata_p = element_p;
@@ -2562,7 +2595,6 @@ PHP_METHOD(Aerospike, listGetRange)
     } else {
         MAKE_STD_ZVAL(elements_p);
     }
-    array_init(elements_p);
 
     list_get_callback_udata.udata_p = elements_p;
     list_get_callback_udata.error_p = &error;
@@ -2570,8 +2602,7 @@ PHP_METHOD(Aerospike, listGetRange)
     if (rec && rec->bins.size) {
         AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
     } else if (rec && rec->bins.size == 0) {
-        as_list *list = NULL;
-        AS_DEFAULT_GET(NULL, (as_val*) list, &list_get_callback_udata);
+        array_init(elements_p);
     }
 
 exit:
@@ -2668,7 +2699,6 @@ PHP_METHOD(Aerospike, listPop)
     } else {
         MAKE_STD_ZVAL(element_p);
     }
-    array_init(element_p);
 
     if (rec && rec->bins.size) {
         list_get_callback_udata.udata_p = element_p;
@@ -2772,7 +2802,6 @@ PHP_METHOD(Aerospike, listPopRange)
     } else {
         MAKE_STD_ZVAL(elements_p);
     }
-    array_init(elements_p);
 
     if (rec && rec->bins.size) {
         list_get_callback_udata.udata_p = elements_p;

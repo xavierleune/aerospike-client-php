@@ -145,13 +145,7 @@ class ListSize extends AerospikeTestCommon
      */
     function edge_001() {
         $status = $this->db->listSize(200, "binB", $size);
-        if ($status != Aerospike::OK) {
-            return $this->db->errorno();
-        }
-        if ($size == 6) {
-            return Aerospike::OK;
-        }
-        return Aerospike::ERR_CLIENT;
+        return $this->db->errorno();
     }
     
     /**
@@ -172,6 +166,30 @@ class ListSize extends AerospikeTestCommon
     function edge_002() {
         try {
             $status = $this->db->listSize($this->keys[0], array(599), $size);
+        } catch (ErrorException $e) {
+            return Aerospike::ERR_PARAM;
+        }
+        return $status;
+    }
+
+    /**
+     * @test
+     * List size operation with options parameter is of type string.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (edge_003)
+     *
+     * @test_plans{1.1}
+     */
+    function edge_003() {
+        try {
+            $status = $this->db->listSize($this->keys[0], "binB", $size, "abc");
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
