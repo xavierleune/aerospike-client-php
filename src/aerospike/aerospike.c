@@ -1939,7 +1939,7 @@ PHP_METHOD(Aerospike, listAppend)
     add_assoc_zval(return_value, bin_name_p, append_val_p);
 
     aerospike_transform_iterate_records(&return_value, &record, &static_pool,
-            aerospike_obj_p->serializer_opt, true, &error TSRMLS_DC);
+            aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
     if (error.code != AEROSPIKE_OK) {
         goto exit;
     }
