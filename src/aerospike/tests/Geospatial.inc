@@ -124,8 +124,14 @@ class Geospatial extends AerospikeTestCommon
      * @test
      * Testing predicateGeoWithinGeoJSONRegion api of the Aerospike\GeoJSON type.
      *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
      * @remark
-     * Variants: OO (geojsonPut)
+     * Variants: OO (testPredicateGeoWithinGeoJSONRegion)
      *
      * @test_plans{1.1}
      */
@@ -146,8 +152,14 @@ class Geospatial extends AerospikeTestCommon
      * @test
      * Testing predicateGeoWithinRadius api of the Aerospike\GeoJSON type.
      *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
      * @remark
-     * Variants: OO (geojsonPut)
+     * Variants: OO (testPredicateGeoWithinRadius)
      *
      * @test_plans{1.1}
      */
@@ -166,8 +178,14 @@ class Geospatial extends AerospikeTestCommon
      * @test
      * Testing predicateGeoContainsGeoJSONPoint api of the Aerospike\GeoJSON type.
      *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
      * @remark
-     * Variants: OO (geojsonPut)
+     * Variants: OO (testPredicateGeoContainsGeoJSONPoint)
      *
      * @test_plans{1.1}
      */
@@ -188,8 +206,14 @@ class Geospatial extends AerospikeTestCommon
      * @test
      * Testing predicateGeoContainsPoint api of the Aerospike\GeoJSON type.
      *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
      * @remark
-     * Variants: OO (geojsonPut)
+     * Variants: OO (testPredicateGeoContainsPoint)
      *
      * @test_plans{1.1}
      */
@@ -201,6 +225,43 @@ class Geospatial extends AerospikeTestCommon
         $this->assertArrayHasKey('op', $predicate, $msg = "Predicate missing 'op' key.");
         $this->assertArrayHasKey('bin', $predicate, $msg = "Predicate missing 'bin' key.");
         $this->assertArrayHasKey('val', $predicate, $msg = "Predicate missing 'val' key.");
+        return Aerospike::OK;
+    }
+
+    /**
+     * @test
+     * Testing Operate Write for GeoJSON data type.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO ()
+     *
+     * @test_plans{1.1}
+     */
+    function testOperateWrite() {
+        $lat = 28.608389;
+        $long = -80.604333;
+        $geo_obj = new stdClass();
+        $geo_obj->type = "Point";
+        $geo_obj->coordinates = [$long, $lat];
+        $loc = new \Aerospike\GeoJSON\GeoJSON($geo_obj);
+        $operations = array(
+            array("op" => Aerospike::OPERATOR_WRITE, "bin" => "tstamp", "val"=> time()),
+            array("op" => Aerospike::OPERATOR_WRITE, "bin" => "userid", "val"=> 4567),
+            array("op" => Aerospike::OPERATOR_WRITE, "bin" => "loc", "val"=> $loc),
+        );
+        $returned = array();
+        $key = $this->db->initKey("test", "demo", "geo_operate");
+        $status = $this->db->operate($key, $operations, $returned);
+        if($status != Aerospike::OK)
+        {
+            return $status;
+        }
         return Aerospike::OK;
     }
 }
