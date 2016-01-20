@@ -1900,7 +1900,9 @@ PHP_METHOD(Aerospike, listAppend)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  append_val_p;
+    zval*                  append_val_p = NULL;
+    zval*                  append_val_copy = NULL;
+    zval*                  temp_record_p = NULL;
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
@@ -1962,17 +1964,24 @@ PHP_METHOD(Aerospike, listAppend)
         goto exit;
     }
 
-    array_init(return_value);
-    add_assoc_zval(return_value, bin_name_p, append_val_p);
+    MAKE_STD_ZVAL(temp_record_p);
+    array_init(temp_record_p);
 
-    aerospike_transform_iterate_records(&return_value, &record, &static_pool,
+    ALLOC_ZVAL(append_val_copy);
+    MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
+    add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+
+    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
-    if (error.code != AEROSPIKE_OK) {
+    if (AEROSPIKE_OK != error.code) {
+        status = error.code;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
         goto exit;
     }
 
     val = (as_val*) as_record_get(&record, bin_name_p);
-    if (error.code == AEROSPIKE_OK) {
+    if (val) {
         as_operations_add_list_append(&ops, bin_name_p, (as_val*) val);
         status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
                 &operate_policy, &as_key_for_list, &ops, NULL);
@@ -1981,6 +1990,9 @@ PHP_METHOD(Aerospike, listAppend)
 exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
+    }
+    if (temp_record_p) {
+        zval_ptr_dtor(&temp_record_p);
     }
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -2002,7 +2014,9 @@ PHP_METHOD(Aerospike, listInsert)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  append_val_p;
+    zval*                  insert_val_p = NULL;
+    zval*                  insert_val_copy = NULL;
+    zval*                  temp_record_p = NULL;
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
@@ -2037,7 +2051,7 @@ PHP_METHOD(Aerospike, listInsert)
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
-                &index, &append_val_p, &options_p) == FAILURE) {
+                &index, &insert_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listInsert function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listInsert function");
@@ -2065,17 +2079,24 @@ PHP_METHOD(Aerospike, listInsert)
         goto exit;
     }
 
-    array_init(return_value);
-    add_assoc_zval(return_value, bin_name_p, append_val_p);
+    MAKE_STD_ZVAL(temp_record_p);
+    array_init(temp_record_p);
 
-    aerospike_transform_iterate_records(&return_value, &record, &static_pool,
+    ALLOC_ZVAL(insert_val_copy);
+    MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
+    add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
+
+    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
-    if (error.code != AEROSPIKE_OK) {
+    if (AEROSPIKE_OK != error.code) {
+        status = error.code;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
         goto exit;
     }
 
     val = (as_val*) as_record_get(&record, bin_name_p);
-    if (error.code == AEROSPIKE_OK) {
+    if (val) {
         as_operations_add_list_insert(&ops, bin_name_p, index, (as_val*) val);
         status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
                 &operate_policy, &as_key_for_list, &ops, NULL);
@@ -2084,6 +2105,9 @@ PHP_METHOD(Aerospike, listInsert)
 exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
+    }
+    if (temp_record_p) {
+        zval_ptr_dtor(&temp_record_p);
     }
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -2105,7 +2129,9 @@ PHP_METHOD(Aerospike, listSet)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  append_val_p;
+    zval*                  set_val_p = NULL;
+    zval*                  set_val_copy = NULL;
+    zval*                  temp_record_p = NULL;
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
@@ -2140,7 +2166,7 @@ PHP_METHOD(Aerospike, listSet)
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
-                &index, &append_val_p, &options_p) == FAILURE) {
+                &index, &set_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listSet function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listSet function");
@@ -2168,17 +2194,24 @@ PHP_METHOD(Aerospike, listSet)
         goto exit;
     }
 
-    array_init(return_value);
-    add_assoc_zval(return_value, bin_name_p, append_val_p);
+    MAKE_STD_ZVAL(temp_record_p);
+    array_init(temp_record_p);
 
-    aerospike_transform_iterate_records(&return_value, &record, &static_pool,
+    ALLOC_ZVAL(set_val_copy);
+    MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
+    add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
+
+    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
-    if (error.code != AEROSPIKE_OK) {
+    if (AEROSPIKE_OK != error.code) {
+        status = error.code;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
         goto exit;
     }
 
     val = (as_val*) as_record_get(&record, bin_name_p);
-    if (error.code == AEROSPIKE_OK) {
+    if (val) {
         as_operations_add_list_set(&ops, bin_name_p, index, (as_val*) val);
         status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
                 &operate_policy, &as_key_for_list, &ops, NULL);
@@ -2187,6 +2220,9 @@ PHP_METHOD(Aerospike, listSet)
 exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
+    }
+    if (temp_record_p) {
+        zval_ptr_dtor(&temp_record_p);
     }
     as_operations_destroy(&ops);
     as_record_destroy(&record);

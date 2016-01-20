@@ -314,23 +314,23 @@ class ListAppend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function normal_009() {
-        //$value = array("Aerospike", "Casandra", "Redis");
+        $value = array("Aerospike", "Casandra", "Redis");
         $bin = $this->generateRandomString();
-        $bin = "random";
-        $status = $this->db->listAppend($this->db->initKey("test", "demo90", "cc"), $bin, array("xyz"));
+        $status = $this->db->listAppend($this->keys[0], $bin, $value);
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
+
         $status = $this->db->get($this->keys[0], $get_record, array($bin));
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        var_dump($get_record);
-        //$out_array = array($value);
-        //$comp_res = array_diff_assoc_recursive($get_record["bins"][$bin], $out_array);
-        //if (!empty($comp_res)) {
-        //    return Aerospike::ERR_CLIENT;
-        //}
+
+        $out_array = array($value);
+        $comp_res = array_diff_assoc_recursive($get_record["bins"][$bin], $out_array);
+        if (!empty($comp_res)) {
+            return Aerospike::ERR_CLIENT;
+        }
         return Aerospike::OK;
     }
     
@@ -350,25 +350,20 @@ class ListAppend extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function normal_010() {
-        //$value = array("Aerospike", "Casandra", "Redis");
         $value = array(100, 400, 700);
         $key = $this->db->initKey("test", "demo", $this->generateRandomString());
         $this->keys[] = $key;
-        var_dump($value);
         $status = $this->db->listAppend($key, "binC", $value);
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        var_dump($value);
+
         $status = $this->db->get($key, $get_record, array("binC"));
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
+
         $out_array = array($value);
-        echo "******************************\n";
-        var_dump($value);
-        echo "******************************\n";
-        var_dump($out_array);
         $comp_res = array_diff_assoc_recursive($get_record["bins"]["binC"], $out_array);
         if (!empty($comp_res)) {
             return Aerospike::ERR_CLIENT;

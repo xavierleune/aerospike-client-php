@@ -322,13 +322,13 @@ class ListSet extends AerospikeTestCommon
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
+
         $status = $this->db->get($this->keys[0], $get_record, array($bin));
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        var_dump($get_record);
+
         $out_array = array($value);
-        var_dump($out_array);
         $comp_res = array_diff_assoc_recursive($get_record["bins"][$bin], $out_array);
         if (!empty($comp_res)) {
             return Aerospike::ERR_CLIENT;
@@ -355,18 +355,17 @@ class ListSet extends AerospikeTestCommon
         $value = array("Aerospike", "Casandra", "Redis");
         $key = $this->db->initKey("test", "demo", $this->generateRandomString());
         $this->keys[] = $key;
-        var_dump($value);
         $status = $this->db->listSet($key, "binC", 0, $value);
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
-        var_dump($value);
+
         $status = $this->db->get($key, $get_record, array("binC"));
         if ($status != Aerospike::OK) {
             return $this->db->errorno();
         }
+
         $out_array = array($value);
-        var_dump($out_array);
         $comp_res = array_diff_assoc_recursive($get_record["bins"]["binC"], $out_array);
         if (!empty($comp_res)) {
             return Aerospike::ERR_CLIENT;
