@@ -185,6 +185,8 @@ PHP_METHOD(Aerospike, operate);
  * List Operations APIs:
  */
 PHP_METHOD(Aerospike, listAppend);
+PHP_METHOD(Aerospike, listInsert);
+PHP_METHOD(Aerospike, listSet);
 PHP_METHOD(Aerospike, listMerge);
 PHP_METHOD(Aerospike, listSize);
 PHP_METHOD(Aerospike, listClear);
