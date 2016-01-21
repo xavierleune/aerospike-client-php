@@ -76,7 +76,7 @@ abstract \Aerospike\LDT
     const ERR_NS_LDT_NOT_ENABLED    = 1500; // LDTs are not enabled for the given namespace
 
 
-    protected __construct ( Aerospike $db, array $key, string $bin, int $type )
+    protected __construct ( Aerospike $client, array $key, string $bin, int $type )
     public boolean isLDT ( void )
     public boolean isValid ( void )
     public string error ( void )

@@ -18,7 +18,7 @@ UDF *module* that was previously registered with the server.
 
 **code** filled by the content of the UDF **module**
 
-**language** one of Aerospike::UDF_TYPE_*.
+**language** one of Aerospike::UDF\_TYPE\_*.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_READ_TIMEOUT**
@@ -34,20 +34,20 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$status = $db->getRegistered('my_udf', $code);
+$status = $client->getRegistered('my_udf', $code);
 if ($status == Aerospike::OK) {
     var_dump($code);
 if ($status == Aerospike::ERR_LUA_FILE_NOT_FOUND) {
     echo "The UDF module my_udf was not found to be registered with the server.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

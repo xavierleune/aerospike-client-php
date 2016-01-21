@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex - Very Long Index Name
+addIndex() and dropIndex() - Very Long Index Name
 
 --FILE--
 <?php

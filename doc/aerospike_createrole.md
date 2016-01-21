@@ -32,20 +32,21 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)),
-        "user"=>"admin", "pass"=>"admin");
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]],
+           "shm"=>[],
+           "user"=>"admin", "pass"=>"admin"];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$res = $db->createRole("example_role", array(array("code" : Aerospike::PRIV_READ, "ns":
+$res = $client->createRole("example_role", array(array("code" : Aerospike::PRIV_READ, "ns":
                 "test", "set": "demo")));
 if ($res == Aerospike::OK) {
     echo "Role successfully created";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

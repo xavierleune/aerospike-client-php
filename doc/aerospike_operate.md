@@ -59,19 +59,19 @@ Touch Operation: reset the time-to-live of the record and increment its generati
 *examples:*
 Combining several write operations into one multi-op call:
 ```
-array(
-  array("op" => Aerospike::OPERATOR_APPEND, "bin" => "name", "val" => " Ph.D."),
-  array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-  array("op" => Aerospike::OPERATOR_READ, "bin" => "age")
-)
+[
+  ["op" => Aerospike::OPERATOR_APPEND, "bin" => "name", "val" => " Ph.D."],
+  ["op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1],
+  ["op" => Aerospike::OPERATOR_READ, "bin" => "age"]
+]
 ```
 To implement an LRU you can read a bin and touch a record in the same
 operation:
 ```
-array(
-  array("op" => Aerospike::OPERATOR_READ, "bin" => "age")
-  array("op" => Aerospike::OPERATOR_TOUCH, "ttl" => 20)
-)
+[
+  ["op" => Aerospike::OPERATOR_READ, "bin" => "age"],
+  ["op" => Aerospike::OPERATOR_TOUCH, "ttl" => 20]
+]
 ```
 
 **returned** an array of bins retrieved by read operations
@@ -97,25 +97,25 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
-$operations = array(
-  array("op" => Aerospike::OPERATOR_APPEND, "bin" => "name", "val" => " Ph.D."),
-  array("op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1),
-  array("op" => Aerospike::OPERATOR_READ, "bin" => "age"),
-);
-$options = array(Aerospike::OPT_TTL => 600);
-$status = $db->operate($key, $operations, $returned, $options);
+$key = $client->initKey("test", "users", 1234);
+$operations = [
+  ["op" => Aerospike::OPERATOR_APPEND, "bin" => "name", "val" => " Ph.D."],
+  ["op" => Aerospike::OPERATOR_INCR, "bin" => "age", "val" => 1],
+  ["op" => Aerospike::OPERATOR_READ, "bin" => "age"],
+];
+$options = [Aerospike::OPT_TTL => 600];
+$status = $client->operate($key, $operations, $returned, $options);
 if ($status == Aerospike::OK) {
     var_dump($returned);
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

@@ -31,14 +31,14 @@ Array:
 <?php
 
 
-$config = array("hosts"=>array(array("addr"=>"192.168.120.144", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$nodes = $db->getNodes();
+$nodes = $client->getNodes();
 var_dump($nodes);
 ?>
 ```

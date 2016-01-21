@@ -6,13 +6,13 @@ Aerospike::scanApply - Apply a record UDF to each record in a background scan.
 ## Description
 
 ```
-public int Aerospike::scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$scan_id [, array $options ] )
+public int Aerospike::scanApply ( string $ns, string $set, string $module, string $function, array $args, int &$job_id [, array $options ] )
 ```
 
 **Aerospike::scanApply()** will initiate a background read/write scan and apply a record UDF
 *module*.*function* with *args* to each record being scanned in *ns*.*set*.
 
-An integer *scan_id* identifies the background scan for subsequent **scanInfo()**
+An integer *job_id* identifies the background scan for subsequent **jobInfo()**
 inquiries. As **scanApply()** is performed in the background,no results will be
 returned to the client.
 
@@ -31,14 +31,10 @@ Currently the only UDF language supported is Lua.  See the
 
 **args** an array of arguments for the UDF.
 
-**scan_id** filled by an integer handle for the initiated background scan
+**job_id** filled by an integer handle for the initiated background scan
 
 **options** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
-- **Aerospike::OPT_SCAN_PRIORITY**
-- **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
-- **Aerospike::OPT_SCAN_CONCURRENTLY** whether to run the scan in parallel
-- **Aerospike::OPT_SCAN_NOBINS** whether to not retrieve bins for the records
 
 ## Return Values
 
@@ -48,7 +44,7 @@ constants.  When non-zero the **Aerospike::error()** and
 
 ## See Also
 
-- [Aerospike::scanInfo()](aerospike_scaninfo.md)
+- [Aerospike::jobInfo()](aerospike_jobinfo.md)
 
 ## Examples
 
@@ -69,10 +65,10 @@ end
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
@@ -80,13 +76,13 @@ if (!$db->isConnected()) {
 // Adds offset to the value in bin 'a', multiplies the value in bin 'b' by offset and
 // Updates value in bin 'c' with the sum of updated values in bins 'a' and 'b'.
 
-$status = $db->scanApply("test", "users", "my_udf", "mytransform", array(20), $scan_id);
+$status = $client->scanApply("test", "users", "my_udf", "mytransform", array(20), $job_id);
 if ($status === Aerospike::OK) {
-    var_dump("scan ID is $scan_id");
+    var_dump("scan ID is $job_id");
 } else if ($status === Aerospike::ERR_CLIENT) {
-    echo "An error occured while initiating the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();
+    echo "An error occured while initiating the BACKGROUND SCAN [{$client->errorno()}] ".$client->error();
 } else {
-    echo "An error occured while running the BACKGROUND SCAN [{$db->errorno()}] ".$db->error();
+    echo "An error occured while running the BACKGROUND SCAN [{$client->errorno()}] ".$client->error();
 }
 
 ?>

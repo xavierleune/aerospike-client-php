@@ -21,22 +21,22 @@ public array Aerospike::infoMany ( string $request [, array $config ] )
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$opts = array(Aerospike::OPT_CONNECT_TIMEOUT => 1250, Aerospike::OPT_WRITE_TIMEOUT => 1500);
-$db = new Aerospike($config, true, $opts);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$opts = [Aerospike::OPT_CONNECT_TIMEOUT => 1250];
+$client = new Aerospike($config, true, $opts);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$status = $db->info('bins/test', $response);
+$status = $client->info('bins/test', $response);
 if ($status == Aerospike::OK) {
     var_dump($response);
 }
 
 // Get the nodes in the cluster
-$nodes = $db->getNodes();
+$nodes = $client->getNodes();
 var_dump($nodes);
 
 ?>
-
+```

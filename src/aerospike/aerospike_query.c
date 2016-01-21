@@ -11,6 +11,9 @@
 #include "aerospike/aerospike_query.h"
 #include "aerospike_policy.h"
 
+#define PROGRESS_PCT "progress_pct"
+#define RECORDS_READ "records_read"
+#define STATUS "status"
 /*
  ******************************************************************************************************
  Initializes and defines an as_query object.
@@ -271,6 +274,179 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
     PHP_EXT_SET_AS_ERR(error_p, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
 exit:
+    return error_p->code;
+}
+/*
+ ******************************************************************************************************
+ * Check the progress of a background job running on the database.
+ *
+ * @param as_object_p           The C Client's aerospike object.
+ * @param error_p               The C Client's as_error to be set to the
+ *                              encountered error.
+ * @param job_id                The id for the job, which can be used for
+ *                              querying the status of the query.
+ * @param job_info              Information about this job, to be populated
+ *                              by this operation.
+ * @param options_p             The optional policy.
+ *
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
+        uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC)
+{
+    as_job_info             job_info;
+    as_policy_info          info_policy;
+
+    set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+            NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (aerospike_job_info(as_object_p, error_p, 
+                    &info_policy, module_p, job_id, false, &job_info))) {
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+        goto exit;
+    }
+
+    add_assoc_long(job_info_p, PROGRESS_PCT, job_info.progress_pct);
+    add_assoc_long(job_info_p, RECORDS_READ, job_info.records_read);
+    add_assoc_long(job_info_p, STATUS, job_info.status);
+exit:
+    return error_p->code;
+}
+/*
+ ******************************************************************************************************
+ * Queries a set in the Aerospike DB and applies UDF on it.
+ *
+ * @param as_object_p               The C client's aerospike object.
+ * @param error_p                   The C client's as_error to be set to the
+ *                                  encountered error.
+ * @param module_p                  The name of UDF module containing the
+ *                                  function to execute.
+ * @param function_p                The name of the function to be applies to 
+ *                                  the record.
+ * @param args_pp                   An array of arguments for the UDF
+ * @param namespace_p               The namespace to query.
+ * @param set_p                     The set to query.
+ * @param job_id_p                  The if for the query job, which can be used
+ *                                  for querying the status of the query. This
+ *                                  value shall be set by this function on
+ *                                  success.
+ * @param percent                   The percentage of data to scan.
+ * @parama scan_priority            The priority levels for the scan operation.
+ * @param concurrent                Whether to scan all nodes in parallel.
+ * @param no_bins                   Whether to return only metadata (and no
+ *                                  bins).
+ * @param options_p                 The optional policy.
+ * @param block                     Whether to block the query API until query
+ *                                  job is completed or make as asynchronous
+ *                                  call to scan and return ID.
+ * @param serializer_policy_p       The serializer_policy value set in
+ *                                  AerospikeObject structure.
+ *                                  Value read from either INI or user provided
+ *                                  options array.
+ * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
+ ******************************************************************************************************
+ */
+extern as_status
+aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
+        char *module_p, char *function_p, zval **args_pp, char *namespace_p,
+        char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p,
+        bool block, int8_t *serializer_policy_p TSRMLS_DC)
+{
+    as_arraylist            args_list;
+    as_arraylist*           args_list_p = NULL;
+    as_static_pool          udf_pool = {0};
+    int8_t                  serializer_policy = (serializer_policy_p) ? *serializer_policy_p : SERIALIZER_NONE;
+    as_policy_write         write_policy;
+    as_policy_info          info_policy;
+    as_query                query;
+    as_query*               query_p = NULL;
+    uint64_t                query_id = 0;
+
+    if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) || 
+            (!namespace_p) || (!set_p) || (!job_id_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to initiate background query");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate background query");
+        goto exit;
+    }
+
+    if ((*args_pp)) {
+        as_arraylist_inita(&args_list,
+                zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+        args_list_p = &args_list;
+        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool,
+                serializer_policy, error_p TSRMLS_CC);
+        if (AEROSPIKE_OK != (error_p->code)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
+            goto exit;
+        }
+    }
+
+
+    query_p = &query;
+    as_query_init(query_p, namespace_p, set_p);
+    if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
+        as_query_where_inita(&query, 1);
+    }
+
+    if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
+                    set_p, predicate_ht_p, NULL, NULL, NULL TSRMLS_CC))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to define scan");
+        goto exit;
+    }
+
+    set_policy_query_apply(&as_object_p->config, &write_policy, options_p, error_p TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (error_p->code)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+        goto exit;
+    }
+
+    if (module_p && function_p && (!as_query_apply(query_p, module_p,
+                    function_p, (as_list*)args_list_p))) {
+        DEBUG_PHP_EXT_DEBUG("Unable to apply UDF on the query");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Unable to initiate background query");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (aerospike_query_background(as_object_p,
+                    error_p, &write_policy, query_p, &query_id))) {
+        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+        goto exit;
+    }
+
+    if (block) {
+        set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+                NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+
+        if (AEROSPIKE_OK != (error_p->code)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+            goto exit;
+        }
+
+        if (AEROSPIKE_OK != aerospike_query_wait(as_object_p,
+                    error_p, &info_policy, query_p, query_id, 0)) {
+            DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+            goto exit;
+        }
+    }
+    ZVAL_LONG(job_id_p, query_id);
+
+exit:
+    if (args_list_p) {
+        as_arraylist_destroy(args_list_p);
+    }
+
+    if (query_p) {
+        as_query_destroy(query_p);
+    }
+    aerospike_helper_free_static_pool(&udf_pool);
     return error_p->code;
 }
 
