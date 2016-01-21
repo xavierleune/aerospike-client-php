@@ -1972,11 +1972,16 @@ PHP_METHOD(Aerospike, listAppend)
     add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 
     aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
-            aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
+            aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
+            &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
         status = error.code;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
         DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
         goto exit;
     }
 
@@ -2087,11 +2092,16 @@ PHP_METHOD(Aerospike, listInsert)
     add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
 
     aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
-            aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
+            aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
+            &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
         status = error.code;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
         DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
         goto exit;
     }
 
@@ -2202,11 +2212,16 @@ PHP_METHOD(Aerospike, listSet)
     add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
 
     aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
-            aerospike_obj_p->serializer_opt, true, &error TSRMLS_CC);
+            aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
+            &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
         status = error.code;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
         DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
         goto exit;
     }
 
@@ -2292,6 +2307,13 @@ PHP_METHOD(Aerospike, listMerge)
         goto exit;
     }
 
+    if (!check_val_type_list(&items_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
+        DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
+        goto exit;
+    }
+
     as_policy_operate_init(&operate_policy);
     set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
             NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
@@ -2305,7 +2327,6 @@ PHP_METHOD(Aerospike, listMerge)
         goto exit;
     }
 
-    //Put check of whether items_p is of type list
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
@@ -2314,6 +2335,9 @@ PHP_METHOD(Aerospike, listMerge)
     }
 
     if (error.code == AEROSPIKE_OK) {
+        if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+            goto exit;
+        }
         as_operations_add_list_append_items(&ops, bin_name_p, (as_list*) args_list_p);
         status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
                 &operate_policy, &as_key_for_list, &ops, NULL);
@@ -2499,6 +2523,10 @@ PHP_METHOD(Aerospike, listClear)
         goto exit;
     }
 
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
     as_operations_add_list_clear(&ops, bin_name_p);
     status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
             &as_key_for_list, &ops, NULL);
@@ -2586,6 +2614,10 @@ PHP_METHOD(Aerospike, listTrim)
         goto exit;
     }
 
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
     as_operations_add_list_trim(&ops, bin_name_p, index, count);
     status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
             &as_key_for_list, &ops, NULL);
@@ -2663,6 +2695,13 @@ PHP_METHOD(Aerospike, listInsertItems)
         goto exit;
     }
 
+    if (!check_val_type_list(&items_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
+        DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
+        goto exit;
+    }
+
     as_policy_operate_init(&operate_policy);
     set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
             NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
@@ -2676,7 +2715,6 @@ PHP_METHOD(Aerospike, listInsertItems)
         goto exit;
     }
 
-    //Put check of whether items_p is of type list
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
@@ -2685,6 +2723,9 @@ PHP_METHOD(Aerospike, listInsertItems)
     }
 
     if (error.code == AEROSPIKE_OK) {
+        if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+            goto exit;
+        }
         as_operations_add_list_insert_items(&ops, bin_name_p, index, (as_list*) args_list_p);
         status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
                 &operate_policy, &as_key_for_list, &ops, NULL);
@@ -2995,6 +3036,10 @@ PHP_METHOD(Aerospike, listPop)
         goto exit;
     }
 
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
     as_operations_add_list_pop(&ops, bin_name_p, index);
     if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p,
                     &error, &operate_policy, &as_key_for_list, &ops, &rec))) {
@@ -3103,6 +3148,10 @@ PHP_METHOD(Aerospike, listPopRange)
         goto exit;
     }
 
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
     as_operations_add_list_pop_range(&ops, bin_name_p, index, count);
     if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p,
                     &error, &operate_policy, &as_key_for_list, &ops, &rec))) {
@@ -3206,6 +3255,10 @@ PHP_METHOD(Aerospike, listRemove)
         goto exit;
     }
 
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
     as_operations_add_list_remove(&ops, bin_name_p, index);
     status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
             &as_key_for_list, &ops, NULL);
@@ -3290,6 +3343,10 @@ PHP_METHOD(Aerospike, listRemoveRange)
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listRemoveRange function");
         DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listRemoveRange function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
         goto exit;
     }
 

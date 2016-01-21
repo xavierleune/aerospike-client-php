@@ -3702,3 +3702,32 @@ exit:
 
     return status;
 }
+
+/*
+ *******************************************************************************************************
+ * This function will check if passed items is of type list.
+ *
+ * @param value                    The optional PHP array for filter bins.
+ *
+ * @return 1 if passed value is of type loist. Otherwise returns 0.
+ *******************************************************************************************************
+ */
+extern int check_val_type_list(zval **value)
+{
+    HashTable *hashtable;
+    HashPosition pointer;
+    char *inner_key = NULL;
+    void *inner_store;
+    uint inner_key_len;
+    ulong index;
+    uint key_iterator = 0;
+
+    hashtable = Z_ARRVAL_PP((zval**)value);
+    zend_hash_internal_pointer_reset_ex(hashtable, &pointer);
+    TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index,
+            pointer, key_iterator);
+    if (key_iterator == zend_hash_num_elements(hashtable)) {
+        return 1;
+    }
+    return 0;
+}
