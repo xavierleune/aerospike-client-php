@@ -2647,7 +2647,7 @@ PHP_METHOD(Aerospike, queryApply)
     zval_dtor(job_id_p);
     ZVAL_LONG(job_id_p, 0);
     if (AEROSPIKE_OK != 
-            (status = aerospike_query_run_background(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_query_run_background(aerospike_obj_p,
                                                      &error, module_p, function_name_p,
                                                      &args_p, namespace_p, set_p,
                                                      predicate_ht_p,

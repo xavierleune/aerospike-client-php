@@ -839,6 +839,9 @@ do {                                                                           \
 #define AEROSPIKE_LIST_GET_APPEND_BYTES(as, key, value, array, static_pool, err)   \
     ADD_LIST_APPEND_BYTES(as, key, value, &array, err TSRMLS_CC)
 
+#define AEROSPIKE_LIST_GET_APPEND_GEOJSON(as, key, value, array, static_pool, err)   \
+    ADD_LIST_APPEND_BYTES(as, key, value, &array, err TSRMLS_CC)
+
 /*
  *******************************************************************************************************
  * GET function calls for level = DEFAULT
@@ -932,6 +935,9 @@ do {                                                                           \
 #define AEROSPIKE_MAP_GET_ASSOC_BYTES(as, key, value, array, static_pool, err)     \
     ADD_MAP_ASSOC_BYTES(as, key, value, &array, err TSRMLS_CC)
 
+#define AEROSPIKE_MAP_GET_ASSOC_GEOJSON(as, key, value, array, static_pool, err)     \
+    ADD_MAP_ASSOC_BYTES(as, key, value, &array, err TSRMLS_CC)
+
 /*
  *******************************************************************************************************
  * GET function calls for level = MAP with integer key
@@ -982,6 +988,10 @@ do {                                                                           \
     ADD_MAP_INDEX_PAIR(as, key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_MAP_GET_INDEX_BYTES(as, key, value, array, static_pool,      \
+        err)                                                                   \
+    ADD_MAP_INDEX_BYTES(as, key, value, &array, err TSRMLS_CC)
+
+#define AEROSPIKE_MAP_GET_INDEX_GEOJSON(as, key, value, array, static_pool,      \
         err)                                                                   \
     ADD_MAP_INDEX_BYTES(as, key, value, &array, err TSRMLS_CC)
 

@@ -353,7 +353,7 @@ exit:
  ******************************************************************************************************
  */
 extern as_status
-aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
+aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
         char *module_p, char *function_p, zval **args_pp, char *namespace_p,
         char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p,
         bool block, int8_t *serializer_policy_p TSRMLS_DC)
@@ -368,7 +368,7 @@ aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
     as_query*               query_p = NULL;
     uint64_t                query_id = 0;
 
-    if ((!as_object_p) || (!error_p) || (!module_p) || (!function_p) || 
+    if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) || 
             (!namespace_p) || (!set_p) || (!job_id_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to initiate background query");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate background query");
@@ -379,7 +379,7 @@ aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
         as_arraylist_inita(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool,
+        AS_LIST_PUT(as_object_p, NULL, args_pp, args_list_p, &udf_pool,
                 serializer_policy, error_p TSRMLS_CC);
         if (AEROSPIKE_OK != (error_p->code)) {
             DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
@@ -400,7 +400,7 @@ aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
         goto exit;
     }
 
-    set_policy_query_apply(&as_object_p->config, &write_policy, options_p, error_p TSRMLS_CC);
+    set_policy_query_apply(&as_object_p->as_ref_p->as_p->config, &write_policy, options_p, error_p TSRMLS_CC);
 
     if (AEROSPIKE_OK != (error_p->code)) {
         DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -415,14 +415,14 @@ aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (aerospike_query_background(as_object_p,
+    if (AEROSPIKE_OK != (aerospike_query_background(as_object_p->as_ref_p->as_p,
                     error_p, &write_policy, query_p, &query_id))) {
         DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
         goto exit;
     }
 
     if (block) {
-        set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+        set_policy(&as_object_p->as_ref_p->as_p->config, NULL, NULL, NULL, NULL, &info_policy,
                 NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 
         if (AEROSPIKE_OK != (error_p->code)) {
@@ -430,7 +430,7 @@ aerospike_query_run_background(aerospike *as_object_p, as_error *error_p,
             goto exit;
         }
 
-        if (AEROSPIKE_OK != aerospike_query_wait(as_object_p,
+        if (AEROSPIKE_OK != aerospike_query_wait(as_object_p->as_ref_p->as_p,
                     error_p, &info_policy, query_p, query_id, 0)) {
             DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
             goto exit;
