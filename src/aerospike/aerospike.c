@@ -1,7 +1,7 @@
 /*
  * src/aerospike/aerospike.c
  *
- * Copyright (C) 2014-2015 Aerospike, Inc.
+ * Copyright (C) 2014-2016 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -726,9 +726,11 @@ PHP_METHOD(Aerospike, isConnected)
         RETURN_FALSE;
     }
 
-    if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
+    if (aerospike_cluster_is_connected(aerospike_obj_p->as_ref_p->as_p)) {
+        aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
         RETURN_TRUE;
     } else {
+        aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
         RETURN_FALSE;
     }
 }

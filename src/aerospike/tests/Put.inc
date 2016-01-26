@@ -634,14 +634,17 @@ class Put extends AerospikeTestCommon
      $key = $db->initKey("test", "demo", "list_list_strval");
      $list1 = array("p","q","r","s","d","op",12,56,89,55);
      $list2 = array(105,"r","s","t","p",$list1);
+     if ($db->errorno() != Aerospike::OK) {
+         return $db->errorno();
+     }
      if ($db->isConnected()) {
-        $status = $db->put($key,array("bin1"=>$list2));
-        $this->keys[] = $key;
+         $status = $db->put($key,array("bin1"=>$list2));
+         $this->keys[] = $key;
      } else {
          return $db->errorno();
      }
      if ($status !== Aerospike::OK) {
-         return $this->db->errorno();
+         return $db->errorno();
      }
      return $status;
  }
