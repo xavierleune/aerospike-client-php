@@ -27,7 +27,7 @@
 
 #ifndef PHP_AEROSPIKE_H
 #define PHP_AEROSPIKE_H 1
-#define PHP_AEROSPIKE_VERSION "3.4.6"
+#define PHP_AEROSPIKE_VERSION "3.4.7"
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 #ifdef ZTS
 #include "TSRM.h"
@@ -180,6 +180,24 @@ PHP_METHOD(Aerospike, getRegistered);
  */
 PHP_METHOD(Aerospike, existsMany);
 PHP_METHOD(Aerospike, operate);
+
+/*
+ * List Operations APIs:
+ */
+PHP_METHOD(Aerospike, listAppend);
+PHP_METHOD(Aerospike, listInsert);
+PHP_METHOD(Aerospike, listSet);
+PHP_METHOD(Aerospike, listMerge);
+PHP_METHOD(Aerospike, listSize);
+PHP_METHOD(Aerospike, listClear);
+PHP_METHOD(Aerospike, listTrim);
+PHP_METHOD(Aerospike, listInsertItems);
+PHP_METHOD(Aerospike, listGet);
+PHP_METHOD(Aerospike, listGetRange);
+PHP_METHOD(Aerospike, listPop);
+PHP_METHOD(Aerospike, listPopRange);
+PHP_METHOD(Aerospike, listRemove);
+PHP_METHOD(Aerospike, listRemoveRange);
 
 /*
  * Security APIs:

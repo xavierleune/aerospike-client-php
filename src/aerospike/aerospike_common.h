@@ -865,4 +865,7 @@ aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error
 extern as_status
 aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
         zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern int
+check_val_type_list(zval **value);
 #endif

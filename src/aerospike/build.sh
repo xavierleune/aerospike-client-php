@@ -16,7 +16,7 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.24}
+export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-4.0.0}
 export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 export LUA_SYSPATH=${LUA_SYSPATH:-/usr/local/aerospike/lua}
 export LUA_USRPATH=${LUA_USRPATH:-/usr/local/aerospike/usr-lua}
