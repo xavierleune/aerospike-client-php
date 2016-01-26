@@ -1004,5 +1004,9 @@ do {                                                                           \
 #define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
     add_next_index_zval(array, store);
 
+extern void
+aerospike_transform_iterate_records(zval **record_pp, as_record* as_record_p, as_static_pool* static_pool, int8_t serializer_policy,
+bool server_support_double, as_error *error_p TSRMLS_DC);
+
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
 
