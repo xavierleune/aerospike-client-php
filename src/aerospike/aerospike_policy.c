@@ -496,9 +496,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_CONCURRENTLY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_CONCURRENTLY");
                         goto exit;
                     }
                     if (!as_scan_set_concurrent(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -512,9 +512,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
                         goto exit;
                     }
                     if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -522,6 +522,18 @@ set_policy_ex(as_config *as_config_p,
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan no bins");
                         goto exit;
                     }
+                    break;
+                case OPT_SCAN_INCLUDELDT:
+                    if (info_policy_p) {
+                        break;
+                    }
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        goto exit;
+                    }
+                    as_scan_p->include_ldt = Z_BVAL_PP(options_value);
                     break;
                 case OPT_POLICY_KEY:
                     if (Z_TYPE_PP(options_value) != IS_LONG) {

@@ -38,6 +38,7 @@ enum Aerospike_constants {
     OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
     OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
     OPT_SCAN_NOBINS,          /* boolean value, default: false */
+    OPT_SCAN_INCLUDELDT,      /* Include large data type bin values in addition to large data type bin names */
     OPT_POLICY_KEY,           /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
     OPT_POLICY_GEN,
     OPT_POLICY_REPLICA,       /* set to one of Aerospike::POLICY_REPLICA_* */
@@ -92,6 +93,7 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_SCAN_PERCENTAGE 		            ,   "OPT_SCAN_PERCENTAGE" 		        },
     { OPT_SCAN_CONCURRENTLY 		        ,   "OPT_SCAN_CONCURRENTLY" 		    },
     { OPT_SCAN_NOBINS 			            ,   "OPT_SCAN_NOBINS" 			        },
+    { OPT_SCAN_INCLUDELDT                   ,   "OPT_SCAN_INCLUDELDT"               },
     { OPT_POLICY_GEN                        ,   "OPT_POLICY_GEN"                    },
     { OPT_POLICY_REPLICA                    ,   "OPT_POLICY_REPLICA"                },
     { OPT_POLICY_CONSISTENCY                ,   "OPT_POLICY_CONSISTENCY"            },
