@@ -99,6 +99,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.use_batch_direct", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, use_batch_direct, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.max_threads", "300", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, max_threads, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.thread_pool_size", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, thread_pool_size, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.compression_threshold", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, compression_threshold, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
