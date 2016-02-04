@@ -512,9 +512,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
                         goto exit;
                     }
                     if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
