@@ -485,7 +485,7 @@ class Connection extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function bug_CLIENT_627() {
-        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME1, "port"=>AEROSPIKE_CONFIG_PORT1)));
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $options = array(Aerospike::COMPRESSION_THRESHOLD=>8);
         $db = new Aerospike($config, true, $options);
         if ($db->errorno() != Aerospike::OK) {
