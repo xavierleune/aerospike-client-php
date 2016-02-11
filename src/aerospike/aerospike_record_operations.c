@@ -178,9 +178,13 @@ aerospike_record_operations_ops(aerospike* as_object_p,
             break;
 
         case AS_CDT_OP_LIST_INSERT_ITEMS_NEW:
+            if (Z_TYPE_PP(each_operation) != IS_ARRAY) {
+                DEBUG_PHP_EXT_DEBUG("Value passed if not array type.");
+                goto exit;
+            }
             as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_PP(each_operation)));
             args_list_p = &args_list;
-            
+
             AS_LIST_PUT(NULL, each_operation, args_list_p, &items_pool, serializer_policy,
                     error_p TSRMLS_CC);
 
@@ -208,7 +212,7 @@ aerospike_record_operations_ops(aerospike* as_object_p,
                 goto exit;
             }
             break;
-            
+
         case AS_CDT_OP_LIST_REMOVE_NEW:
             if (!as_operations_add_list_remove(ops, bin_name_p, time_to_live)) {
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to remove.");
