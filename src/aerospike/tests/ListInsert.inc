@@ -441,7 +441,7 @@ class ListInsert extends AerospikeTestCommon
     function edge_003() {
         $value = array("Aerospike", "Casandra", "Redis");
         try {
-            $status = $this->db->listMerge($this->keys[0], "binB", 0,
+            $status = $this->db->listInsert($this->keys[0], "binB", 0,
                 $value, "abcdef");
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
