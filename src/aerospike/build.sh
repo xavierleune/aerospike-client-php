@@ -195,6 +195,26 @@ config()
 
 }
 
+echo "---------------------------Installing PHPUnit--------------------------"
+
+phpVersion=$(php --version)
+phpStringIndex=`expr index "$phpVersion" 'PHP'`
+declare -i intPhpVer=${phpVersion:$phpStringIndex+2:2}
+echo $intPhpVer
+if (("$intPhpVer" >= "7")); then
+    echo 'Installing PHPUnit 5.1' 
+    sudo rm phpunit.phar
+    sudo wget https://phar.phpunit.de/phpunit.phar
+    sudo chmod +x phpunit.phar
+    sudo mv phpunit.phar /usr/local/bin/phpunit
+else
+    echo 'Installing PHPUnit 4.8'
+    sudo rm phpunit-old.phar
+    sudo wget https://phar.phpunit.de/phpunit-old.phar
+    sudo chmod +x phpunit-old.phar
+    sudo mv phpunit-old.phar /usr/local/bin/phpunit
+fi
+
 echo "----------------------------------------------------------------------"
 headline "Installing the Aerospike PHP Extension"
 echo "To install the extension run inside src/aerospike:"
