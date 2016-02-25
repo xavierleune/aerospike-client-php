@@ -68,6 +68,9 @@ Here is a description of the configuration directives:
 **aerospike.thread_pool_size integer**
     Number of threads stored in underlying thread pool that is used in batch/scan/query commands
 
+**aerospike.compression_threshold**
+    Minimum record size beyond which it is compressed and sent to the server
+
 ## See Also
 
 ### [Aerospike Class](aerospike.md)
