@@ -6117,7 +6117,6 @@ PHP_MINIT_FUNCTION(aerospike)
 
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
-    Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
 #ifdef ZTS
     ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
 #else
