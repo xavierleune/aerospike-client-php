@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
 #include "aerospike/as_arraylist.h"
@@ -874,4 +892,7 @@ aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error
 extern as_status
 aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
         zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern int
+check_val_type_list(zval **value);
 #endif

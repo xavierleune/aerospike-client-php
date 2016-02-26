@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include "php.h"
 #include "ext/standard/php_var.h"
 #include "ext/standard/php_smart_str.h"
@@ -3068,7 +3086,7 @@ exit:
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-    static void
+static void
 aerospike_transform_iterate_records(Aerospike_object* as, zval **record_pp,
         as_record* as_record_p,
         as_static_pool* static_pool,
@@ -3790,4 +3808,33 @@ exit:
     }
 
     return status;
+}
+
+/*
+ *******************************************************************************************************
+ * This function will check if passed items is of type list.
+ *
+ * @param value                    The optional PHP array for filter bins.
+ *
+ * @return 1 if passed value is of type loist. Otherwise returns 0.
+ *******************************************************************************************************
+ */
+extern int check_val_type_list(zval **value)
+{
+    HashTable *hashtable;
+    HashPosition pointer;
+    char *inner_key = NULL;
+    void *inner_store;
+    uint inner_key_len;
+    ulong index;
+    uint key_iterator = 0;
+
+    hashtable = Z_ARRVAL_PP((zval**)value);
+    zend_hash_internal_pointer_reset_ex(hashtable, &pointer);
+    TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index,
+            pointer, key_iterator);
+    if (key_iterator == zend_hash_num_elements(hashtable)) {
+        return 1;
+    }
+    return 0;
 }

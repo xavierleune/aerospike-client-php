@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Copyright 2013-2015 Aerospike, Inc.
+# Copyright 2013-2016 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-3.1.24}
+export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-4.0.0}
 export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 export LUA_SYSPATH=${LUA_SYSPATH:-/usr/local/aerospike/lua}
 export LUA_USRPATH=${LUA_USRPATH:-/usr/local/aerospike/usr-lua}
