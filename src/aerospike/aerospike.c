@@ -1990,7 +1990,7 @@ PHP_METHOD(Aerospike, listAppend)
     MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
     add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 
-    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
             &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
@@ -2110,7 +2110,7 @@ PHP_METHOD(Aerospike, listInsert)
     MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
     add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
 
-    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
             &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
@@ -2230,7 +2230,7 @@ PHP_METHOD(Aerospike, listSet)
     MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
     add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
 
-    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
             &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
@@ -2349,7 +2349,7 @@ PHP_METHOD(Aerospike, listMerge)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
@@ -2737,7 +2737,7 @@ PHP_METHOD(Aerospike, listInsertItems)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 

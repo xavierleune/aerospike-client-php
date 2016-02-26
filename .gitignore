@@ -1,1 +1,32 @@
+.project
 aerospike-client-c/
+src/aerospike/build/*
+src/aerospike/modules/*
+src/aerospike/autom4te.cache/
+src/aerospike/.libs/*
+
+# test directories
+src/aerospike/tests/**/*.diff
+src/aerospike/tests/**/*.exp
+src/aerospike/tests/**/*.log
+src/aerospike/tests/**/*.out
+src/aerospike/tests/**/*.sh
+src/aerospike/tests/**/*.php
+
+# src/aerospike directory
+src/aerospike/.deps
+src/aerospike/Makefile*
+src/aerospike/acinclude.m4
+src/aerospike/aclocal.m4
+src/aerospike/aerospike.la
+src/aerospike/config.*
+!src/aerospike/config.m4
+src/aerospike/configure
+src/aerospike/configure.in
+src/aerospike/install-sh
+src/aerospike/libtool
+src/aerospike/ltmain.sh
+src/aerospike/missing
+src/aerospike/mkinstalldirs
+src/aerospike/run-tests.php
+src/aerospike/*.lo
