@@ -1,10 +1,10 @@
 <?php
 
 require_once("Common.inc");
-
+require_once(realpath(__DIR__ . '/../../../autoload.php'));
 class Scan extends AerospikeTestCommon
 {
-
+    static $put_ldt_rec = array("LDTCONTROLBIN" => NULL, "triangular"=>array(19));
     protected function setUp() {
         $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
         $this->db = new Aerospike($config);
@@ -515,6 +515,47 @@ class Scan extends AerospikeTestCommon
             return $this->db->errorno();
         }
         return $status;
+    }
+
+    /**
+     * @test
+     * scan() with OPT_SCAN_INCLUDELDT option
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (testScanOptionIncludeLDT)
+     *
+     * @test_plans{1.1}
+     */
+    function testScanOptionIncludeLDT()
+    {
+        $count_recs = 0;
+        $key = $this->db->initKey("test", "demo", "put_ldt");
+        $this->db->remove($key);
+        $tri_primes = new \Aerospike\LDT\LList($this->db, $key, 'triangular');
+        $status = $tri_primes->add(19);
+        if ($status !== AEROSPIKE::OK) {
+            return $status;
+        }
+        $this->keys[] = $key;
+        $status = $this->db->scan("test", "demo307", function ($record) use (&$count_recs) {
+            $comp_res = array_diff_assoc_recursive(self::$put_ldt_rec, $record["bins"]);
+            if (!empty($comp_res)) {
+                return Aerospike::ERR_CLIENT;
+            }
+            if ($count_recs != 1) {
+                return Aerospike::ERR_CLIENT;
+            }
+        }, array(), array(Aerospike::OPT_SCAN_INCLUDELDT => true));
+        if ($status !== AEROSPIKE::OK) {
+            return $this->db->errorno();
+        }
+        return Aerospike::OK;
     }
 }
 ?>

@@ -356,8 +356,7 @@ class Connection extends AerospikeTestCommon
      * @test
      * connect() with use_shm is disabled.
      * For this test-case to pass you need to set use_shm to false
-     * either through ini or through config.(Enabling/disabling use_shm
-     * through config is yet to be implemented)
+     * through ini.
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -386,9 +385,6 @@ class Connection extends AerospikeTestCommon
     /**
      * @test
      * connect() with use_shm enabled. shm_key is given by user.
-     * For this test-case to pass you need to set use_shm to false
-     * either through ini or through config.(Enabling/disabling use_shm
-     * through config is yet to be implemented)
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -418,9 +414,6 @@ class Connection extends AerospikeTestCommon
     /**
      * @test
      * connect() with use_shm enabled. shm_key is not passed by user.
-     * For this test-case to pass you need to set use_shm to false
-     * either through ini or through config.(Enabling/disabling use_shm
-     * through config is yet to be implemented)
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -450,9 +443,6 @@ class Connection extends AerospikeTestCommon
     /**
      * @test
      * connect() with use_shm enabled and shm_key is passed by user is already used.
-     * For this test-case to pass you need to set use_shm to false
-     * either through ini or through config.(Enabling/disabling use_shm
-     * through config is yet to be implemented)
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -477,6 +467,31 @@ class Connection extends AerospikeTestCommon
             return Aerospike::OK;
         }
         return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * connect() with COMPRESSION_THRESHOLD option passed.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (bug_CLIENT_627)
+     *
+     * @test_plans{1.1}
+     */
+    function bug_CLIENT_627() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $options = array(Aerospike::COMPRESSION_THRESHOLD=>8);
+        $db = new Aerospike($config, true, $options);
+        if ($db->errorno() != Aerospike::OK) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return Aerospike::OK;
     }
 } 
 ?>

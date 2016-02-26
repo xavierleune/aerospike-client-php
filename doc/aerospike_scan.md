@@ -32,6 +32,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 - **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
 - **Aerospike::OPT_SCAN_CONCURRENTLY** whether to run the scan in parallel
 - **Aerospike::OPT_SCAN_NOBINS** whether to not retrieve bins for the records
+- **Aerospike::OPT_SCAN_INCLUDELDT** whether to include large data type bin values along with LDT bin names
 
 ## Return Values
 

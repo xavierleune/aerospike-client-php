@@ -61,6 +61,7 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int shm_takeover_threshold_sec;
     int shm_key;
     int shm_key_counter;
+    int compression_threshold;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
     HashTable *shm_key_list_g;

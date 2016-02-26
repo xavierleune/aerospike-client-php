@@ -50,6 +50,7 @@
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 #define GEN_POLICY_PHP_INI INI_STR("aerospike.key_gen") ? (uint32_t) atoi(INI_STR("aerospike.key_gen")) : 0
 #define USE_BATCH_DIRECT_PHP_INI INI_STR("aerospike.use_batch_direct") ? (bool) atoi(INI_STR("aerospike.use_batch_direct")) : 0
+#define COMPRESSION_THRESHOLD_PHP_INI INI_STR("aerospike.compression_threshold") ? (uint32_t) atoi(INI_STR("aerospike.compression_threshold")) : 0
 
 /*
  *******************************************************************************************************
@@ -496,9 +497,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_CONCURRENTLY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_CONCURRENTLY");
                         goto exit;
                     }
                     if (!as_scan_set_concurrent(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -512,9 +513,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
                         goto exit;
                     }
                     if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -522,6 +523,18 @@ set_policy_ex(as_config *as_config_p,
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan no bins");
                         goto exit;
                     }
+                    break;
+                case OPT_SCAN_INCLUDELDT:
+                    if (info_policy_p) {
+                        break;
+                    }
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        goto exit;
+                    }
+                    as_scan_p->include_ldt = Z_BVAL_PP(options_value);
                     break;
                 case OPT_POLICY_KEY:
                     if (Z_TYPE_PP(options_value) != IS_LONG) {
@@ -983,8 +996,13 @@ set_config_policies(as_config *as_config_p,
     }
 
     ini_value = USE_BATCH_DIRECT_PHP_INI;
-    if (ini_value && as_config_p) {
+    if (as_config_p) {
         as_config_p->policies.batch.use_batch_direct = ini_value;
+    }
+
+    ini_value = COMPRESSION_THRESHOLD_PHP_INI;
+    if (ini_value >= 0 && as_config_p) {
+        as_config_p->policies.write.compression_threshold = ini_value;
     }
 
     if (options_p != NULL) {
@@ -1119,6 +1137,23 @@ set_config_policies(as_config *as_config_p,
                         goto exit;
                     }
                     as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_PP(options_value);
+                    break;
+                case COMPRESSION_THRESHOLD:
+                    if (Z_TYPE_PP(options_value) != IS_LONG) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
+                        goto exit;
+                    }
+                    uint32_t compression_threshold = (uint32_t) Z_LVAL_PP(options_value);
+                    if (compression_threshold >= 0) {
+                        as_config_p->policies.write.compression_threshold = compression_threshold;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Compression threshold should be >= 0");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Compression threshold should be >= 0");
+                        goto exit;
+                    }
                     break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");

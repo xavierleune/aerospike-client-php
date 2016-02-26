@@ -438,7 +438,7 @@ class ListAppend extends AerospikeTestCommon
     function edge_003() {
         $value = array("Aerospike", "Casandra", "Redis");
         try {
-            $status = $this->db->listMerge($this->keys[0], "binB", $value, "abcdef");
+            $status = $this->db->listAppend($this->keys[0], "binB", $value, "abcdef");
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;
         }
