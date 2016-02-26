@@ -1800,7 +1800,7 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
     as_bytes     *bytes;
     GET_BYTES_POOL(bytes, static_pool, error_p, exit);
     const char* name = NULL;
-    int name_len = 0;
+    zend_uint name_len = 0;
     int dup;
 
     if ((FETCH_VALUE_PUT((zval**)value)) == IS_OBJECT) {
