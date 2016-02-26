@@ -38,6 +38,7 @@
 
 #include "aerospike/aerospike.h"
 #include "aerospike/aerospike_batch.h"
+#include "aerospike/aerospike_info.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"
@@ -418,6 +419,16 @@ static zend_function_entry Aerospike_class_functions[] =
 
     /*
      ********************************************************************
+     * GeoJSON APIs:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, predicateGeoWithinGeoJSONRegion, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoWithinRadius, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoContainsGeoJSONPoint, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoContainsPoint, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+    /*
+     ********************************************************************
      * UDF APIs:
      ********************************************************************
      */
@@ -664,6 +675,13 @@ PHP_METHOD(Aerospike, __construct)
 
     /* connection is established, set the connection flag now */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
+
+    /* Checking if the GeoJSON feature is supported for this given cluster. */
+    if (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
+        aerospike_obj_p->hasGeoJSON = true;
+    } else {
+        aerospike_obj_p->hasGeoJSON = false;
+    }
 
     DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object");
 exit:
@@ -985,7 +1003,7 @@ PHP_METHOD(Aerospike, put)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p->as_ref_p->as_p,
+    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p,
                     &record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
@@ -1974,7 +1992,7 @@ PHP_METHOD(Aerospike, listAppend)
     MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
     add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 
-    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
             &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
@@ -2094,7 +2112,7 @@ PHP_METHOD(Aerospike, listInsert)
     MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
     add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
 
-    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
             &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
@@ -2214,7 +2232,7 @@ PHP_METHOD(Aerospike, listSet)
     MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
     add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
 
-    aerospike_transform_iterate_records(&temp_record_p, &record, &static_pool,
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
             &error TSRMLS_CC);
     if (AEROSPIKE_OK != error.code) {
@@ -2333,7 +2351,7 @@ PHP_METHOD(Aerospike, listMerge)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
@@ -2721,7 +2739,7 @@ PHP_METHOD(Aerospike, listInsertItems)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
@@ -3972,7 +3990,7 @@ PHP_METHOD(Aerospike, aggregate)
     array_init(returned_p);
 
     if (AEROSPIKE_OK !=
-            (status = aerospike_query_aggregate(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_query_aggregate(aerospike_obj_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
@@ -4166,7 +4184,7 @@ PHP_METHOD(Aerospike, queryApply)
     zval_dtor(job_id_p);
     ZVAL_LONG(job_id_p, 0);
     if (AEROSPIKE_OK != 
-            (status = aerospike_query_run_background(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_query_run_background(aerospike_obj_p,
                                                      &error, module_p, function_name_p,
                                                      &args_p, namespace_p, set_p,
                                                      predicate_ht_p,
@@ -4280,7 +4298,7 @@ PHP_METHOD(Aerospike, scanApply)
     zval_dtor(scan_id_p);
     ZVAL_LONG(scan_id_p, 0);
     if (AEROSPIKE_OK !=
-            (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_scan_run_background(aerospike_obj_p,
                                                     &error, module_p, function_name_p,
                                                     &args_p, namespace_p, set_p,
                                                     scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
@@ -4437,6 +4455,118 @@ exit:
     RETURN_LONG(status);
 }
 
+/*
+ *******************************************************************************************************
+ *  GeoJSON APIs:
+ *******************************************************************************************************
+ */
+/* {{{ proto array Aerospike::predicateGeoWithinGeoJSONRegion( string bin,
+ * string region).
+ * Helper which builds the "WHITHIN REGION' predicate */
+PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
+{
+    as_status               status = AEROSPIKE_OK;
+    char                    *bin_name_p = NULL;
+    char                    *region_p = NULL;
+    int                     region_len = 0;
+    int                     bin_name_len = 0;
+    zval                    *val_p;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                &bin_name_p, &bin_name_len, &region_p, &region_len)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithingGeoJSONRegion");
+        RETURN_NULL();
+    }
+
+    if (bin_name_len == 0 || region_len == 0) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateGeoWithinGeoJSONRegion() expects parameter 1 to be a non-empty string.");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    add_assoc_stringl(return_value, VAL, region_p, region_len, 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoWithinRadius( string bin, double long, double $lat,
+ * float $radiusMeter).
+ * Helper which builds the "WITHIN RADIUS" predicate */
+PHP_METHOD(Aerospike, predicateGeoWithinRadius)
+{
+    as_status               status = AEROSPIKE_OK;
+    double                  longitude;
+    double                  latitude;
+    double                  radius;
+    char                    *bin_name_p = NULL;
+    int                     bin_name_len = 0;
+    char                    geo_value[1024];
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
+                &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithinRadius");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
+
+    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoContainsGeoJSONPoint(string bin, string
+ * Point).
+ * Helper which build the "CONRAINS POINT" predicate */
+PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
+{
+    as_status                 status = AEROSPIKE_OK;
+    char                      *bin_name_p = NULL;
+    int                       bin_name_len = 0;
+    char                      *geoPoint_p = NULL;
+    int                       geoPoint_len = 0;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                &bin_name_p, &bin_name_len, &geoPoint_p, &geoPoint_len)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoContainsGeoJSONPoint");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len, 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoContainsPoint(string bin, double long,
+ * double lat, double radiusMeter).
+ * Helper which build the "CONTAINS POINT" predicate */
+PHP_METHOD(Aerospike, predicateGeoContainsPoint)
+{
+    as_status               status = AEROSPIKE_OK;
+    char                    *bin_name_p = NULL;
+    int                     bin_name_len = 0;
+    double                  longitude;
+    double                  latitude;
+    double                  radius;
+    char                    geo_value[1024];
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
+                &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoContainsPoint");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius); 
+
+    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+}
 /*
  *******************************************************************************************************
  *  User Defined Function (UDF) APIs:

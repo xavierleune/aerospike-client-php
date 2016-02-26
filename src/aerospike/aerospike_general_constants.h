@@ -98,7 +98,8 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
     { "=",         "OP_EQ"  },
     { "BETWEEN",   "OP_BETWEEN" },
     { "CONTAINS",   "OP_CONTAINS" },
-    { "RANGE",   "OP_RANGE" }
+    { "RANGE",   "OP_RANGE" },
+    { "GEOWITHIN",   "OP_GEOWITHINREGION" }
 };
 
 #define AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE (sizeof(aerospike_general_long_constants)/sizeof(AerospikeGeneralLongConstants))

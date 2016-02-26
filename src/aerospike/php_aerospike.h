@@ -167,6 +167,15 @@ PHP_METHOD(Aerospike, scanInfo);
 PHP_METHOD(Aerospike, jobInfo);
 
 /*
+ * GeoJSON APIs:
+ */
+
+PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion);
+PHP_METHOD(Aerospike, predicateGeoWithinRadius);
+PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint);
+PHP_METHOD(Aerospike, predicateGeoContainsPoint);
+
+/*
  * User Defined Function (UDF) APIs:
  */
 
