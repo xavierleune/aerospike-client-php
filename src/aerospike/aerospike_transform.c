@@ -1804,7 +1804,7 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
     int dup;
 
     if ((FETCH_VALUE_PUT((zval**)value)) == IS_OBJECT) {
-        dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_DC);
+        dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_CC);
     }
 
     if (name && (!strcmp(name, GEOJSONCLASS)) && (as->hasGeoJSON)) {

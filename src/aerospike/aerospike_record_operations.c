@@ -397,7 +397,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                             zend_uint name_len;
 							int dup;
                             dup = zend_get_object_classname(*((zval**)each_operation),
-                                    &name, &name_len TSRMLS_DC);
+                                    &name, &name_len TSRMLS_CC);
                             if((!strcmp(name, GEOJSONCLASS)) 
                                     && (aerospike_obj_p->hasGeoJSON)
                                     && op == AS_OPERATOR_WRITE) {
