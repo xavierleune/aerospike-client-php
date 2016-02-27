@@ -274,6 +274,22 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
                         "Predicate BETWEEN 'op' requires an array of (min,max) integers.");
                 goto exit;
             }
+        } else if (strncmp(Z_STRVAL_PP(op_pp), "GEOWITHIN", 9) == 0) {
+            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp), as_geo_within(Z_STRVAL_PP(val_pp)))) {
+                DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                        "Unable to set query predicate");
+            }
+            goto exit;
+        } else if (strncmp(Z_STRVAL_PP(op_pp), "GEOCONTAINS", 9) == 0) {
+            printf("In Contains.\n");
+            if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp), as_geo_contains(Z_STRVAL_PP(val_pp)))){
+                printf("Failed.\n");
+                DEBUG_PHP_EXT_DEBUG("Unable to set the query predicate");
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                        "Unable to set query predicate");
+            }
+            goto exit;
         } else {
             DEBUG_PHP_EXT_DEBUG("Unsupported 'op' in predicate");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unsupported 'op' in predicate");

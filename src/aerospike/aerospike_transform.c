@@ -3086,7 +3086,7 @@ exit:
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-static void
+void
 aerospike_transform_iterate_records(Aerospike_object* as, zval **record_pp,
         as_record* as_record_p,
         as_static_pool* static_pool,
