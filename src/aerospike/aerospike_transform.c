@@ -1022,10 +1022,11 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *val
     zval** param[1];
     ALLOC_INIT_ZVAL(geojson_zval_p);
     char* json_string = (char*)as_geojson_get(as_geojson_fromval(value));
-    ZVAL_STRINGL(&fname, "json_decode", sizeof("json_decode") - 1, 1);
+    ZVAL_STRINGL(&fname, "\\Aerospike\\GeoJSON\\GeoJSON::fromJson", sizeof("\\Aerospike\\GeoJSON\\GeoJSON::fromJson") - 1, 1);
     ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 0);
     param[0] = &geojson_zval_p;
     result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+
     if (key == NULL) {
         zval_dtor((zval*)array);
         ZVAL_ZVAL((zval*)array, retval, 1, 1);
