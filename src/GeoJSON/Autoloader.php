@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2014-2015 Aerospike, Inc.
+ * Copyright 2014-2016 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2014 Aerospike, Inc.
+ * @copyright  Copyright 2014-2016 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @filesource
  */
@@ -47,7 +47,12 @@ class Autoloader
     {
         $parts = explode('\\', $class_name);
         if ($parts[0] == "Aerospike" && $parts[1] == "GeoJSON") {
-            require __DIR__. DIRECTORY_SEPARATOR. $parts[2]. '.php';
+           if (count($parts) == 2) {
+                require __DIR__. DIRECTORY_SEPARATOR. 'GeoJSON.php';
+            }
+            elseif ($parts[2] == 'Serializable') {
+                require __DIR__. DIRECTORY_SEPARATOR. 'Serializable.php';
+            }
         }
     }
 }

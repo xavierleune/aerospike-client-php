@@ -40,6 +40,7 @@ Shared-memory cluster tending is enabled if an array (even an empty one) is prov
   - *shm_takeover_threshold_sec* take over tending if the cluster hasn't been checked for this many seconds (default: 30)
 - *max_threads* (default: 300)
 - *thread_pool_size* (default: 16)
+- *compression_threshold* client will compress records larger than this value for transport (default: 0)
 
 **persistent_connection** whether the connections will persist between requests.
 

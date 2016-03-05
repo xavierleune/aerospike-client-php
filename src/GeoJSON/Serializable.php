@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2015 Aerospike, Inc.
+ * Copyright 2014-2016 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2015 Aerospike, Inc.
+ * @copyright  Copyright 2014-2016 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
- * @link       http://www.aerospike.com/docs/guide/ldt.html
  * @filesource
  */
 namespace Aerospike\GeoJSON;
@@ -29,7 +28,7 @@ use Aerospike;
  * with the record.
  *
  * @package    Aerospike
- * @subpackage LDT
+ * @subpackage GeoJSON
  * @link       http://www.aerospike.com/docs/guide/geojson.html
  * @author     Ronen Botzer <rbotzer@aerospike.com>
  */

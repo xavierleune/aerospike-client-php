@@ -77,6 +77,91 @@ public int Aerospike::getMany ( array $keys, array &$records [, array $filter [,
 public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
 ```
 
+### Aerospike::listSize
+```
+// count the elements of the list value in the bin
+public int Aerospike::listSize ( array $key, string $bin, int &$count [, array $options ] )
+```
+
+### Aerospike::listAppend
+```
+// add a single value (of any type) to the end of the list
+public int Aerospike::listAppend ( array $key, string $bin, mixed $value [, array $options ] )
+```
+
+### Aerospike::listMerge
+```
+// add items to the end of a list
+public int Aerospike::listMerge ( array $key, string $bin, array $items [, array $options ] )
+```
+
+### Aerospike::listInsert
+```
+// insert an element at the specified index of a list value in the bin
+public int Aerospike::listInsert ( array $key, string $bin, int $index, mixed $value [, array $options ] )
+```
+
+### Aerospike::listInertItems
+```
+// insert items at the specified index of a list value in the bin
+public int Aerospike::listInertItems ( array $key, string $bin, int $index, array $items [, array $options ] )
+```
+
+### Aerospike::listPop
+```
+// remove and get back the list element at a given index of a list value in the bin
+// index -1 is the last item in the list, -3 is the third from last, 0 is the first in the list
+public int Aerospike::listPop ( array $key, string $bin, int $index, mixed &$element [, array $options ] )
+```
+
+### Aerospike::listPopRange
+```
+// remove and get back list elements at a given index of a list value in the bin
+public int Aerospike::listPopRange ( array $key, string $bin, int $index, int $count, array &$elements [, array $options ] )
+```
+
+### Aerospike::listRemove
+```
+// remove a list element at a given index of a list value in the bin
+public int Aerospike::listRemove ( array $key, string $bin, int $index [, array $options ] )
+```
+
+### Aerospike::listRemoveRange
+```
+// remove list elements at a given index of a list value in the bin
+public int Aerospike::listRemoveRange ( array $key, string $bin, int $index, int $count [, array $options ] )
+```
+
+### Aerospike::listTrim
+```
+// trim the list, removing all elements not in the range starting at a given index plus count
+public int Aerospike::listTrim ( array $key, string $bin, int $index, int $count [, array $options ] )
+```
+
+### Aerospike::listClear
+```
+// remove all the elements from the list value in the bin
+public int Aerospike::listClear ( array $key, string $bin [, array $options ] )
+```
+
+### Aerospike::listSet
+```
+// set list element val at the specified index of a list value in the bin
+public int Aerospike::listSet ( array $key, string $bin, int $index, mixed $val [, array $options ] )
+```
+
+### Aerospike::listGet
+```
+// get the list element at the specified index of a list value in the bin
+public int Aerospike::listGet ( array $key, string $bin, int $index, mixed &$element [, array $options ] )
+```
+
+### Aerospike::listGetRange
+```
+// get the list of $count elements starting at a specified index of a list value in the bin
+public int Aerospike::listGetRange ( array $key, string $bin, int $index, int $count, array &$elements [, array $options ] )
+```
+
 ### [Aerospike::setSerializer](aerospike_setserializer.md)
 ```
 public static Aerospike::setSerializer ( callback $serialize_cb )

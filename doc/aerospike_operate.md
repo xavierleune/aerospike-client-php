@@ -55,6 +55,83 @@ Touch Operation: reset the time-to-live of the record and increment its generati
                  (only combines with read operations)
   op => Aerospike::OPERATOR_TOUCH
   ttl => a positive integer value to set as time-to-live for the record
+
+List Append Operation:
+  op => Aerospike::OP_LIST_APPEND,
+  bin =>  "events",
+  val =>  1234
+
+List Merge Operation:
+  op => Aerospike::OP_LIST_MERGE,
+  bin =>  "events",
+  val =>  [ 123, 456 ]
+
+List Insert Operation:
+  op => Aerospike::OP_LIST_INSERT,
+  bin =>  "events",
+  index =>  2,
+  val =>  1234
+
+List Insert Items Operation:
+  op => Aerospike::OP_LIST_INSERT_ITEMS,
+  bin =>  "events",
+  index =>  2,
+  val =>  [ 123, 456 ]
+
+List Pop Operation:
+  op => Aerospike::OP_LIST_POP, # returns a value
+  bin =>  "events",
+  index =>  2
+
+List Pop Range Operation:
+  op => Aerospike::OP_LIST_POP_RANGE, # returns a value
+  bin =>  "events",
+  index =>  2,
+  val =>  3 # remove 3 elements starting at index 2
+
+List Remove Operation:
+  op => Aerospike::OP_LIST_REMOVE,
+  bin =>  "events",
+  index =>  2
+
+List Remove Range Operation:
+  op => Aerospike::OP_LIST_REMOVE_RANGE,
+  bin =>  "events",
+  index =>  2,
+  val =>  3 # remove 3 elements starting at index 2
+
+List Clear Operation:
+  op => Aerospike::OP_LIST_CLEAR,
+  bin =>  "events"
+
+List Set Operation:
+  op => Aerospike::OP_LIST_SET,
+  bin =>  "events",
+  index =>  2,
+  val =>  "latest event at index 2" # set this value at index 2
+
+List Get Operation:
+  op => Aerospike::OP_LIST_GET, # returns a value
+  bin =>  "events",
+  index =>  2 # similar to Aerospike::OPERATOR_READ but only returns the value
+                at index 2 of the list, not the whole bin
+
+List Get Range Operation:
+  op => Aerospike::OP_LIST_GET_RANGE, # returns a value
+  bin =>  "events",
+  index =>  2,
+  val =>  3 # get 3 elements starting at index 2
+
+List Trim Operation:
+  op => Aerospike::OP_LIST_TRIM,
+  bin =>  "events",
+  index =>  2,
+  val =>  3 # remove all elements not in the range between index 2 and index 2 + 3
+
+List Size Operation:
+  op => Aerospike::OP_LIST_SIZE, # returns a value
+  bin =>  "events" # gets the size of a list contained in the bin
+
 ```
 *examples:*
 Combining several write operations into one multi-op call:
@@ -74,7 +151,7 @@ operation:
 ]
 ```
 
-**returned** an array of bins retrieved by read operations
+**returned** an array of bins retrieved by read operations. If multiple operations exist for a specific bin name, the last operation will be the one placed as the value.
 
 **[options](aerospike.md)** including
 - **Aerospike::OPT_WRITE_TIMEOUT**

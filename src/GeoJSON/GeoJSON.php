@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2015 Aerospike, Inc.
+ * Copyright 2014-2016 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  * limitations under the License.
  *
  * @category   Database
+ * @package    Aerospike
+ * @subpackage GeoJSON
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2015 Aerospike, Inc.
+ * @copyright  Copyright 2014-2016 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
- * @link       http://www.aerospike.com/docs/guide/llist.html
  * @filesource
  */
 
-namespace Aerospike\GeoJSON;
-use Aerospike;
+namespace Aerospike;
 
 class GeoJSON implements \Aerospike\GeoJSON\Serializable
 {
@@ -66,7 +66,7 @@ class GeoJSON implements \Aerospike\GeoJSON\Serializable
         $geo_obj = new \stdClass();
         $geo_obj->type = $geo_array["type"];
         $geo_obj->coordinates = $geo_array["coordinates"];
-        return new \Aerospike\GeoJSON\GeoJSON($geo_obj);
+        return new \Aerospike\GeoJSON($geo_obj);
     }
 
     public static function fromJson($geo_json) {
@@ -74,7 +74,7 @@ class GeoJSON implements \Aerospike\GeoJSON\Serializable
         $geo_obj = new \stdClass();
         $geo_obj->type = $geo->type;;
         $geo_obj->coordinates = $geo->coordinates;
-        return new \Aerospike\GeoJSON\GeoJSON($geo_obj);
+        return new \Aerospike\GeoJSON($geo_obj);
     }
 }
 ?>
