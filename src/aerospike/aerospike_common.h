@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #ifndef __AEROSPIKE_COMMON_H__
 #define __AEROSPIKE_COMMON_H__
 #include "aerospike/as_arraylist.h"
@@ -103,6 +121,13 @@
 
 #define AEROSPIKE_SESSION "aerospike"
 #define AEROSPIKE_SESSION_LEN 9
+
+/* 
+ *******************************************************************************************************
+ * MACROS FOR AEROSPIKE GEOJSON CLASS.
+ *******************************************************************************************************
+ */
+#define GEOJSONCLASS "Aerospike\\GeoJSON\\GeoJSON"
 
 /* 
  *******************************************************************************************************
@@ -222,6 +247,8 @@ typedef struct Aerospike_object {
     aerospike_ref *as_ref_p;
     u_int16_t is_conn_16;
     int8_t serializer_opt;
+    bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported 
+                                or not */
 #ifdef ZTS
     void ***ts;
 #endif
@@ -505,7 +532,7 @@ do {                                                                            
  *******************************************************************************************************
  */
 extern bool AS_DEFAULT_GET(const char *key, const as_val *value, void *array);
-extern bool AS_AGGREGATE_GET(const char *key, const as_val *value, void *array);
+extern bool AS_AGGREGATE_GET(Aerospike_object* as, const char *key, const as_val *value, void *array);
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
@@ -516,7 +543,7 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
         void* config_p);
 
 extern as_status
-aerospike_transform_key_data_put(aerospike* as_object_p,
+aerospike_transform_key_data_put(Aerospike_object* as_object_p,
                                  zval **record_pp,
                                  as_key* as_key_p,
                                  as_error *error_p,
@@ -541,7 +568,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
         long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
         as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
 
-extern void AS_LIST_PUT(void *key, void *value, void *store, void *static_pool,
+extern void AS_LIST_PUT(Aerospike_object* as, void *key, void *value, void *store, void *static_pool,
         int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 /*
  *******************************************************************************************************
@@ -682,7 +709,7 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
         HashTable* bins_ht_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
 
 extern as_status
-aerospike_scan_run_background(aerospike* as_object_p, as_error* error_p,
+aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char* namespace_p,
         char* set_p, zval* scan_id_p, zval *options_p, bool block, int8_t* serializer_policy_p TSRMLS_DC);
 
@@ -699,7 +726,7 @@ aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
  ******************************************************************************************************
  */
 extern as_status
-aerospike_query_run_background(aerospike* as_object_p, as_error* error_p,
+aerospike_query_run_background(Aerospike_object* as_object_p, as_error* error_p,
         char *module_p, char *function_p, zval** args_pp, char *namespace_p,
         char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p, 
         bool block, int8_t *serializer_policy_p TSRMLS_DC);
@@ -710,7 +737,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
         HashTable* predicate_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
-aerospike_query_aggregate(aerospike* as_object_p, as_error* error_p,
+aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
         const char* module_p, const char* function_p, zval** args_pp,
         char* namespace_p, char* set_p, HashTable* bins_ht_p,
         HashTable* predicate_ht_p, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
@@ -865,4 +892,7 @@ aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error
 extern as_status
 aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
         zval* roles_p, zval* options_p TSRMLS_DC);
+
+extern int
+check_val_type_list(zval **value);
 #endif

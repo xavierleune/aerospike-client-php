@@ -146,9 +146,9 @@ final class Aerospike
     const SCAN_STATUS_COMPLETED;  // scan completed successfully. deprecated.
 
     // Status values returned by jobInfo()
-    const STATUS_UNDEF;      // the job's status is undefined.
-    const STATUS_INPROGRESS; // the job is currently running.
-    const STATUS_COMPLETED;  // the job completed successfully.
+    const JOB_STATUS_UNDEF;      // the job's status is undefined.
+    const JOB_STATUS_INPROGRESS; // the job is currently running.
+    const JOB_STATUS_COMPLETED;  // the job completed successfully.
 
     // Logger
     const LOG_LEVEL_OFF  ;
@@ -219,7 +219,20 @@ final class Aerospike
     public int append ( array $key, string $bin, string $value [, array $options ] )
     public int prepend ( array $key, string $bin, string $value [, array $options ] )
     public int operate ( array $key, array $operations [, array &$returned ] )
-    public int getMetadata ( array $key, array &$metadata [, array $options ] )
+    public int listSize ( array $key, string $bin, int &$count [, array $options ] )
+    public int listAppend ( array $key, string $bin, mixed $value [, array $options ] )
+    public int listMerge ( array $key, string $bin, array $items [, array $options ] )
+    public int listInsert ( array $key, string $bin, int $index, mixed $value [, array $options ] )
+    public int listInertItems ( array $key, string $bin, int $index, array $items [, array $options ] )
+    public int listPop ( array $key, string $bin, int $index, mixed &$element [, array $options ] )
+    public int listPopRange ( array $key, string $bin, int $index, int $count, array &$elements [, array $options ] )
+    public int listRemove ( array $key, string $bin, int $index [, array $options ] )
+    public int listRemoveRange ( array $key, string $bin, int $index, int $count [, array $options ] )
+    public int listTrim ( array $key, string $bin, int $index, int $count [, array $options ] )
+    public int listClear ( array $key, string $bin [, array $options ] )
+    public int listSet ( array $key, string $bin, int $index, mixed $val [, array $options ] )
+    public int listGet ( array $key, string $bin, int $index, mixed &$element [, array $options ] )
+    public int listGetRange ( array $key, string $bin, int $index, int $count, array &$elements [, array $options ] )
 
     // unsupported type handler methods
     public static setSerializer ( callback $serialize_cb )

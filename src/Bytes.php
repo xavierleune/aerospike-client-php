@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2013-2015 Aerospike, Inc.
+ * Copyright 2013-2016 Aerospike, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  * @category   Database
  * @author     Ronen Botzer <rbotzer@aerospike.com>
- * @copyright  Copyright 2013-2015 Aerospike, Inc.
+ * @copyright  Copyright 2013-2016 Aerospike, Inc.
  * @license    http://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2
  * @link       https://github.com/aerospike/aerospike-client-php/blob/master/doc/README.md#handling-unsupported-types
  * @filesource

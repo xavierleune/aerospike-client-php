@@ -1,7 +1,7 @@
 /*
  * src/aerospike/aerospike.c
  *
- * Copyright (C) 2014-2015 Aerospike, Inc.
+ * Copyright (C) 2014-2016 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -38,6 +38,7 @@
 
 #include "aerospike/aerospike.h"
 #include "aerospike/aerospike_batch.h"
+#include "aerospike/aerospike_info.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"
@@ -57,6 +58,7 @@
 #include "aerospike_policy.h"
 #include "aerospike_logger.h"
 #include "aerospike_general_constants.h"
+#include "aerospike_transform.h"
 
 bool record_stream_callback(const as_val* p_val, void* udata);
 
@@ -98,6 +100,7 @@ PHP_INI_BEGIN()
    STD_PHP_INI_ENTRY("aerospike.use_batch_direct", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, use_batch_direct, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.max_threads", "300", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, max_threads, zend_aerospike_globals, aerospike_globals)
    STD_PHP_INI_ENTRY("aerospike.thread_pool_size", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, thread_pool_size, zend_aerospike_globals, aerospike_globals)
+   STD_PHP_INI_ENTRY("aerospike.compression_threshold", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, compression_threshold, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
 
@@ -233,6 +236,20 @@ ZEND_END_ARG_INFO()
  ********************************************************************
  */
 ZEND_BEGIN_ARG_INFO(arginfo_third_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(0)
+ZEND_ARG_PASS_INFO(1)
+ZEND_END_ARG_INFO()
+
+/*
+ ********************************************************************
+ * Using "arginfo_fourth_by_ref" in zend_arg_info argument of a
+ * zend_function_entry accepts fourth argument of the
+ * corresponding functions by reference and rest by value.
+ ********************************************************************
+ */
+ZEND_BEGIN_ARG_INFO(arginfo_fourth_by_ref, 0)
+ZEND_ARG_PASS_INFO(0)
 ZEND_ARG_PASS_INFO(0)
 ZEND_ARG_PASS_INFO(0)
 ZEND_ARG_PASS_INFO(1)
@@ -402,6 +419,16 @@ static zend_function_entry Aerospike_class_functions[] =
 
     /*
      ********************************************************************
+     * GeoJSON APIs:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, predicateGeoWithinGeoJSONRegion, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoWithinRadius, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoContainsGeoJSONPoint, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Aerospike, predicateGeoContainsPoint, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+
+    /*
+     ********************************************************************
      * UDF APIs:
      ********************************************************************
      */
@@ -418,6 +445,26 @@ static zend_function_entry Aerospike_class_functions[] =
      */
     PHP_ME(Aerospike, existsMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getMany, arginfo_sec_by_ref, ZEND_ACC_PUBLIC)
+
+    /*
+     ********************************************************************
+     * List CDT operations:
+     ********************************************************************
+     */
+    PHP_ME(Aerospike, listAppend, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listInsert, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listSet, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listMerge, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listSize, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listClear, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listTrim, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listInsertItems, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listGet, arginfo_fourth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listGetRange, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listPop, arginfo_fourth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listPopRange, arginfo_fifth_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listRemove, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, listRemoveRange, NULL, ZEND_ACC_PUBLIC)
 
     /*
      ********************************************************************
@@ -629,6 +676,13 @@ PHP_METHOD(Aerospike, __construct)
     /* connection is established, set the connection flag now */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 
+    /* Checking if the GeoJSON feature is supported for this given cluster. */
+    if (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
+        aerospike_obj_p->hasGeoJSON = true;
+    } else {
+        aerospike_obj_p->hasGeoJSON = false;
+    }
+
     DEBUG_PHP_EXT_INFO("Success in creating php-aerospike object");
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -691,9 +745,11 @@ PHP_METHOD(Aerospike, isConnected)
         RETURN_FALSE;
     }
 
-    if (AEROSPIKE_CONN_STATE_TRUE == aerospike_obj_p->is_conn_16) {
+    if (aerospike_cluster_is_connected(aerospike_obj_p->as_ref_p->as_p)) {
+        aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
         RETURN_TRUE;
     } else {
+        aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
         RETURN_FALSE;
     }
 }
@@ -947,7 +1003,7 @@ PHP_METHOD(Aerospike, put)
         goto exit;
     }
 
-    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p->as_ref_p->as_p,
+    if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p,
                     &record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
@@ -1833,6 +1889,1504 @@ exit:
 }
 /* }}} */
 
+/**
+ ********************************************************************************************************
+ * Check whether Aerospike server supports CDT feature or not.
+ ********************************************************************************************************
+ */
+#define INFO_CALL "features"
+static bool has_cdt_list(aerospike *as, as_error *err)
+{
+    char *res = NULL;
+    int rc = aerospike_info_any(as, err, NULL, INFO_CALL, &res);
+    if (rc == AEROSPIKE_OK) {
+        char *st = strstr(res, "cdt-list");
+        free(res);
+        if (st) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/* {{{ proto int Aerospike::listAppend( array key, string bin, mixed value [,array options ] )
+   Add a single value (of any type) to the end of the list */
+PHP_METHOD(Aerospike, listAppend)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              record;
+    as_val                 *val = NULL;
+    as_policy_operate      operate_policy;
+    as_static_pool         static_pool = {0};
+    zval*                  key_record_p = NULL;
+    zval*                  append_val_p = NULL;
+    zval*                  append_val_copy = NULL;
+    zval*                  temp_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p;
+    long                   bin_name_len;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+    as_record_inita(&record, 1);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listAppend: connection not established");
+        DEBUG_PHP_EXT_ERROR("listAppend: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &append_val_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listAppend function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listAppend function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listAppend function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listAppend function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listAppend function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listAppend function");
+        goto exit;
+    }
+
+    MAKE_STD_ZVAL(temp_record_p);
+    array_init(temp_record_p);
+
+    ALLOC_ZVAL(append_val_copy);
+    MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
+    add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
+            aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
+            &error TSRMLS_CC);
+    if (AEROSPIKE_OK != error.code) {
+        status = error.code;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    val = (as_val*) as_record_get(&record, bin_name_p);
+    if (val) {
+        as_operations_add_list_append(&ops, bin_name_p, (as_val*) val);
+        status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                &operate_policy, &as_key_for_list, &ops, NULL);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (temp_record_p) {
+        zval_ptr_dtor(&temp_record_p);
+    }
+    as_operations_destroy(&ops);
+    as_record_destroy(&record);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listInsert( array key, string bin, int index, mixed value [,array options ] )
+   Insert an element at the specified index of a list value in the bin */
+PHP_METHOD(Aerospike, listInsert)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              record;
+    as_val                 *val = NULL;
+    as_policy_operate      operate_policy;
+    as_static_pool         static_pool = {0};
+    zval*                  key_record_p = NULL;
+    zval*                  insert_val_p = NULL;
+    zval*                  insert_val_copy = NULL;
+    zval*                  temp_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p;
+    long                   bin_name_len;
+    long                   index;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+    as_record_inita(&record, 1);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listInsert: connection not established");
+        DEBUG_PHP_EXT_ERROR("listInsert: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &insert_val_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listInsert function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listInsert function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listInsert function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listInsert function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listInsert function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listInsert function");
+        goto exit;
+    }
+
+    MAKE_STD_ZVAL(temp_record_p);
+    array_init(temp_record_p);
+
+    ALLOC_ZVAL(insert_val_copy);
+    MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
+    add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
+
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
+            aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
+            &error TSRMLS_CC);
+    if (AEROSPIKE_OK != error.code) {
+        status = error.code;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    val = (as_val*) as_record_get(&record, bin_name_p);
+    if (val) {
+        as_operations_add_list_insert(&ops, bin_name_p, index, (as_val*) val);
+        status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                &operate_policy, &as_key_for_list, &ops, NULL);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (temp_record_p) {
+        zval_ptr_dtor(&temp_record_p);
+    }
+    as_operations_destroy(&ops);
+    as_record_destroy(&record);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listSet( array key, string bin, int index, mixed value [,array options ] )
+   Set list element val at the specified index of a list value in the bin */
+PHP_METHOD(Aerospike, listSet)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              record;
+    as_val                 *val = NULL;
+    as_policy_operate      operate_policy;
+    as_static_pool         static_pool = {0};
+    zval*                  key_record_p = NULL;
+    zval*                  set_val_p = NULL;
+    zval*                  set_val_copy = NULL;
+    zval*                  temp_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p;
+    long                   bin_name_len;
+    long                   index;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+    as_record_inita(&record, 1);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listSet: connection not established");
+        DEBUG_PHP_EXT_ERROR("listSet: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &set_val_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listSet function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listSet function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listSet function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listSet function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listSet function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listSet function");
+        goto exit;
+    }
+
+    MAKE_STD_ZVAL(temp_record_p);
+    array_init(temp_record_p);
+
+    ALLOC_ZVAL(set_val_copy);
+    MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
+    add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
+
+    aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
+            aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
+            &error TSRMLS_CC);
+    if (AEROSPIKE_OK != error.code) {
+        status = error.code;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
+        DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    val = (as_val*) as_record_get(&record, bin_name_p);
+    if (val) {
+        as_operations_add_list_set(&ops, bin_name_p, index, (as_val*) val);
+        status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                &operate_policy, &as_key_for_list, &ops, NULL);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (temp_record_p) {
+        zval_ptr_dtor(&temp_record_p);
+    }
+    as_operations_destroy(&ops);
+    as_record_destroy(&record);
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listMerge( array key, string bin, mixed value [,array options ] )
+   Add items to the end of a list */
+PHP_METHOD(Aerospike, listMerge)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_arraylist           args_list;
+    as_arraylist*          args_list_p = NULL;
+    as_static_pool         items_pool = {0};
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  items_p;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listMerge: connection not established");
+        DEBUG_PHP_EXT_ERROR("listMerge: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsa|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &items_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listMerge function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listMerge function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listMerge function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listMerge function not proper.");
+        goto exit;
+    }
+
+    if (!check_val_type_list(&items_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
+        DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listMerge function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listMerge function");
+        goto exit;
+    }
+
+    if (items_p) {
+        as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
+        args_list_p = &args_list;
+        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+                (&error) TSRMLS_CC);
+    }
+
+    if (error.code == AEROSPIKE_OK) {
+        if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+            goto exit;
+        }
+        as_operations_add_list_append_items(&ops, bin_name_p, (as_list*) args_list_p);
+        status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                &operate_policy, &as_key_for_list, &ops, NULL);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (args_list_p) {
+        as_arraylist_destroy(args_list_p);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listSize( array key, string bin, int count [,array options ] )
+   Count the elements of the list value in the bin */
+PHP_METHOD(Aerospike, listSize)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              *rec = NULL;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  list_elements_count = 0;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listSize: connection not established");
+        DEBUG_PHP_EXT_ERROR("listSize: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &list_elements_count, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listSize function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listSize function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listSize function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listSize function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listSize function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listSize function");
+        goto exit;
+    }
+
+    zval_dtor(list_elements_count);
+    ZVAL_LONG(list_elements_count, 0);
+
+    as_operations_add_list_size(&ops, bin_name_p);
+    if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                    &operate_policy, &as_key_for_list, &ops, &rec))) {
+        goto exit;
+    }
+    ZVAL_LONG(list_elements_count, as_record_get_int64(rec, bin_name_p, 0));
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (rec) {
+        as_record_destroy(rec);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listClear( array key, string bin [,array options ] )
+   Remove all the elements from the list value in the bin */
+PHP_METHOD(Aerospike, listClear)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listClear: connection not established");
+        DEBUG_PHP_EXT_ERROR("listClear: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listClear function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listClear function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listClear function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listClear function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listClear function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listClear function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    as_operations_add_list_clear(&ops, bin_name_p);
+    status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
+            &as_key_for_list, &ops, NULL);
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listTrim( array key, string bin, int index, int count [,array options ] )
+   Removing all elements not in the range starting at a given index plus count */
+PHP_METHOD(Aerospike, listTrim)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    long                   count;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listTrim: connection not established");
+        DEBUG_PHP_EXT_ERROR("listTrim: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsll|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &count, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listTrim function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listTrim function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listTrim function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listTrim function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listTrim function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listTrim function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    as_operations_add_list_trim(&ops, bin_name_p, index, count);
+    status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
+            &as_key_for_list, &ops, NULL);
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listInsertItems( array key, string bin, int index, array items [,array options ] )
+   Insert items at the specified index of a list value in the bin */
+PHP_METHOD(Aerospike, listInsertItems)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_arraylist           args_list;
+    as_arraylist*          args_list_p = NULL;
+    as_static_pool         items_pool = {0};
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  items_p;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index = 0;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listInsertItems: connection not established");
+        DEBUG_PHP_EXT_ERROR("listInsertItems: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsla|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &items_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listInsertItems function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listInsertItems function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listInsertItems function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listInsertItems function not proper.");
+        goto exit;
+    }
+
+    if (!check_val_type_list(&items_p)) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
+        DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listInsertItems function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listInsertItems function");
+        goto exit;
+    }
+
+    if (items_p) {
+        as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
+        args_list_p = &args_list;
+        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+                (&error) TSRMLS_CC);
+    }
+
+    if (error.code == AEROSPIKE_OK) {
+        if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+            goto exit;
+        }
+        as_operations_add_list_insert_items(&ops, bin_name_p, index, (as_list*) args_list_p);
+        status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
+                &operate_policy, &as_key_for_list, &ops, NULL);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (args_list_p) {
+        as_arraylist_destroy(args_list_p);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listGet( array key, string bin, int index, mixed element [,array options ] )
+   Get the list element at the specified index of a list value in the bin */
+PHP_METHOD(Aerospike, listGet)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              *rec = NULL;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  element_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    foreach_callback_udata list_get_callback_udata;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listGet: connection not established");
+        DEBUG_PHP_EXT_ERROR("listGet: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &element_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listGet function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listGet function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listGet function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listGet function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listGet function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listGet function");
+        goto exit;
+    }
+
+    as_operations_add_list_get(&ops, bin_name_p, index);
+    if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p,
+                    &error, &operate_policy, &as_key_for_list, &ops, &rec))) {
+        goto exit;
+    }
+
+    if (element_p) {
+        zval_dtor(element_p);
+    } else {
+        MAKE_STD_ZVAL(element_p);
+    }
+
+    if (rec && rec->bins.size) {
+        list_get_callback_udata.udata_p = element_p;
+        list_get_callback_udata.error_p = &error;
+        AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (rec) {
+        as_record_destroy(rec);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listGetRange( array key, string bin, int index, int count,
+ * array elements [,array options ] )
+   Get the list of $count elements starting at a specified index of a list value in the bin */
+PHP_METHOD(Aerospike, listGetRange)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              *rec = NULL;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  elements_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    long                   count;
+    foreach_callback_udata list_get_callback_udata;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listGetRange: connection not established");
+        DEBUG_PHP_EXT_ERROR("listGetRange: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &count, &elements_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listGetRange function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listGetRange function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listGetRange function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listGetRange function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listGetRange function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listGetRange function");
+        goto exit;
+    }
+
+    as_operations_add_list_get_range(&ops, bin_name_p, index, count);
+    if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p,
+            &error, &operate_policy, &as_key_for_list, &ops, &rec))) {
+        goto exit;
+    }
+
+    if (elements_p) {
+        zval_dtor(elements_p);
+    } else {
+        MAKE_STD_ZVAL(elements_p);
+    }
+
+    list_get_callback_udata.udata_p = elements_p;
+    list_get_callback_udata.error_p = &error;
+
+    if (rec && rec->bins.size) {
+        AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
+    } else if (rec && rec->bins.size == 0) {
+        array_init(elements_p);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (rec) {
+        as_record_destroy(rec);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listPop( array key, string bin, int index, mixed element [,array options ] )
+   Remove and get back the list element at a given index of a list value in the bin */
+PHP_METHOD(Aerospike, listPop)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              *rec = NULL;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  element_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    foreach_callback_udata list_get_callback_udata;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listPop: connection not established");
+        DEBUG_PHP_EXT_ERROR("listPop: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &element_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listPop function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listPop function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listPop function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listPop function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listPop function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listPop function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    as_operations_add_list_pop(&ops, bin_name_p, index);
+    if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p,
+                    &error, &operate_policy, &as_key_for_list, &ops, &rec))) {
+        goto exit;
+    }
+
+    if (element_p) {
+        zval_dtor(element_p);
+    } else {
+        MAKE_STD_ZVAL(element_p);
+    }
+
+    if (rec && rec->bins.size) {
+        list_get_callback_udata.udata_p = element_p;
+        list_get_callback_udata.error_p = &error;
+        AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (rec) {
+        as_record_destroy(rec);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listPopRange( array key, string bin, int index, int count,
+ * array elements [,array options ] )
+   Remove and get back list elements at a given index of a list value in the bin */
+PHP_METHOD(Aerospike, listPopRange)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_record              *rec = NULL;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  elements_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    long                   count;
+    foreach_callback_udata list_get_callback_udata;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listPopRange: connection not established");
+        DEBUG_PHP_EXT_ERROR("listPopRange: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &count, &elements_p, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listPopRange function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listPopRange function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listPopRange function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listPopRange function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listPopRange function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listPopRange function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    as_operations_add_list_pop_range(&ops, bin_name_p, index, count);
+    if (AEROSPIKE_OK != (status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p,
+                    &error, &operate_policy, &as_key_for_list, &ops, &rec))) {
+        goto exit;
+    }
+
+    if (elements_p) {
+        zval_dtor(elements_p);
+    } else {
+        MAKE_STD_ZVAL(elements_p);
+    }
+
+    if (rec && rec->bins.size) {
+        list_get_callback_udata.udata_p = elements_p;
+        list_get_callback_udata.error_p = &error;
+        AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    if (rec) {
+        as_record_destroy(rec);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listRemove( array key, string bin, int index [,array options ] )
+   Remove a list element at a given index of a list value in the bin */
+PHP_METHOD(Aerospike, listRemove)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listRemove: connection not established");
+        DEBUG_PHP_EXT_ERROR("listRemove: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsl|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listRemove function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listRemove function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listRemove function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listRemove function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listRemove function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listRemove function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    as_operations_add_list_remove(&ops, bin_name_p, index);
+    status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
+            &as_key_for_list, &ops, NULL);
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int Aerospike::listRemoveRange( array key, string bin, int index, int count [,array options ] )
+   Remove list elements at a given index of a list value in the bin */
+PHP_METHOD(Aerospike, listRemoveRange)
+{
+    as_status              status = AEROSPIKE_OK;
+    as_error               error;
+    as_key                 as_key_for_list;
+    as_policy_operate      operate_policy;
+    zval*                  key_record_p = NULL;
+    zval*                  options_p = NULL;
+    int16_t                initializeKey = 0;
+    char*                  bin_name_p = NULL;
+    long                   bin_name_len;
+    long                   index;
+    long                   count;
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+
+    as_operations ops;
+    as_operations_inita(&ops, 1);
+
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listRemoveRange: connection not established");
+        DEBUG_PHP_EXT_ERROR("listRemoveRange: connection not established");
+        goto exit;
+    }
+
+    if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
+        as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsll|a",
+                &key_record_p, &bin_name_p, &bin_name_len,
+                &index, &count, &options_p) == FAILURE) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listRemoveRange function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listRemoveRange function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) || (!bin_name_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for listRemoveRange function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for listRemoveRange function not proper.");
+        goto exit;
+    }
+
+    as_policy_operate_init(&operate_policy);
+    set_policy(&aerospike_obj_p->as_ref_p->as_p->config, NULL, NULL, &operate_policy, NULL, NULL,
+            NULL, NULL, &aerospike_obj_p->serializer_opt, options_p, &error TSRMLS_CC);
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_list,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listRemoveRange function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for listRemoveRange function");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, &error TSRMLS_CC)) {
+        goto exit;
+    }
+
+    as_operations_add_list_remove_range(&ops, bin_name_p, index, count);
+    status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error, &operate_policy,
+            &as_key_for_list, &ops, NULL);
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_list);
+    }
+    as_operations_destroy(&ops);
+
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
+/* }}} */
+
 /* {{{ proto array Aerospike::initKey( string ns, string set, int|string pk [, bool digest=false ])
    Helper which builds the key array that is needed for read/write operations */
 PHP_METHOD(Aerospike, initKey)
@@ -2436,7 +3990,7 @@ PHP_METHOD(Aerospike, aggregate)
     array_init(returned_p);
 
     if (AEROSPIKE_OK !=
-            (status = aerospike_query_aggregate(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_query_aggregate(aerospike_obj_p,
                                                 &error, module_p, function_name_p,
                                                 &args_p, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
@@ -2630,7 +4184,7 @@ PHP_METHOD(Aerospike, queryApply)
     zval_dtor(job_id_p);
     ZVAL_LONG(job_id_p, 0);
     if (AEROSPIKE_OK != 
-            (status = aerospike_query_run_background(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_query_run_background(aerospike_obj_p,
                                                      &error, module_p, function_name_p,
                                                      &args_p, namespace_p, set_p,
                                                      predicate_ht_p,
@@ -2744,7 +4298,7 @@ PHP_METHOD(Aerospike, scanApply)
     zval_dtor(scan_id_p);
     ZVAL_LONG(scan_id_p, 0);
     if (AEROSPIKE_OK !=
-            (status = aerospike_scan_run_background(aerospike_obj_p->as_ref_p->as_p,
+            (status = aerospike_scan_run_background(aerospike_obj_p,
                                                     &error, module_p, function_name_p,
                                                     &args_p, namespace_p, set_p,
                                                     scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
@@ -2901,6 +4455,118 @@ exit:
     RETURN_LONG(status);
 }
 
+/*
+ *******************************************************************************************************
+ *  GeoJSON APIs:
+ *******************************************************************************************************
+ */
+/* {{{ proto array Aerospike::predicateGeoWithinGeoJSONRegion( string bin,
+ * string region).
+ * Helper which builds the "WHITHIN REGION' predicate */
+PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
+{
+    as_status               status = AEROSPIKE_OK;
+    char                    *bin_name_p = NULL;
+    char                    *region_p = NULL;
+    int                     region_len = 0;
+    int                     bin_name_len = 0;
+    zval                    *val_p;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                &bin_name_p, &bin_name_len, &region_p, &region_len)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithingGeoJSONRegion");
+        RETURN_NULL();
+    }
+
+    if (bin_name_len == 0 || region_len == 0) {
+        DEBUG_PHP_EXT_ERROR("Aerospike::predicateGeoWithinGeoJSONRegion() expects parameter 1 to be a non-empty string.");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    add_assoc_stringl(return_value, VAL, region_p, region_len, 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoWithinRadius( string bin, double long, double $lat,
+ * float $radiusMeter).
+ * Helper which builds the "WITHIN RADIUS" predicate */
+PHP_METHOD(Aerospike, predicateGeoWithinRadius)
+{
+    as_status               status = AEROSPIKE_OK;
+    double                  longitude;
+    double                  latitude;
+    double                  radius;
+    char                    *bin_name_p = NULL;
+    int                     bin_name_len = 0;
+    char                    geo_value[1024];
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
+                &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithinRadius");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
+
+    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoContainsGeoJSONPoint(string bin, string
+ * Point).
+ * Helper which build the "CONRAINS POINT" predicate */
+PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
+{
+    as_status                 status = AEROSPIKE_OK;
+    char                      *bin_name_p = NULL;
+    int                       bin_name_len = 0;
+    char                      *geoPoint_p = NULL;
+    int                       geoPoint_len = 0;
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                &bin_name_p, &bin_name_len, &geoPoint_p, &geoPoint_len)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoContainsGeoJSONPoint");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len, 1);
+}
+
+/* {{{proto array Aerospike::predicateGeoContainsPoint(string bin, double long,
+ * double lat, double radiusMeter).
+ * Helper which build the "CONTAINS POINT" predicate */
+PHP_METHOD(Aerospike, predicateGeoContainsPoint)
+{
+    as_status               status = AEROSPIKE_OK;
+    char                    *bin_name_p = NULL;
+    int                     bin_name_len = 0;
+    double                  longitude;
+    double                  latitude;
+    double                  radius;
+    char                    geo_value[1024];
+
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
+                &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
+        DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoContainsPoint");
+        RETURN_NULL();
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius); 
+
+    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+}
 /*
  *******************************************************************************************************
  *  User Defined Function (UDF) APIs:
@@ -3151,10 +4817,7 @@ PHP_METHOD(Aerospike, apply)
 
     if (return_value_of_udf_p) {
         zval_dtor(return_value_of_udf_p);
-    } else {
-        MAKE_STD_ZVAL(return_value_of_udf_p);
     }
-    array_init(return_value_of_udf_p);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_udf_apply(aerospike_obj_p, 
@@ -4584,7 +6247,6 @@ PHP_MINIT_FUNCTION(aerospike)
 
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
-    Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
 #ifdef ZTS
     ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
 #else

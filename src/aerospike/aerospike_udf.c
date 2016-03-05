@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include "php.h"
 #include "aerospike/as_log.h"
 #include "aerospike/aerospike_key.h"
@@ -234,7 +252,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
         as_arraylist_inita(&args_list,
                 zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
         args_list_p = &args_list;
-        AS_LIST_PUT(NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
+        AS_LIST_PUT(aerospike_obj_p, NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
     }
 
     if (AEROSPIKE_OK != (aerospike_key_apply(aerospike_obj_p->as_ref_p->as_p,
