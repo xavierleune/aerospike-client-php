@@ -1,4 +1,15 @@
 
+## 3.4.7
+
+### Features
+* Upgraded to C client [4.0.2](http://www.aerospike.com/download/client/c/notes.html#4.0.2).
+* Added [list operations](https://github.com/citrusleaf/aerospike-client-php/blob/master/doc/apiref_kv.md) as standalone methods. _CLIENT-561_  **Requires server >= 3.7.0**
+* Added list operators for operate(). _CLIENT-646_  **Requires server >= 3.7.0**
+* [isConnected()](https://github.com/aerospike/aerospike-client-php/tree/master/doc/aerospike_isconnected.md) now testing the client’s connections to the nodes. _CLIENT-624_
+* Allow the Aerospike class to be extendable. _CLIENT-648_
+* Added a [compression_threshold](https://github.com/aerospike/aerospike-client-php/blob/master/doc/aerospike_construct.md#parameters) client config parameter. _CLIENT-627_
+* Added OPT\_SCAN\_INCLUDELDT option for [scan()](https://github.com/aerospike/aerospike-client-php/tree/master/doc/aerospike_scan.md). _CLIENT-610_
+
 ## 3.4.6
 
 ### Features
@@ -129,7 +140,7 @@ I hope you will see the benefit in these changes, and that if you use UDFs and b
 * [Aerospike\Bytes](https://github.com/aerospike/aerospike-client-php/blob/master/src/Bytes.php) wrapper added, and doc updated regarding the [handling of binary-strings](https://github.com/aerospike/aerospike-client-php/blob/master/doc/README.md#handling-unsupported-types) that may contain the null-byte (**\0**).
 * Large Ordered List:
  - Deprecated: get_capacity(),set_capacity() methods of the LDT parent class.
- - Added the methods: find_first, find_last, find_range, exists, config, setPageSize. **Require server >= 3.5.8**
+ - Added the methods: find_first, find_last, find_range, exists, config, setPageSize. **Requires server >= 3.5.8**
 
 ### Fixes
 * Fixed issue #33 fixed for non-ZTS PHP (still in progress for the other case).
