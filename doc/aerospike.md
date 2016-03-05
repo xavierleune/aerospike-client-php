@@ -3,7 +3,7 @@
 
 ```php
 
-final class Aerospike
+class Aerospike
 {
     // The key policy can be determined by setting OPT_POLICY_KEY to one of
     const POLICY_KEY_DIGEST; // hashes (ns,set,key) data into a unique record ID (default)
@@ -60,6 +60,7 @@ final class Aerospike
     const OPT_SCAN_PERCENTAGE;    // integer value 1-100 (default: 100)
     const OPT_SCAN_CONCURRENTLY;  // boolean value (default: false)
     const OPT_SCAN_NOBINS;        // boolean value (default: false)
+    const OPT_SCAN_INCLUDELDT;    // boolean value (default: false)
     const OPT_POLICY_KEY;         // records store the digest unique ID, optionally also its (ns,set,key) inputs
     const OPT_POLICY_GEN;         // set to array( Aerospike::POLICY_GEN_* [, $gen_value ] )
     const OPT_POLICY_REPLICA;     // set to one of Aerospike::POLICY_REPLICA_*
@@ -172,6 +173,20 @@ final class Aerospike
     const OPERATOR_PREPEND;
     const OPERATOR_APPEND;
     const OPERATOR_TOUCH;
+    const OP_LIST_APPEND;
+    const OP_LIST_MERGE;
+    const OP_LIST_INSERT;
+    const OP_LIST_INSERT_ITEMS;
+    const OP_LIST_POP;
+    const OP_LIST_POP_RANGE;
+    const OP_LIST_REMOVE;
+    const OP_LIST_REMOVE_RANGE;
+    const OP_LIST_CLEAR;
+    const OP_LIST_SET;
+    const OP_LIST_GET;
+    const OP_LIST_GET_RANGE;
+    const OP_LIST_TRIM;
+    const OP_LIST_SIZE;
 
     // UDF types
     const UDF_TYPE_LUA;
