@@ -18,6 +18,7 @@ The following configuration options in php.ini
 | aerospike.shm.max_namespaces | 8 |
 | aerospike.shm.takeover_threshold_sec | 30 |
 | aerospike.use_batch_direct | 0 |
+| aerospike.compression_threshold | 0 |
 | aerospike.max_threads | 300 |
 | aerospike.thread_pool_size | 16 |
 
@@ -62,11 +63,17 @@ Here is a description of the configuration directives:
 **aerospike.use_batch_direct**
     Use the batch-direct (1) or batch-index (0) protocol for batch read operations.
 
+**aerospike.compression_threshold**
+    The client will compress records larger than this value for transport.
+
 **aerospike.max_threads integer**
     Size of the synchronous connection pool for each server node
 
 **aerospike.thread_pool_size integer**
     Number of threads stored in underlying thread pool that is used in batch/scan/query commands
+
+**aerospike.compression_threshold**
+    Minimum record size beyond which it is compressed and sent to the server
 
 ## See Also
 

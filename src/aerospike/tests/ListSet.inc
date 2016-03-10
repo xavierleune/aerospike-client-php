@@ -125,7 +125,7 @@ class ListSet extends AerospikeTestCommon
             return $this->db->errorno();
         }
         $out_array = array("John", 15, array(25, 45), array("name"=>"Dan"),
-            45.8, 3.14);
+            45.8, True, 3.14);
         $comp_res = array_diff_assoc_recursive($get_record["bins"]["binB"], $out_array);
         if (!empty($comp_res)) {
             return Aerospike::ERR_CLIENT;
@@ -441,7 +441,7 @@ class ListSet extends AerospikeTestCommon
     function edge_003() {
         $value = array("Aerospike", "Casandra", "Redis");
         try {
-            $status = $this->db->listMerge($this->keys[0], "binB", 0,
+            $status = $this->db->listSet($this->keys[0], "binB", 0,
                 $value, "abcdef");
         } catch (ErrorException $e) {
             return Aerospike::ERR_PARAM;

@@ -92,7 +92,6 @@ used for storage. The developer should wrap binary-string with an object to
 distinguish them. This allows the serializer to behave in the correct manner.
 
 ### Example:
-
 ```php
 require('autoload.php');
 $client = new Aerospike(['hosts'=>[['addr'=>'127.0.0.1', 'port'=>3000]]]);
@@ -132,8 +131,8 @@ So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
 
 The *Large Data Type Methods* are implemented as a PHP library.
 
-Aerospike 3.7.x compatible list operations and geospatial secondary index
-queries will be implemented with a near-future release of the client.
+Aerospike 3.7.x compatible list operations have been added to version 3.4.7 of the client.
+Geospatial data types, indexing, and quries are in-progress.
 
 PHP 5.3.3 - 5.6.x is supported by this client. A new PHP 7 compatible extension
 is in progress.
