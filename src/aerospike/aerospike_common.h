@@ -127,7 +127,7 @@
  * MACROS FOR AEROSPIKE GEOJSON CLASS.
  *******************************************************************************************************
  */
-#define GEOJSONCLASS "Aerospike\\GeoJSON\\GeoJSON"
+#define GEOJSONCLASS "Aerospike\\GeoJSON"
 
 /* 
  *******************************************************************************************************
