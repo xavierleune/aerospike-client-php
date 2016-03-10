@@ -1830,7 +1830,7 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
 
 exit:
     if (name) {
-        efree(name);
+        efree((void*)name);
         name = NULL;
     }
     return;
