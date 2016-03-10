@@ -1829,6 +1829,10 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
+    if (name) {
+        efree(name);
+        name = NULL;
+    }
     return;
 }
 
