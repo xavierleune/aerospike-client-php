@@ -282,9 +282,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
             }
             goto exit;
         } else if (strncmp(Z_STRVAL_PP(op_pp), "GEOCONTAINS", 9) == 0) {
-            printf("In Contains.\n");
             if (!as_query_where(query_p, Z_STRVAL_PP(bin_pp), as_geo_contains(Z_STRVAL_PP(val_pp)))){
-                printf("Failed.\n");
                 DEBUG_PHP_EXT_DEBUG("Unable to set the query predicate");
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                         "Unable to set query predicate");
