@@ -1776,8 +1776,8 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
     char* geoStr = NULL;
 
     ALLOC_INIT_ZVAL(fname);
-    ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") - 1, 1);
-    result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
+    ZVAL_STRINGL(fname, "__tostring", sizeof("__tostring") - 1, 1);
+    result = call_user_function_ex(NULL, value, fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
     geoStr = Z_STRVAL_P(retval);
     if (!(as_record_set_geojson_str((as_record*)array, (const char*)key, 
                     geoStr))) {
