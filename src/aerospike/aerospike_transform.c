@@ -1017,15 +1017,16 @@ static void ADD_DEFAULT_ASSOC_PAIR(Aerospike_object* as, void *key, void *value,
 static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     int result;
-    zval* retval = NULL, fname;
+    zval* retval = NULL, *fname = NULL;
     zval* geojson_zval_p = NULL;
     zval** param[1];
+    ALLOC_INIT_ZVAL(fname);
     ALLOC_INIT_ZVAL(geojson_zval_p);
     char* json_string = (char*)as_geojson_get(as_geojson_fromval(value));
-    ZVAL_STRINGL(&fname, "\\Aerospike\\GeoJSON::fromJson", sizeof("\\Aerospike\\GeoJSON::fromJson") - 1, 1);
-    ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 0);
+    ZVAL_STRINGL(fname, "\\Aerospike\\GeoJSON::fromJson", sizeof("\\Aerospike\\GeoJSON::fromJson") - 1, 1);
+    ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 1);
     param[0] = &geojson_zval_p;
-    result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+    result = call_user_function_ex(NULL, &geojson_zval_p, fname, &retval, 1, param, 0, NULL TSRMLS_CC);
 
     if (key == NULL) {
         zval_dtor((zval*)array);
@@ -1035,6 +1036,13 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *val
                 retval);
     }
 
+    if (geojson_zval_p) {
+        zval_ptr_dtor(param[0]);
+    }
+
+    if (fname) {
+        zval_ptr_dtor(&fname);
+    }
     PHP_EXT_SET_AS_ERR((as_error*) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
@@ -1764,8 +1772,10 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
     int result;
-    zval* retval = NULL, fname;
+    zval* retval = NULL, *fname = NULL;
     char* geoStr = NULL;
+
+    ALLOC_INIT_ZVAL(fname);
     ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") - 1, 1);
     result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
     geoStr = Z_STRVAL_P(retval);
@@ -1778,6 +1788,9 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 exit:
+    if (fname) {
+        zval_ptr_dtor(&fname);
+    }
     return;
 }
 
