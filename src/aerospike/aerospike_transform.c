@@ -1778,7 +1778,15 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
     ALLOC_INIT_ZVAL(fname);
     ZVAL_STRINGL(fname, "__tostring", sizeof("__tostring") - 1, 1);
     result = call_user_function_ex(NULL, value, fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
-    geoStr = Z_STRVAL_P(retval);
+    geoStr = (char *) malloc (strlen(Z_STRVAL_P(retval)) + 1);
+    if (geoStr == NULL) {
+        DEBUG_PHP_EXT_DEBUG("Failed to allocate memory\n");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Failed to allocate memory\n");
+        goto exit;
+    }
+    memset(geoStr, '\0', strlen(geoStr));
+    strcpy(geoStr, Z_STRVAL_P(retval));
     if (!(as_record_set_geojson_str((as_record*)array, (const char*)key, 
                     geoStr))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record as geojson string.\n");
@@ -1790,6 +1798,9 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
 exit:
     if (fname) {
         zval_ptr_dtor(&fname);
+    }
+    if (retval) {
+        zval_ptr_dtor(&retval);
     }
     return;
 }
