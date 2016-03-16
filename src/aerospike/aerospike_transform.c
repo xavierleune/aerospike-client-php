@@ -385,7 +385,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_null(*((zval **) array));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -403,10 +403,36 @@ static void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_bool(*((zval **) array),
             (int8_t) as_boolean_get((as_boolean *) value));
+    PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
+}
+
+/*
+ ********************************************************************************************************
+ * Adds a double to PHP asson array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The sting value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function
+ *                              with encountered error if any.
+ *******************************************************************************************************
+ */
+void ADD_LIST_APPEND_DOUBLE(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+{
+    /*if (key == NULL) {
+      zval* double_zval_p = NULL;
+      ALLOC_INIT_ZVAL(double_zval_p);
+      ZVAL_DOUBLE(double_zval_p, (double)as_double_get((as_double *)value));
+      zval_dtor((zval *)array);
+      ZVAL_ZVAL((zval *)array, double_zval_p, 1, 1);
+      } else {
+      add_next_index_double(*((zval **) array), (double)as_double_get((as_double *) value));
+      }*/
+    add_next_index_double(*((zval **) array), (double) as_double_get((as_double *) value));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
@@ -422,7 +448,7 @@ static void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_long(*((zval **) array),
             (long) as_integer_get((as_integer *) value));
@@ -441,7 +467,7 @@ static void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_stringl(*((zval **) array),
             as_string_get((as_string *) value),
@@ -461,7 +487,7 @@ static void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value,
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -478,7 +504,7 @@ static void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, vo
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -495,7 +521,7 @@ static void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     zval        *unserialized_zval = NULL;
 
@@ -1097,7 +1123,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_MAP_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1115,7 +1141,7 @@ static void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, vo
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_LIST_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -3481,7 +3507,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-    static as_status
+    as_status
 aerospike_get_record_key_digest(as_config *as_config_p, as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status                  status = AEROSPIKE_OK;

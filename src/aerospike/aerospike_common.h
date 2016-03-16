@@ -604,6 +604,13 @@ extern as_status aerospike_record_operations_operate(Aerospike_object* aerospike
                                 zval* returned_p,
                                 HashTable* operations_array_p);
 
+extern as_status aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                zval* returned_p,
+                                HashTable* operations_array_p);
+
 extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,
                                        as_key* as_key_p,

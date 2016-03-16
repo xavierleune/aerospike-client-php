@@ -128,6 +128,7 @@ PHP_METHOD(Aerospike, initKey);
 PHP_METHOD(Aerospike, getKeyDigest);
 PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
+PHP_METHOD(Aerospike, operateOrdered);
 PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, remove);
