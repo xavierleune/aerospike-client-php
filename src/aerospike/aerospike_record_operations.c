@@ -38,15 +38,15 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 
     MAKE_STD_ZVAL(record_local_p);
     array_init(record_local_p);
+    if (key) {
+        if (0 != add_next_index_string(record_local_p, key, 1)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to get the record key.");
+            return false;
+        }
+    }
 
 
     if (value) {
-        if (key) {
-            if (0 != add_next_index_string(record_local_p, key, 1)) {
-                DEBUG_PHP_EXT_DEBUG("Unable to get the record key.");
-                return false;
-            }
-        }
         switch(value->type) {
             case AS_STRING:
                 if (0 != add_next_index_string(record_local_p, as_string_get((as_string *) value), 1)) {
@@ -94,7 +94,6 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  break;
 
             case AS_LIST:
-                 printf("Key = %s\n", key);
                  ADD_LIST_APPEND_LIST(NULL, key, value, &record_local_p, &err TSRMLS_CC);
                  if (err.code != AEROSPIKE_OK) {
                      DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
@@ -126,12 +125,19 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  }
                  break;
         }
-        if(0 != add_index_zval(((foreach_callback_udata *) array)->udata_p, iterator, record_local_p)) {
+        iterator++;
+    } else {
+        if (0 != add_next_index_null(record_local_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
             return false;
         }
         iterator++;
     }
+    if(0 != add_index_zval(((foreach_callback_udata *) array)->udata_p, iterator, record_local_p)) {
+        DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
+        return false;
+    }
+
     return true;
 }
 
@@ -962,6 +968,13 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
                             "Unable to get bins of a record");
                     DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
                 }
+                if (!get_rec->bins.entries) {
+                    if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                                "Unable to get bins of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
+                    }
+                }
             }
         }
         as_operations_destroy(&ops);
@@ -999,7 +1012,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
         goto exit;
     }
 
-    if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_BINS, record_p_local)) {
+    if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_RESULTS, record_p_local)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get the record.");
         goto exit;

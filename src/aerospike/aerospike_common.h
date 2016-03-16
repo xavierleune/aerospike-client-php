@@ -170,6 +170,8 @@
 #define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN               8
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                       "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN                   4
+#define PHP_AS_RECORD_DEFINE_FOR_RESULTS                    "results"
+#define PHP_AS_RECORD_DEFINE_FOR_RESULTS_LEN                7
 #define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS                   "max_threads"
 #define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN               11
 #define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE              "thread_pool_size"
