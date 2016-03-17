@@ -2442,10 +2442,10 @@ static void AS_LIST_PUT_APPEND_DOUBLE_BYTES(Aerospike_object* as, void *key, voi
     if (does_server_support_double && is_datatype_double)
     {
         AS_LIST_PUT_APPEND_DOUBLE (as, key, value, array, static_pool,
-                serializer_policy, error_p TSRMLS_DC);
+                serializer_policy, error_p);
     } else {
         AS_LIST_PUT_APPEND_BYTES (as, key, value, array, static_pool,
-                serializer_policy, error_p TSRMLS_DC);
+                serializer_policy, error_p);
     }
 exit:
     return;
