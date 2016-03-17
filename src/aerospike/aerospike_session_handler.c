@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -145,6 +163,7 @@ PS_OPEN_FUNC(aerospike)
     as_config               config;
     aerospike_session*      session_p = NULL;
     HashTable*              persistent_list = AEROSPIKE_G(persistent_list_g);
+    HashTable*              shm_key_list = AEROSPIKE_G(shm_key_list_g);
     int                     iter_host = 0;
 
     DEBUG_PHP_EXT_INFO("In PS_OPEN_FUNC");
@@ -171,6 +190,7 @@ PS_OPEN_FUNC(aerospike)
     if (AEROSPIKE_OK !=
             aerospike_helper_object_from_alias_hash(session_p->aerospike_obj_p,
                                                               true, &config,
+                                                              shm_key_list,
                                                               persistent_list,
                                                               persist TSRMLS_CC)) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to find object from alias");

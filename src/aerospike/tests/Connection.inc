@@ -351,5 +351,147 @@ class Connection extends AerospikeTestCommon
         $db->close();
         return Aerospike::OK;
     }
+
+    /**
+     * @test
+     * connect() with use_shm is disabled.
+     * For this test-case to pass you need to set use_shm to false
+     * through ini.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_001)
+     *
+     * @test_plans{1.1}
+     */
+    function normal_001() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $db = new Aerospike($config);
+        if ($db->errorno() != Aerospike::OK) {
+            return Aerospike::ERR_CLIENT;
+        }
+        $shared_memory_key = $db->shmKey();
+        if ($shared_memory_key == NULL) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * connect() with use_shm enabled. shm_key is given by user.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_002)
+     *
+     * @test_plans{1.1}
+     */
+    function normal_002() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)),
+            "shm"=>array("shm_key"=>123));
+        $db = new Aerospike($config);
+        if ($db->errorno() != Aerospike::OK) {
+            return Aerospike::ERR_CLIENT;
+        }
+        $shared_memory_key = $db->shmKey();
+        if ($shared_memory_key == 123) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * connect() with use_shm enabled. shm_key is not passed by user.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_003)
+     *
+     * @test_plans{1.1}
+     */
+    function normal_003() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)),
+            "shm"=>array());
+        $db = new Aerospike($config);
+        if ($db->errorno() != Aerospike::OK) {
+            return Aerospike::ERR_CLIENT;
+        }
+        $shared_memory_key = $db->shmKey();
+        if ($shared_memory_key == 2768240641) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * connect() with use_shm enabled and shm_key is passed by user is already used.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_004)
+     *
+     * @test_plans{1.1}
+     */
+    function normal_004() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2, "port"=>AEROSPIKE_CONFIG_PORT2)),
+            "shm"=>array("shm_key"=>0xA5000000));
+        $db = new Aerospike($config);
+        if ($db->errorno() != Aerospike::OK) {
+            return Aerospike::ERR_CLIENT;
+        }
+        $shared_memory_key = $db->shmKey();
+        if ($shared_memory_key == 2768240641) {
+            return Aerospike::OK;
+        }
+        return Aerospike::ERR_CLIENT;
+    }
+
+    /**
+     * @test
+     * connect() with COMPRESSION_THRESHOLD option passed.
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (bug_CLIENT_627)
+     *
+     * @test_plans{1.1}
+     */
+    function bug_CLIENT_627() {
+        $config = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME, "port"=>AEROSPIKE_CONFIG_PORT)));
+        $options = array(Aerospike::COMPRESSION_THRESHOLD=>8);
+        $db = new Aerospike($config, true, $options);
+        if ($db->errorno() != Aerospike::OK) {
+            return Aerospike::ERR_CLIENT;
+        }
+        return Aerospike::OK;
+    }
 } 
 ?>

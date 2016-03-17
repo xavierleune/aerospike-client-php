@@ -13,20 +13,20 @@ public Aerospike::setLogLevel ( int $log_level )
 
 ## Parameters
 
-**log_level** one of *Aerospike::LOG_LEVEL_\** values
+**log_level** one of `Aerospike::LOG_LEVEL_*` values
 
 ## Examples
 
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
-$db->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
+$client->setLogLevel(Aerospike::LOG_LEVEL_DEBUG);
 
 ?>
 ```

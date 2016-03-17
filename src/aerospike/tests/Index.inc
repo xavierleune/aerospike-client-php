@@ -38,13 +38,13 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexStringBinPositive)
+     * Variants: OO (testCreateAndDropIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinPositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_INTEGER, "bin2_integer_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC)) {
             return($this->db->dropIndex("test", "bin2_integer_index"));
         } else {
             return $this->db->errorno();
@@ -62,13 +62,13 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexStringBinPositive)
+     * Variants: OO (testaddIndexStringBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinWithOptionsPositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_INTEGER, "bin2_integer_index",
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC,
             array(Aerospike::OPT_WRITE_TIMEOUT => 12000))) {
             return($this->db->dropIndex("test", "bin2_integer_index",
                 array(Aerospike::OPT_WRITE_TIMEOUT => 10000)));
@@ -87,15 +87,17 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexSameIntegerBinWithSameNamePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_INTEGER, "bin2_integer_index")) {
-            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-                Aerospike::INDEX_TYPE_INTEGER, "bin2_integer_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_NUMERIC)) {
+            if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_NUMERIC)) {
                 return($this->db->dropIndex("test", "bin2_integer_index"));
             } else {
                 return $this->db->errorno();
@@ -116,15 +118,15 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexDifferentIntegerBinWithSameNamePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_INTEGER, "test_index")) {
-            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin3",
-                Aerospike::INDEX_TYPE_INTEGER, "test_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "test_index", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC)) {
+            if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin3",
+            "test_index", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC)) {
                 return($this->db->dropIndex("test", "test_index"));
             } else {
                 return $this->db->errorno();
@@ -146,15 +148,15 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexSameIntegerBinWithDifferentNamePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_INTEGER, "test_index")) {
-            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-                Aerospike::INDEX_TYPE_INTEGER, "test_index_new")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "test_index", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC)) {
+            if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "test_index_new", Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC)) {
                 return($this->db->dropIndex("test", "test_index"));
             } else {
                 return $this->db->errorno();
@@ -175,17 +177,18 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexStringBinPositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin1",
-            Aerospike::INDEX_TYPE_STRING, "bin1_string_index")) {
-            return($this->db->dropIndex("test", "bin1_string_index"));
-        } else {
-            return $this->db->errorno();
-        }
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin1",
+            "bin1_string_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
+                return($this->db->dropIndex("test", "bin1_string_index"));
+            } else {
+                return $this->db->errorno();
+            }
     }
     /**
      * @test
@@ -198,17 +201,18 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexStringSetNull() {
-        if (Aerospike::OK == $this->db->createIndex("test", NULL, "bin1",
-            Aerospike::INDEX_TYPE_STRING, "bin1_string_index")) {
-            return($this->db->dropIndex("test", "bin1_string_index"));
-        } else {
-            return $this->db->errorno();
-        }
+        if (Aerospike::OK == $this->db->addIndex("test", NULL, "bin1",
+            "bin1_string_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
+                return($this->db->dropIndex("test", "bin1_string_index"));
+            } else {
+                return $this->db->errorno();
+            }
     }
 
     /**
@@ -222,19 +226,19 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexStringBinWithOptionsPositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin1",
-            Aerospike::INDEX_TYPE_STRING, "bin1_string_index",
-            array(Aerospike::OPT_WRITE_TIMEOUT => 10000))) {
-            return($this->db->dropIndex("test", "bin1_string_index",
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin1",
+            "bin1_string_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING, array(Aerospike::OPT_WRITE_TIMEOUT => 10000))) {
+                return($this->db->dropIndex("test", "bin1_string_index",
                 array(Aerospike::OPT_WRITE_TIMEOUT => 12000)));
-        } else {
-            return $this->db->errorno();
-        }
+            } else {
+                return $this->db->errorno();
+            }
     }
     /**
      * @test
@@ -247,15 +251,17 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexSameStringBinWithSameNamePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_STRING, "bin2_string_index")) {
-            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-                Aerospike::INDEX_TYPE_STRING, "bin2_string_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "bin2_string_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
+            if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "bin2_string_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
                 return($this->db->dropIndex("test", "bin2_string_index"));
             } else {
                 return $this->db->errorno();
@@ -276,15 +282,17 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexDifferentStringBinWithSameNamePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_STRING, "test_index")) {
-            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin3",
-                Aerospike::INDEX_TYPE_STRING, "test_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "test_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
+            if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin3",
+            "test_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
                 return($this->db->dropIndex("test", "test_index"));
             } else {
                 return $this->db->errorno();
@@ -306,15 +314,17 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexSameStringBinWithDifferentNamePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-            Aerospike::INDEX_TYPE_STRING, "test_index")) {
-            if (Aerospike::OK == $this->db->createIndex("test", "demo", "bin2",
-                Aerospike::INDEX_TYPE_STRING, "test_index_new")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "test_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
+            if (Aerospike::OK == $this->db->addIndex("test", "demo", "bin2",
+            "test_index_new", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_STRING)) {
                 return($this->db->dropIndex("test", "test_index"));
             } else {
                 return $this->db->errorno();
@@ -334,18 +344,18 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinInvalidBinPositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo",
-            "invalid_bin", Aerospike::INDEX_TYPE_INTEGER,
-            "bin2_integer_index")) {
-            return($this->db->dropIndex("test", "bin2_integer_index"));
-        } else {
-            return $this->db->errorno();
-        }
+        if (Aerospike::OK == $this->db->addIndex("test", "demo",
+            "invalid_bin", "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_NUMERIC)) {
+                return($this->db->dropIndex("test", "bin2_integer_index"));
+            } else {
+                return $this->db->errorno();
+            }
     }
 
     /**
@@ -359,14 +369,14 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinInvalidSetPositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "invalid_set",
-            "bin2", Aerospike::INDEX_TYPE_INTEGER,
-            "bin2_integer_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "invalid_set",
+            "bin2", "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_NUMERIC)) {
             return($this->db->dropIndex("test", "bin2_integer_index"));
         } else {
             return $this->db->errorno();
@@ -385,18 +395,18 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinInvalidNamespaceNegative() {
-        if (Aerospike::OK == $this->db->createIndex("invalid_namespace", "demo",
-            "bin2", Aerospike::INDEX_TYPE_INTEGER,
-            "bin2_integer_index")) {
-            return($this->db->dropIndex("test", "bin2_integer_index"));
-        } else {
-            return $this->db->errorno();
-        }
+        if (Aerospike::OK == $this->db->addIndex("invalid_namespace", "demo",
+            "bin2", "bin2_integer_index", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_NUMERIC)) {
+                return($this->db->dropIndex("test", "bin2_integer_index"));
+            } else {
+                return $this->db->errorno();
+            }
     }
 
     /**
@@ -411,14 +421,14 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinInvalidIndexTypePositive() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo",
-            "bin2", 10,
-            "bin2_integer_index")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo",
+            "bin2", "bin2_integer_index", 10,
+            Aerospike::INDEX_NUMERIC)) {
             return($this->db->dropIndex("test", "bin2_integer_index"));
         } else {
             return($this->db->errorno());
@@ -436,14 +446,14 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testaddIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */
     function testCreateAndDropIndexIntegerBinVeryLongIndexNameNegativeWithDBCrash() {
-        if (Aerospike::OK == $this->db->createIndex("test", "demo",
-            "bin2", Aerospike::INDEX_TYPE_INTEGER,
-            "bin2_integer_indexsdadadfasdfasdfeartfqrgahfas;dfheudsdfasdfawf312342q3453rf9qwfasdcfasdcalskdcbacfq34915rwcfasdcas.cnabscbaskjdbcalsjkbcdasc")) {
+        if (Aerospike::OK == $this->db->addIndex("test", "demo",
+            "bin2", "bin2_integer_indexsdadadfasdfasdfeartfqrgahfas;dfheudsdfasdfawf312342q3453rf9qwfasdcfasdcalskdcbacfq34915rwcfasdcas.cnabscbaskjdbcalsjkbcdasc", Aerospike::INDEX_TYPE_DEFAULT,
+            Aerospike::INDEX_NUMERIC)) {
             return($this->db->dropIndex("test", "bin2_integer_index"));
         } else {
             return $this->db->errorno();
@@ -461,7 +471,7 @@ class Index extends AerospikeTestCommon
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (testCreateIndexIntegerBinPositive)
+     * Variants: OO (testdropIndexIntegerBinPositive)
      *
      * @test_plans{1.1}
      */

@@ -9,6 +9,10 @@ if (!is_array($autoloaders) || !array_key_exists('Aerospike\\LDT\\Autoloader', $
     require __DIR__. '/src/LDT/Autoloader.php';
     \Aerospike\LDT\Autoloader::register();
 }
+if (!is_array($autoloaders) || !array_key_exists('Aerospike\\GeoJSON\\Autoloader', $autoloaders)) {
+    require __DIR__. '/src/GeoJSON/Autoloader.php';
+    \Aerospike\GeoJSON\Autoloader::register();
+}
 if (!is_array($autoloaders) || !array_key_exists('Aerospike\\Bytes', $autoloaders)) {
     spl_autoload_register(function ($class_name) {
         if ($class_name == 'Aerospike\Bytes') {

@@ -1,7 +1,26 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #ifndef __AEROSPIKE_POLICY_H__
 #define __AEROSPIKE_POLICY_H__
 
 #include "aerospike/as_scan.h"
+#include "aerospike/as_job.h"
 #include "aerospike/as_admin.h"
 /*
  *******************************************************************************************************
@@ -19,11 +38,15 @@ enum Aerospike_constants {
     OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
     OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
     OPT_SCAN_NOBINS,          /* boolean value, default: false */
+    OPT_SCAN_INCLUDELDT,      /* Include large data type bin values in addition to large data type bin names */
     OPT_POLICY_KEY,           /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
     OPT_POLICY_GEN,
     OPT_POLICY_REPLICA,       /* set to one of Aerospike::POLICY_REPLICA_* */
     OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
-    OPT_POLICY_COMMIT_LEVEL   /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
+    OPT_POLICY_COMMIT_LEVEL,  /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
+    OPT_TTL,                  /* set to time-to-live of the record in seconds */
+    USE_BATCH_DIRECT,         /* use new batch index protocol if server supports it*/
+    COMPRESSION_THRESHOLD,    /* Minimum record size beyond which it is compressed and sent to the server */
 };
 
 /*
@@ -35,7 +58,6 @@ enum Aerospike_constants {
 enum Aerospike_serializer_values {
     SERIALIZER_NONE,
     SERIALIZER_PHP,                                     /* default handler for serializer type */
-    SERIALIZER_JSON,
     SERIALIZER_USER,
 };
 
@@ -72,10 +94,14 @@ AerospikeConstants aerospike_constants[] = {
     { OPT_SCAN_PERCENTAGE 		            ,   "OPT_SCAN_PERCENTAGE" 		        },
     { OPT_SCAN_CONCURRENTLY 		        ,   "OPT_SCAN_CONCURRENTLY" 		    },
     { OPT_SCAN_NOBINS 			            ,   "OPT_SCAN_NOBINS" 			        },
+    { OPT_SCAN_INCLUDELDT                   ,   "OPT_SCAN_INCLUDELDT"               },
     { OPT_POLICY_GEN                        ,   "OPT_POLICY_GEN"                    },
     { OPT_POLICY_REPLICA                    ,   "OPT_POLICY_REPLICA"                },
     { OPT_POLICY_CONSISTENCY                ,   "OPT_POLICY_CONSISTENCY"            },
     { OPT_POLICY_COMMIT_LEVEL               ,   "OPT_POLICY_COMMIT_LEVEL"           },
+    { OPT_TTL                               ,   "OPT_TTL"                           },
+    { USE_BATCH_DIRECT                      ,   "USE_BATCH_DIRECT"                  },
+    { COMPRESSION_THRESHOLD                 ,   "COMPRESSION_THRESHOLD"             },
     { AS_POLICY_RETRY_NONE                  ,   "POLICY_RETRY_NONE"                 },
     { AS_POLICY_RETRY_ONCE                  ,   "POLICY_RETRY_ONCE"                 },
     { AS_POLICY_EXISTS_IGNORE               ,   "POLICY_EXISTS_IGNORE"              },
@@ -85,7 +111,6 @@ AerospikeConstants aerospike_constants[] = {
     { AS_POLICY_EXISTS_CREATE_OR_REPLACE    ,   "POLICY_EXISTS_CREATE_OR_REPLACE"   },
     { SERIALIZER_NONE                       ,   "SERIALIZER_NONE"                   },
     { SERIALIZER_PHP                        ,   "SERIALIZER_PHP"                    },
-    { SERIALIZER_JSON                       ,   "SERIALIZER_JSON"                   },
     { SERIALIZER_USER                       ,   "SERIALIZER_USER"                   },
     { AS_UDF_TYPE_LUA                       ,   "UDF_TYPE_LUA"                      },
     { AS_SCAN_PRIORITY_AUTO 		        ,   "SCAN_PRIORITY_AUTO" 		        },
@@ -96,6 +121,9 @@ AerospikeConstants aerospike_constants[] = {
     { AS_SCAN_STATUS_INPROGRESS 		    ,   "SCAN_STATUS_INPROGRESS" 		    },
     { AS_SCAN_STATUS_ABORTED 		        ,   "SCAN_STATUS_ABORTED" 		        },
     { AS_SCAN_STATUS_COMPLETED 		        ,   "SCAN_STATUS_COMPLETED" 		    },
+    { AS_JOB_STATUS_UNDEF                   ,   "JOB_STATUS_UNDEF"                  },
+    { AS_JOB_STATUS_INPROGRESS              ,   "JOB_STATUS_INPROGRESS"             },
+    { AS_JOB_STATUS_COMPLETED               ,   "JOB_STATUS_COMPLETED"              },
     { AS_POLICY_KEY_DIGEST 		            ,   "POLICY_KEY_DIGEST" 		        },
     { AS_POLICY_KEY_SEND 			        ,   "POLICY_KEY_SEND" 			        },
     { AS_POLICY_GEN_IGNORE                  ,   "POLICY_GEN_IGNORE"                 },
@@ -107,12 +135,12 @@ AerospikeConstants aerospike_constants[] = {
     { AS_POLICY_CONSISTENCY_LEVEL_ALL       ,   "POLICY_CONSISTENCY_ALL"            },
     { AS_POLICY_COMMIT_LEVEL_ALL            ,   "POLICY_COMMIT_LEVEL_ALL"           },
     { AS_POLICY_COMMIT_LEVEL_MASTER         ,   "POLICY_COMMIT_LEVEL_MASTER"        },
-	{ AS_PRIVILEGE_USER_ADMIN               ,   "PRIV_USER_ADMIN" },
-    { AS_PRIVILEGE_SYS_ADMIN                ,   "PRIV_SYS_ADMIN" },
-    { AS_PRIVILEGE_READ                     ,   "PRIV_READ"},
-    { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"},
-    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"},
-    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"}
+	{ AS_PRIVILEGE_USER_ADMIN               ,   "PRIV_USER_ADMIN"                   },
+    { AS_PRIVILEGE_SYS_ADMIN                ,   "PRIV_SYS_ADMIN"                    },
+    { AS_PRIVILEGE_READ                     ,   "PRIV_READ"                         },
+    { AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"                   },
+    { AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"               },
+    { AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"                   }
 };
 /*
  *******************************************************************************************************
@@ -156,6 +184,12 @@ extern void
 set_policy_udf_apply(as_config* as_config_p,
         as_policy_apply *apply_policy_p,
         int8_t *serializer_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC);
+
+extern void
+set_policy_query_apply(as_config *as_config_p,
+        as_policy_write *write_policy_p,
         zval *options_p,
         as_error *error_p TSRMLS_DC);
 

@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include "php.h"
 #include "php_aerospike.h"
 #include "aerospike/as_log.h"
@@ -237,6 +255,127 @@ do {                                                                          \
 
 /*
  *******************************************************************************************************
+ * This function will check if shm_key is unique or not.
+ *
+ * @param shm_key_to_match          The shm_key value to match.
+ * @param shm_key_list              The hashtable pointing to the zend global shm key list.
+ *
+ * @returns 1 if paased shm key is unique. Otherwise 0.
+ *******************************************************************************************************
+ */
+int is_unique_shm_key(int shm_key_to_match, HashTable *shm_key_list TSRMLS_DC)
+{
+    HashPosition        options_pointer;
+    void*              options_value;
+
+    for (zend_hash_internal_pointer_reset_ex(shm_key_list, &options_pointer);
+            zend_hash_get_current_data_ex(shm_key_list,
+                (void **) &options_value, &options_pointer) == SUCCESS;
+            zend_hash_move_forward_ex(shm_key_list, &options_pointer)) {
+        if (shm_key_to_match == ((shared_memory_key *)(((zend_rsrc_list_entry*)options_value)->ptr))->key) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/*
+ *******************************************************************************************************
+ * Function to set shm_key value from paased config and if it's not unique then it will
+ * generate a new unique shm key.
+ *
+ * @param conf                      The as_config to be used for creating/retrieving aerospike object
+ * @param shm_key_list              The hashtable pointing to the zend global shm key list
+ * @param shm_key_counter           shm_key generator counter
+ *
+ * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
+ *******************************************************************************************************
+ */
+static as_status
+set_shm_key_from_alias_hash_or_generate(
+                                        as_config* conf,
+                                        HashTable *shm_key_list,
+                                        int* shm_key_counter TSRMLS_DC)
+{
+    zend_rsrc_list_entry *le, new_shm_entry;
+    zval* rsrc_result = NULL;
+    as_status status = AEROSPIKE_OK;
+    int itr_user = 0;
+    char *alias_to_search = NULL;
+    char port[MAX_PORT_SIZE];
+    int alias_length = 0;
+    shared_memory_key *shm_key_ptr = NULL;
+
+    for (itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+        alias_length += strlen(conf->hosts[itr_user].addr) + strlen(conf->user) + MAX_PORT_SIZE + 3;
+    }
+
+    alias_to_search =(char*) emalloc(alias_length);
+    memset( alias_to_search, '\0', alias_length);
+    for (itr_user=0; itr_user < conf->hosts_size; itr_user++) {
+        sprintf(port, "%d", conf->hosts[itr_user].port);
+        strcat(alias_to_search, conf->hosts[itr_user].addr);
+        strcat(alias_to_search, ":");
+        strcat(alias_to_search, port);
+        strcat(alias_to_search, ":");
+        strcat(alias_to_search, conf->user);
+        if (itr_user != conf->hosts_size - 1) {
+            strcat(alias_to_search, ";");
+        }
+    }
+    pthread_rwlock_rdlock(&AEROSPIKE_G(aerospike_mutex));
+    if (zend_hash_num_elements(shm_key_list) == 0) {
+        shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
+        shm_key_ptr->key = conf->shm_key;
+        ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
+        new_shm_entry.ptr = shm_key_ptr;
+        new_shm_entry.type = 1;
+        zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
+                (void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
+        pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
+        goto exit;
+    }
+    if (zend_hash_find(shm_key_list, alias_to_search,
+           strlen(alias_to_search), (void **) &le) == SUCCESS) {
+        if ((le->ptr) != NULL) {
+            conf->shm_key = ((shared_memory_key *)(le->ptr))->key;
+        }
+    } else {
+        if (!(is_unique_shm_key(conf->shm_key, shm_key_list TSRMLS_CC))) {
+            while (true) {
+                //generating unique shm_key
+                if (is_unique_shm_key(*shm_key_counter, shm_key_list TSRMLS_CC)) {
+                    conf->shm_key = *shm_key_counter;
+                    break;
+                } else{
+                    (*shm_key_counter)++;
+                }
+            }
+        }
+
+        shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
+        shm_key_ptr->key = conf->shm_key;
+        ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
+        new_shm_entry.ptr = shm_key_ptr;
+        new_shm_entry.type = 1;
+        zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
+                (void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
+    }
+    pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
+    if (alias_to_search) {
+        efree(alias_to_search);
+        alias_to_search = NULL;
+    }
+exit:
+    if (alias_to_search) {
+        efree(alias_to_search);
+        alias_to_search = NULL;
+    }
+    return (status);
+}
+
+/*
+ *******************************************************************************************************
  * Function to retrieve a C Client's aerospike object either from the zend
  * persistent store if an already hashed object (with the addr+port as the hash) exists, or by
  * creating a new aerospike object if it doesn't and pushing it on the zend persistent store
@@ -249,6 +388,7 @@ do {                                                                          \
  * @param conf                      The as_config to be used for creating/retrieving aerospike object.
  * @param persistent_list           The hashtable pointing to the zend global persistent list.
  * @param val_persist               The resource handler for persistent list.
+ * @param shm_key_list              The hashtable pointing to the zend global shm key list.
  *
  * @return AEROSPIKE::OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
@@ -257,6 +397,7 @@ extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
                                         bool persist_flag,
                                         as_config* conf,
+                                        HashTable *shm_key_list,
                                         HashTable *persistent_list,
                                         int val_persist TSRMLS_DC)
 {
@@ -274,6 +415,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
     char *alias_to_search = NULL;
     char *alias_to_hash = NULL;
     char port[MAX_PORT_SIZE];
+    static int shm_key_counter = 0xA5000000;
 
     if (!(as_object_p) && !(conf)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -376,9 +518,13 @@ use_existing:
     as_object_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
     as_object_p->as_ref_p = tmp_ref;
     as_object_p->as_ref_p->ref_as_p++;
-    DEBUG_PHP_EXT_DEBUG("\nCount is: %d",as_object_p->as_ref_p->ref_as_p);
     goto exit;
 exit:
+    if (conf->use_shm) {
+        status = set_shm_key_from_alias_hash_or_generate(conf,shm_key_list,
+                &shm_key_counter TSRMLS_CC);
+    }
+
     if (alias_to_search) {
         efree(alias_to_search);
         alias_to_search = NULL;
@@ -591,7 +737,7 @@ aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p)
         return true;
     }
 
-    AS_AGGREGATE_GET(NULL, val_p, (foreach_callback_udata *) udata_p);
+    AS_AGGREGATE_GET(((foreach_callback_udata*)udata_p)->obj, NULL, val_p, (foreach_callback_udata *) udata_p);
 exit:
     return true;
 }
@@ -603,6 +749,7 @@ aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
         config_p->shm_max_nodes = (uint32_t) SHM_MAX_NODES_PHP_INI;
         config_p->shm_max_namespaces = (uint32_t) SHM_MAX_NAMESPACES_PHP_INI;
         config_p->shm_takeover_threshold_sec = (uint32_t) SHM_TAKEOVER_THRESHOLD_SEC_PHP_INI;
+        config_p->shm_key = (uint32_t) SHM_KEY_PHP_INI;
     } else {
         config_p->use_shm = false;
     }
@@ -819,20 +966,23 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
     strcpy(config_p->lua.system_path, LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config_p->lua.user_path, LUA_USER_PATH_PHP_INI);
 
-    if (!strncmp(SAVE_HANDLER_PHP_INI, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
-        if (!save_path) {
-            save_path = SAVE_PATH_PHP_INI;
-        }
+    char *save_handler = SAVE_HANDLER_PHP_INI;
+    if (save_handler != NULL) {
+        if (!strncmp(save_handler, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
+            if (!save_path) {
+                save_path = SAVE_PATH_PHP_INI;
+            }
 
-        if (save_path) {
-            if (AEROSPIKE_OK != parse_save_path(save_path, session_p,
-                        config_p, error_p TSRMLS_CC)) {
+            if (save_path) {
+                if (AEROSPIKE_OK != parse_save_path(save_path, session_p,
+                            config_p, error_p TSRMLS_CC)) {
+                    goto exit;
+                }
+            } else {
+                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_PATH settings");
+                DEBUG_PHP_EXT_ERROR("Could not read SAVE_PATH settings");
                 goto exit;
             }
-        } else {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_PATH settings");
-            DEBUG_PHP_EXT_ERROR("Could not read SAVE_PATH settings");
-            goto exit;
         }
     } else {
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_HANDLER settings");

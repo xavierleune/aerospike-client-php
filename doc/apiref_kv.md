@@ -77,6 +77,91 @@ public int Aerospike::getMany ( array $keys, array &$records [, array $filter [,
 public int Aerospike::existsMany ( array $keys, array &$metadata [, array $options ] )
 ```
 
+### Aerospike::listSize
+```
+// count the elements of the list value in the bin
+public int Aerospike::listSize ( array $key, string $bin, int &$count [, array $options ] )
+```
+
+### Aerospike::listAppend
+```
+// add a single value (of any type) to the end of the list
+public int Aerospike::listAppend ( array $key, string $bin, mixed $value [, array $options ] )
+```
+
+### Aerospike::listMerge
+```
+// add items to the end of a list
+public int Aerospike::listMerge ( array $key, string $bin, array $items [, array $options ] )
+```
+
+### Aerospike::listInsert
+```
+// insert an element at the specified index of a list value in the bin
+public int Aerospike::listInsert ( array $key, string $bin, int $index, mixed $value [, array $options ] )
+```
+
+### Aerospike::listInertItems
+```
+// insert items at the specified index of a list value in the bin
+public int Aerospike::listInertItems ( array $key, string $bin, int $index, array $items [, array $options ] )
+```
+
+### Aerospike::listPop
+```
+// remove and get back the list element at a given index of a list value in the bin
+// index -1 is the last item in the list, -3 is the third from last, 0 is the first in the list
+public int Aerospike::listPop ( array $key, string $bin, int $index, mixed &$element [, array $options ] )
+```
+
+### Aerospike::listPopRange
+```
+// remove and get back list elements at a given index of a list value in the bin
+public int Aerospike::listPopRange ( array $key, string $bin, int $index, int $count, array &$elements [, array $options ] )
+```
+
+### Aerospike::listRemove
+```
+// remove a list element at a given index of a list value in the bin
+public int Aerospike::listRemove ( array $key, string $bin, int $index [, array $options ] )
+```
+
+### Aerospike::listRemoveRange
+```
+// remove list elements at a given index of a list value in the bin
+public int Aerospike::listRemoveRange ( array $key, string $bin, int $index, int $count [, array $options ] )
+```
+
+### Aerospike::listTrim
+```
+// trim the list, removing all elements not in the range starting at a given index plus count
+public int Aerospike::listTrim ( array $key, string $bin, int $index, int $count [, array $options ] )
+```
+
+### Aerospike::listClear
+```
+// remove all the elements from the list value in the bin
+public int Aerospike::listClear ( array $key, string $bin [, array $options ] )
+```
+
+### Aerospike::listSet
+```
+// set list element val at the specified index of a list value in the bin
+public int Aerospike::listSet ( array $key, string $bin, int $index, mixed $val [, array $options ] )
+```
+
+### Aerospike::listGet
+```
+// get the list element at the specified index of a list value in the bin
+public int Aerospike::listGet ( array $key, string $bin, int $index, mixed &$element [, array $options ] )
+```
+
+### Aerospike::listGetRange
+```
+// get the list of $count elements starting at a specified index of a list value in the bin
+public int Aerospike::listGetRange ( array $key, string $bin, int $index, int $count, array &$elements [, array $options ] )
+```
+
 ### [Aerospike::setSerializer](aerospike_setserializer.md)
 ```
 public static Aerospike::setSerializer ( callback $serialize_cb )
@@ -93,35 +178,35 @@ public static Aerospike::setDeserializer ( callback $unserialize_cb )
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
-$bins = array("email" => "hey@example.com", "name" => "Hey There");
+$key = $client->initKey("test", "users", 1234);
+$bins = ["email" => "hey@example.com", "name" => "Hey There"];
 // attempt to 'CREATE' a new record at the specified key
-$status = $db->put($key, $bins, 0, array(Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE));
+$status = $client->put($key, $bins, 0, [Aerospike::OPT_POLICY_EXISTS => Aerospike::POLICY_EXISTS_CREATE]);
 if ($status == Aerospike::OK) {
     echo "Record written.\n";
 } elseif ($status == Aerospike::ERR_RECORD_EXISTS) {
     echo "The Aerospike server already has a record with the given key.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 // check for the existance of the given key in the database, then fetch it
-if ($db->exists($key, $foo) == Aerospike::OK) {
-    $status = $db->get($key, $record);
+if ($client->exists($key, $foo) == Aerospike::OK) {
+    $status = $client->get($key, $record);
     if ($status == Aerospike::OK) {
         var_dump($record);
     }
 }
 
 // filtering for specific keys
-$status = $db->get($key, $record, array("email"), Aerospike::POLICY_RETRY_ONCE);
+$status = $client->get($key, $record, ["email"], Aerospike::POLICY_RETRY_ONCE);
 if ($status == Aerospike::OK) {
     echo "The email for this user is ". $record['bins']['email']. "\n";
     echo "The name bin should be filtered out: ".var_export(is_null($record['bins']['name']), true). "\n";

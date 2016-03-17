@@ -32,6 +32,7 @@ Non-existent bins will appear in the *record* with a NULL value.
 - **Aerospike::OPT_SCAN_PERCENTAGE** of the records in the set to return
 - **Aerospike::OPT_SCAN_CONCURRENTLY** whether to run the scan in parallel
 - **Aerospike::OPT_SCAN_NOBINS** whether to not retrieve bins for the records
+- **Aerospike::OPT_SCAN_INCLUDELDT** whether to include large data type bin values along with LDT bin names
 
 ## Return Values
 
@@ -46,24 +47,24 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$options = array(Aerospike::OPT_SCAN_PRIORITY => Aerospike::SCAN_PRIORITY_MEDIUM);
+$options = [Aerospike::OPT_SCAN_PRIORITY => Aerospike::SCAN_PRIORITY_MEDIUM];
 $processed = 0;
-$status = $db->scan("test", "users", function ($record) use (&$processed) {
+$status = $client->scan("test", "users", function ($record) use (&$processed) {
     if (!is_null($record['bins']['email'])) echo $record['bins']['email']."\n";
     if ($processed++ > 19) return false; // halt the stream by returning a false
-}, array("email"), $options);
+}, ["email"], $options);
 // check the status of the last operation
 if ($status == Aerospike::ERR_SCAN_ABORTED) {
     echo "I think a sample of $processed records is enough\n";
 } else if ($status !== Aerospike::OK) {
-    echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";
+    echo "An error occured while scanning[{$client->errorno()}] {$client->error()}\n";
 }
 
 ?>
@@ -83,12 +84,12 @@ I think a sample of 20 records is enough
 ```php
 <?php
 
-$result = array();
-$status = $db->scan("test", "users", function ($record) use (&$result) {
+$result = [];
+$status = $client->scan("test", "users", function ($record) use (&$result) {
     $result[] = $record['bins'];
 });
 if ($status !== Aerospike::OK) {
-    echo "An error occured while scanning[{$db->errorno()}] {$db->error()}\n";
+    echo "An error occured while scanning[{$client->errorno()}] {$client->error()}\n";
 } else {
     echo "The scan returned ".count($result)." records\n";
 }

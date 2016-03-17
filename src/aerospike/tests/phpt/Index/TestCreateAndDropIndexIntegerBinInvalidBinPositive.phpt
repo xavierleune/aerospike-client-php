@@ -1,5 +1,5 @@
 --TEST--
-createIndex and dropIndex - Invalid bin
+addIndex() and dropIndex() - Invalid bin
 
 --FILE--
 <?php

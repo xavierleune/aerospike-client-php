@@ -11,6 +11,12 @@ addons:
     packages:
       - libssl-dev
       - autoconf
+env:
+  global:
+  - LUA_SYSPATH=~/udf/sys
+  - LUA_USRPATH=~/udf/usr
+  - secure: fJ2nIo5OYkrOFQFo/TXCqiyLXABuhYmLO8037ALplv3JbEZLMI7/NtZptKop+YZVO/HQ2jolWRVeKrXDY6ZDjdnI67hk+FSeIdhviNeWOoWEUt1Yk+YE6lLSFgtgZ0gI11hHrqqU9uzZ1h4MgkPpMPbA85O6RFWLrvjE9fcHLR4=
+  - secure: 3zu4iH0VlDWPps9cT8Jz4LOsjKErbrqNabHqAKKHA1GfVZjd9C/UKxqjfCzF+F196rmZZgiOy5hG6zYPn9dM6JMpMPiKbnrguRTB6me79zP5FGWakp5B4IwkjQAm/eRCPa0VV3Ft//vG0/OgyrHQtrR0eFEDv1DVSonZ4s91QtM=
 install:
 - wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
 - tar xvzf aerospike-server.tgz
@@ -30,8 +36,8 @@ install:
 script:
 - cd src/aerospike
 - ./build.sh
+- make install
 - ../../.travis/edit-php-ini.sh
-- cp ../aerospike-client-c/package/opt/aerospike/client/sys/udf/lua/*lua ~/udf/sys/
 - cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
 - make test TESTS=tests/phpt TEST_PHP_ARGS="--show-diff"
 notifications:
@@ -43,7 +49,3 @@ notifications:
   email:
     - qe-notices@aerospike.com
     - qe-notices-clients@aerospike.com
-env:
-  global:
-  - secure: fJ2nIo5OYkrOFQFo/TXCqiyLXABuhYmLO8037ALplv3JbEZLMI7/NtZptKop+YZVO/HQ2jolWRVeKrXDY6ZDjdnI67hk+FSeIdhviNeWOoWEUt1Yk+YE6lLSFgtgZ0gI11hHrqqU9uzZ1h4MgkPpMPbA85O6RFWLrvjE9fcHLR4=
-  - secure: 3zu4iH0VlDWPps9cT8Jz4LOsjKErbrqNabHqAKKHA1GfVZjd9C/UKxqjfCzF+F196rmZZgiOy5hG6zYPn9dM6JMpMPiKbnrguRTB6me79zP5FGWakp5B4IwkjQAm/eRCPa0VV3Ft//vG0/OgyrHQtrR0eFEDv1DVSonZ4s91QtM=

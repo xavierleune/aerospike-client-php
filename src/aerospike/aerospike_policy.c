@@ -1,3 +1,21 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #include "php.h"
 
 #include "aerospike/aerospike_key.h"
@@ -23,8 +41,6 @@
         serializer_ini = SERIALIZER_NONE;                      \
     } else if (!strncmp(serializer_str, "php", 3)) {           \
         serializer_ini = SERIALIZER_PHP;                       \
-    } else if (!strncmp(serializer_str, "json", 4)) {          \
-        serializer_ini = SERIALIZER_JSON;                      \
     } else if (!strncmp(serializer_str, "user", 4)) {          \
         serializer_ini = SERIALIZER_USER;                      \
     } else {                                                   \
@@ -33,6 +49,8 @@
 
 #define KEY_POLICY_PHP_INI INI_STR("aerospike.key_policy") ? (uint32_t) atoi(INI_STR("aerospike.key_policy")) : 0
 #define GEN_POLICY_PHP_INI INI_STR("aerospike.key_gen") ? (uint32_t) atoi(INI_STR("aerospike.key_gen")) : 0
+#define USE_BATCH_DIRECT_PHP_INI INI_STR("aerospike.use_batch_direct") ? (bool) atoi(INI_STR("aerospike.use_batch_direct")) : 0
+#define COMPRESSION_THRESHOLD_PHP_INI INI_STR("aerospike.compression_threshold") ? (uint32_t) atoi(INI_STR("aerospike.compression_threshold")) : 0
 
 /*
  *******************************************************************************************************
@@ -92,6 +110,9 @@ as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
                         aerospike_constants[i].constantno TSRMLS_CC);
     }
 
+    zend_declare_class_constant_stringl (Aerospike_ce, "JOB_QUERY", strlen("JOB_QUERY"), "query", strlen("query") TSRMLS_CC);
+    zend_declare_class_constant_stringl (Aerospike_ce, "JOB_SCAN", strlen("JOB_SCAN"), "scan", strlen("scan") TSRMLS_CC);
+
 exit:
     return status;
 }
@@ -110,71 +131,71 @@ exit:
 extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *error_p TSRMLS_DC)
 {
-    //zval**                  gen_policy_pp = NULL;
-    zval*                   gen_policy_p = NULL;
-    zval*                   gen_value_p = NULL;
+    zval**                  gen_policy_pp = NULL;
+    zval**                  gen_value_pp = NULL;
 
     if (options_p) {
-#if PHP_VERSION_ID < 70000
-        if (FAILURE == AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_GEN,
-                &gen_policy_p))
-#else
-        if (NULL == (gen_policy_p = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(options_p), OPT_POLICY_GEN,
-                &gen_policy_p)))
-#endif
-        {
+        if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
+            //error_p->code = AEROSPIKE_ERR_CLIENT;
             goto exit;
         }
-
-        if (Z_TYPE_P(gen_policy_p) != IS_ARRAY) {
+        if (Z_TYPE_PP(gen_policy_pp) != IS_ARRAY) {
             error_p->code = AEROSPIKE_ERR_PARAM;
             goto exit;
         }
-#if PHP_VERSION_ID < 70000
-        if (FAILURE == AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(gen_policy_p), 1,
-                &gen_value_p))
-#else
-        if (NULL == (gen_value_p = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(gen_policy_p), 1,
-                &gen_value_p)))
-#endif
-        {
-            goto exit;
-        }
+        zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
 
-        if (gen_value_p && (Z_TYPE_P(gen_value_p) != IS_LONG)) {
+        if (gen_value_pp && (Z_TYPE_PP(gen_value_pp) != IS_LONG)) {
             error_p->code = AEROSPIKE_ERR_PARAM;
             goto exit;
         }
 
-        if (gen_value_p) {
-            *generation_value_p = Z_LVAL_P(gen_value_p);
+        if (gen_value_pp) {
+            *generation_value_p = Z_LVAL_PP(gen_value_pp);
         }
-    } 
-
+    }
 exit:
     return;
-}
 
+}
 
 
 /*
  *******************************************************************************************************
-        
-        if (gen_value_p && (Z_TYPE_P(gen_value_p) != IS_LONG)) {
-            error_p->code = AEROSPIKE_ERR_PARAM;
+ * Function for setting the relevant aerospike policies by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param options_p             The optional parameters.
+ * @param generation_value_p    The generation value to be set into put record.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *******************************************************************************************************
+ */
+extern as_status
+get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p TSRMLS_DC)
+{
+    zval**                  ttl_value_pp = NULL;
+
+    if (options_p) {
+        if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
+            //error_p->code = AEROSPIKE_ERR_CLIENT;
+            goto exit;
+        }
+        if (Z_TYPE_PP(ttl_value_pp) != IS_LONG) {
+            DEBUG_PHP_EXT_DEBUG("OPT_TTL should be of type integer");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                    "OPT_TTL should be of type integer");
             goto exit;
         }
 
-        if (gen_value_p) {
-            *generation_value_p = Z_LVAL_P(gen_value_p);
+        if (ttl_value_pp) {
+            *ttl_value_p = Z_LVAL_PP(ttl_value_pp);
         }
     } 
 
 exit:
-    return;
+    return error_p->code;
 }
-
-
 
 /*
  *******************************************************************************************************
@@ -315,6 +336,7 @@ set_policy_ex(as_config *as_config_p,
         uint8_t             options_passed_for_read = 0x0;
         uint8_t             options_passed_for_operate = 0x0;
         uint8_t             options_passed_for_remove = 0x0;
+      zval**               gen_policy_pp = NULL;
         zval*               gen_policy_p = NULL;
 #if PHP_VERSION_ID < 70000
         int8_t*             options_key;
@@ -482,9 +504,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || ((Z_TYPE_PP(options_value) != IS_BOOL))) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_CONCURRENTLY");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_CONCURRENTLY");
                         goto exit;
                     }
                     if (!as_scan_set_concurrent(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -498,9 +520,9 @@ set_policy_ex(as_config *as_config_p,
                         break;
                     }
                     if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
-                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                                "Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
+                                "Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
                         goto exit;
                     }
                     if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -508,6 +530,18 @@ set_policy_ex(as_config *as_config_p,
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan no bins");
                         goto exit;
                     }
+                    break;
+                case OPT_SCAN_INCLUDELDT:
+                    if (info_policy_p) {
+                        break;
+                    }
+                    if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                "Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+                        goto exit;
+                    }
+                    as_scan_p->include_ldt = Z_BVAL_PP(options_value);
                     break;
                 case OPT_POLICY_KEY:
                     if (Z_TYPE_PP(options_value) != IS_LONG) {
@@ -534,23 +568,20 @@ set_policy_ex(as_config *as_config_p,
                     }
                     break;
                 case OPT_POLICY_GEN:
-                    if (FAIURE == AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(options_value), 0,
-                            &gen_policy_p)) {
-                        goto exit;
-                    }
+                      zend_hash_index_find(Z_ARRVAL_P(*options_value), 0, (void **) &gen_policy_pp);
 
-                    if (Z_TYPE_P(gen_policy_p) != IS_LONG) {
+                    if (Z_TYPE_PP(gen_policy_pp) != IS_LONG) {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         goto exit;
                     }
                     if (write_policy_p) {
-                        write_policy_p->gen = Z_LVAL_P(gen_policy_p);
+                        write_policy_p->gen = Z_LVAL_PP(gen_policy_pp);
                     } else if (operate_policy_p) {
-                        operate_policy_p->gen = Z_LVAL_P(gen_policy_p);
+                        operate_policy_p->gen = Z_LVAL_PP(gen_policy_pp);
                     } else if (remove_policy_p) {
-                        remove_policy_p->gen = Z_LVAL_P(gen_policy_p);
+                        remove_policy_p->gen = Z_LVAL_PP(gen_policy_pp);
                     } else {
                         DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_GEN");
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -613,6 +644,8 @@ set_policy_ex(as_config *as_config_p,
                                 "Unable to set policy: Invalid Value for OPT_POLICY_REPLICA");
                         goto exit;
                     }
+                    break;
+                case OPT_TTL:
                     break;
                 default:
                     DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
@@ -1096,6 +1129,32 @@ set_policy_scan(as_config *as_config_p,
             serializer_policy_p, as_scan_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
+
+/*
+ *******************************************************************************************************
+ * Wrapper function for setting the queryApply policy by using the user's
+ * optional policy options (if set) else the defaults.
+ *
+ * @param write_policy_p        The as_policy_write to be passed in case of
+ *                              batch operations.
+ * @param options_p             The user's optional policy options to be used if
+ *                              set, else default.
+ * @param error_p               The as_error to be populated by the function
+ *                              with the encountered error if any.
+ *
+ *******************************************************************************************************
+ */
+extern void
+set_policy_query_apply(as_config *as_config_p,
+        as_policy_write *write_policy_p,
+        zval *options_p,
+        as_error *error_p TSRMLS_DC)
+{
+    set_policy_ex(as_config_p, NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+}
+
+
 /*
  *******************************************************************************************************
  * Wrapper function for setting the batch policy by using the user's
@@ -1228,6 +1287,16 @@ set_config_policies(as_config *as_config_p,
         *serializer_opt = ini_value;
     }
 
+    ini_value = USE_BATCH_DIRECT_PHP_INI;
+    if (as_config_p) {
+        as_config_p->policies.batch.use_batch_direct = ini_value;
+    }
+
+    ini_value = COMPRESSION_THRESHOLD_PHP_INI;
+    if (ini_value >= 0 && as_config_p) {
+        as_config_p->policies.write.compression_threshold = ini_value;
+    }
+
     if (options_p != NULL) {
         HashTable*          options_array = Z_ARRVAL_P(options_p);
         HashPosition        options_pointer;
@@ -1357,6 +1426,31 @@ set_config_policies(as_config *as_config_p,
                     }
                     *serializer_opt = (int8_t)Z_LVAL_PP(options_value);
                     break;
+                case USE_BATCH_DIRECT:
+                    if ((Z_TYPE_PP(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set USE_BATCH_DIRECT : Incorrect Value type for USE_BATCH_DIRECT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                           "Unable to set USE_BATCH_DIRECT:Incorrect Value type for USE_BATCH_DIRECT");
+                        goto exit;
+                    }
+                    as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_PP(options_value);
+                    break;
+                case COMPRESSION_THRESHOLD:
+                    if (Z_TYPE_PP(options_value) != IS_LONG) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                           "Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
+                        goto exit;
+                    }
+                    uint32_t compression_threshold = (uint32_t) Z_LVAL_PP(options_value);
+                    as_config_p->policies.write.compression_threshold = compression_threshold;
+                    break;
+                default:
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                       "Unable to set policy: Invalid Policy Constant Key");
+                    goto exit;
+
 #else
                 case OPT_CONNECT_TIMEOUT:
                     if ((!as_config_p) || (Z_TYPE_P(options_value) != IS_LONG)) {
@@ -1462,6 +1556,38 @@ set_config_policies(as_config *as_config_p,
                     }
                     *serializer_opt = (int8_t)Z_LVAL_P(options_value);
                     break;
+                case USE_BATCH_DIRECT:
+                    if ((Z_TYPE_P(options_value) != IS_BOOL)) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set USE_BATCH_DIRECT : Incorrect Value type for USE_BATCH_DIRECT");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                           "Unable to set USE_BATCH_DIRECT:Incorrect Value type for USE_BATCH_DIRECT");
+                        goto exit;
+                    }
+                    as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_P(options_value);
+                    break;
+                case COMPRESSION_THRESHOLD:
+                    if (Z_TYPE_P(options_value) != IS_LONG) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                           "Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
+                        goto exit;
+                    }
+                    uint32_t compression_threshold = (uint32_t) Z_LVAL_P(options_value);
+                    if (compression_threshold >= 0) {
+                        as_config_p->policies.write.compression_threshold = compression_threshold;
+                    } else {
+                        DEBUG_PHP_EXT_DEBUG("Compression threshold should be >= 0");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                           "Compression threshold should be >= 0");
+                        goto exit;
+                    }
+                    break;
+                default:
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                                       "Unable to set policy: Invalid Policy Constant Key");
+                    goto exit;
+
 #endif
             }
         }

@@ -1,9 +1,40 @@
+/*
+ *
+ * Copyright (C) 2014-2016 Aerospike, Inc.
+ *
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 #ifndef __AEROSPIKE_GENERAL_CONSTANTS_H__
 #define __AEROSPIKE_GENERAL_CONSTANTS_H__
 
 #include "aerospike/aerospike_index.h"
 #include "aerospike/as_operations.h"
 #define MAX_GENERAL_CONSTANT_STR_SIZE 512
+#define AS_CDT_OP_LIST_APPEND_NEW AS_CDT_OP_LIST_APPEND + 1000
+#define AS_CDT_OP_LIST_INSERT_NEW AS_CDT_OP_LIST_INSERT + 1000
+#define AS_CDT_OP_LIST_INSERT_ITEMS_NEW AS_CDT_OP_LIST_INSERT_ITEMS + 1000
+#define AS_CDT_OP_LIST_POP_NEW AS_CDT_OP_LIST_POP + 1000
+#define AS_CDT_OP_LIST_POP_RANGE_NEW AS_CDT_OP_LIST_POP_RANGE + 1000
+#define AS_CDT_OP_LIST_REMOVE_NEW AS_CDT_OP_LIST_REMOVE + 1000
+#define AS_CDT_OP_LIST_REMOVE_RANGE_NEW AS_CDT_OP_LIST_REMOVE_RANGE + 1000
+#define AS_CDT_OP_LIST_CLEAR_NEW AS_CDT_OP_LIST_CLEAR + 1000
+#define AS_CDT_OP_LIST_SET_NEW AS_CDT_OP_LIST_SET + 1000
+#define AS_CDT_OP_LIST_GET_NEW AS_CDT_OP_LIST_GET + 1000
+#define AS_CDT_OP_LIST_GET_RANGE_NEW AS_CDT_OP_LIST_GET_RANGE + 1000
+#define AS_CDT_OP_LIST_TRIM_NEW AS_CDT_OP_LIST_TRIM + 1000
+#define AS_CDT_OP_LIST_SIZE_NEW AS_CDT_OP_LIST_SIZE + 1000
 
 /*
  *******************************************************************************************************
@@ -31,8 +62,6 @@ typedef struct Aerospike_General_String_Constants {
  *******************************************************************************************************
  */
 static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
-    { AS_INDEX_STRING,      "INDEX_TYPE_STRING"  },
-    { AS_INDEX_NUMERIC,     "INDEX_TYPE_INTEGER" },
     { AS_INDEX_STRING,      "INDEX_STRING"       },
     { AS_INDEX_NUMERIC,     "INDEX_NUMERIC"      },
     { AS_INDEX_TYPE_DEFAULT,"INDEX_TYPE_DEFAULT" },
@@ -44,7 +73,20 @@ static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
     { AS_OPERATOR_INCR,     "OPERATOR_INCR"      },
     { AS_OPERATOR_PREPEND,  "OPERATOR_PREPEND"   },
     { AS_OPERATOR_APPEND,   "OPERATOR_APPEND"    },
-    { AS_OPERATOR_TOUCH,    "OPERATOR_TOUCH"     }
+    { AS_OPERATOR_TOUCH,    "OPERATOR_TOUCH"     },
+    { AS_CDT_OP_LIST_APPEND_NEW,"OP_LIST_APPEND" },
+    { AS_CDT_OP_LIST_INSERT_NEW,"OP_LIST_INSERT" },
+    { AS_CDT_OP_LIST_INSERT_ITEMS_NEW,"OP_LIST_INSERT_ITEMS"},
+    { AS_CDT_OP_LIST_POP_NEW, "OP_LIST_POP"      },
+    { AS_CDT_OP_LIST_POP_RANGE_NEW, "OP_LIST_POP_RANGE"},
+    { AS_CDT_OP_LIST_REMOVE_NEW, "OP_LIST_REMOVE"},
+    { AS_CDT_OP_LIST_REMOVE_RANGE_NEW, "OP_LIST_REMOVE_RANGE"},
+    { AS_CDT_OP_LIST_CLEAR_NEW, "OP_LIST_CLEAR"  },
+    { AS_CDT_OP_LIST_SET_NEW, "OP_LIST_SET"      },
+    { AS_CDT_OP_LIST_GET_NEW, "OP_LIST_GET"      },
+    { AS_CDT_OP_LIST_GET_RANGE_NEW, "OP_LIST_GET_RANGE"},
+    { AS_CDT_OP_LIST_TRIM_NEW, "OP_LIST_TRIM"    },
+    { AS_CDT_OP_LIST_SIZE_NEW, "OP_LIST_SIZE"    }
 };
 
 /*
@@ -56,7 +98,8 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
     { "=",         "OP_EQ"  },
     { "BETWEEN",   "OP_BETWEEN" },
     { "CONTAINS",   "OP_CONTAINS" },
-    { "RANGE",   "OP_RANGE" }
+    { "RANGE",   "OP_RANGE" },
+    { "GEOWITHIN",   "OP_GEOWITHINREGION" }
 };
 
 #define AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE (sizeof(aerospike_general_long_constants)/sizeof(AerospikeGeneralLongConstants))

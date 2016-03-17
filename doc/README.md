@@ -2,16 +2,16 @@
 # Overview
 
 The Aerospike <a href="http://www.aerospike.com/docs/architecture/clients.html"
-target="_doc">PHP client</a> enables your PHP application to work with an
-<a href="http://www.aerospike.com/docs/architecture/distribution.html"
-target="_doc">Aerospike cluster</a> as its
+target="_doc">client</a> for PHP enables your application to work with an
+Aerospike <a href="http://www.aerospike.com/docs/architecture/distribution.html"
+target="_doc">cluster</a> as its
 <a href="http://www.aerospike.com/docs/guide/kvs.html" target="_doc">key-value store</a>.
 
 The <a href="http://www.aerospike.com/docs/architecture/data-model.html" target="_doc">Data Model</a>
 document gives further details on how data is organized in the cluster.
 
 ## Client API
-The Aerospike PHP client API is described in the following sections:
+The client API is described in the following sections:
 
 ### [Runtime Configuration](aerospike_config.md)
 ### [Session Handler](aerospike_sessions.md)
@@ -25,39 +25,48 @@ The Aerospike PHP client API is described in the following sections:
 ### [Info Methods](apiref_info.md)
 ### [Large Data Type Methods](aerospike_ldt.md)
 
-## Implementation Status
-So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
-*Handling and Logging Methods*, *Query and Scan Methods*, *User Defined Methods*
-, *Admin Methods*, *Info Methods* and *Key-Value Methods* have been implemented.
+## Configuration in a Web Server Context
 
-The *Large Data Type Methods* are implemented as a PHP library.
+Initializing the client to a cluster is a costly
+operation, so ideally it should be reused for the multiple requests
+that the same PHP process will handle (as is the case for mod\_php and fastCGI).
 
-We expect the specification of the PHP client to closely describe our next
-release, including the unimplemented methods.  However, it is possible that
-some changes to the client spec will occur.
+The developer can determine whether the constructor will
+use persistent connections by way of an optional boolean argument.
+After the first time Aerospike::\_\_construct() is called within the process, the
+client will be stored for reuse by subsequent requests, if persistent connections
+were indicated. With persistent connections, the methods _reconnect()_ and
+_close()_ do not actually close the connection.
 
-## Persistent Connections
+Each Aerospike client opens 2*N connections to the cluster, where N is the number
+of nodes in that cluster, and a connection simply costs a file descriptor
+on the server-side. Depending on the number of web servers and PHP processes on
+each server, you may need to adjust the
+[proto-fd-max](http://www.aerospike.com/docs/reference/configuration/#proto-fd-max)
+server config parameter and the OS limits to account for the necessary number of
+[file descriptors](http://www.aerospike.com/docs/operations/troubleshoot/startup/#not-enough-file-descriptors-error-in-log).
+On the client side, the web server should be configured to reduce the frequency
+in which new clients are created. Historically, the `max_requests` for mod\_php
+and FPM was set low to combat memory leaks. PHP has been stable on memory for a
+long while, so the correct configuration would be to have fewer processes, and
+let each of them handle a high number of requests. This reduces the process
+initialization overhead, and the overall number of connections on the web
+server. Monitoring the memory consumption of the PHP processes allows the
+`max_requests` to be raised safely to an efficient, stable value.
 
-Initializing the C-client to connect to a specified cluster is a costly
-operation, so ideally the C-client should be reused for the multiple requests
-made against the same PHP process (as is the case for mod_php and fastCGI).
-
-The PHP developer can determine whether the Aerospike class constructor will
-use persistent connections or not by way of an optional boolean argument.
-After the first time Aerospike::__construct() is called within the process, the
-extension will attempt to reuse the persistent connection.
-
-When persistent connections are used the methods _reconnect()_ and _close()_ do
-not actually close the connection.  Those methods only apply to instances of
-class Aerospike which use non-persistent connections.
+The client keeps track of changes at the server-side through a
+[cluster tending](http://www.aerospike.com/docs/architecture/clustering.html)
+thread. In a web server context, a single client can handle cluster tending and
+share its state through a shared-memory segment. To enable shm cluster tending,
+the developer can set the [`aerospike.shm.use`](aerospike_config.md) ini config
+to `true`, or at the [constructor](aerospike_construct.md) through its config.
 
 ## Halting a Stream
 
 Halting a _query()_ or _scan()_ result stream can be done by returning (an
-explicit) boolean **false** from the callback.  The extension will capture the
-return value from the registered PHP callback, and pass it to the C-client.
-The C-client will then close the sockets to the nodes involved in streaming
-results, effectively halting it.
+explicit) boolean **false** from the callback.
+The client will then close the sockets to the nodes of the cluster, halting the
+stream of records.
 
 ## Handling Unsupported Types
 
@@ -83,7 +92,6 @@ used for storage. The developer should wrap binary-string with an object to
 distinguish them. This allows the serializer to behave in the correct manner.
 
 ### Example:
-
 ```php
 require('autoload.php');
 $client = new Aerospike(['hosts'=>[['addr'=>'127.0.0.1', 'port'=>3000]]]);
@@ -116,7 +124,19 @@ wrapped binary-string: string(10) "truncated"
 The binary-string that was given to put() without a wrapper: trunc
 ```
 
+## Implementation Status
+So far the *Runtime Configuration*, *Lifecycle and Connection Methods*, *Error*
+*Handling and Logging Methods*, *Query and Scan Methods*, *User Defined Methods*
+, *Admin Methods*, *Info Methods* and *Key-Value Methods* have been implemented.
+
+The *Large Data Type Methods* are implemented as a PHP library.
+
+Aerospike 3.7.x compatible list operations have been added to version 3.4.7 of the client.
+Geospatial data types, indexing, and quries are in-progress.
+
+PHP 5.3.3 - 5.6.x is supported by this client. A new PHP 7 compatible extension
+is in progress.
+
 ## Further Reading
 
 - [How does the Aerospike client find a node](https://discuss.aerospike.com/t/how-does-aerospike-client-find-a-node/706)
-- [How would hash collisions be handled](https://discuss.aerospike.com/t/what-will-aerospike-do-if-hash-collision-for-a-key/779)

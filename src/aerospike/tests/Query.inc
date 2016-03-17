@@ -29,7 +29,6 @@ class Query extends AerospikeTestCommon
         $this->keys[] = $key;
 
         $this->ensureIndex('test', 'demo', 'age', 'demo_age_idx', Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_NUMERIC);
-        #$this->db->createIndex('test', 'demo', 'age', Aerospike::INDEX_TYPE_INTEGER, 'demo_age_idx');
 
         #INDEX on list.
         $key = $this->db->initKey("test", "demo", "index_key1");

@@ -634,14 +634,17 @@ class Put extends AerospikeTestCommon
      $key = $db->initKey("test", "demo", "list_list_strval");
      $list1 = array("p","q","r","s","d","op",12,56,89,55);
      $list2 = array(105,"r","s","t","p",$list1);
+     if ($db->errorno() != Aerospike::OK) {
+         return $db->errorno();
+     }
      if ($db->isConnected()) {
-        $status = $db->put($key,array("bin1"=>$list2));
-        $this->keys[] = $key;
+         $status = $db->put($key,array("bin1"=>$list2));
+         $this->keys[] = $key;
      } else {
          return $db->errorno();
      }
      if ($status !== Aerospike::OK) {
-         return $this->db->errorno();
+         return $db->errorno();
      }
      return $status;
  }
@@ -2735,10 +2738,10 @@ function testMixedTypesWithDefaultSerializer()
             return $this->db->errorno();
         }
     }
-
+    
     /**
      * @test
-     * Basic PUT with bin as float.
+     * put() with no data
      *
      * @pre
      * Connect using aerospike object to the specified node
@@ -2747,23 +2750,41 @@ function testMixedTypesWithDefaultSerializer()
      * newly initialized Aerospike objects
      *
      * @remark
-     * Variants: OO (normal_001)
+     * Variants: OO (bug_CLIENT_69)
+     *
+     * @test_plans{1.1}
      */
-    function normal_001()
+    function bug_CLIENT_69()
     {
-        $key = $this->db->initKey("test", "demo", "put_float");
-        $status = $this->db->put($key,  array("float"=>3.145));
-        $this->keys[] = $key;
+        $key = $this->db->initKey("test", "demo", "no_data");
+        $status = $this->db->put($key,  array());
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }
-        $status = $this->db->get($key, $return);
+        return $status;
+    }
+    
+    /**
+     * @test
+     * put() with bin name only
+     *
+     * @pre
+     * Connect using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (edge_001)
+     *
+     * @test_plans{1.1}
+     */
+    function edge_001()
+    {
+        $key = $this->db->initKey("test", "demo", "bin_name");
+        $status = $this->db->put($key,  array("binA"));
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
-        }
-        if (abs($return["bins"]["float"] - 3.145) > 0.00001)
-        {
-            return Aerospike::ERR_CLIENT;
         }
         return $status;
     }

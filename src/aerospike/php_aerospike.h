@@ -1,7 +1,7 @@
 /*
  * src/aerospike/php_aerospike.h
  *
- * Copyright (C) 2014-2105 Aerospike, Inc.
+ * Copyright (C) 2014-2016 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -27,7 +27,7 @@
 
 #ifndef PHP_AEROSPIKE_H
 #define PHP_AEROSPIKE_H 1
-#define PHP_AEROSPIKE_VERSION "3.4.3"
+#define PHP_AEROSPIKE_VERSION "3.4.7"
 #define PHP_AEROSPIKE_EXTNAME "aerospike"
 #ifdef ZTS
 #include "TSRM.h"
@@ -53,12 +53,20 @@ ZEND_BEGIN_MODULE_GLOBALS(aerospike)
     int key_policy;
     int key_gen;
     zend_bool shm_use;
+    zend_bool use_batch_direct;
+    int max_threads;
+    int thread_pool_size;
     int shm_max_nodes;
     int shm_max_namespaces;
     int shm_takeover_threshold_sec;
+    int shm_key;
+    int shm_key_counter;
+    int compression_threshold;
     aerospike_global_error error_g;
     HashTable *persistent_list_g;
+    HashTable *shm_key_list_g;
     int persistent_ref_count;
+    int shm_key_ref_count;
     pthread_rwlock_t aerospike_mutex;
     pthread_rwlock_t query_cb_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
@@ -85,6 +93,7 @@ PHP_MINFO_FUNCTION(aerospike);
 
 PHP_METHOD(Aerospike, __construct);
 PHP_METHOD(Aerospike, __destruct);
+PHP_METHOD(Aerospike, shmKey);
 
 /*
  * Cluster Management APIs:
@@ -138,7 +147,6 @@ PHP_METHOD(Aerospike, setLogHandler);
  * Secondary Index APIs:
  */
 
-PHP_METHOD(Aerospike, createIndex);
 PHP_METHOD(Aerospike, addIndex);
 PHP_METHOD(Aerospike, dropIndex);
 
@@ -154,7 +162,18 @@ PHP_METHOD(Aerospike, query);
 PHP_METHOD(Aerospike, aggregate);
 PHP_METHOD(Aerospike, scan);
 PHP_METHOD(Aerospike, scanApply);
+PHP_METHOD(Aerospike, queryApply);
 PHP_METHOD(Aerospike, scanInfo);
+PHP_METHOD(Aerospike, jobInfo);
+
+/*
+ * GeoJSON APIs:
+ */
+
+PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion);
+PHP_METHOD(Aerospike, predicateGeoWithinRadius);
+PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint);
+PHP_METHOD(Aerospike, predicateGeoContainsPoint);
 
 /*
  * User Defined Function (UDF) APIs:
@@ -171,6 +190,24 @@ PHP_METHOD(Aerospike, getRegistered);
  */
 PHP_METHOD(Aerospike, existsMany);
 PHP_METHOD(Aerospike, operate);
+
+/*
+ * List Operations APIs:
+ */
+PHP_METHOD(Aerospike, listAppend);
+PHP_METHOD(Aerospike, listInsert);
+PHP_METHOD(Aerospike, listSet);
+PHP_METHOD(Aerospike, listMerge);
+PHP_METHOD(Aerospike, listSize);
+PHP_METHOD(Aerospike, listClear);
+PHP_METHOD(Aerospike, listTrim);
+PHP_METHOD(Aerospike, listInsertItems);
+PHP_METHOD(Aerospike, listGet);
+PHP_METHOD(Aerospike, listGetRange);
+PHP_METHOD(Aerospike, listPop);
+PHP_METHOD(Aerospike, listPopRange);
+PHP_METHOD(Aerospike, listRemove);
+PHP_METHOD(Aerospike, listRemoveRange);
 
 /*
  * Security APIs:

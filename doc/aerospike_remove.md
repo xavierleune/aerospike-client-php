@@ -33,21 +33,21 @@ constants.  When non-zero the **Aerospike::error()** and
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = $db->initKey("test", "users", 1234);
-$status = $db->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
+$key = $client->initKey("test", "users", 1234);
+$status = $client->remove($key, array(Aerospike::OPT_POLICY_RETRY => Aerospike::POLICY_RETRY_NONE));
 if ($status == Aerospike::OK) {
     echo "Record removed.\n";
 } elseif ($status == Aerospike::ERR_RECORD_NOT_FOUND) {
     echo "A user with key ". $key['key']. " does not exist in the database\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>

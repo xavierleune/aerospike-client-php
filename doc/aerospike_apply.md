@@ -71,15 +71,15 @@ end
 ```php
 <?php
 
-$config = array("hosts"=>array(array("addr"=>"localhost", "port"=>3000)));
-$db = new Aerospike($config);
-if (!$db->isConnected()) {
-   echo "Aerospike failed to connect[{$db->errorno()}]: {$db->error()}\n";
+$config = ["hosts" => [["addr"=>"localhost", "port"=>3000]], "shm"=>[]];
+$client = new Aerospike($config, true);
+if (!$client->isConnected()) {
+   echo "Aerospike failed to connect[{$client->errorno()}]: {$client->error()}\n";
    exit(1);
 }
 
-$key = array("ns" => "test", "set" => "users", "key" => "1234");
-$status = $db->apply($key, 'my_udf', 'startswith', array('email', 'hey@'), $returned);
+$key = ["ns" => "test", "set" => "users", "key" => "1234"];
+$status = $client->apply($key, 'my_udf', 'startswith', ['email', 'hey@'], $returned);
 if ($status == Aerospike::OK) {
     if ($returned) {
         echo "The email of the user with key {$key['key']} starts with 'hey@'.\n";
@@ -89,7 +89,7 @@ if ($status == Aerospike::OK) {
 } elseif ($status == Aerospike::ERR_UDF_NOT_FOUND) {
     echo "The UDF module my_udf.lua was not registered with the Aerospike DB.\n";
 } else {
-    echo "[{$db->errorno()}] ".$db->error();
+    echo "[{$client->errorno()}] ".$client->error();
 }
 
 ?>
