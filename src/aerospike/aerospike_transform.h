@@ -283,7 +283,7 @@ do {                                                                           \
         as_integer_init(map_int, index);                                       \
         key = (as_val*) map_int;                                               \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map"); \
         goto label;                                                            \
     }                                                                          \
 } while(0);
@@ -306,7 +306,7 @@ do {                                                                           \
         as_integer_init(map_int, index);                                       \
         key = (as_val*) map_int;                                               \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map"); \
         goto label;                                                            \
     }                                                                          \
 } while(0);
@@ -357,7 +357,7 @@ do {                                                                           \
     if (AS_MAX_STORE_SIZE > STR_CNT(static_pool)) {                            \
         map_str = &(STR_POOL(static_pool)[STR_CNT(static_pool)++]);            \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_string");   \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_string"); \
         goto label;                                                            \
     }
 
@@ -365,7 +365,7 @@ do {                                                                           \
     if (AS_MAX_STORE_SIZE > INT_CNT(static_pool)) {                            \
         map_int = &(INT_POOL(static_pool)[INT_CNT(static_pool)++]);            \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_integer");  \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_integer"); \
         goto label;                                                            \
     }
 
@@ -373,7 +373,7 @@ do {                                                                           \
     if (AS_MAX_STORE_SIZE > BYTES_CNT(static_pool)) {                          \
         map_bytes = &(BYTES_POOL(static_pool)[BYTES_CNT(static_pool)++]);      \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_bytes");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate as_bytes");   \
         goto label;                                                            \
     }
 
@@ -392,11 +392,11 @@ do {                                                                           \
         (CURRENT_##level##_SIZE(static_pool))++];                              \
         INIT_##level##_IN_POOL(store, hashtable);                              \
     } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate list/map");    \
+        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Cannot allocate list/map");  \
         goto label;                                                            \
     }
 
-#define AS_DEFAULT_INIT_STORE(store, hashtable, static_pool, err, label)                      
+#define AS_DEFAULT_INIT_STORE(store, hashtable, static_pool, err, label) 
 
 #define AS_LIST_INIT_STORE(store, hashtable, static_pool, err, label)          \
     INIT_STORE(store, static_pool, hashtable, LIST, err, label)
@@ -471,7 +471,7 @@ do {                                                                           \
     zval **dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
-    hashtable = Z_ARRVAL_P((zval*) *value);                                   \
+    hashtable = Z_ARRVAL_P((zval*) *value);                                    \
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
@@ -506,7 +506,7 @@ do {                                                                           \
     }                                                                          \
 } while(0)
 
-#endif                                                                         
+#endif
 
 /*
  *******************************************************************************************************
@@ -743,7 +743,7 @@ do {                                                                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-    }                                                                          
+    }
 #else
 #define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
                                 err, static_pool, serializer_policy)           \
@@ -787,7 +787,7 @@ do {                                                                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-    }                                                                          
+    }
 #endif
 /*
  *******************************************************************************************************
@@ -1129,7 +1129,7 @@ do {                                                                           \
 #define AEROSPIKE_MAP_GET_ASSOC_BYTES(as, key, value, array, static_pool, err)     \
     ADD_MAP_ASSOC_BYTES(as, key, value, &array, err TSRMLS_CC)
 
-#define AEROSPIKE_MAP_GET_ASSOC_GEOJSON(as, key, value, array, static_pool, err)     \
+#define AEROSPIKE_MAP_GET_ASSOC_GEOJSON(as, key, value, array, static_pool, err)   \
     ADD_MAP_ASSOC_BYTES(as, key, value, &array, err TSRMLS_CC)
 
 /*
@@ -1186,7 +1186,7 @@ do {                                                                           \
         err)                                                                   \
     ADD_MAP_INDEX_BYTES(as, key, value, &array, err TSRMLS_CC)
 
-#define AEROSPIKE_MAP_GET_INDEX_GEOJSON(as, key, value, array, static_pool,      \
+#define AEROSPIKE_MAP_GET_INDEX_GEOJSON(as, key, value, array, static_pool,    \
         err)                                                                   \
     ADD_MAP_INDEX_BYTES(as, key, value, &array, err TSRMLS_CC)
 
@@ -1195,7 +1195,7 @@ do {                                                                           \
  * Macros for ZVAL processing at different levels
  *******************************************************************************************************
  */
-#define ADD_MAP_ASSOC_ZVAL(array, key, store)                              \
+#define ADD_MAP_ASSOC_ZVAL(array, key, store)                                  \
     add_assoc_zval(array, as_string_get((as_string *) key), store);
 
 #define ADD_MAP_INDEX_ZVAL(array, key, store)                                  \

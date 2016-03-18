@@ -36,39 +36,39 @@
 #include "pthread.h"
 
 typedef struct global_error {
-    int reset;
-    as_error error;
+	int reset;
+	as_error error;
 } aerospike_global_error;
 
 ZEND_BEGIN_MODULE_GLOBALS(aerospike)
-    int nesting_depth;
-    int connect_timeout;
-    int read_timeout;
-    int write_timeout;
-    char *log_path;
-    char *log_level;
-    int serializer;
-    char *lua_system_path;
-    char *lua_user_path;
-    int key_policy;
-    int key_gen;
-    zend_bool shm_use;
-    zend_bool use_batch_direct;
-    int max_threads;
-    int thread_pool_size;
-    int shm_max_nodes;
-    int shm_max_namespaces;
-    int shm_takeover_threshold_sec;
-    int shm_key;
-    int shm_key_counter;
-    int compression_threshold;
-    aerospike_global_error error_g;
-    HashTable *persistent_list_g;
-    HashTable *shm_key_list_g;
-    int persistent_ref_count;
-    int shm_key_ref_count;
-    pthread_rwlock_t aerospike_mutex;
-    pthread_rwlock_t query_cb_mutex;
+	int nesting_depth;
+	int connect_timeout;
+	int read_timeout;
+	int write_timeout;
+	char *log_path;
+	char *log_level;
+	int serializer;
+	char *lua_system_path;
+	char *lua_user_path;
+	int key_policy;
+	int key_gen;
+	zend_bool shm_use;
+	zend_bool use_batch_direct;
+	int max_threads;
+	int thread_pool_size;
+	int shm_max_nodes;
+	int shm_max_namespaces;
+	int shm_takeover_threshold_sec;
+	int shm_key;
+	int shm_key_counter;
+	int compression_threshold;
+	aerospike_global_error error_g;
+	HashTable *persistent_list_g;
+	HashTable *shm_key_list_g;
+	int persistent_ref_count;
+	int shm_key_ref_count;
+	pthread_rwlock_t aerospike_mutex;
+	pthread_rwlock_t query_cb_mutex;
 ZEND_END_MODULE_GLOBALS(aerospike)
 
 ZEND_EXTERN_MODULE_GLOBALS(aerospike);
