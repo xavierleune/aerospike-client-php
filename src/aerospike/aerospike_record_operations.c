@@ -125,18 +125,17 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  }
                  break;
         }
-        iterator++;
     } else {
         if (0 != add_next_index_null(record_local_p)) {
             DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
             return false;
         }
-        iterator++;
     }
     if(0 != add_index_zval(((foreach_callback_udata *) array)->udata_p, iterator, record_local_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
         return false;
     }
+    iterator++;
 
     return true;
 }
@@ -801,6 +800,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 {
     as_operations               ops;
     as_record*                  get_rec = NULL;
+    as_record*                  get_rec_temp = NULL;
     aerospike*                  as_object_p = aerospike_obj_p->as_ref_p->as_p;
     as_status                   status = AEROSPIKE_OK;
     as_policy_operate           operate_policy;
@@ -951,25 +951,37 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
         if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, error_p TSRMLS_CC)) {
             goto exit;
         }
+        foreach_record_callback_udata.udata_p = record_p_local;
+        foreach_record_callback_udata.error_p = error_p;
+        foreach_record_callback_udata.obj = aerospike_obj_p;
 
         if (AEROSPIKE_OK != (status = aerospike_key_operate(as_object_p, error_p,
                         &operate_policy, as_key_p, &ops, &get_rec))) {
             DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+            operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata);
             goto exit;
         } else {
             if (get_rec) {
-                int i = 0;
-                foreach_record_callback_udata.udata_p = record_p_local;
-                foreach_record_callback_udata.error_p = error_p;
-                foreach_record_callback_udata.obj = aerospike_obj_p;
-                if (!as_record_foreach(get_rec, (as_rec_foreach_callback) operater_ordered_callback, 
-                            &foreach_record_callback_udata)) {
-                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                            "Unable to get bins of a record");
-                    DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
-                }
-                if (!get_rec->bins.entries) {
+                if (!((op == AS_OPERATOR_READ ) ||
+                      (op == AS_CDT_OP_LIST_SIZE_NEW) || 
+                      (op == AS_CDT_OP_LIST_GET_NEW)   ||
+                      (op == AS_CDT_OP_LIST_GET_RANGE_NEW) ||
+                      (op == AS_CDT_OP_LIST_POP_NEW)   ||
+                      (op == AS_CDT_OP_LIST_POP_RANGE_NEW))) {
                     if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                                "Unable to get bins of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
+                    }
+                } else if (get_rec->bins.size == 0){
+                    if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata)) {
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                                "Unable to get bins of a record");
+                        DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
+                    }
+                }else {
+                    if (!as_record_foreach(get_rec, (as_rec_foreach_callback) operater_ordered_callback, 
+                                &foreach_record_callback_udata)) {
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get bins of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
@@ -978,50 +990,55 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
             }
         }
         as_operations_destroy(&ops);
-        if (pointer->pListNext && get_rec) {
-            foreach_record_callback_udata.udata_p = NULL;
-            as_record_destroy(get_rec);
+        if (get_rec) {
+            if (get_rec_temp) {
+                as_record_destroy(get_rec_temp);
+                get_rec_temp = NULL;
+            }
+            get_rec_temp = get_rec;
             get_rec = NULL;
         }
     }
 
-    status = aerospike_get_record_metadata(get_rec, metadata_container_p TSRMLS_CC);
+exit:
+    status = aerospike_get_record_metadata(get_rec_temp, metadata_container_p TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of record.");
-        goto exit;
+        goto exit_1;
     }
 
 
-    status = aerospike_get_record_key_digest(NULL, get_rec, as_key_p, key_container_p, NULL, false TSRMLS_CC);
+    status = aerospike_get_record_key_digest(&(aerospike_obj_p->as_ref_p->as_p->config), get_rec_temp, as_key_p, key_container_p, options_p, true TSRMLS_CC);
     if (status != AEROSPIKE_OK) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get key and digest for record.");
-        goto exit;
+        goto exit_1;
     }
 
     if (0 != add_assoc_zval(returned_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get key of a record.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get key of a record.");
-        goto exit;
+        goto exit_1;
     }
 
     if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of a record.");
-        goto exit;
+        goto exit_1;
     }
 
     if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_RESULTS, record_p_local)) {
         DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get the record.");
-        goto exit;
+        goto exit_1;
     }
 
-exit:
-    if (get_rec) {
+exit_1:
+    if (get_rec_temp) {
         foreach_record_callback_udata.udata_p = NULL;
-        as_record_destroy(get_rec);
+        as_record_destroy(get_rec_temp);
+        get_rec_temp = NULL;
     }
     return status;
 }
