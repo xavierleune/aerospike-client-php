@@ -552,7 +552,7 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
 		DEBUG_PHP_EXT_ERROR("invalid aerospike object");
 	}
 
-	return; 
+	return;
 }
 
 /*
@@ -590,7 +590,7 @@ static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
 	if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object) + zend_object_properties_size(ce)))) {
 		zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
 		object_properties_init((zend_object*) &(intern_obj_p->std), ce);
-		
+
 		intern_obj_p->std.handlers = &Aerospike_handlers;
 		intern_obj_p->as_ref_p = NULL;
 	} else {
@@ -1010,7 +1010,7 @@ PHP_METHOD(Aerospike, put)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "put: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "put: connection not established");
 		DEBUG_PHP_EXT_ERROR("put: connection not established");
 		goto exit;
 	}
@@ -1242,7 +1242,7 @@ PHP_METHOD(Aerospike, existsMany)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "existsMany : connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "existsMany : connection not established");
 		DEBUG_PHP_EXT_ERROR("existsMany : connection not established");
 		goto exit;
 	}
@@ -1310,7 +1310,7 @@ PHP_METHOD(Aerospike, getMany)
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-				"getMany : connection not established"); 
+				"getMany : connection not established");
 		DEBUG_PHP_EXT_ERROR("getMany : connection not established");
 		goto exit;
 	}
@@ -1373,7 +1373,7 @@ PHP_METHOD(Aerospike, operate)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "operate: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "operate: connection not established");
 		DEBUG_PHP_EXT_ERROR("operate: connection not established");
 		goto exit;
 	}
@@ -1457,7 +1457,7 @@ PHP_METHOD(Aerospike, append)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "append: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "append: connection not established");
 		DEBUG_PHP_EXT_ERROR("append: connection not established");
 		goto exit;
 	}
@@ -1640,7 +1640,7 @@ PHP_METHOD(Aerospike, getMetadata)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "getMetadata: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "getMetadata: connection not established");
 		DEBUG_PHP_EXT_ERROR("getMetadata: connection not established");
 		goto exit;
 	}
@@ -1706,7 +1706,7 @@ PHP_METHOD(Aerospike, prepend)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "prepend: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "prepend: connection not established");
 		DEBUG_PHP_EXT_ERROR("prepend: connection not established");
 		goto exit;
 	}
@@ -1788,7 +1788,7 @@ PHP_METHOD(Aerospike, increment)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "increment: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "increment: connection not established");
 		DEBUG_PHP_EXT_ERROR("increment: connection not established");
 		goto exit;
 	}
@@ -1876,7 +1876,7 @@ PHP_METHOD(Aerospike, touch)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "touch: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "touch: connection not established");
 		DEBUG_PHP_EXT_ERROR("touch: connection not established");
 		goto exit;
 	}
@@ -2040,7 +2040,7 @@ PHP_METHOD(Aerospike, listAppend)
 	 }
 	 #endif
 	 */
-	
+
 	ALLOC_ZVAL(append_val_copy);
 	MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
 	add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
@@ -3512,7 +3512,7 @@ PHP_METHOD(Aerospike, getKeyDigest)
 		RETURN_NULL();
 	}
 
-	ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
+	ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE);
 	as_key_destroy(&key);
 }
 /* }}} */
@@ -3551,7 +3551,7 @@ PHP_METHOD(Aerospike, setSerializer)
 	if (user_serializer_call_info.function_name &&
 			(Z_ISREF_P(user_serializer_call_info.function_name))) {
 		/*
-		 * once set the same serializer would be used. Incase a new 
+		 * once set the same serializer would be used. Incase a new
 		 * serializer is to be given, then we would have to unref the older
 		 * serialiser function and then attach the new serializer callback
 		 */
@@ -3596,7 +3596,7 @@ PHP_METHOD(Aerospike, removeBin)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "removeBin: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "removeBin: connection not established");
 		DEBUG_PHP_EXT_ERROR("removeBin: connection not established");
 		goto exit;
 	}
@@ -4249,7 +4249,7 @@ PHP_METHOD(Aerospike, queryApply)
 	if (args_p && PHP_TYPE_ISNULL(args_p)) {
 		args_p = NULL;
 	}
-	
+
 	if (options_p && PHP_TYPE_ISNULL(options_p)) {
 		options_p = NULL;
 	}
@@ -4281,7 +4281,7 @@ PHP_METHOD(Aerospike, queryApply)
 
 	zval_dtor(job_id_p);
 	ZVAL_LONG(job_id_p, 0);
-	if (AEROSPIKE_OK != 
+	if (AEROSPIKE_OK !=
 			(status = aerospike_query_run_background(aerospike_obj_p,
 													 &error, module_p, function_name_p,
 													 &args_p, namespace_p, set_p,
@@ -4431,7 +4431,7 @@ PHP_METHOD(Aerospike, scanInfo)
 
 	if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
 				"scanInfo: Connection not established");
 		DEBUG_PHP_EXT_ERROR("scanInfo: Connection not established");
 		goto exit;
@@ -4539,7 +4539,7 @@ PHP_METHOD(Aerospike, jobInfo)
 	zval_dtor(job_info_p);
 	array_init(job_info_p);
 
-	if (AEROSPIKE_OK != 
+	if (AEROSPIKE_OK !=
 			(status = aerospike_job_get_info(aerospike_obj_p->as_ref_p->as_p,
 											 &error, job_id, job_info_p,
 											 module_p,
@@ -4661,7 +4661,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
 	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
 
-	snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius); 
+	snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
 	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
 }
@@ -4756,7 +4756,7 @@ PHP_METHOD(Aerospike, deregister)
 	char*                  module_p = NULL;
 	zval*                  module_zval_p = NULL;
 	zval*                  options_p = NULL;
-	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT; 
+	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -4918,7 +4918,7 @@ PHP_METHOD(Aerospike, apply)
 	}
 
 	if (AEROSPIKE_OK !=
-			(status = aerospike_udf_apply(aerospike_obj_p, 
+			(status = aerospike_udf_apply(aerospike_obj_p,
 										  &as_key_for_apply_udf, &error,
 										  module_p, function_name_p, &args_p,
 										  return_value_of_udf_p, options_p,
@@ -5059,7 +5059,7 @@ PHP_METHOD(Aerospike, getRegistered)
 			(status = aerospike_get_registered_udf_module_code(aerospike_obj_p,
 															   &error, module_p,
 															   udf_code_p,
-															   language, 
+															   language,
 															   options_p))) {
 		ZVAL_EMPTY_STRING(udf_code_p);
 		DEBUG_PHP_EXT_ERROR("getRegistered function returned an error");
@@ -5827,7 +5827,7 @@ PHP_METHOD(Aerospike, createRole)
 
 	if (AEROSPIKE_OK !=
 			(status = aerospike_security_operations_create_role(aerospike_obj_p->as_ref_p->as_p,
-																&error, role_p, Z_ARRVAL_P(privileges_p), 
+																&error, role_p, Z_ARRVAL_P(privileges_p),
 																options_p TSRMLS_CC))) {
 		DEBUG_PHP_EXT_ERROR("createRole() function returned an error");
 		goto exit;
@@ -6233,7 +6233,7 @@ PHP_METHOD(Aerospike, setLogLevel)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogLevel: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogLevel: connection not established");
 		DEBUG_PHP_EXT_ERROR("setLogLevel: connection not established");
 		goto exit;
 	}
@@ -6278,7 +6278,7 @@ PHP_METHOD(Aerospike, setLogHandler)
 
 	if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
 		status = AEROSPIKE_ERR_CLUSTER;
-		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogHandler: connection not established"); 
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogHandler: connection not established");
 		DEBUG_PHP_EXT_ERROR("setLogHandler: connection not established");
 		RETURN_FALSE;
 	}
@@ -6485,4 +6485,3 @@ PHP_MINFO_FUNCTION(aerospike)
 	php_info_print_table_row(2, "aerospike version", PHP_AEROSPIKE_VERSION);
 	php_info_print_table_end();
 }
-
