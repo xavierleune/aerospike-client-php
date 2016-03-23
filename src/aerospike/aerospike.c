@@ -3524,7 +3524,7 @@ PHP_METHOD(Aerospike, setDeserializer)
 	as_status              status = AEROSPIKE_OK;
 
 	if (user_deserializer_call_info.function_name &&
-			(Z_ISREF_P(user_deserializer_call_info.function_name))) {
+			(Z_ISREF_P(&user_deserializer_call_info.function_name))) {
 		RETURN_TRUE;
 	}
 	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
@@ -3549,7 +3549,7 @@ PHP_METHOD(Aerospike, setSerializer)
 	as_status              status = AEROSPIKE_OK;
 
 	if (user_serializer_call_info.function_name &&
-			(Z_ISREF_P(user_serializer_call_info.function_name))) {
+			(Z_ISREF_P(&user_serializer_call_info.function_name))) {
 		/*
 		 * once set the same serializer would be used. Incase a new
 		 * serializer is to be given, then we would have to unref the older
