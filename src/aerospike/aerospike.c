@@ -124,7 +124,7 @@ static void aerospike_check_close_and_destroy(zval *hashtable_element)
 	TSRMLS_FETCH();
 	DEBUG_PHP_EXT_DEBUG("In destructor function");
 #if PHP_VERSION_ID < 70000
-	aerospike_ref *as_ref_p = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+	aerospike_ref *as_ref_p = ((zend_resource *) hashtable_element)->ptr;
 #else
 	aerospike_ref *as_ref_p = ((zend_resource *) hashtable_element)->ptr;
 #endif
@@ -161,7 +161,7 @@ static void shm_key_hashtable_dtor(void *hashtable_element)
 {
 	TSRMLS_FETCH();
 	DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
-	struct set_get_data *shm_key_ptr = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+	struct set_get_data *shm_key_ptr = ((zend_resource *) hashtable_element)->ptr;
 	if (shm_key_ptr) {
 		pefree(shm_key_ptr, 1);
 	}
