@@ -2071,7 +2071,7 @@ exit:
 		as_key_destroy(&as_key_for_list);
 	}
 	if (temp_record_p) {
-		zval_ptr_dtor(&temp_record_p);
+		zval_ptr_dtor(temp_record_p);
 	}
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
@@ -2191,7 +2191,7 @@ exit:
 		as_key_destroy(&as_key_for_list);
 	}
 	if (temp_record_p) {
-		zval_ptr_dtor(&temp_record_p);
+		zval_ptr_dtor(temp_record_p);
 	}
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
@@ -2311,7 +2311,7 @@ exit:
 		as_key_destroy(&as_key_for_list);
 	}
 	if (temp_record_p) {
-		zval_ptr_dtor(&temp_record_p);
+		zval_ptr_dtor(temp_record_p);
 	}
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
