@@ -3537,7 +3537,7 @@ PHP_METHOD(Aerospike, setDeserializer)
 	}
 
 	is_user_deserializer_registered = 1;
-	Z_ADDREF_P(user_deserializer_call_info.function_name);
+	Z_ADDREF_P(&user_deserializer_call_info.function_name);
 	RETURN_TRUE;
 }
 /* }}} */
@@ -3568,7 +3568,7 @@ PHP_METHOD(Aerospike, setSerializer)
 	}
 
 	is_user_serializer_registered = 1;
-	Z_ADDREF_P(user_serializer_call_info.function_name);
+	Z_ADDREF_P(&user_serializer_call_info.function_name);
 	RETURN_TRUE;
 }
 /* }}} */
