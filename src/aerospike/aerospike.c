@@ -3523,7 +3523,7 @@ PHP_METHOD(Aerospike, setDeserializer)
 {
 	as_status              status = AEROSPIKE_OK;
 
-	if (user_deserializer_call_info.function_name &&
+	if (&user_deserializer_call_info.function_name &&
 			(Z_ISREF_P(&user_deserializer_call_info.function_name))) {
 		RETURN_TRUE;
 	}
