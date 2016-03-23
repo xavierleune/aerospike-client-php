@@ -4582,9 +4582,9 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-	add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
-	add_assoc_stringl(return_value, VAL, region_p, region_len, 1);
+	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+	add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"));
+	add_assoc_stringl(return_value, VAL, region_p, region_len);
 }
 
 /* {{{proto array Aerospike::predicateGeoWithinRadius( string bin, double long, double $lat,
@@ -4607,12 +4607,12 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-	add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+	add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"));
 
 	snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
-	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value));
 }
 
 /* {{{proto array Aerospike::predicateGeoContainsGeoJSONPoint(string bin, string
@@ -4633,9 +4633,9 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
-	add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len, 1);
+	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"));
+	add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len);
 }
 
 /* {{{proto array Aerospike::predicateGeoContainsPoint(string bin, double long,
@@ -4658,12 +4658,12 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
+	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"));
 
 	snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
-	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value));
 }
 /*
  *******************************************************************************************************
