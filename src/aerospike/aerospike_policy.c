@@ -62,7 +62,7 @@
  *
  * Usage:
  * uint8_t options_passed_for_write = 0x0;
- * 
+ *
  * Setting appropriate bits:
  *
  * In case options passed by user contains OPT_WRITE_TIMEOUT, set this:
@@ -135,7 +135,11 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
 	zval**                  gen_value_pp = NULL;
 
 	if (options_p) {
-		if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
+    #if PHP_VERSION_ID < 70000
+  	  if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
+    #else
+  	  if ((gen_policy_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_POLICY_GEN)) == NULL) {
+    #endif
 			//error_p->code = AEROSPIKE_ERR_CLIENT;
 			goto exit;
 		}
@@ -143,7 +147,11 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
 			error_p->code = AEROSPIKE_ERR_PARAM;
 			goto exit;
 		}
-		zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
+    #if PHP_VERSION_ID < 70000
+  	  zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
+    #else
+  	  gen_value_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_TTL);
+    #endif
 
 		if (gen_value_pp && (Z_TYPE_PP(gen_value_pp) != IS_LONG)) {
 			error_p->code = AEROSPIKE_ERR_PARAM;
@@ -177,9 +185,14 @@ get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p 
 	zval**                  ttl_value_pp = NULL;
 
 	if (options_p) {
-		if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
-			//error_p->code = AEROSPIKE_ERR_CLIENT;
-			goto exit;
+    #if PHP_VERSION_ID < 70000
+    	if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
+    #else
+    	if ((ttl_value_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_TTL)) == NULL) {
+    #endif
+
+		//error_p->code = AEROSPIKE_ERR_CLIENT;
+		goto exit;
 		}
 		if (Z_TYPE_PP(ttl_value_pp) != IS_LONG) {
 			DEBUG_PHP_EXT_DEBUG("OPT_TTL should be of type integer");
@@ -191,7 +204,7 @@ get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p 
 		if (ttl_value_pp) {
 			*ttl_value_p = Z_LVAL_PP(ttl_value_pp);
 		}
-	} 
+	}
 
 exit:
 	return error_p->code;
@@ -1557,7 +1570,7 @@ set_config_policies(as_config *as_config_p,
 					*serializer_opt = (int8_t)Z_LVAL_P(options_value);
 					break;
 				case USE_BATCH_DIRECT:
-					if ((Z_TYPE_P(options_value) != IS_BOOL)) {
+					if ((Z_TYPE_P(options_value) != IS_TRUE) && (Z_TYPE_P(options_value) != IS_FALSE)) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set USE_BATCH_DIRECT : Incorrect Value type for USE_BATCH_DIRECT");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 										   "Unable to set USE_BATCH_DIRECT:Incorrect Value type for USE_BATCH_DIRECT");
