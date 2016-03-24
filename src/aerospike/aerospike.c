@@ -3734,16 +3734,11 @@ PHP_METHOD(Aerospike, predicateBetween)
 
 #if PHP_VERSION_ID < 70000
 	MAKE_STD_ZVAL(minmax_arr);
-	array_init_size(minmax_arr, 2);
-	add_next_index_long(minmax_arr, min_p);
-	add_next_index_long(minmax_arr, max_p);
-	add_assoc_zval(return_value, VAL, minmax_arr);
-#else
-	array_init_size(&minmax_arr, 2);
-	add_next_index_long(&minmax_arr, min_p);
-	add_next_index_long(&minmax_arr, max_p);
-	add_assoc_zval(return_value, VAL, &minmax_arr);
 #endif
+	AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
+	AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, min_p);
+	AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, max_p);
+	AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 
@@ -3845,10 +3840,8 @@ PHP_METHOD(Aerospike, predicateRange)
 
 #if PHP_VERSION_ID < 70000
 	MAKE_STD_ZVAL(minmax_arr);
-	array_init_size(minmax_arr, 2);
-#else
-	array_init_size(&minmax_arr, 2);
 #endif
+AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
 	/*
 	 * Range min value
 	 */
@@ -3897,11 +3890,7 @@ PHP_METHOD(Aerospike, predicateRange)
 			DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
 			RETURN_NULL();
 	}
-#if PHP_VERSION_ID < 70000
-	add_assoc_zval(return_value, VAL, minmax_arr);
-#else
-	add_assoc_zval(return_value, VAL, &minmax_arr);
-#endif
+AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 

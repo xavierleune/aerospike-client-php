@@ -111,14 +111,14 @@
 #define AEROSPIKE_SESSION "aerospike"
 #define AEROSPIKE_SESSION_LEN 9
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS FOR AEROSPIKE GEOJSON CLASS.
  *******************************************************************************************************
  */
 #define GEOJSONCLASS "Aerospike\\GeoJSON\\GeoJSON"
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS FOR PREDICATE ARRAY KEYS.
  *******************************************************************************************************
@@ -242,7 +242,7 @@ typedef struct Aerospike_object {
 #endif
 } Aerospike_object;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure containing session info of Aerospike_object.
  *******************************************************************************************************
@@ -482,7 +482,7 @@ do {                                                                            
 #define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTLONG(zend_val)     PHP_IS_NOT_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
- 
+
 /*
  *******************************************************************************************************
  * MACRO TO CHECK IF GIVEN CONNECTION TO AEROSPIKE DB IS ESTABLISHED.
@@ -730,7 +730,7 @@ aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
 extern as_status
 aerospike_query_run_background(Aerospike_object* as_object_p, as_error* error_p,
 		char *module_p, char *function_p, zval** args_pp, char *namespace_p,
-		char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p, 
+		char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p,
 		bool block, int8_t *serializer_policy_p TSRMLS_DC);
 
 extern as_status
@@ -953,7 +953,23 @@ check_val_type_list(zval **value);
 	*/
 #define AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, str) \
 		add_next_index_long(minmax_arr, str)
-		
+
+  /*
+	******************************************************************************************************
+	* Macro to initialize a hashtable into a zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, size) \
+		array_init_size(minmax_arr, size)
+
+	/*
+	******************************************************************************************************
+	* Macro to add zval value to an assoc array.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr) \
+	  add_assoc_zval(return_value, VAL, minmax_arr)
+
 	/*
 	******************************************************************************************************
 	* Macro to append string at indexed key.
@@ -969,7 +985,7 @@ check_val_type_list(zval **value);
 	*/
 #define AEROSPIKE_ADD_INDEX_STRING(z_value, index_key, str, ifDuplicate) \
 		add_index_string(z_value, index_key, str, ifDuplicate)
-		
+
 	/*
 	******************************************************************************************************
 	* Macro to unref zval.
@@ -1031,7 +1047,7 @@ check_val_type_list(zval **value);
 	*/
 #define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
 		zend_hash_add(ht, key, len, data, data_size, dest)
-	
+
 	/*
 	******************************************************************************************************
 	* Macro for zval destructor.
@@ -1081,7 +1097,7 @@ check_val_type_list(zval **value);
 	for (iter = 0; iter < 4; iter++) {                                              \
 		zval_ptr_dtor(params[iter]);                                                \
 	}
-#else   /* Else if the version is greater than of equal to 70000 */
+#else   /* Else if the version is greater than or equal to 70000 */
 
 	/*
 	******************************************************************************************************
@@ -1145,7 +1161,23 @@ check_val_type_list(zval **value);
 	*/
 #define AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, str) \
 		add_next_index_long(&minmax_arr, str)
-		
+
+	/*
+	******************************************************************************************************
+	* Macro to initialize a hashtable into a zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, size) \
+		array_init_size(&minmax_arr, size)
+
+	/*
+	******************************************************************************************************
+	* Macro to add zval value to an assoc array.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr) \
+    add_assoc_zval(return_value, VAL, &minmax_arr)
+
 	/*
 	******************************************************************************************************
 	* Macro to unref zval.
