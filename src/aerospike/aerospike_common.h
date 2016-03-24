@@ -948,6 +948,14 @@ check_val_type_list(zval **value);
 
 	/*
 	******************************************************************************************************
+	* Macro to add next index long.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, str) \
+		add_next_index_long(minmax_arr, str)
+		
+	/*
+	******************************************************************************************************
 	* Macro to append string at indexed key.
 	******************************************************************************************************
 	*/
@@ -961,6 +969,7 @@ check_val_type_list(zval **value);
 	*/
 #define AEROSPIKE_ADD_INDEX_STRING(z_value, index_key, str, ifDuplicate) \
 		add_index_string(z_value, index_key, str, ifDuplicate)
+		
 	/*
 	******************************************************************************************************
 	* Macro to unref zval.
@@ -1023,6 +1032,13 @@ check_val_type_list(zval **value);
 #define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
 		zend_hash_add(ht, key, len, data, data_size, dest)
 	
+	/*
+	******************************************************************************************************
+	* Macro for zval destructor.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_PTR_DTOR(object) \
+		zval_ptr_dtor(&object)
 	/*
 	*******************************************************************************************************
 	* Macro to invoke callback function.
@@ -1120,8 +1136,16 @@ check_val_type_list(zval **value);
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ADD_NEXT_STRING(minmax_arr, str, ifDuplicate) \
-		add_next_index_string(minmax_arr, str)
+		add_next_index_string(&minmax_arr, str)
 
+	/*
+	******************************************************************************************************
+	* Macro to add next index long.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, str) \
+		add_next_index_long(&minmax_arr, str)
+		
 	/*
 	******************************************************************************************************
 	* Macro to unref zval.
@@ -1164,7 +1188,7 @@ check_val_type_list(zval **value);
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ADD_NEXT_STRINGL(z_val, value, len, ifDuplicate) \
-		add_next_index_stringl(z_val, value, len)
+		add_next_index_stringl(&z_val, value, len)
 
 	/*
 	******************************************************************************************************
@@ -1174,6 +1198,13 @@ check_val_type_list(zval **value);
 #define AEROSPIKE_ZEND_HASH_FIND(ht, key, len, zv_ptr) \
 		zend_hash_find(ht, zend_string_init(key, strlen(key), 0))
 
+	/*
+	******************************************************************************************************
+	* Macro for zval destructor.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_PTR_DTOR(object) \
+		zval_ptr_dtor(object)
 	/*
 	******************************************************************************************************
 	* Macro to add key in hastable

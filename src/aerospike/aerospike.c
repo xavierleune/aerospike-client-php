@@ -124,7 +124,7 @@ static void aerospike_check_close_and_destroy(zval *hashtable_element)
 	TSRMLS_FETCH();
 	DEBUG_PHP_EXT_DEBUG("In destructor function");
 #if PHP_VERSION_ID < 70000
-	aerospike_ref *as_ref_p = ((zend_resource *) hashtable_element)->ptr;
+	aerospike_ref *as_ref_p = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
 #else
 	aerospike_ref *as_ref_p = ((zend_resource *) hashtable_element)->ptr;
 #endif
@@ -161,7 +161,11 @@ static void shm_key_hashtable_dtor(void *hashtable_element)
 {
 	TSRMLS_FETCH();
 	DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
+#if PHP_VERSION_ID < 70000
+	struct set_get_data *shm_key_ptr = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+#else
 	struct set_get_data *shm_key_ptr = ((zend_resource *) hashtable_element)->ptr;
+#endif
 	if (shm_key_ptr) {
 		pefree(shm_key_ptr, 1);
 	}
@@ -2071,7 +2075,7 @@ exit:
 		as_key_destroy(&as_key_for_list);
 	}
 	if (temp_record_p) {
-		zval_ptr_dtor(temp_record_p);
+	 	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
 	}
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
@@ -2191,7 +2195,7 @@ exit:
 		as_key_destroy(&as_key_for_list);
 	}
 	if (temp_record_p) {
-		zval_ptr_dtor(temp_record_p);
+	 	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
 	}
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
@@ -2311,7 +2315,7 @@ exit:
 		as_key_destroy(&as_key_for_list);
 	}
 	if (temp_record_p) {
-		zval_ptr_dtor(temp_record_p);
+	 	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
 	}
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
@@ -3512,7 +3516,7 @@ PHP_METHOD(Aerospike, getKeyDigest)
 		RETURN_NULL();
 	}
 
-	ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE);
+	AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
 	as_key_destroy(&key);
 }
 /* }}} */
@@ -3524,7 +3528,8 @@ PHP_METHOD(Aerospike, setDeserializer)
 	as_status              status = AEROSPIKE_OK;
 
 	if (&user_deserializer_call_info.function_name &&
-			(Z_ISREF_P(&user_deserializer_call_info.function_name))) {
+			(AEROSPIKE_Z_ISREF_P(user_deserializer_call_info.function_name))) {
+
 		RETURN_TRUE;
 	}
 	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
@@ -3537,7 +3542,9 @@ PHP_METHOD(Aerospike, setDeserializer)
 	}
 
 	is_user_deserializer_registered = 1;
-	Z_ADDREF_P(&user_deserializer_call_info.function_name);
+
+	AEROSPIKE_Z_ADDREF_P(user_deserializer_call_info.function_name);
+
 	RETURN_TRUE;
 }
 /* }}} */
@@ -3549,7 +3556,8 @@ PHP_METHOD(Aerospike, setSerializer)
 	as_status              status = AEROSPIKE_OK;
 
 	if (user_serializer_call_info.function_name &&
-			(Z_ISREF_P(&user_serializer_call_info.function_name))) {
+			(AEROSPIKE_Z_ISREF_P(user_serializer_call_info.function_name))) {
+
 		/*
 		 * once set the same serializer would be used. Incase a new
 		 * serializer is to be given, then we would have to unref the older
@@ -3568,7 +3576,9 @@ PHP_METHOD(Aerospike, setSerializer)
 	}
 
 	is_user_serializer_registered = 1;
-	Z_ADDREF_P(&user_serializer_call_info.function_name);
+
+	AEROSPIKE_Z_ADDREF_P(user_serializer_call_info.function_name);
+
 	RETURN_TRUE;
 }
 /* }}} */
@@ -3844,11 +3854,8 @@ PHP_METHOD(Aerospike, predicateRange)
 	 */
 	switch(Z_TYPE_P(min_p)) {
 		case IS_LONG:
-#if PHP_VERSION_ID < 70000
-			add_next_index_long(minmax_arr, Z_LVAL_P(min_p));
-#else
-			add_next_index_long(&minmax_arr, Z_LVAL_P(min_p));
-#endif
+			AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, Z_LVAL_P(min_p));
+
 			break;
 		case IS_STRING:
 			if (Z_STRLEN_P(min_p) == 0) {
@@ -3856,11 +3863,9 @@ PHP_METHOD(Aerospike, predicateRange)
 				DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
 				RETURN_NULL();
 			}
-#if PHP_VERSION_ID < 70000
+
 			AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(min_p), 1);
-#else
-			AEROSPIKE_ADD_NEXT_STRING(&minmax_arr, Z_STRVAL_P(min_p), 1);
-#endif
+
 			break;
 		default:
 			zval_ptr_dtor(&minmax_arr);
@@ -3873,11 +3878,8 @@ PHP_METHOD(Aerospike, predicateRange)
 	 */
 	switch(Z_TYPE_P(max_p)) {
 		case IS_LONG:
-#if PHP_VERSION_ID < 70000
-			add_next_index_long(minmax_arr, Z_LVAL_P(max_p));
-#else
-			add_next_index_long(&minmax_arr, Z_LVAL_P(max_p));
-#endif
+			AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, Z_LVAL_P(max_p));
+
 			break;
 		case IS_STRING:
 			if (Z_STRLEN_P(min_p) == 0) {
@@ -3885,11 +3887,9 @@ PHP_METHOD(Aerospike, predicateRange)
 				DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
 				RETURN_NULL();
 			}
-#if PHP_VERSION_ID < 70000
+
 			AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(max_p), 1);
-#else
-			AEROSPIKE_ADD_NEXT_STRING(&minmax_arr, Z_STRVAL_P(max_p), 1);
-#endif
+
 			break;
 		default:
 			zval_ptr_dtor(&minmax_arr);
@@ -4582,9 +4582,9 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
-	add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"));
-	add_assoc_stringl(return_value, VAL, region_p, region_len);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, region_p, region_len, 1);
 }
 
 /* {{{proto array Aerospike::predicateGeoWithinRadius( string bin, double long, double $lat,
@@ -4607,12 +4607,12 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
-	add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"));
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
 
 	snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
-	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value));
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geo_value, strlen(geo_value), 1);
 }
 
 /* {{{proto array Aerospike::predicateGeoContainsGeoJSONPoint(string bin, string
@@ -4633,9 +4633,9 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
-	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"));
-	add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geoPoint_p, geoPoint_len, 1);
 }
 
 /* {{{proto array Aerospike::predicateGeoContainsPoint(string bin, double long,
@@ -4658,12 +4658,12 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 	}
 
 	array_init(return_value);
-	add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len);
-	add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"));
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
 
 	snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
-	add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value));
+	AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geo_value, strlen(geo_value), 1);
 }
 /*
  *******************************************************************************************************
