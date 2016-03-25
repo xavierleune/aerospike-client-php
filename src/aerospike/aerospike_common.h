@@ -1017,12 +1017,19 @@ check_val_type_list(zval **value);
 	* Macro to iterate over a hashtable.
 	******************************************************************************************************
 	*/
-
 #define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
     for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
          zend_hash_get_current_data_ex(ht,                                          \
                 (void **) &datavalue, &position) == SUCCESS;                        \
             zend_hash_move_forward_ex(ht, &position))
+
+ /*
+ ******************************************************************************************************
+ * Macro to get the data at the current position in ht.
+ ******************************************************************************************************
+ */
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht, data, pos)                      \
+		zend_hash_get_current_data_ex(ht, (void**) data, pos)
 
 	/*
 	******************************************************************************************************
@@ -1213,6 +1220,14 @@ check_val_type_list(zval **value);
 		datavalue = zend_hash_get_current_data_ex(ht,                               \
 			&position);                                                             \
 		zend_hash_move_forward_ex(ht, &position))
+
+ /*
+	******************************************************************************************************
+	* Macro to get the data at the current position in ht.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht, data, pos)                      \
+			 zend_hash_get_current_data_ex(ht, pos)
 
 	/*
 	******************************************************************************************************

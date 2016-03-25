@@ -66,7 +66,7 @@ static as_status
 aerospike_transform_iteratefor_addr_port(HashTable* ht_p,
 		void* as_config_p);
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland Serializer callback.
  *******************************************************************************************************
@@ -77,7 +77,7 @@ zval                  *user_serializer_callback_retval_p;
 uint32_t              is_user_serializer_registered = 0;
 
 
-/* 
+/*
  *******************************************************************************************************
  * PHP Userland Deserializer callback.
  *******************************************************************************************************
@@ -171,7 +171,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 	user_callback_info->param_count = 1;
 #if PHP_VERSION_ID < 70000
 	user_callback_info->params = params;
-#else 
+#else
 	user_callback_info->params = **params;
 #endif
 
@@ -184,7 +184,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 	if (zend_call_function(user_callback_info,
 				user_callback_info_cache TSRMLS_CC) == SUCCESS &&
 #if PHP_VERSION_ID < 70000
-						user_callback_info->retval_ptr_ptr && 
+						user_callback_info->retval_ptr_ptr &&
 							*user_callback_info->retval_ptr_ptr
 #else
 							user_callback_info->retval
@@ -360,12 +360,12 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
 				if (1 != php_var_unserialize(retval,
 							(const unsigned char **) &(bytes_val_p),
 							(const unsigned char*) ((char *) bytes_val_p + bytes->size),
-							&var_hash TSRMLS_CC)) 
+							&var_hash TSRMLS_CC))
 #else
 				if (1 != php_var_unserialize(*retval,
 							(const unsigned char **) &(bytes_val_p),
 							(const unsigned char*) ((char *) bytes_val_p + bytes->size),
-							&var_hash TSRMLS_CC)) 
+							&var_hash TSRMLS_CC))
 #endif
 				{
 					DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes using standard php unserializer");
@@ -406,13 +406,13 @@ exit:
 	return;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * GET helper functions.
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * Wrappers for appeding datatype to List.
  *******************************************************************************************************
@@ -586,7 +586,7 @@ exit:
 	return;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Wrappers for associating datatype with Map with string key.
  *******************************************************************************************************
@@ -756,11 +756,11 @@ exit:
  * Wrappers for associating datatype with Map with integer key.
  *******************************************************************************************************
  */
- 
+
 /*
  *******************************************************************************************************
  * Adds a null to PHP assoc array at specified index: map with integer key.
- * 
+ *
  * @param key                   The index at which value is to be added in the assoc array.
  * @param value                 The null value to be added to the PHP array.
  * @param array                 The PHP array to be appended to.
@@ -1133,7 +1133,7 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *val
 	zval** param[1];
 	ALLOC_INIT_ZVAL(geojson_zval_p);
 	char* json_string = (char*)as_geojson_get(as_geojson_fromval(value));
-	ZVAL_STRINGL(&fname, "json_decode", sizeof("json_decode") - 1, 1);
+	AEROSPIKE_ZVAL_STRINGL(&fname, "json_decode", sizeof("json_decode") - 1, 1);
 	ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 0);
 	param[0] = &geojson_zval_p;
 	result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
@@ -1194,7 +1194,7 @@ exit:
 	return;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * GET helper functions with expanding macros.
  *******************************************************************************************************
@@ -1363,7 +1363,7 @@ static void ADD_DEFAULT_ASSOC_LIST(Aerospike_object* as, void *key, void *value,
  *
  * @param key                   The bin name.
  * @param value                 The current bin value.
- * @param array                 The foreach_callback_udata struct containing the PHP record array 
+ * @param array                 The foreach_callback_udata struct containing the PHP record array
  *                              as well as the as_error to be populated by the callback.
  *
  * @return true if the callback succeeds. Otherwise false.
@@ -1386,7 +1386,7 @@ exit:
  * Callback function for as_list_foreach.
  *
  * @param value                 The current value.
- * @param array                 The foreach_callback_udata struct containing the PHP list array 
+ * @param array                 The foreach_callback_udata struct containing the PHP list array
  *                              as well as the as_error to be populated by the callback.
  *
  * @return true if the callback succeeds. Otherwise false.
@@ -1545,7 +1545,7 @@ exit:
  *
  * @param key                   The bin name.
  * @param value                 The current bin value.
- * @param array                 The foreach_callback_udata struct containing the PHP record array 
+ * @param array                 The foreach_callback_udata struct containing the PHP record array
  *                              as well as the as_error to be populated by the callback.
  *
  * @return true if the callback succeeds. Otherwise false.
@@ -1649,7 +1649,7 @@ exit:
 	return;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Wrappers for appeding datatype to List.
  *******************************************************************************************************
@@ -1679,7 +1679,7 @@ static void AS_SET_ERROR_CASE(Aerospike_object* as, void* key, void* value, void
 static void AS_LIST_PUT_APPEND_DOUBLE(Aerospike_object* as, void* key, void *value, void *array,
 		void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
-	if (AEROSPIKE_OK != (error_p->code = 
+	if (AEROSPIKE_OK != (error_p->code =
 				as_arraylist_append_double((as_arraylist *)array,
 					(double)Z_DVAL_PP((zval**) value)))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
@@ -1723,7 +1723,7 @@ static void AS_LIST_PUT_APPEND_INT64(Aerospike_object* as, void* key, void *valu
 exit:
 	return;
 }
- 
+
 /*
  *******************************************************************************************************
  * Appends a string to a list.
@@ -1917,10 +1917,10 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
 	int result;
 	zval* retval = NULL, fname;
 	char* geoStr = NULL;
-	ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") - 1, 1);
+	AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") - 1, 1);
 	result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
 	geoStr = Z_STRVAL_P(retval);
-	if (!(as_record_set_geojson_str((as_record*)array, (const char*)key, 
+	if (!(as_record_set_geojson_str((as_record*)array, (const char*)key,
 					geoStr))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to set record as geojson string.\n");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
@@ -1952,7 +1952,11 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
 	as_bytes     *bytes;
 	GET_BYTES_POOL(bytes, static_pool, error_p, exit);
 	const char* name = NULL;
-	zend_uint name_len = 0;
+	#if PHP_VERSION_ID < 70000
+    zend_uint name_len = 0;
+	#else
+    size_t name_len = 0;
+	#endif
 	int dup;
 
 	if ((FETCH_VALUE_PUT((zval**)value)) == IS_OBJECT) {
@@ -1995,7 +1999,7 @@ static void AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(Aerospike_object* as, void* key, v
 {
 	if (does_server_support_double && is_datatype_double)
 	{
-		AS_DEFAULT_PUT_ASSOC_DOUBLE (as, key, value, array, static_pool, 
+		AS_DEFAULT_PUT_ASSOC_DOUBLE (as, key, value, array, static_pool,
 				serializer_policy, error_p TSRMLS_CC);
 	} else {
 		AS_DEFAULT_PUT_ASSOC_BYTES (as, key, value, array, static_pool,
@@ -2053,13 +2057,13 @@ static void AS_DEFAULT_PUT_ASSOC_STR(Aerospike_object* as, void *key, void *valu
 		void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
 	if (!(as_record_set_str((as_record *)array, (const char*)key,
-					(char *) 
+					(char *)
 #if PHP_VERSION_ID < 70000
 					Z_STRVAL_PP((zval**) value)
 #else
 					Z_STRVAL_P((zval*) value)
 #endif
-					
+
 					))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to set record to a string");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
@@ -2170,11 +2174,11 @@ static void AS_MAP_PUT_ASSOC_STR(Aerospike_object* as, void *key, void *value, v
 {
 	as_string   *map_str;
 	GET_STR_POOL(map_str, static_pool, error_p, exit);
-	as_string_init(map_str, 
+	as_string_init(map_str,
 #if PHP_VERSION_ID < 70000
-			Z_STRVAL_PP((zval**)value), 
+			Z_STRVAL_PP((zval**)value),
 #else
-			Z_STRVAL_P((zval*)value), 
+			Z_STRVAL_P((zval*)value),
 #endif
 			false);
 	if (AEROSPIKE_OK != ((error_p->code) =
@@ -2490,18 +2494,18 @@ exit:
 	return;
 }
 
-/* 
+/*
  *******************************************************************************************************
- * End of PUT helper functions. 
+ * End of PUT helper functions.
  *******************************************************************************************************
  */
 
 typedef as_status (*aerospike_transform_key_callback)(HashTable* ht_p,
-		u_int32_t    key_data_type_u32, 
+		u_int32_t    key_data_type_u32,
 		int8_t*      key_p, u_int32_t key_len_u32,
 		void*        data_p, zval** retdata_pp);
 
-/* 
+/*
  *******************************************************************************************************
  * Structure for expected input key in put from PHP userland.
  *******************************************************************************************************
@@ -2513,7 +2517,7 @@ typedef struct asputkeydatamap {
 	int      is_digest;
 } as_put_key_data_map;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure for asconfig iterator.
  *******************************************************************************************************
@@ -2523,7 +2527,7 @@ typedef struct asconfig_iter {
 	as_config*    as_config_p;
 } as_config_iter_map;
 
-/* 
+/*
  *******************************************************************************************************
  * Union for addrport iterator.
  * Holds either as_config or a string.
@@ -2534,7 +2538,7 @@ typedef union _addrport_callback_result {
 	char*      ip_port_p;
 } addrport_callback_result_t;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure for config transform iterator.
  * Used for iterating over addr and port and transforming it into either
@@ -2547,7 +2551,7 @@ typedef struct addrport_transform_iter {
 	addrport_callback_result_t              transform_result;
 } addrport_transform_iter_map_t;
 
-/* 
+/*
  *******************************************************************************************************
  * Structure for config transform iterator.
  * Used for iterating over config array and transforming it into either
@@ -2572,7 +2576,7 @@ do {                                                                            
 #define AS_CONFIG_ITER_MAP_IS_ADDR_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].addr)
 #define AS_CONFIG_ITER_MAP_IS_PORT_SET(map_p)    (map_p->transform_result.as_config_p->hosts[map_p->iter_count_u32].port)
 
-/* 
+/*
  *******************************************************************************************************
  * Set input user in as_config.
  *
@@ -2598,7 +2602,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Iterates over the shn array and sets the shm parameters in C client's as_config.
  *
@@ -2624,7 +2628,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 			uint options_key_len;
 			ulong options_index;
 			int8_t* options_key;
-			if (zend_hash_get_current_key_ex(ht_shm, (char **) &options_key,
+			if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_shm, (char **) &options_key,
 						&options_key_len, &options_index, 0, &options_pointer)
 					!= HASH_KEY_IS_STRING) {
 				status = AEROSPIKE_ERR_PARAM;
@@ -2634,7 +2638,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 
 			zval ** data;
 			if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_KEY) == 0) {
-				if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
 					if (Z_TYPE_PP(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory key");
@@ -2643,7 +2647,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 					(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_key = Z_LVAL_PP(data);
 				}
 			} else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NODES) == 0) {
-				if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
 					if (Z_TYPE_PP(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max nodes");
@@ -2652,7 +2656,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 					(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_nodes = Z_LVAL_PP(data);
 				}
 			} else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NAMESPACES) == 0) {
-				if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
 					if (Z_TYPE_PP(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
@@ -2661,7 +2665,7 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 					(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->shm_max_namespaces = Z_LVAL_PP(data);
 				}
 			} else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_TAKEOVER_THRESHOLD_SEC) == 0) {
-				if (zend_hash_get_current_data_ex(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
 					if (Z_TYPE_PP(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
@@ -2680,7 +2684,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Set input password in as_config.
  *
@@ -2706,7 +2710,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * This function iterates over the keys of a PHP array and performs the
  * required checks with the help of the given keycallback function.
@@ -2721,8 +2725,8 @@ exit:
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-static as_status 
-aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp, 
+static as_status
+aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp,
 		aerospike_transform_key_callback keycallback_p,
 		void* data_p)
 {
@@ -2747,24 +2751,13 @@ aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp,
 		u_int32_t   key_len_u32 = 0;
 		ulong	   index_u64 = 0;
 
-#if PHP_VERSION_ID < 70000
-		u_int32_t   key_type_u32 = zend_hash_get_current_key_ex (ht_p,
-																(char **)&key_value_p,
-																&key_len_u32,
-																&index_u64, 0,
-																&hashPosition_p);
-#else
-		u_int32_t   key_type_u32 = zend_hash_get_current_key_ex (ht_p,
-																(zend_string **)&key_value_p,
-																&key_len_u32,
-																&index_u64, 0,
-																&hashPosition_p);
-		if (key_value_p)
-		{
-			key_value_len = strlen(ZSTR_VAL(key_value_p)) + 1;
-		}
+u_int32_t key_type_u32 = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_p, (char **)&key_value_p, &key_len_u32, &index_u64, 0, &hashPosition_p);
+#if PHP_VERSION_ID >= 70000
+  if (key_value_p)
+  {
+	  key_value_len = strlen(ZSTR_VAL(key_value_p)) + 1;
+  }
 #endif
-
 
 		/* check for key type , need to know what it is*/
 
@@ -2798,7 +2791,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for checking expected keys (hosts, user and password) in the input
  * config array for Aerospike::construct().
@@ -2822,12 +2815,12 @@ aerospike_transform_config_callback_php7(HashTable* ht_p,
 {
 	as_status      status = AEROSPIKE_OK;
 	TSRMLS_FETCH();
-	if (PHP_IS_ARRAY(key_data_type_u32) && 
+	if (PHP_IS_ARRAY(key_data_type_u32) &&
 		PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_HOSTS,
 			PHP_AS_KEY_DEFINE_FOR_HOSTS_LEN, key_p, key_len_u32 - 1)) {
 			status = aerospike_transform_iteratefor_addr_port(Z_ARRVAL_P(value_pp),
 					data_p);
-	} else if (PHP_IS_STRING(key_data_type_u32) && 
+	} else if (PHP_IS_STRING(key_data_type_u32) &&
 		PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_USER, PHP_AS_KEY_DEFINE_FOR_USER_LEN,
 			key_p, key_len_u32 -1)) {
 			if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
@@ -2837,7 +2830,7 @@ aerospike_transform_config_callback_php7(HashTable* ht_p,
 				DEBUG_PHP_EXT_DEBUG("Skipping users as zval config is to be transformed into host_lookup");
 				status = AEROSPIKE_OK;
 			}
-	} else if (PHP_IS_STRING(key_data_type_u32) && 
+	} else if (PHP_IS_STRING(key_data_type_u32) &&
 		PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD,
 			PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
 			if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
@@ -2856,7 +2849,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Callback for checking expected keys (hosts, user and password) in the input
  * config array for Aerospike::construct().
@@ -2906,7 +2899,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
 			DEBUG_PHP_EXT_DEBUG("Skipping users as zval config is to be transformed into host_lookup");
 			status = AEROSPIKE_OK;
 		}
-	} else if (PHP_IS_STRING(key_data_type_u32) && 
+	} else if (PHP_IS_STRING(key_data_type_u32) &&
 			PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_PASSWORD,
 				PHP_AS_KEY_DEFINE_FOR_PASSWORD_LEN, key_p, key_len_u32 -1)) {
 		if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
@@ -2930,7 +2923,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
 #else
 			(((transform_zval_config_into *) data_p)->transform_result).as_config_p->max_threads = Z_LVAL_P(*value_pp);
 #endif
-		   
+
 		} else {
 			DEBUG_PHP_EXT_DEBUG("Skipping max_threads as zval config is to be transformed into host_lookup");
 			status = AEROSPIKE_OK;
@@ -2944,7 +2937,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
 #else
 			(((transform_zval_config_into *) data_p)->transform_result).as_config_p->thread_pool_size = Z_LVAL_P(*value_pp);
 #endif
-		   
+
 		} else {
 			DEBUG_PHP_EXT_DEBUG("Skipping thread_pool_size as zval config is to be transformed into host_lookup");
 			status = AEROSPIKE_OK;
@@ -2968,7 +2961,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Check input PHP config array and translate it to corresponding as_config of
  * the c-client.
@@ -2997,7 +2990,7 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, /*a
 								config_p)))
 #else
 	if (AEROSPIKE_OK != (status =
-				aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/, 
+				aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
 						&aerospike_transform_config_callback_php7,
 								config_p)))
 #endif
@@ -3017,7 +3010,7 @@ exit:
 
 /*
  *******************************************************************************************************
- * Callback for checking expected keys (addr and port) in the current host 
+ * Callback for checking expected keys (addr and port) in the current host
  * within the array of hosts from input config array for Aerospike::construct().
  *
  * @param ht_p                      The hashtable pointing to the input host array.
@@ -3238,7 +3231,7 @@ as_status aerospike_transform_array_callback_php7(HashTable* ht_p,
 		status = AEROSPIKE_ERR_PARAM;
 		goto exit;
 	}
-	
+
 	if (!set_as_config) {
 		zval *tmp;
 #if PHP_VERSION_ID < 70000
@@ -3482,7 +3475,7 @@ exit:
  *******************************************************************************************************
  * Callback for checking and setting the as_key for the record to be read/written from/to Aerospike.
  *
- * @param ht_p                      The hashtable pointing to the current element of 
+ * @param ht_p                      The hashtable pointing to the current element of
  *                                  input key from PHP user.
  * @param key_data_type_u32         The datatype of current key.
  * @param key_p                     The current key.
@@ -3543,7 +3536,7 @@ exit:
  *
  * @param ht_p                      The hashtable pointing to the input key from PHP user.
  * @param as_key_p                  The C client's as_key to be set.
- * @param set_val_p                 The flag to be set if as_key is allocated memory 
+ * @param set_val_p                 The flag to be set if as_key is allocated memory
  *                                  so that it can be destroyed by calling function if set.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
@@ -3606,7 +3599,7 @@ exit:
  * @param as_record_p               The C client's as_record to be set.
  * @param static_pool               The static pool of C client datatypes (like
  *                                  as_hashmap, as_arraylist, as_string, as_integer, as_bytes)
- * @param serializer_policy         The serializer policy for writing unsupported datatypes to Aerospike. 
+ * @param serializer_policy         The serializer policy for writing unsupported datatypes to Aerospike.
  * @param error_p                   The as_error object to be set with the
  *                                  encountered error or success.
  *
@@ -3643,11 +3636,11 @@ exit:
  *
  * @param as_object_p               The C client's aerospike object for the db to be written to.
  * @param record_pp                 The record to be written.
- * @param as_key_p                  The C client's as_key identifying the record to be written to. 
+ * @param as_key_p                  The C client's as_key identifying the record to be written to.
  * @param error_p                   The C client's as_error to be set to the encountered error.
  * @param ttl_u64                   The ttl to be set for C client's as_record.
  * @param options_p                 The optional parameters to Aerospike::put()
- * @param serializer_policy_p       The serializer_policy value set in AerospikeObject. Either from 
+ * @param serializer_policy_p       The serializer_policy value set in AerospikeObject. Either from
  *                                  INI or user provided options array.
  *
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
@@ -3685,7 +3678,6 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 	num_of_bins = zend_hash_num_elements(Z_ARRVAL_P(*record_pp));
 #endif
 
-	num_of_bins = zend_hash_num_elements(Z_ARRVAL_PP(record_pp));
 	if (num_of_bins < 1) {
 		error_p->code = AEROSPIKE_ERR_PARAM;
 		DEBUG_PHP_EXT_DEBUG("Record must be given at least one bin => val pair");
@@ -3713,7 +3705,7 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 
 	server_support_double = aerospike_has_double (aerospike_object_p->as_ref_p->as_p);
 
-	aerospike_transform_iterate_records(aerospike_object_p, record_pp, &record, 
+	aerospike_transform_iterate_records(aerospike_object_p, record_pp, &record,
 			&static_pool, serializer_policy, server_support_double,
 			error_p TSRMLS_CC);
 	if (AEROSPIKE_OK != (error_p->code)) {
@@ -3844,9 +3836,9 @@ numPlaces (int num) {
 	return places;
 }
 
-/* 
+/*
  *******************************************************************************************************
- * Creates php key(ns, set, pk) 
+ * Creates php key(ns, set, pk)
  *
  * @param ns_p                      Namespace
  * @param ns_p_length               Namespace length
@@ -3905,7 +3897,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
 						DEBUG_PHP_EXT_ERROR("Aerospike::initKey() digest max length exceeded");
 						status = AEROSPIKE_ERR_CLIENT;
 						goto exit;
-					} 
+					}
 					add_assoc_long(return_value, PHP_AS_KEY_DEFINE_FOR_DIGEST, Z_LVAL_P(pk_p));
 				}
 				break;
@@ -3916,7 +3908,7 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
 					goto exit;
 				}
 				if (!is_digest) {
-					AEROSPIKE_ADD_ASSOC_STRINGL(return_value, PHP_AS_KEY_DEFINE_FOR_KEY, 
+					AEROSPIKE_ADD_ASSOC_STRINGL(return_value, PHP_AS_KEY_DEFINE_FOR_KEY,
 							Z_STRVAL_P(pk_p), Z_STRLEN_P(pk_p), 1);
 				} else {
 					if ((Z_STRLEN_P(pk_p)) > AS_DIGEST_VALUE_SIZE) {
@@ -4039,7 +4031,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
 
 /*
  *******************************************************************************************************
- * Get record key and key digest. 
+ * Get record key and key digest.
  *
  * @param get_record_p              Record
  * @param record_key_p              Key of record
@@ -4071,7 +4063,7 @@ aerospike_get_record_key_digest(as_config *as_config_p, as_record* get_record_p,
 		goto exit;
 	}
 
-	/* 
+	/*
 	 * Returns allocated memory, need to free
 	 */
 	/*if (NULL == (hex_str_p = bin2hex(((as_key_digest(record_key_p))->value), AS_DIGEST_VALUE_SIZE))) {
@@ -4164,7 +4156,7 @@ aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_rec
 	if (!get_record_p || !record_key_p || ! outer_container_p) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get a record");
 		status = AEROSPIKE_ERR_CLIENT;
-		goto exit; 
+		goto exit;
 	}
 
 #if PHP_VERSION_ID < 70000
@@ -4203,7 +4195,7 @@ aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_rec
 		goto exit;
 	}
 
-	if (0 != 
+	if (0 !=
 #if PHP_VERSION_ID < 70000
 			add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)
 #else
@@ -4214,7 +4206,7 @@ aerospike_get_key_meta_bins_of_record(as_config *as_config_p, as_record* get_rec
 		status = AEROSPIKE_ERR_CLIENT;
 		goto exit;
 	}
-	if (0 != 
+	if (0 !=
 #if PHP_VERSION_ID < 70000
 			add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)
 #else
@@ -4244,7 +4236,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Get record key, metadata and bins of a record.
  *
@@ -4277,7 +4269,7 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
 	if (!get_record_p || !record_key_p || ! outer_container_p) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get a record");
 		status = AEROSPIKE_ERR_CLIENT;
-		goto exit; 
+		goto exit;
 	}
 
 #if PHP_VERSION_ID < 70000
@@ -4288,7 +4280,7 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
 #else
 	array_init(&key_container_p);
 #endif
-	status = 
+	status =
 #if PHP_VERSION_ID < 70000
 		aerospike_get_record_key_digest(as_config_p, get_record_p, record_key_p, key_container_p, options_p, get_flag TSRMLS_CC);
 #else
@@ -4318,7 +4310,7 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
 		goto exit;
 	}
 
-	if (0 != 
+	if (0 !=
 #if PHP_VERSION_ID < 70000
 			add_assoc_zval(outer_container_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)
 #else
@@ -4331,7 +4323,7 @@ aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get
 	}
 
 	if (!nullflag) {
-		if (0 != 
+		if (0 !=
 #if PHP_VERSION_ID < 70000
 				add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)
 #else
@@ -4368,7 +4360,7 @@ exit:
 	return status;
 }
 
-/* 
+/*
  *******************************************************************************************************
  * Read all bins for the record specified by get_rec_key_p.
  *
@@ -4436,8 +4428,8 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 	}
 
 	if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(
-					&as_object_p->config, get_record, 
-					get_rec_key_p, outer_container_p, options_p, 
+					&as_object_p->config, get_record,
+					get_rec_key_p, outer_container_p, options_p,
 					true TSRMLS_CC))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
 		status = AEROSPIKE_ERR_CLIENT;
