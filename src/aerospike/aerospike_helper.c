@@ -64,7 +64,7 @@ as_log_level php_log_level_set = __AEROSPIKE_PHP_CLIENT_LOG_LEVEL__;
  * This function shall be invoked by:
  * 1. C client's logger statements.
  * 2. PHP client's logger statements.
- * 
+ *
  * @param level             The as_log_level to be used by the callback.
  * @param func              The function name generating the log.
  * @param file              The file name containing the func generating the log.
@@ -85,12 +85,12 @@ aerospike_helper_log_callback(as_log_level level, const char * func TSRMLS_DC, c
 		vsnprintf(msg, 1024, fmt, ap);
 		msg[1023] = '\0';
 		va_end(ap);
-		if (!is_callback_registered) { 
+		if (!is_callback_registered) {
 			fprintf(stderr, "PHP EXTn: level %d func %s file %s line %d msg %s \n", level, func, file, line, msg);
 		}
 	}
 
-	if (is_callback_registered) { 
+	if (is_callback_registered) {
 		INVOKE_CALLBACK_FUNCTION(level, func, file, line);
 	}
 
@@ -118,7 +118,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 
 	MAKE_STD_ZVAL(err_code_p);
 	MAKE_STD_ZVAL(err_msg_p);
-	
+
 	if (error_t.reset) {
 		AEROSPIKE_ZVAL_STRINGL(err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
 		ZVAL_LONG(err_code_p, DEFAULT_ERRORNO);
@@ -268,14 +268,23 @@ int is_unique_shm_key(int shm_key_to_match, HashTable *shm_key_list TSRMLS_DC)
 	HashPosition        options_pointer;
 	void*              options_value;
 
-	for (zend_hash_internal_pointer_reset_ex(shm_key_list, &options_pointer);
-			zend_hash_get_current_data_ex(shm_key_list,
-				(void **) &options_value, &options_pointer) == SUCCESS;
-			zend_hash_move_forward_ex(shm_key_list, &options_pointer)) {
-		if (shm_key_to_match == ((shared_memory_key *)(((zend_rsrc_list_entry*)options_value)->ptr))->key) {
-			return 0;
-		}
-	}
+  #if PHP_VERSION_ID < 70000
+    for (zend_hash_internal_pointer_reset_ex(shm_key_list, &options_pointer);
+        zend_hash_get_current_data_ex(shm_key_list,
+          (void **) &options_value, &options_pointer) == SUCCESS;
+        zend_hash_move_forward_ex(shm_key_list, &options_pointer)) {
+      if (shm_key_to_match == ((shared_memory_key *)(((zend_rsrc_list_entry*)options_value)->ptr))->key) {
+        return 0;
+      }
+    }
+  #else
+    zval * data;
+    ZEND_HASH_FOREACH_VAL(shm_key_list, data) {
+      if (shm_key_to_match == ((shared_memory_key *)(((zend_resource*)options_value)->ptr))->key) {
+        return 0;
+      }
+    } ZEND_HASH_FOREACH_END();
+  #endif
 	return 1;
 }
 
@@ -297,7 +306,11 @@ set_shm_key_from_alias_hash_or_generate(
 										HashTable *shm_key_list,
 										int* shm_key_counter TSRMLS_DC)
 {
-	zend_rsrc_list_entry *le, new_shm_entry;
+  #if PHP_VERSION_ID < 70000
+    zend_rsrc_list_entry *le, new_shm_entry;
+  #else
+    zend_resource *le, new_shm_entry;
+  #endif
 	zval* rsrc_result = NULL;
 	as_status status = AEROSPIKE_OK;
 	int itr_user = 0;
@@ -330,13 +343,23 @@ set_shm_key_from_alias_hash_or_generate(
 		ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
-		zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
-				(void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
+    #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+      zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
+        (void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
+    #else
+      zend_hash_add_new_ptr(shm_key_list,                                 \
+        zend_string_init(alias_to_search, strlen(alias_to_search), 0), (void *) &new_shm_entry);
+    #endif
 		pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
 		goto exit;
 	}
-	if (zend_hash_find(shm_key_list, alias_to_search,
-			strlen(alias_to_search), (void **) &le) == SUCCESS) {
+ #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+   if (AEROSPIKE_ZEND_HASH_FIND(shm_key_list, alias_to_search,
+  					strlen(alias_to_search), (void **) &le) == SUCCESS) {
+ #else
+   if (NULL != (le = (zend_resource *) AEROSPIKE_ZEND_HASH_FIND(shm_key_list,
+      alias_to_search, strlen(alias_to_search), (void **) &le))) {
+ #endif
 		if ((le->ptr) != NULL) {
 			conf->shm_key = ((shared_memory_key *)(le->ptr))->key;
 		}
@@ -358,8 +381,13 @@ set_shm_key_from_alias_hash_or_generate(
 		ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
-		zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
-				(void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
+    #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+      zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
+        (void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
+    #else
+      zend_hash_add_new_ptr(shm_key_list,                                 \
+        zend_string_init(alias_to_search, strlen(alias_to_search), 0), (void *) &new_shm_entry);
+    #endif
 	}
 	pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
 	if (alias_to_search) {
@@ -380,10 +408,10 @@ exit:
  * persistent store if an already hashed object (with the addr+port as the hash) exists, or by
  * creating a new aerospike object if it doesn't and pushing it on the zend persistent store
  * for further reuse.
- * 
- * @param as_object_p               The instance of Aerospike_object structure containing 
+ *
+ * @param as_object_p               The instance of Aerospike_object structure containing
  *                                  the C Client's aerospike object.
- * @param persist_flag              The flag which indicates whether to persist the C Client's 
+ * @param persist_flag              The flag which indicates whether to persist the C Client's
  *                                  aerospike object.
  * @param conf                      The as_config to be used for creating/retrieving aerospike object.
  * @param persistent_list           The hashtable pointing to the zend global persistent list.
@@ -774,7 +802,7 @@ aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
  */
 extern as_status
 aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
-		as_error *error_p TSRMLS_DC) 
+		as_error *error_p TSRMLS_DC)
 {
 	as_error_init(error_p);
 	DEBUG_PHP_EXT_DEBUG("In aerospike_helper_close_php_connection");
