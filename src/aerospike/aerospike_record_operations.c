@@ -263,15 +263,33 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
             if (AEROSPIKE_OK != error_p->code) {
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
                 DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
-                goto exit;
+                 if (temp_record_p) {
+                     zval_ptr_dtor(&temp_record_p);
+                 }
+                 if (append_val_copy) {
+                     zval_ptr_dtor(&append_val_copy);
+                 }
+                 goto exit;
             }
             val = (as_val*) as_record_get(&record, bin_name_p);
             if (val) {
                 if (!as_operations_add_list_append(ops, bin_name_p, val)) {
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to append");
                     DEBUG_PHP_EXT_DEBUG("Unable to append");
+                    if (temp_record_p) {
+                        zval_ptr_dtor(&temp_record_p);
+                    }
+                    if (append_val_copy) {
+                        zval_ptr_dtor(&append_val_copy);
+                    }
                     goto exit;
                 }
+            }
+            if (temp_record_p) {
+                zval_ptr_dtor(&temp_record_p);
+            }
+            if (append_val_copy) {
+                zval_ptr_dtor(&append_val_copy);
             }
             break;
 
@@ -287,6 +305,12 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
             if (AEROSPIKE_OK != error_p->code) {
                 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to parse the value parameter");
                 DEBUG_PHP_EXT_ERROR("Unable to parse the value parameter");
+                if (temp_record_p) {
+                    zval_ptr_dtor(&temp_record_p);
+                }
+                if (append_val_copy) {
+                    zval_ptr_dtor(&append_val_copy);
+                }
                 goto exit;
             }
             val = (as_val*) as_record_get(&record, bin_name_p);
@@ -294,8 +318,20 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
                 if (!as_operations_add_list_insert(ops, bin_name_p, time_to_live, val)) {
                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to insert");
                     DEBUG_PHP_EXT_DEBUG("Unable to insert");
+                    if (temp_record_p) {
+                        zval_ptr_dtor(&temp_record_p);
+                    }
+                    if (append_val_copy) {
+                        zval_ptr_dtor(&append_val_copy);
+                    }
                     goto exit;
                 }
+            }
+            if (temp_record_p) {
+                zval_ptr_dtor(&temp_record_p);
+            }
+            if (append_val_copy) {
+                zval_ptr_dtor(&append_val_copy);
             }
             break;
 
@@ -694,7 +730,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                         } else if (IS_OBJECT == Z_TYPE_PP(each_operation)) {
                             const char* name;
                             zend_uint name_len;
-							int dup;
+                            int dup;
                             dup = zend_get_object_classname(*((zval**)each_operation),
                                     &name, &name_len TSRMLS_CC);
                             if((!strcmp(name, GEOJSONCLASS)) 
@@ -824,7 +860,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
     zval*                       key_container_p;
 
     MAKE_STD_ZVAL(record_p_local)
-    array_init(record_p_local);
+        array_init(record_p_local);
 
     MAKE_STD_ZVAL(metadata_container_p);
     array_init(metadata_container_p);
@@ -884,7 +920,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
                         } else if (IS_OBJECT == Z_TYPE_PP(each_operation)) {
                             const char* name;
                             zend_uint name_len;
-							int dup;
+                            int dup;
                             dup = zend_get_object_classname(*((zval**)each_operation),
                                     &name, &name_len TSRMLS_CC);
                             if((!strcmp(name, GEOJSONCLASS))
@@ -963,11 +999,11 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
         } else {
             if (get_rec) {
                 if (!((op == AS_OPERATOR_READ ) ||
-                      (op == AS_CDT_OP_LIST_SIZE_NEW) || 
-                      (op == AS_CDT_OP_LIST_GET_NEW)   ||
-                      (op == AS_CDT_OP_LIST_GET_RANGE_NEW) ||
-                      (op == AS_CDT_OP_LIST_POP_NEW)   ||
-                      (op == AS_CDT_OP_LIST_POP_RANGE_NEW))) {
+                            (op == AS_CDT_OP_LIST_SIZE_NEW) || 
+                            (op == AS_CDT_OP_LIST_GET_NEW)   ||
+                            (op == AS_CDT_OP_LIST_GET_RANGE_NEW) ||
+                            (op == AS_CDT_OP_LIST_POP_NEW)   ||
+                            (op == AS_CDT_OP_LIST_POP_RANGE_NEW))) {
                     if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata)) {
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get bins of a record");
