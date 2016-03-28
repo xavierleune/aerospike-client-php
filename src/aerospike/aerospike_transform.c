@@ -2832,7 +2832,7 @@ static as_status
 aerospike_transform_config_callback_php7(HashTable* ht_p,
 									u_int32_t key_data_type_u32,
 									int8_t* key_p, u_int32_t key_len_u32,
-									void* data_p, zval* value_pp)
+									void* data_p, zval** value_pp)
 {
 	as_status      status = AEROSPIKE_OK;
 	TSRMLS_FETCH();
@@ -3010,15 +3010,13 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp, /*a
 	}
 
 #if PHP_VERSION_ID < 70000
-	if (AEROSPIKE_OK != (status =
-				aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
+	if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
 						&aerospike_transform_config_callback,
-								config_p)))
+						onfig_p)))
 #else
-	if (AEROSPIKE_OK != (status =
-				aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
+	if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
 						&aerospike_transform_config_callback_php7,
-								config_p)))
+						config_p)))
 #endif
 	{
 		goto exit;
@@ -3138,7 +3136,7 @@ static
 as_status aerospike_transform_addrport_callback_php7(HashTable* ht_p,
 												u_int32_t key_data_type_u32,
 												int8_t* key_p, u_int32_t key_len_u32,
-												void* data_p, zval* value_pp)
+												void* data_p, zval** value_pp)
 {
 	as_status                           status = AEROSPIKE_OK;
 	int                                 port = -1;
@@ -3209,7 +3207,7 @@ static
 as_status aerospike_transform_array_callback_php7(HashTable* ht_p,
 											 u_int32_t key_data_type_u32,
 											 int8_t* key_p, u_int32_t key_len_u32,
-											 void* data_p, zval* retdata_pp)
+											 void* data_p, zval** retdata_pp)
 {
 	as_status                               status = AEROSPIKE_OK;
 	zval**                                  addrport_data_pp = NULL;
