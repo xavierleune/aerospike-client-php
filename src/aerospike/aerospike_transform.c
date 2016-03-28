@@ -2644,7 +2644,11 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 		goto exit;
 	} else {
 		HashPosition		options_pointer;
-		zval**			  options_value;
+		#if PHP_VERSION_ID < 70000
+			zval**			  options_value;
+		#else
+			zval*			  options_value;
+		#endif
 		(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->use_shm = true;
 		AEROSPIKE_FOREACH_HASHTABLE(ht_shm, options_pointer, options_value) {
 			uint options_key_len;
