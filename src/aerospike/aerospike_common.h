@@ -909,11 +909,20 @@ check_val_type_list(zval **value);
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 	/*
 	******************************************************************************************************
-	* Macro to copy char* in zval.
+	* Macro to copy char* in zval when size is specified.
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, x, ifDuplicate) \
 		ZVAL_STRINGL(return_value, digest_p, x, ifDuplicate)
+
+  /*
+	******************************************************************************************************
+	* Macro to copy char* in zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_STRING(return_value, digest_p, ifDuplicate) \
+		ZVAL_STRING(return_value, digest_p, ifDuplicate)
+
 	/*
 	******************************************************************************************************
 	* Macro to verify Address reference
@@ -1039,6 +1048,20 @@ check_val_type_list(zval **value);
 #define AEROSPIKE_ADD_NEXT_INDEX_STRINGL(z_val, value, len, ifDuplicate) \
 		add_next_index_stringl(z_val, value, len, ifDuplicate)
 
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_ZVAL_ZVAL(z, zv, copy, dtor) \
+    ZVAL_ZVAL(z, zv, copy, dtor)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_STRVAL_P(retval) \
+    Z_STRVAL_P(retval)
+
 	/*
 	******************************************************************************************************
 	* Macro to find key in hastable
@@ -1108,11 +1131,19 @@ check_val_type_list(zval **value);
 
 	/*
 	******************************************************************************************************
-	* Macro to copy char* in zval.
+	* Macro to copy char* in zval when size is specified.
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, SIZE, ifDuplicate) \
 		ZVAL_STRINGL(return_value, digest_p, SIZE)
+
+ /*
+	******************************************************************************************************
+	* Macro to copy char* in zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_STRING(return_value, digest_p, ifDuplicate) \
+		ZVAL_STRING(&return_value, digest_p)
 
 	/*
 	******************************************************************************************************
@@ -1227,15 +1258,30 @@ check_val_type_list(zval **value);
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht, data, pos)                      \
-			 zend_hash_get_current_data_ex(ht, pos)
+    zend_hash_get_current_data_ex(ht, pos)
 
-	/*
+  /*
 	******************************************************************************************************
 	* Macro to append string at next index key which is a long.
 	******************************************************************************************************
 	*/
-#define AEROSPIKE_ADD_NEXT_STRINGL(z_val, value, len, ifDuplicate) \
+#define AEROSPIKE_ADD_NEXT_INDEX_STRINGL(z_val, value, len, ifDuplicate) \
 		add_next_index_stringl(&z_val, value, len)
+
+  /*
+	******************************************************************************************************
+	* Macro to .
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_ZVAL(z, zv, copy, dtor) \
+    ZVAL_ZVAL(z, &zv, copy, dtor)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_STRVAL_P(retval) \
+    Z_STRVAL_P(&retval)
 
 	/*
 	******************************************************************************************************

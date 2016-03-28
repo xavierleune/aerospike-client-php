@@ -1128,20 +1128,33 @@ static void ADD_DEFAULT_ASSOC_PAIR(Aerospike_object* as, void *key, void *value,
 static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	int result;
-	zval* retval = NULL, fname;
-	zval* geojson_zval_p = NULL;
-	zval** param[1];
+	#if PHP_VERSION_ID < 70000
+	  zval *geojson_zval_p;
+	  zval* retval = NULL, fname;
+	  geojson_zval_p = NULL;
+		zval** param[1];
+	#else
+	  zval geojson_zval_p;
+	  zval retval, fname;
+		zval param[1];
+	#endif
+
 	ALLOC_INIT_ZVAL(geojson_zval_p);
 	char* json_string = (char*)as_geojson_get(as_geojson_fromval(value));
 	AEROSPIKE_ZVAL_STRINGL(&fname, "json_decode", sizeof("json_decode") - 1, 1);
-	ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 0);
-	param[0] = &geojson_zval_p;
-	result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+	AEROSPIKE_ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 0);
+	#if PHP_VERSION_ID < 70000
+	  param[0] = &geojson_zval_p;
+	  result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+	#else
+	  param[0] = geojson_zval_p;
+	  result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+	#endif
 	if (key == NULL) {
 		zval_dtor((zval*)array);
-		ZVAL_ZVAL((zval*)array, retval, 1, 1);
+		AEROSPIKE_ZVAL_ZVAL((zval*)array, retval, 1, 1);
 	} else {
-		add_assoc_zval(((zval *)array), (char *)key,
+		AEROSPIKE_ADD_ASSOC_ZVAL(((zval *)array), (char *)key,
 				retval);
 	}
 
@@ -1914,12 +1927,20 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* value, void* array,
 		void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
-	int result;
-	zval* retval = NULL, fname;
+	#if PHP_VERSION_ID < 70000
+	  zval* retval = NULL, fname;
+	#else
+	  zval retval, fname;
+	#endif
 	char* geoStr = NULL;
+	int result;
 	AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") - 1, 1);
-	result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
-	geoStr = Z_STRVAL_P(retval);
+	#if PHP_VERSION_ID < 70000
+	  result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
+	#else
+	  result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
+	#endif
+	geoStr = AEROSPIKE_Z_STRVAL_P(retval);
 	if (!(as_record_set_geojson_str((as_record*)array, (const char*)key,
 					geoStr))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to set record as geojson string.\n");
@@ -2772,7 +2793,7 @@ u_int32_t key_type_u32 = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_p, (char **)&
 														Z_TYPE_P(keyData_p),
 														ZSTR_VAL(key_value_p),
 														key_value_len,
-														data_p, keyData_p
+														data_p, &keyData_p
 #endif
 															))) {
 
@@ -2947,7 +2968,12 @@ aerospike_transform_config_callback(HashTable* ht_p,
 				PHP_AS_KEY_DEFINE_FOR_SHM_LEN, key_p, key_len_u32 - 1)) {
 		(((transform_zval_config_into *) data_p)->transform_result).as_config_p->use_shm = true;
 		if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
-			status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p TSRMLS_CC);
+			#if PHP_VERSION_ID < 70000
+				status = aerospike_transform_set_shm_in_config(Z_ARRVAL_PP(value_pp), data_p TSRMLS_CC);
+			#else
+				status = aerospike_transform_set_shm_in_config(Z_ARRVAL_P(*value_pp), data_p TSRMLS_CC);
+			#endif
+
 		} else {
 			DEBUG_PHP_EXT_DEBUG("Skipping shm as zval config is to be transformed into host_lookup");
 			status = AEROSPIKE_OK;
@@ -4479,7 +4505,11 @@ extern int check_val_type_list(zval **value)
 	ulong index;
 	uint key_iterator = 0;
 
-	hashtable = Z_ARRVAL_PP((zval**)value);
+	#if PHP_VERSION_ID < 70000
+		hashtable = Z_ARRVAL_PP((zval**)value);
+	#else
+	  hashtable = Z_ARRVAL_P((zval*)value);
+	#endif
 	zend_hash_internal_pointer_reset_ex(hashtable, &pointer);
 	TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index,
 			pointer, key_iterator);
