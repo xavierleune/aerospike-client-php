@@ -157,7 +157,11 @@ static void aerospike_check_close_and_destroy(zval *hashtable_element)
 }
 
 /* Shared memory key persistent list destruction */
+#if PHP_VERSION_ID < 70000
 static void shm_key_hashtable_dtor(void *hashtable_element)
+#else
+static void shm_key_hashtable_dtor(zval *hashtable_element)
+#endif
 {
 	TSRMLS_FETCH();
 	DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
