@@ -745,7 +745,7 @@ do {                                                                           \
         }                                                                      \
     }
 #else
-#define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
+#define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,       \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
@@ -762,13 +762,13 @@ do {                                                                           \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
         AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_LIST(inner_key,                     \
+        AEROSPIKE_##level##_PUT_##action##_LIST(as, inner_key,                     \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_LIST(store,                         \
+        AEROSPIKE_##level##_SET_##action##_LIST(as, store,                         \
                        inner_store, key, err);                                 \
         if(AEROSPIKE_OK != (err->code)) {                                      \
             goto label;                                                        \
@@ -776,13 +776,13 @@ do {                                                                           \
     } else {                                                                   \
         AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_MAP(inner_key,                      \
+        AEROSPIKE_##level##_PUT_##action##_MAP(as, inner_key,                      \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_MAP(store,                          \
+        AEROSPIKE_##level##_SET_##action##_MAP(as, store,                          \
                        inner_store, key, err);                                 \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
