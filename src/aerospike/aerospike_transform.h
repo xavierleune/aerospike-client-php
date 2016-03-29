@@ -462,40 +462,40 @@ do {                                                                           \
 
 #else
 
-#define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action, err,           \
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT(as, method, level, action, err,           \
         static_pool, key, value, store, label, serializer_policy)              \
 do {                                                                           \
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
-    zval **dataval;                                                            \
+    zval* dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
     hashtable = Z_ARRVAL_P((zval*) *value);                                    \
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
-        switch (FETCH_VALUE_##method(dataval)) {                               \
-            EXPAND_CASE_PUT(level, method, action, ARRAY, key,                 \
+        switch (FETCH_VALUE_##method(&dataval)) {                               \
+            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,                 \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, STRING, key,                \
+            EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
                     dataval, store, err, static_pool, label, -1);              \
-            EXPAND_CASE_PUT(level, method, action, LONG, key,                  \
+            EXPAND_CASE_PUT(as, level, method, action, LONG, key,                  \
                     dataval, store, err, static_pool, label, -1);              \
-            EXPAND_CASE_PUT(level, method, action, DOUBLE, key,                \
+            EXPAND_CASE_PUT(as, level, method, action, DOUBLE, key,                \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, NULL, key,                  \
+            EXPAND_CASE_PUT(as, level, method, action, NULL, key,                  \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, OBJECT, key,                \
+            EXPAND_CASE_PUT(as, level, method, action, OBJECT, key,                \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, TRUE, key,                  \
+            EXPAND_CASE_PUT(as, level, method, action, TRUE, key,                  \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, FALSE, key,                 \
+            EXPAND_CASE_PUT(as, level, method, action, FALSE, key,                 \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
             default:                                                           \
@@ -922,14 +922,14 @@ do {                                                                           \
     AS_DEFAULT_PUT_ASSOC_BYTES(as, key, value, array, static_pool,             \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_TRUE(key, value, array, static_pool,       \
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_TRUE(as, key, value, array, static_pool,       \
             serializer_policy, err)                                            \
-    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                 \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_FALSE(key, value, array, static_pool,      \
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_FALSE(as, key, value, array, static_pool,      \
             serializer_policy, err)                                            \
-    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                 \
         serializer_policy, err TSRMLS_CC)
 
 /*
@@ -982,14 +982,14 @@ do {                                                                           \
     AS_MAP_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                 \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_TRUE(key, value, array, static_pool,           \
+#define AEROSPIKE_MAP_PUT_ASSOC_TRUE(as, key, value, array, static_pool,           \
            serializer_policy, err)                                             \
-    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+    AS_MAP_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                     \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_FALSE(key, value, array, static_pool,          \
+#define AEROSPIKE_MAP_PUT_ASSOC_FALSE(as, key, value, array, static_pool,          \
            serializer_policy, err)                                             \
-    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+    AS_MAP_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                     \
         serializer_policy, err TSRMLS_CC)
 
 /*
