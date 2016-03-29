@@ -3559,8 +3559,8 @@ PHP_METHOD(Aerospike, setSerializer)
 {
 	as_status              status = AEROSPIKE_OK;
 
-	//if (user_serializer_call_info.function_name &&
-			if (AEROSPIKE_Z_ISREF_P(user_serializer_call_info.function_name)) {
+	if (&user_serializer_call_info.function_name &&
+			(AEROSPIKE_Z_ISREF_P(user_serializer_call_info.function_name))) {
 
 		/*
 		 * once set the same serializer would be used. Incase a new
