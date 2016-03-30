@@ -83,11 +83,15 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
 		goto exit;
 	}
-	
+
 	if (bins_ht_p) {
 		as_scan_select_inita(&scan, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
-		zval **bin_names_pp;
+		#if PHP_VERSION_ID < 70000
+		  zval **bin_names_pp;
+		#else
+		  zval *bin_names_pp;
+		#endif
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
 #if PHP_VERSION_ID < 70000
 			if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
@@ -95,10 +99,10 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 			}
 			as_scan_select(&scan, Z_STRVAL_PP(bin_names_pp));
 #else
-			if (Z_TYPE_P(*bin_names_pp) != IS_STRING) {
-				convert_to_string_ex(*bin_names_pp);
+			if (Z_TYPE_P(bin_names_pp) != IS_STRING) {
+				convert_to_string_ex(bin_names_pp);
 			}
-			as_scan_select(&scan, Z_STRVAL_P(*bin_names_pp));
+			as_scan_select(&scan, Z_STRVAL_P(bin_names_pp));
 #endif
 		}
 		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, &scan_policy,
