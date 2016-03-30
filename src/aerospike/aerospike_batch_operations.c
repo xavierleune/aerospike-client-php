@@ -253,15 +253,16 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 	as_policy_batch         batch_policy;
 	HashTable*              keys_array = NULL;
 	HashPosition            key_pointer;
-	zval**                  key_entry;
 	int16_t                 initializeKey = 0;
 	int                     i = 0;
 	bool                    is_batch_init = false;
 	bool                    null_flag = false;
 #if PHP_VERSION_ID < 70000
 	zval*                   record_metadata_p = NULL;
+	zval**                  key_entry;
 #else
 	zval                    record_metadata_p;
+	zval*                   key_entry;
 #endif
 	zval*                   get_record_p = NULL;
 	foreach_callback_udata  metadata_callback;
@@ -299,7 +300,7 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 				AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
 					&record->key, &initializeKey)
 #else
-				AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(*key_entry),
+				AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_entry),
 					&record->key, &initializeKey)
 #endif
 			) {
@@ -430,7 +431,11 @@ aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p
 	as_batch                    batch;
 	HashTable*                  keys_array = NULL;
 	HashPosition                key_pointer;
-	zval**                      key_entry;
+	#if PHP_VERSION_ID < 70000
+	  zval**                      key_entry;
+	#else
+	  zval*                       key_entry;
+	#endif
 	int16_t                     initializeKey = 0;
 	int                         i = 0;
 	bool                        is_batch_init = false;
@@ -467,7 +472,7 @@ aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p
 				AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_PP(key_entry),
 					as_batch_keyat(&batch, i), &initializeKey)
 #else
-				AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(*key_entry),
+				AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_entry),
 					as_batch_keyat(&batch, i), &initializeKey)
 #endif
 		) {
@@ -499,7 +504,11 @@ process_filer_bins(HashTable *bins_array_p, const char **select_p TSRMLS_DC)
 {
 	as_status           status = AEROSPIKE_OK;
 	HashPosition        pointer;
-	zval                **bin_names;
+	#if PHP_VERSION_ID < 70000
+	  zval                **bin_names;
+	#else
+		zval                *bin_names;
+	#endif
 	int                 count = 0;
 
 	AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
@@ -508,7 +517,7 @@ process_filer_bins(HashTable *bins_array_p, const char **select_p TSRMLS_DC)
 #if PHP_VERSION_ID < 70000
 				select_p[count++] = Z_STRVAL_PP(bin_names);
 #else
-				select_p[count++] = Z_STRVAL_P(*bin_names);
+				select_p[count++] = Z_STRVAL_P(bin_names);
 #endif
 				break;
 			default:
