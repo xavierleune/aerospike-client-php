@@ -18,7 +18,8 @@
 
 #include "php.h"
 #include "ext/standard/php_var.h"
-#include "ext/standard/php_smart_str.h"
+//#include "ext/standard/php_smart_string.h"
+//#include "ext/standard/php_smart_str.h"
 #include "aerospike/as_status.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
@@ -208,7 +209,11 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 				DEBUG_PHP_EXT_DEBUG("Value passed if not array type.");
 				goto exit;
 			}
-			as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_PP(each_operation)));
+			#if PHP_VERSION_ID < 70000
+			  as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_PP(each_operation)));
+			#else
+			  as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P((zval*) *each_operation)));
+			#endif
 			args_list_p = &args_list;
 
 			AS_LIST_PUT(aerospike_obj_p, NULL, each_operation, args_list_p, &items_pool, serializer_policy,
@@ -342,7 +347,7 @@ exit:
  * @param as_key_p              The C client's as_key that identifies the record.
  * @param error_p               The as_error to be populated by the function
  *                              with the encountered error if any.
- * @param metadata_p            The return metadata for the exists/getMetadata API to be 
+ * @param metadata_p            The return metadata for the exists/getMetadata API to be
  *                              populated by this function.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  *
@@ -427,7 +432,7 @@ aerospike_record_operations_remove(Aerospike_object* aerospike_obj_p,
 		aerospike_key_remove(as_object_p, error_p, &remove_policy, as_key_p);
 	}
 
-exit: 
+exit:
 	return error_p->code;
 }
 
@@ -510,7 +515,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 				as_key_p, &ops, NULL);
 	}
 
-exit: 
+exit:
 	if (get_rec) {
 		as_record_destroy(get_rec);
 	}
@@ -533,22 +538,29 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 	as_policy_operate           operate_policy;
 	HashPosition                pointer;
 	HashPosition                each_pointer;
-	HashTable*                  each_operation_array_p = NULL;
 	char*                       bin_name_p;
 	char*                       str;
 	char*                       geoStr;
-	zval **                     operation;
 	int                         offset = 0;
 	double                      double_offset = 0.0;
 	long                        l_offset = 0;
 	int                         op;
-	zval**                      each_operation;
-	zval**                      each_operation_back;
+	#if PHP_VERSION_ID < 70000
+	      HashTable*                  each_operation_array_p = NULL;
+				zval**                      each_operation;
+				zval**                      operation;
+				zval**                      each_operation_back;
+	#else
+	      HashTable*                  each_operation_array_p;
+				zval*                       each_operation;
+		    zval*                       operation;
+				zval*                       each_operation_back;
+	#endif
 	int8_t                      serializer_policy;
-	uint32_t                    ttl;                /* Using this same variable for 'index' as well 
-                                                     * in case of OP_LIST_INSERT. 
+	uint32_t                    ttl;                /* Using this same variable for 'index' as well
+                                                     * in case of OP_LIST_INSERT.
                                                      * This will avoid adding another parameter to
-                                                     * further function and can reuse 'ttl'. 
+                                                     * further function and can reuse 'ttl'.
                                                      */
 	foreach_callback_udata      foreach_record_callback_udata;
 
@@ -576,7 +588,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 #if PHP_VERSION_ID < 70000
 			each_operation_array_p = Z_ARRVAL_PP(operation);
 #else
-			each_operation_array_p = Z_ARRVAL_P(*operation);
+			each_operation_array_p = Z_ARRVAL_P(operation);
 #endif
 			str = NULL;
 			geoStr = NULL;
@@ -589,14 +601,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 				char* options_key;
 
 #if PHP_VERSION_ID < 70000
-				if (
-						zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key,
+				if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key,
 							&options_key_len, &options_index, 0, &each_pointer)
 #else
 				zend_string* z_str = zend_string_init(options_key, strlen(options_key), 0);
-				if (
-
-						zend_hash_get_current_key_ex(each_operation_array_p, &z_str,
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(each_operation_array_p, &z_str,
 							&options_key_len, &options_index, 0, &each_pointer)
 #endif
 						!= HASH_KEY_IS_STRING) {
@@ -611,14 +620,14 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 #if PHP_VERSION_ID < 70000
 						bin_name_p = (char *) Z_STRVAL_PP(each_operation);
 #else
-						bin_name_p = (char *) Z_STRVAL_P(*each_operation);
+						bin_name_p = (char *) Z_STRVAL_P(each_operation);
 #endif
 					} else if (!strcmp(options_key, "val")) {
 						if (IS_STRING == Z_TYPE_PP(each_operation)) {
 #if PHP_VERSION_ID < 70000
 							str = (char *) Z_STRVAL_PP(each_operation);
 #else
-							str = (char *) Z_STRVAL_P(*each_operation);
+							str = (char *) Z_STRVAL_P(each_operation);
 #endif
 							each_operation_back = each_operation;
 						} else if (IS_LONG == Z_TYPE_PP(each_operation)) {
@@ -627,19 +636,36 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 							double_offset = (double) Z_DVAL_PP(each_operation);
 						} else if (IS_OBJECT == Z_TYPE_PP(each_operation)) {
 							const char* name;
-							zend_uint name_len;
+							#if PHP_VERSION_ID < 70000
+						    zend_uint name_len;
+							#else
+						    size_t name_len;
+							#endif
 							int dup;
+							#if PHP_VERSION_ID < 70000
 							dup = zend_get_object_classname(*((zval**)each_operation),
 									&name, &name_len TSRMLS_CC);
-							if((!strcmp(name, GEOJSONCLASS)) 
+							#else
+							dup = zend_get_object_classname(each_operation,
+									&name, &name_len TSRMLS_CC);
+							#endif
+							if((!strcmp(name, GEOJSONCLASS))
 									&& (aerospike_obj_p->hasGeoJSON)
 									&& op == AS_OPERATOR_WRITE) {
 								int result;
-								zval* retval = NULL, fname;
-								ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
-								result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+								#if PHP_VERSION_ID < 70000
+								  zval* retval = NULL, fname;
+									AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
+									result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+													0, NULL, 0, NULL TSRMLS_CC);
+									geoStr = Z_STRVAL_P(retval);
+								#else
+								  zval retval, fname;
+									AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
+								  result = call_user_function_ex(NULL, each_operation, &fname, &retval,
 										0, NULL, 0, NULL TSRMLS_CC);
-								geoStr = Z_STRVAL_P(retval);
+										geoStr = Z_STRVAL_P(&retval);
+								#endif
 							}
 							else {
 								status = AEROSPIKE_ERR_CLIENT;
@@ -674,7 +700,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 #if PHP_VERSION_ID < 70000
 							is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0)
 #else
-							is_numeric_string(Z_STRVAL_P(*each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0)
+							is_numeric_string(Z_STRVAL_P(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0)
 #endif
 								)) {
 						status = AEROSPIKE_ERR_PARAM;
@@ -684,11 +710,17 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 					}
 				}
 			}
-
-			if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
+			#if PHP_VERSION_ID < 70000
+			  if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
 							as_key_p, options_p, error_p, bin_name_p, str, geoStr,
 							offset, double_offset, ttl, op, &ops, each_operation, &operate_policy,
 							serializer_policy, &temp_rec TSRMLS_CC))) {
+			#else
+			  if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
+							as_key_p, options_p, error_p, bin_name_p, str, geoStr,
+							offset, double_offset, ttl, op, &ops, &each_operation, &operate_policy,
+							serializer_policy, &temp_rec TSRMLS_CC))) {
+			#endif
 
 				DEBUG_PHP_EXT_ERROR("Operate function returned an error");
 				goto exit;
@@ -724,7 +756,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 		}
 	}
 
-exit: 
+exit:
 	if (get_rec) {
 		foreach_record_callback_udata.udata_p = NULL;
 		as_record_destroy(get_rec);
@@ -757,7 +789,11 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
 	as_record           rec;
 	HashTable           *bins_array_p = Z_ARRVAL_P(bins_p);
 	HashPosition        pointer;
-	zval                **bin_names;
+	#if PHP_VERSION_ID < 70000
+		zval        **bin_names;
+	#else
+		zval*			  bin_names;
+	#endif
 	as_policy_write     write_policy;
 	aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
 	TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
@@ -783,7 +819,7 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
 #if PHP_VERSION_ID < 70000
 						as_record_set_nil(&rec, Z_STRVAL_PP(bin_names))
 #else
-						as_record_set_nil(&rec, Z_STRVAL_P(*bin_names))
+						as_record_set_nil(&rec, Z_STRVAL_P(bin_names))
 #endif
 						)) {
 				status = AEROSPIKE_ERR_CLIENT;
@@ -819,7 +855,7 @@ exit:
  *
  * @param as_object_p           The C client's aerospike object.
  * @param as_key_p              The C client's as_key that identifies the record.
- * @param metadata_p            The return metadata for the exists/getMetadata API to be 
+ * @param metadata_p            The return metadata for the exists/getMetadata API to be
  *                              populated by this function.
  * @param options_p             The user's optional policy options to be used if set, else defaults.
  * @param error_p               The as_error to be populated by the function
@@ -865,7 +901,7 @@ aerospike_php_exists_metadata(Aerospike_object* aerospike_obj_p,
 		ZVAL_ZVAL(metadata_p, metadata_arr_p, 1, 1);
 #else
 		zval		  metadata_arr_p;
-		
+
 		array_init(&metadata_arr_p);
 		ZVAL_ZVAL(metadata_p, &metadata_arr_p, 1, 1);
 #endif

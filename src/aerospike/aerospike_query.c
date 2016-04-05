@@ -62,16 +62,17 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 	zval**              index_type_pp = NULL;
 
 	if (predicate_ht_p && (zend_hash_num_elements(predicate_ht_p) != 0)) {
+		#if PHP_VERSION_ID >= 70000
+		  zend_string* z_bin = zend_string_init(BIN, strlen(BIN), 0);
+	 	  zend_string* z_op  = zend_string_init(OP, strlen(OP), 0);
+		  zend_string* z_val = zend_string_init(VAL, strlen(VAL), 0);
+		#endif
 		if (
 #if PHP_VERSION_ID < 70000
 				(!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
 				(!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
 				(!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))
 #else
-				zend_string* z_bin = zend_string_init(BIN, strlen(BIN), 0);
-				zend_string* z_op  = zend_string_init(OP, strlen(OP), 0);
-				zend_string* z_val = zend_string_init(VAL, strlen(VAL), 0);
-
 				(!zend_hash_exists(predicate_ht_p, z_bin)) ||
 				(!zend_hash_exists(predicate_ht_p, z_op))  ||
 				(!zend_hash_exists(predicate_ht_p, z_val))
@@ -83,7 +84,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 			goto exit;
 		}
 
-		if (	
+		if (
 #if PHP_VERSION_ID < 70000
 				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
 						(void **) &op_pp)) ||
@@ -99,7 +100,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 				(*val_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
 										   (void **) &val_pp))
 #endif
-				
+
 				) {
 			DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', 'val'.");
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -157,11 +158,11 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 							"Predicate 'val' must be either string or integer.");
 					goto exit;
 			}
-		} 
+		}
 #if PHP_VERSION_ID < 70000
-					else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0) 
+					else if (strncmp(Z_STRVAL_PP(op_pp), "BETWEEN", 7) == 0)
 #else
-					else if (strncmp(Z_STRVAL_P(*op_pp), "BETWEEN", 7) == 0) 
+					else if (strncmp(Z_STRVAL_P(*op_pp), "BETWEEN", 7) == 0)
 #endif
 					{
 			bool between_unpacked = false;
@@ -417,7 +418,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 										as_range(MAPVALUES, NUMERIC, Z_LVAL_P(*min_pp), Z_LVAL_P(*max_pp)),
 										AS_INDEX_TYPE_MAPVALUES)
 #endif
-									
+
 									) {
 								DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
 								PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -520,7 +521,7 @@ aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
 		goto exit;
 	}
 
-	if (AEROSPIKE_OK != (aerospike_job_info(as_object_p, error_p, 
+	if (AEROSPIKE_OK != (aerospike_job_info(as_object_p, error_p,
 					&info_policy, module_p, job_id, false, &job_info))) {
 		DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
 		goto exit;
@@ -541,7 +542,7 @@ exit:
  *                                  encountered error.
  * @param module_p                  The name of UDF module containing the
  *                                  function to execute.
- * @param function_p                The name of the function to be applies to 
+ * @param function_p                The name of the function to be applies to
  *                                  the record.
  * @param args_pp                   An array of arguments for the UDF
  * @param namespace_p               The namespace to query.
@@ -582,7 +583,7 @@ aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
 	as_query*			   query_p = NULL;
 	uint64_t				query_id = 0;
 
-	if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) || 
+	if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) ||
 			(!namespace_p) || (!set_p) || (!job_id_p)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to initiate background query");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate background query");
@@ -590,8 +591,13 @@ aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
 	}
 
 	if ((*args_pp)) {
-		as_arraylist_inita(&args_list,
-				zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+		#if PHP_VERSION_ID < 70000
+		  as_arraylist_inita(&args_list,
+				  zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+		#else
+		  as_arraylist_inita(&args_list,
+				  zend_hash_num_elements(Z_ARRVAL_P((zval*) *args_pp)));
+		#endif
 		args_list_p = &args_list;
 		AS_LIST_PUT(as_object_p, NULL, args_pp, args_list_p, &udf_pool,
 				serializer_policy, error_p TSRMLS_CC);
@@ -719,20 +725,20 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 	if (bins_ht_p) {
 		as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
-		zval **bin_names_pp = NULL;
+		#if PHP_VERSION_ID < 70000
+      zval** bin_names_pp = NULL;
+		#else
+      zval* bin_names_pp = NULL;
+		#endif
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
 			if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
-#if PHP_VERSION_ID < 70000
 				convert_to_string_ex(bin_names_pp);
-#else
-				convert_to_string_ex(*bin_names_pp);
-#endif
 			}
 			if (
 #if PHP_VERSION_ID < 70000
 					!as_query_select(&query, Z_STRVAL_PP(bin_names_pp))
 #else
-					!as_query_select(&query, Z_STRVAL_P(*bin_names_pp))
+					!as_query_select(&query, Z_STRVAL_P(bin_names_pp))
 #endif
 					) {
 				DEBUG_PHP_EXT_DEBUG("Unable to apply filter bins to the query");
@@ -844,7 +850,7 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 	if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
 		as_query_where_inita(&query, 1);
 	}
-	
+
 	if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
 					set_p, predicate_ht_p, module_p, function_p,
 					args_list_p TSRMLS_CC))) {
@@ -860,20 +866,20 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 	if (bins_ht_p) {
 		as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
-		zval **bin_names_pp = NULL;
+		#if PHP_VERSION_ID < 70000
+      zval **bin_names_pp = NULL;
+		#else
+      zval *bin_names_pp = NULL;
+		#endif
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
 			if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
-#if PHP_VERSION_ID < 70000
 				convert_to_string_ex(bin_names_pp);
-#else
-				convert_to_string_ex(*bin_names_pp);
-#endif
 			}
 			if (
 #if PHP_VERSION_ID < 70000
 					!as_query_select(&query, Z_STRVAL_PP(bin_names_pp))
 #else
-					!as_query_select(&query, Z_STRVAL_P(*bin_names_pp))
+					!as_query_select(&query, Z_STRVAL_P(bin_names_pp))
 #endif
 					) {
 				DEBUG_PHP_EXT_DEBUG("Unable to apply filter bins to the query");

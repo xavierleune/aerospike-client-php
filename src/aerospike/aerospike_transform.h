@@ -85,7 +85,7 @@
  *
  *  It can be derived to following names,
  *  for example,
- *  
+ *
  *  AEROSPIKE_MAP_GET_ASSOC_STRING
  *  AEROSPIKE_LIST_PUT_APPEND_INTEGER
  *  AEROSPIKE_DEFAULT_GET_ASSOC_MAP
@@ -234,7 +234,7 @@
  *******************************************************************************************************
  */
 
-#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */ 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
             AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len,   \
@@ -246,7 +246,7 @@
             if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
                 PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
-            }                                                                  
+            }
 #else
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
@@ -260,12 +260,12 @@
             if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
                 PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
-            }                                                                  
+            }
 #endif
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
         err, label)                                                            \
 
-#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */ 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,       \
         err, label)                                                            \
 do {                                                                           \
@@ -312,15 +312,15 @@ do {                                                                           \
 } while(0);
 #endif
 
-/* 
+/*
  *******************************************************************************************************
- * End of key deduction methods for Record, List and Map. 
+ * End of key deduction methods for Record, List and Map.
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
- * Macros to access Static Pool 
+ * Macros to access Static Pool
  *******************************************************************************************************
  */
 #define CURRENT_LIST_SIZE(static_pool)                                         \
@@ -383,7 +383,7 @@ do {                                                                           \
 
 #define INIT_MAP_IN_POOL(store, hashtable_)                                    \
     store = (as_hashmap *) as_hashmap_init((as_hashmap*)store,                 \
-            AEROSPIKE_HASHMAP_BUCKET_SIZE);       
+            AEROSPIKE_HASHMAP_BUCKET_SIZE);
 
 #define INIT_STORE(store, static_pool, hashtable, level, err, label)           \
     if (AS_MAX_STORE_SIZE > CURRENT_##level##_SIZE(static_pool)) {             \
@@ -396,7 +396,7 @@ do {                                                                           \
         goto label;                                                            \
     }
 
-#define AS_DEFAULT_INIT_STORE(store, hashtable, static_pool, err, label) 
+#define AS_DEFAULT_INIT_STORE(store, hashtable, static_pool, err, label)
 
 #define AS_LIST_INIT_STORE(store, hashtable, static_pool, err, label)          \
     INIT_STORE(store, static_pool, hashtable, LIST, err, label)
@@ -418,7 +418,7 @@ do {                                                                           \
  * datatypes and deduce respective methods from each case (expanded above).
  *******************************************************************************************************
  */
-#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */ 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(as, method, level, action, err,           \
         static_pool, key, value, store, label, serializer_policy)              \
 do {                                                                           \
@@ -460,42 +460,42 @@ do {                                                                           \
     }                                                                          \
 } while(0)
 
-#else 
+#else
 
-#define AEROSPIKE_WALKER_SWITCH_CASE_PUT(method, level, action, err,           \
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT(as, method, level, action, err,           \
         static_pool, key, value, store, label, serializer_policy)              \
 do {                                                                           \
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
-    zval **dataval;                                                            \
+    zval* dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
     hashtable = Z_ARRVAL_P((zval*) *value);                                    \
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
-        switch (FETCH_VALUE_##method(dataval)) {                               \
-            EXPAND_CASE_PUT(level, method, action, ARRAY, key,                 \
+        switch (FETCH_VALUE_##method(&dataval)) {                               \
+            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,                 \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, STRING, key,                \
+            EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
                     dataval, store, err, static_pool, label, -1);              \
-            EXPAND_CASE_PUT(level, method, action, LONG, key,                  \
+            EXPAND_CASE_PUT(as, level, method, action, LONG, key,                  \
                     dataval, store, err, static_pool, label, -1);              \
-            EXPAND_CASE_PUT(level, method, action, DOUBLE, key,                \
+            EXPAND_CASE_PUT(as, level, method, action, DOUBLE, key,                \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, NULL, key,                  \
+            EXPAND_CASE_PUT(as, level, method, action, NULL, key,                  \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, OBJECT, key,                \
+            EXPAND_CASE_PUT(as, level, method, action, OBJECT, key,                \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, TRUE, key,                  \
+            EXPAND_CASE_PUT(as, level, method, action, TRUE, key,                  \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
-            EXPAND_CASE_PUT(level, method, action, FALSE, key,                 \
+            EXPAND_CASE_PUT(as, level, method, action, FALSE, key,                 \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
             default:                                                           \
@@ -528,7 +528,7 @@ do {                                                                           \
         value, store, label, serializer_policy)                                \
             AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, MAP, ASSOC, err,             \
                     static_pool, key, value, store, label, serializer_policy)
-/* 
+/*
  *******************************************************************************************************
  * End of Wrappers over the walker of PUT.
  *******************************************************************************************************
@@ -598,15 +598,15 @@ do {                                                                           \
 #define AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(as, err, static_pool, key,\
         value, array, label)                                                   \
             AEROSPIKE_WALKER_SWITCH_CASE(as, GET, LIST, APPEND, err,           \
-                    static_pool, key, value, array, label, -1) 
+                    static_pool, key, value, array, label, -1)
 
-/* 
+/*
  *******************************************************************************************************
  * End of Wrappers over the walker of PUT.
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * Macros for GET to iterate over complex datatypes and handle internal complex
  * datatypes with callbacks.
@@ -671,13 +671,13 @@ do {                                                                           \
 } while(0);
 #endif
 
-/* 
+/*
  *******************************************************************************************************
  * End of Macros for GET iteration over complex datatypes.
  *******************************************************************************************************
  */
 
-/* 
+/*
  *******************************************************************************************************
  * Macro to iterate over the keys of an array.
  * If number of iterations matches the length of array,
@@ -745,7 +745,7 @@ do {                                                                           \
         }                                                                      \
     }
 #else
-#define AEROSPIKE_PROCESS_ARRAY(level, action, label, key, value, store,       \
+#define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,       \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
@@ -762,13 +762,13 @@ do {                                                                           \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
         AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_LIST(inner_key,                     \
+        AEROSPIKE_##level##_PUT_##action##_LIST(as, inner_key,                     \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_LIST(store,                         \
+        AEROSPIKE_##level##_SET_##action##_LIST(as, store,                         \
                        inner_store, key, err);                                 \
         if(AEROSPIKE_OK != (err->code)) {                                      \
             goto label;                                                        \
@@ -776,13 +776,13 @@ do {                                                                           \
     } else {                                                                   \
         AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_MAP(inner_key,                      \
+        AEROSPIKE_##level##_PUT_##action##_MAP(as, inner_key,                      \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_MAP(store,                          \
+        AEROSPIKE_##level##_SET_##action##_MAP(as, store,                          \
                        inner_store, key, err);                                 \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
@@ -915,21 +915,21 @@ do {                                                                           \
             serializer_policy, err)                                            \
     is_datatype_double = true;                                                 \
     AS_DEFAULT_PUT_ASSOC_DOUBLE_BYTES(as, key, value, array, static_pool,      \
-                serializer_policy, err TSRMLS_CC)                               
+                serializer_policy, err TSRMLS_CC)
 
 #define AEROSPIKE_DEFAULT_PUT_ASSOC_BOOL(as, key, value, array, static_pool,   \
             serializer_policy, err)                                            \
     AS_DEFAULT_PUT_ASSOC_BYTES(as, key, value, array, static_pool,             \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_TRUE(key, value, array, static_pool,       \
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_TRUE(as, key, value, array, static_pool,       \
             serializer_policy, err)                                            \
-    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                 \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_DEFAULT_PUT_ASSOC_FALSE(key, value, array, static_pool,      \
+#define AEROSPIKE_DEFAULT_PUT_ASSOC_FALSE(as, key, value, array, static_pool,      \
             serializer_policy, err)                                            \
-    AS_DEFAULT_PUT_ASSOC_BYTES(key, value, array, static_pool,                 \
+    AS_DEFAULT_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                 \
         serializer_policy, err TSRMLS_CC)
 
 /*
@@ -982,14 +982,14 @@ do {                                                                           \
     AS_MAP_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                 \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_TRUE(key, value, array, static_pool,           \
+#define AEROSPIKE_MAP_PUT_ASSOC_TRUE(as, key, value, array, static_pool,           \
            serializer_policy, err)                                             \
-    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+    AS_MAP_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                     \
         serializer_policy, err TSRMLS_CC)
 
-#define AEROSPIKE_MAP_PUT_ASSOC_FALSE(key, value, array, static_pool,          \
+#define AEROSPIKE_MAP_PUT_ASSOC_FALSE(as, key, value, array, static_pool,          \
            serializer_policy, err)                                             \
-    AS_MAP_PUT_ASSOC_BYTES(key, value, array, static_pool,                     \
+    AS_MAP_PUT_ASSOC_BYTES(as, key, value, array, static_pool,                     \
         serializer_policy, err TSRMLS_CC)
 
 /*
@@ -1220,4 +1220,3 @@ aerospike_transform_iterate_records(Aerospike_object* as, zval **record_pp, as_r
 bool server_support_double, as_error *error_p TSRMLS_DC);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
-

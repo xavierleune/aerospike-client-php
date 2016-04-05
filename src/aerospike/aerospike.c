@@ -157,7 +157,11 @@ static void aerospike_check_close_and_destroy(zval *hashtable_element)
 }
 
 /* Shared memory key persistent list destruction */
+#if PHP_VERSION_ID < 70000
 static void shm_key_hashtable_dtor(void *hashtable_element)
+#else
+static void shm_key_hashtable_dtor(zval *hashtable_element)
+#endif
 {
 	TSRMLS_FETCH();
 	DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
@@ -3555,7 +3559,7 @@ PHP_METHOD(Aerospike, setSerializer)
 {
 	as_status              status = AEROSPIKE_OK;
 
-	if (user_serializer_call_info.function_name &&
+	if (&user_serializer_call_info.function_name &&
 			(AEROSPIKE_Z_ISREF_P(user_serializer_call_info.function_name))) {
 
 		/*
@@ -3734,16 +3738,11 @@ PHP_METHOD(Aerospike, predicateBetween)
 
 #if PHP_VERSION_ID < 70000
 	MAKE_STD_ZVAL(minmax_arr);
-	array_init_size(minmax_arr, 2);
-	add_next_index_long(minmax_arr, min_p);
-	add_next_index_long(minmax_arr, max_p);
-	add_assoc_zval(return_value, VAL, minmax_arr);
-#else
-	array_init_size(&minmax_arr, 2);
-	add_next_index_long(&minmax_arr, min_p);
-	add_next_index_long(&minmax_arr, max_p);
-	add_assoc_zval(return_value, VAL, &minmax_arr);
 #endif
+	AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
+	AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, min_p);
+	AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, max_p);
+	AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 
@@ -3845,10 +3844,8 @@ PHP_METHOD(Aerospike, predicateRange)
 
 #if PHP_VERSION_ID < 70000
 	MAKE_STD_ZVAL(minmax_arr);
-	array_init_size(minmax_arr, 2);
-#else
-	array_init_size(&minmax_arr, 2);
 #endif
+AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
 	/*
 	 * Range min value
 	 */
@@ -3897,11 +3894,7 @@ PHP_METHOD(Aerospike, predicateRange)
 			DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
 			RETURN_NULL();
 	}
-#if PHP_VERSION_ID < 70000
-	add_assoc_zval(return_value, VAL, minmax_arr);
-#else
-	add_assoc_zval(return_value, VAL, &minmax_arr);
-#endif
+AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 
