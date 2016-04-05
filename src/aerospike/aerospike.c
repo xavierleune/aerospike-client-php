@@ -4485,7 +4485,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
 
     array_init(return_value);
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    add_assoc_stringl(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
     add_assoc_stringl(return_value, VAL, region_p, region_len, 1);
 }
 
@@ -4510,7 +4510,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
 
     array_init(return_value);
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    add_assoc_stringl(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
 
     snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
@@ -4536,7 +4536,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
 
     array_init(return_value);
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    add_assoc_stringl(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
     add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len, 1);
 }
 
@@ -4561,7 +4561,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 
     array_init(return_value);
     add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    add_assoc_stringl(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
 
     snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius); 
 

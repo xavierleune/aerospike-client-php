@@ -590,11 +590,32 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
                                     && (aerospike_obj_p->hasGeoJSON)
                                     && op == AS_OPERATOR_WRITE) {
                                 int result;
-                                zval* retval = NULL, fname;
-                                ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
-                                result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+                                zval* retval = NULL, *fname = NULL;
+                                ALLOC_INIT_ZVAL(fname);
+                                ZVAL_STRINGL(fname, "__tostring", sizeof("__tostring") -1, 1);
+                                result = call_user_function_ex(NULL, each_operation, fname, &retval,
                                         0, NULL, 0, NULL TSRMLS_CC);
-                                geoStr = Z_STRVAL_P(retval);
+
+                                geoStr = (char *) malloc (strlen(Z_STRVAL_P(retval)) + 1);
+                                if (geoStr == NULL) {
+                                    DEBUG_PHP_EXT_DEBUG("Failed to allocate memory\n");
+                                    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                                            "Failed to allocate memory\n");
+                                    goto exit;
+                                }
+                                memset(geoStr, '\0', strlen(geoStr));
+                                strcpy(geoStr, Z_STRVAL_P(retval));
+
+                                if (name) {
+                                    efree((void *) name);
+                                    name = NULL;
+                                }
+                                if (fname) {
+                                    zval_ptr_dtor(&fname);
+                                }
+                                if (retval) {
+                                    zval_ptr_dtor(&retval);
+                                }
                             }
                             else {
                                 status = AEROSPIKE_ERR_CLIENT;
