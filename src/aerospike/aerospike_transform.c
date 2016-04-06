@@ -1123,7 +1123,7 @@ exit:
  *
  *******************************************************************************************************
  */
-void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_MAP_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1141,7 +1141,7 @@ void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *arr
  *
  *******************************************************************************************************
  */
-void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+static void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_LIST_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);

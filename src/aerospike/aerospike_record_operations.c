@@ -30,7 +30,7 @@
 #include "aerospike_general_constants.h"
 #include "aerospike_transform.h"
 
-extern bool operater_ordered_callback(const char *key, const as_val *value, void *array)
+extern bool operater_ordered_callback(const char *key, const as_val *value, void *array TSRMLS_DC)
 {
     zval* record_local_p;
     static int iterator = 0;
@@ -994,7 +994,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
         if (AEROSPIKE_OK != (status = aerospike_key_operate(as_object_p, error_p,
                         &operate_policy, as_key_p, &ops, &get_rec))) {
             DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-            operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata);
+            operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata TSRMLS_CC);
             goto exit;
         } else {
             if (get_rec) {
@@ -1004,13 +1004,13 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
                             (op == AS_CDT_OP_LIST_GET_RANGE_NEW) ||
                             (op == AS_CDT_OP_LIST_POP_NEW)   ||
                             (op == AS_CDT_OP_LIST_POP_RANGE_NEW))) {
-                    if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata)) {
+                    if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata TSRMLS_CC)) {
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get bins of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");
                     }
                 } else if (get_rec->bins.size == 0){
-                    if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata)) {
+                    if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata TSRMLS_CC)) {
                         PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
                                 "Unable to get bins of a record");
                         DEBUG_PHP_EXT_DEBUG("Unable to get bins of a record");

@@ -75,7 +75,6 @@ ZEND_EXTERN_MODULE_GLOBALS(aerospike);
 
 #ifdef ZTS
 #define AEROSPIKE_G(v) (((zend_aerospike_globals*)(*((void ***)tsrm_ls))[(aerospike_globals_id)-1])->v)
-zend_aerospike_globals *globals;
 #else
 #define AEROSPIKE_G(v) (aerospike_globals.v)
 #endif
