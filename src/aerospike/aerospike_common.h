@@ -170,6 +170,8 @@
 #define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN               8
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                       "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN                   4
+#define PHP_AS_RECORD_DEFINE_FOR_RESULTS                    "results"
+#define PHP_AS_RECORD_DEFINE_FOR_RESULTS_LEN                7
 #define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS                   "max_threads"
 #define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN               11
 #define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE              "thread_pool_size"
@@ -598,6 +600,13 @@ aerospike_record_operations_general(Aerospike_object* aerospike_object_p,
                                 u_int64_t operation);
 
 extern as_status aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                zval* returned_p,
+                                HashTable* operations_array_p);
+
+extern as_status aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
                                 as_key* as_key_p,
                                 zval* options_p,
                                 as_error* error_p,
