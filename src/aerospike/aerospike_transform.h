@@ -1038,9 +1038,23 @@ do {                                                                           \
 #define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
     add_next_index_zval(array, store);
 
+extern as_status
+aerospike_get_record_key_digest(as_config *as_config_p, as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC);
+
+extern as_status
+aerospike_get_record_metadata(as_record* get_record_p, zval* metadata_container_p TSRMLS_DC);
+
 extern void
 aerospike_transform_iterate_records(Aerospike_object* as, zval **record_pp, as_record* as_record_p, as_static_pool* static_pool, int8_t serializer_policy,
 bool server_support_double, as_error *error_p TSRMLS_DC);
+
+extern void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
+extern void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
+extern void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
+extern void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
+extern void ADD_LIST_APPEND_DOUBLE(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
+extern void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
+extern void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC);
 
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
 

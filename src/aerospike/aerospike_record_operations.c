@@ -45,7 +45,6 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
         }
     }
 
-
     if (value) {
         switch(value->type) {
             case AS_STRING:
@@ -69,7 +68,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                 }
 
             case AS_BYTES:
-                ADD_LIST_APPEND_BYTES(NULL, NULL, value, &record_local_p, &err TSRMLS_CC);
+                ADD_LIST_APPEND_BYTES(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
                 if (err.code != AEROSPIKE_OK) {
                     DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                     return false;
@@ -78,7 +77,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 
             case AS_UNDEF:
             case AS_NIL:
-                ADD_LIST_APPEND_NULL(NULL, NULL, value, &record_local_p, &err TSRMLS_CC);
+                ADD_LIST_APPEND_NULL(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
                 if (err.code != AEROSPIKE_OK) {
                     DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                     return false;
@@ -86,7 +85,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                 break;
 
             case AS_DOUBLE:
-                 ADD_LIST_APPEND_DOUBLE(NULL, NULL, value, &record_local_p, &err TSRMLS_CC);
+                 ADD_LIST_APPEND_DOUBLE(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
                  if (err.code != AEROSPIKE_OK) {
                      DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                      return false;
@@ -94,7 +93,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  break;
 
             case AS_LIST:
-                 ADD_LIST_APPEND_LIST(NULL, key, value, &record_local_p, &err TSRMLS_CC);
+                 ADD_LIST_APPEND_LIST(NULL, (void *)key, (void *)value, &record_local_p, &err TSRMLS_CC);
                  if (err.code != AEROSPIKE_OK) {
                      DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                      return false;
@@ -102,7 +101,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  break;
 
             case AS_MAP:
-                 ADD_LIST_APPEND_MAP(NULL, NULL, value, &record_local_p, &err TSRMLS_CC);
+                 ADD_LIST_APPEND_MAP(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
                  if (err.code != AEROSPIKE_OK) {
                      DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                      return false;
@@ -110,7 +109,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  break;
 
             case AS_REC:
-                 ADD_LIST_APPEND_REC(NULL, NULL, value, &record_local_p, &err TSRMLS_CC);
+                 ADD_LIST_APPEND_REC(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
                  if (err.code != AEROSPIKE_OK) {
                      DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                      return false;
@@ -118,7 +117,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
                  break;
 
             case AS_PAIR:
-                 ADD_LIST_APPEND_PAIR(NULL, NULL, value, &record_local_p, &err TSRMLS_CC);
+                 ADD_LIST_APPEND_PAIR(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
                  if (err.code != AEROSPIKE_OK) {
                      DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
                      return false;
