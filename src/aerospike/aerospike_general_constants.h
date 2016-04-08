@@ -74,6 +74,7 @@ static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
     { AS_OPERATOR_PREPEND,  "OPERATOR_PREPEND"   },
     { AS_OPERATOR_APPEND,   "OPERATOR_APPEND"    },
     { AS_OPERATOR_TOUCH,    "OPERATOR_TOUCH"     },
+    { AS_INDEX_GEO2DSPHERE, "INDEX_GEO2DSPHERE"  },
     { AS_CDT_OP_LIST_APPEND_NEW,"OP_LIST_APPEND" },
     { AS_CDT_OP_LIST_INSERT_NEW,"OP_LIST_INSERT" },
     { AS_CDT_OP_LIST_INSERT_ITEMS_NEW,"OP_LIST_INSERT_ITEMS"},
@@ -99,7 +100,8 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
     { "BETWEEN",   "OP_BETWEEN" },
     { "CONTAINS",   "OP_CONTAINS" },
     { "RANGE",   "OP_RANGE" },
-    { "GEOWITHIN",   "OP_GEOWITHINREGION" }
+    { "GEOWITHIN",   "OP_GEOWITHINREGION" },
+    { "GEOCONTAINS",   "OP_GEOCONTAINSPOINT" }
 };
 
 #define AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE (sizeof(aerospike_general_long_constants)/sizeof(AerospikeGeneralLongConstants))

@@ -385,7 +385,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_null(*((zval **) array));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -403,10 +403,36 @@ static void ADD_LIST_APPEND_NULL(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_bool(*((zval **) array),
             (int8_t) as_boolean_get((as_boolean *) value));
+    PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
+}
+
+/*
+ ********************************************************************************************************
+ * Adds a double to PHP asson array: record.
+ *
+ * @param key                   The bin name.
+ * @param value                 The sting value to be added to the PHP array.
+ * @param array                 The PHP array to be appended to.
+ * @param err                   The as_error to be populated by the function
+ *                              with encountered error if any.
+ *******************************************************************************************************
+ */
+void ADD_LIST_APPEND_DOUBLE(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+{
+    /*if (key == NULL) {
+      zval* double_zval_p = NULL;
+      ALLOC_INIT_ZVAL(double_zval_p);
+      ZVAL_DOUBLE(double_zval_p, (double)as_double_get((as_double *)value));
+      zval_dtor((zval *)array);
+      ZVAL_ZVAL((zval *)array, double_zval_p, 1, 1);
+      } else {
+      add_next_index_double(*((zval **) array), (double)as_double_get((as_double *) value));
+      }*/
+    add_next_index_double(*((zval **) array), (double) as_double_get((as_double *) value));
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
@@ -422,7 +448,7 @@ static void ADD_LIST_APPEND_BOOL(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_long(*((zval **) array),
             (long) as_integer_get((as_integer *) value));
@@ -441,7 +467,7 @@ static void ADD_LIST_APPEND_LONG(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     add_next_index_stringl(*((zval **) array),
             as_string_get((as_string *) value),
@@ -461,7 +487,7 @@ static void ADD_LIST_APPEND_STRING(Aerospike_object* as, void *key, void *value,
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -478,7 +504,7 @@ static void ADD_LIST_APPEND_REC(Aerospike_object* as, void *key, void *value, vo
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -495,7 +521,7 @@ static void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, v
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     zval        *unserialized_zval = NULL;
 
@@ -1017,15 +1043,17 @@ static void ADD_DEFAULT_ASSOC_PAIR(Aerospike_object* as, void *key, void *value,
 static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     int result;
-    zval* retval = NULL, fname;
+    zval* retval = NULL, *fname = NULL;
     zval* geojson_zval_p = NULL;
     zval** param[1];
+    ALLOC_INIT_ZVAL(fname);
     ALLOC_INIT_ZVAL(geojson_zval_p);
     char* json_string = (char*)as_geojson_get(as_geojson_fromval(value));
-    ZVAL_STRINGL(&fname, "json_decode", sizeof("json_decode") - 1, 1);
-    ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 0);
+    ZVAL_STRINGL(fname, "\\Aerospike\\GeoJSON::fromJson", sizeof("\\Aerospike\\GeoJSON::fromJson") - 1, 1);
+    ZVAL_STRING(geojson_zval_p, (char*)as_geojson_get(as_geojson_fromval(value)), 1);
     param[0] = &geojson_zval_p;
-    result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+    result = call_user_function_ex(NULL, &geojson_zval_p, fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+
     if (key == NULL) {
         zval_dtor((zval*)array);
         ZVAL_ZVAL((zval*)array, retval, 1, 1);
@@ -1034,6 +1062,13 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *val
                 retval);
     }
 
+    if (geojson_zval_p) {
+        zval_ptr_dtor(param[0]);
+    }
+
+    if (fname) {
+        zval_ptr_dtor(&fname);
+    }
     PHP_EXT_SET_AS_ERR((as_error*) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
@@ -1097,7 +1132,7 @@ exit:
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_MAP_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1115,7 +1150,7 @@ static void ADD_LIST_APPEND_MAP(Aerospike_object* as, void *key, void *value, vo
  *
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
     AS_APPEND_LIST_TO_LIST(key, value, array, err);
     PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1763,11 +1798,21 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
         void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
     int result;
-    zval* retval = NULL, fname;
+    zval* retval = NULL, *fname = NULL;
     char* geoStr = NULL;
-    ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") - 1, 1);
-    result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
-    geoStr = Z_STRVAL_P(retval);
+
+    ALLOC_INIT_ZVAL(fname);
+    ZVAL_STRINGL(fname, "__tostring", sizeof("__tostring") - 1, 1);
+    result = call_user_function_ex(NULL, value, fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
+    geoStr = (char *) malloc (strlen(Z_STRVAL_P(retval)) + 1);
+    if (geoStr == NULL) {
+        DEBUG_PHP_EXT_DEBUG("Failed to allocate memory\n");
+        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                "Failed to allocate memory\n");
+        goto exit;
+    }
+    memset(geoStr, '\0', strlen(geoStr));
+    strcpy(geoStr, Z_STRVAL_P(retval));
     if (!(as_record_set_geojson_str((as_record*)array, (const char*)key, 
                     geoStr))) {
         DEBUG_PHP_EXT_DEBUG("Unable to set record as geojson string.\n");
@@ -1777,6 +1822,12 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
     }
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 exit:
+    if (fname) {
+        zval_ptr_dtor(&fname);
+    }
+    if (retval) {
+        zval_ptr_dtor(&retval);
+    }
     return;
 }
 
@@ -1828,6 +1879,10 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
+    if (name) {
+        efree((void*)name);
+        name = NULL;
+    }
     return;
 }
 
@@ -3481,7 +3536,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-    static as_status
+    as_status
 aerospike_get_record_key_digest(as_config *as_config_p, as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
     as_status                  status = AEROSPIKE_OK;
