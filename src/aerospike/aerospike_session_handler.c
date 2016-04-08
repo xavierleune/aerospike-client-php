@@ -366,7 +366,7 @@ PS_WRITE_FUNC(aerospike)
         goto exit;
     }
 
-    record.ttl = CACHE_EXPIRE_PHP_INI;
+    record.ttl = SESSION_EXPIRE_PHP_INI;
     if (AEROSPIKE_OK != aerospike_key_put(session_p->aerospike_obj_p->as_ref_p->as_p,
                                         &error, NULL, &key_put, &record)) {
         DEBUG_PHP_EXT_ERROR("Unable to save session data");
