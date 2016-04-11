@@ -1171,7 +1171,7 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *val
 	  result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
 	#else
 	  param[0] = geojson_zval_p;
-	  result = call_user_function_ex(NULL, &geojson_zval_p, &fname, &retval, 1, param, 0, NULL TSRMLS_CC);
+	  result = call_user_function_ex(NULL, &geojson_zval_p, fname, &retval, 1, param, 0, NULL TSRMLS_CC);
 	#endif
 	if (key == NULL) {
 		zval_dtor((zval*)array);
@@ -1968,7 +1968,7 @@ static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* 
 	  result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
 		geoStr = Z_STRVAL_P(retval);
 	#else
-	  result = call_user_function_ex(NULL, value, &fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
+	  result = call_user_function_ex(NULL, value, fname, &retval, 0, NULL, 0, NULL TSRMLS_CC);
 		geoStr = Z_STRVAL_P(&retval);
 	#endif
 	if (!(as_record_set_geojson_str((as_record*)array, (const char*)key,
@@ -2537,12 +2537,12 @@ static void AS_LIST_PUT_APPEND_BYTES(Aerospike_object* as, void* key, void *valu
 	GET_BYTES_POOL(bytes, static_pool, error_p, exit);
 
 	serialize_based_on_serializer_policy(serializer_policy, bytes,
-			#if PHP_VERSION_ID < 70000
-				zval**
-			#else
-				zval*
-			#endif
-			value, error_p TSRMLS_CC);
+		#if PHP_VERSION_ID < 70000
+				(zval**) value
+		#else
+				(zval*) value
+		#endif
+			, error_p TSRMLS_CC);
 	if(AEROSPIKE_OK != (error_p->code)) {
 		goto exit;
 	}
