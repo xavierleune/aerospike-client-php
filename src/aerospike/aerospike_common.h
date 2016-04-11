@@ -1156,7 +1156,7 @@ check_val_type_list(zval **value);
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, SIZE, ifDuplicate) \
-		ZVAL_STRINGL(return_value, digest_p, SIZE)
+		ZVAL_STRINGL(&return_value, digest_p, SIZE)
 
  /*
 	******************************************************************************************************

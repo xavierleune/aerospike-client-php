@@ -182,7 +182,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 #if PHP_VERSION_ID < 70000
 	user_callback_info->params = params;
 #else
-	user_callback_info->params = **params;
+	user_callback_info->params = *params;
 #endif
 
 #if PHP_VERSION_ID < 70000

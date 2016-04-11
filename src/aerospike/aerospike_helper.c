@@ -136,10 +136,22 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 	array_init(&err_code_p);
 	array_init(&err_msg_p);
 	if (error_t.reset) {
-		AEROSPIKE_ZVAL_STRINGL(&err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
+		AEROSPIKE_ZVAL_STRINGL(
+      #if PHP_VERSION_ID < 70000
+        &err_msg_p
+      #else
+        err_msg_p
+      #endif
+      , DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
 		ZVAL_LONG(&err_code_p, DEFAULT_ERRORNO);
 	} else {
-		AEROSPIKE_ZVAL_STRINGL(&err_msg_p, error_t.error.message, strlen(error_t.error.message), 1);
+		AEROSPIKE_ZVAL_STRINGL(
+      #if PHP_VERSION_ID < 70000
+        &err_msg_p
+      #else
+        err_msg_p
+      #endif
+      , error_t.error.message, strlen(error_t.error.message), 1);
 		ZVAL_LONG(&err_code_p, error_t.error.code);
 	}
 
