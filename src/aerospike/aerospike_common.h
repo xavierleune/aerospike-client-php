@@ -1271,11 +1271,9 @@ check_val_type_list(zval **value);
 	* Macro to iterate over a hashtable.
 	*****************************************************************************************************
 	*/
-#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
-	for (zend_hash_internal_pointer_reset_ex(ht, position);                        \
-		datavalue = zend_hash_get_current_data_ex(ht,                               \
-			position);                                                             \
-		zend_hash_move_forward_ex(ht, position))
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                   \
+  ZEND_HASH_FOREACH_VAL(ht, datavalue) {                                  \
+  } ZEND_HASH_FOREACH_END();
 
  /*
 	******************************************************************************************************

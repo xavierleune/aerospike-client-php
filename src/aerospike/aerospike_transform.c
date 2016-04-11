@@ -2417,13 +2417,7 @@ void AS_DEFAULT_PUT(Aerospike_object* as, void *key, void *value, as_record *rec
 		int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
 	AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(as, error_p, static_pool,
-			key, ((
-				#if PHP_VERSION_ID < 70000
-				  zval**)value
-				#else
-				  zval*)value
-				#endif
-				, record_p, exit, serializer_policy);
+			key, ((zval**)value), record_p, exit, serializer_policy);
 exit:
 	return;
 }
@@ -2446,13 +2440,7 @@ extern void AS_LIST_PUT(Aerospike_object *as, void *key, void *value, void *stor
 		int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
 	AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(as, error_p, static_pool,
-			key, ((
-				#if PHP_VERSION_ID < 70000
-				  zval**)value
-				#else
-				  zval*)value
-				#endif
-				, store, exit, serializer_policy);
+			key, ((zval**)value), store, exit, serializer_policy);
 exit:
 	return;
 }
@@ -2933,8 +2921,7 @@ aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp,
 #else
   zend_ulong index_u64 = 0;
 	AEROSPIKE_FOREACH_HASHTABLE (ht_p, hashPosition_p, keyData_p) {
-
-		zend_string*	 key_value_p = NULL;
+  zend_string*	 key_value_p = NULL;
 #endif
 		u_int32_t   key_len_u32 = 0;
 
@@ -4062,7 +4049,7 @@ aerospike_transform_filter_bins_exists(Aerospike_object *as_object_p,
     AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
 		switch (Z_TYPE_PP(bin_names))
 #else
-    AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, &pointer, bin_names) {
+    AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
 		switch (Z_TYPE_P(bin_names))
 #endif
 		{
@@ -4691,7 +4678,9 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 	foreach_callback_udata  foreach_record_callback_udata;
 	zval*                   get_record_p = NULL;
 
-	ALLOC_INIT_ZVAL(get_record_p);
+	#if PHP_VERSION_ID < 70000
+		ALLOC_INIT_ZVAL(get_record_p);
+	#endif
 	array_init(get_record_p);
 
 	foreach_record_callback_udata.udata_p = get_record_p;
