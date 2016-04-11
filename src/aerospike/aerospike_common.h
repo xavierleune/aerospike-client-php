@@ -546,8 +546,12 @@ aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
 
 extern as_status
 aerospike_transform_key_data_put(Aerospike_object* as_object_p,
-								zval **record_pp,
-								as_key* as_key_p,
+	              #if PHP_VERSION_ID < 70000
+		              zval **record_pp
+	              #else
+		              zval *record_pp
+	              #endif
+								, as_key* as_key_p,
 								as_error *error_p,
 								u_int32_t ttl_u32,
 								zval* options_p,
