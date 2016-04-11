@@ -128,7 +128,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 #else
 		if (strncmp(Z_STRVAL_P(op_pp), "=", 1) == 0) {
 #endif
-			switch(Z_TYPE_PP(val_pp)) {
+			switch(
+			  #if PHP_VERSION_ID < 70000
+				  Z_TYPE_PP(val_pp
+			  #else
+					Z_TYPE_P(val_pp
+				#endif
+				)) {
 				case IS_STRING:
 #if PHP_VERSION_ID < 70000
 					convert_to_string_ex(val_pp);
@@ -173,7 +179,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 #endif
 					{
 			bool between_unpacked = false;
-			if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
+			if (
+			  #if PHP_VERSION_ID < 70000
+				  Z_TYPE_PP(val_pp
+				#else
+				  Z_TYPE_P(val_pp
+				#endif
+				) == IS_ARRAY) {
         convert_to_array_ex(val_pp);
 				#if PHP_VERSION_ID < 70000
 				  zval** min_pp;
@@ -193,7 +205,20 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 						) {
 					convert_to_long_ex(min_pp);
 					convert_to_long_ex(max_pp);
-					if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
+					if (
+
+							#if PHP_VERSION_ID < 70000
+							  Z_TYPE_PP(min_pp
+							#else
+								Z_TYPE_P(min_pp
+							#endif
+						) == IS_LONG &&
+							#if PHP_VERSION_ID < 70000
+								Z_TYPE_PP(max_pp
+							#else
+								Z_TYPE_P(max_pp
+							#endif
+						) == IS_LONG) {
 						between_unpacked = true;
 						if (
 #if PHP_VERSION_ID < 70000
@@ -243,10 +268,23 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 #else
 			convert_to_long_ex(index_type_pp);
 #endif
-			switch(Z_TYPE_PP(val_pp)) {
+			switch(
+
+					#if PHP_VERSION_ID < 70000
+						Z_TYPE_PP(val_pp
+					#else
+						Z_TYPE_P(val_pp
+					#endif
+				)) {
 				case IS_STRING:
 					convert_to_string_ex(val_pp);
-					if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
+					if (
+						#if PHP_VERSION_ID < 70000
+					    Z_LVAL_PP(index_type_pp
+						#else
+						  Z_LVAL_P(index_type_pp
+						#endif
+						) == AS_INDEX_TYPE_MAPVALUES) {
 						if (
 #if PHP_VERSION_ID < 70000
 								!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -260,7 +298,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 							PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 									"Unable to set query predicate");
 						}
-					} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
+					} else if (
+					    #if PHP_VERSION_ID < 70000
+						    Z_LVAL_PP(index_type_pp
+							#else
+							  Z_LVAL_P(index_type_pp
+							#endif
+						) == AS_INDEX_TYPE_MAPKEYS) {
 						if (
 #if PHP_VERSION_ID < 70000
 								!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -274,7 +318,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 							PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 									"Unable to set query predicate");
 						}
-					} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
+					} else if (
+						#if PHP_VERSION_ID < 70000
+						  Z_LVAL_PP(index_type_pp
+						#else
+							Z_LVAL_P(index_type_pp
+						#endif
+						) == AS_INDEX_TYPE_LIST) {
 						if (
 #if PHP_VERSION_ID < 70000
 								!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -297,7 +347,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 					break;
 				case IS_LONG:
 					convert_to_long_ex(val_pp);
-					if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
+					if (
+							#if PHP_VERSION_ID < 70000
+							  Z_LVAL_PP(index_type_pp
+							#else
+							  Z_LVAL_P(index_type_pp
+							#endif
+						) == AS_INDEX_TYPE_MAPVALUES) {
 						if (
 #if PHP_VERSION_ID < 70000
 								!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -311,7 +367,14 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 							PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 									"Unable to set query predicate");
 						}
-					} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
+					} else if (
+
+							#if PHP_VERSION_ID < 70000
+								Z_LVAL_PP(index_type_pp
+							#else
+								Z_LVAL_P(index_type_pp
+							#endif
+						) == AS_INDEX_TYPE_MAPKEYS) {
 						if (
 #if PHP_VERSION_ID < 70000
 								!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -325,7 +388,14 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 							PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 									"Unable to set query predicate");
 						}
-					} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
+					} else if (
+
+							#if PHP_VERSION_ID < 70000
+								Z_LVAL_PP(index_type_pp
+							#else
+							  Z_LVAL_P(index_type_pp
+							#endif
+						) == AS_INDEX_TYPE_LIST) {
 						if (
 #if PHP_VERSION_ID < 70000
 								!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -374,7 +444,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 				goto exit;
 			}
 			bool between_unpacked = false;
-			if (Z_TYPE_PP(val_pp) == IS_ARRAY) {
+			if (
+					#if PHP_VERSION_ID < 70000
+						Z_TYPE_PP(val_pp
+					#else
+						Z_TYPE_P(val_pp
+					#endif
+				) == IS_ARRAY) {
 			  convert_to_array_ex(val_pp);
 			  convert_to_long_ex(index_type_pp);
 #if PHP_VERSION_ID < 70000
@@ -395,9 +471,28 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 						) {
           convert_to_long_ex(min_pp);
 					convert_to_long_ex(max_pp);
-					if (Z_TYPE_PP(min_pp) == IS_LONG && Z_TYPE_PP(max_pp) == IS_LONG) {
+					if (
+							#if PHP_VERSION_ID < 70000
+								Z_TYPE_PP(min_pp
+							#else
+								Z_TYPE_P(min_pp
+							#endif
+						) == IS_LONG &&
+							#if PHP_VERSION_ID < 70000
+									Z_TYPE_PP(max_pp
+							#else
+									Z_TYPE_P(max_pp
+							#endif
+						) == IS_LONG) {
 						between_unpacked = true;
-						if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPVALUES) {
+						if (
+
+								#if PHP_VERSION_ID < 70000
+										Z_LVAL_PP(index_type_pp
+								#else
+										Z_LVAL_P(index_type_pp
+								#endif
+							) == AS_INDEX_TYPE_MAPVALUES) {
 							if (
 #if PHP_VERSION_ID < 70000
 									!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -414,7 +509,14 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 								PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 										"Unable to set query predicate");
 							}
-						} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_MAPKEYS) {
+						} else if (
+
+								#if PHP_VERSION_ID < 70000
+								  Z_LVAL_PP(index_type_pp
+								#else
+								  Z_LVAL_P(index_type_pp
+								#endif
+							) == AS_INDEX_TYPE_MAPKEYS) {
 							if (
 #if PHP_VERSION_ID < 70000
 									!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -430,7 +532,14 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 								PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 										"Unable to set query predicate");
 							}
-						} else if (Z_LVAL_PP(index_type_pp) == AS_INDEX_TYPE_LIST) {
+						} else if (
+
+								#if PHP_VERSION_ID < 70000
+									Z_LVAL_PP(index_type_pp
+								#else
+									Z_LVAL_P(index_type_pp
+								#endif
+							) == AS_INDEX_TYPE_LIST) {
 							if (
 #if PHP_VERSION_ID < 70000
 									!as_query_where(query_p, Z_STRVAL_PP(bin_pp),
@@ -721,7 +830,13 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
       zval* bin_names_pp = NULL;
 		#endif
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-			if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
+			if (
+					#if PHP_VERSION_ID < 70000
+						Z_TYPE_PP(bin_names_pp
+					#else
+						Z_TYPE_P(bin_names_pp
+					#endif
+				) != IS_STRING) {
 				convert_to_string_ex(bin_names_pp);
 			}
 			if (
@@ -862,7 +977,13 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
       zval *bin_names_pp = NULL;
 		#endif
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-			if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
+			if (
+					#if PHP_VERSION_ID < 70000
+					  Z_TYPE_PP(bin_names_pp
+					#else
+						Z_TYPE_P(bin_names_pp
+					#endif
+				) != IS_STRING) {
 				convert_to_string_ex(bin_names_pp);
 			}
 			if (

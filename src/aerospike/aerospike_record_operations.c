@@ -569,7 +569,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 	char*                       geoStr;
 	int                         offset = 0;
 	double                      double_offset = 0.0;
-	long                        l_offset = 0;
+	#if PHP_VERSION_ID < 70000
+		long                      l_offset = 0;
+	#else
+		zend_long                 l_offset = 0;
+	#endif
 	int                         op;
 	#if PHP_VERSION_ID < 70000
 	      HashTable*                  each_operation_array_p = NULL;
@@ -735,9 +739,6 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 							#if PHP_VERSION_ID < 70000
 							dup = zend_get_object_classname(*((zval**)each_operation),
 									&name, &name_len TSRMLS_CC);
-							#else
-							dup = zend_get_object_classname(each_operation,
-									&name, &name_len TSRMLS_CC);
 							#endif
 							if((!strcmp(name, GEOJSONCLASS))
 									&& (aerospike_obj_p->hasGeoJSON)
@@ -838,7 +839,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 			#else
 			  if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
 							as_key_p, options_p, error_p, bin_name_p, str, geoStr,
-							offset, double_offset, ttl, op, &ops, &each_operation, &operate_policy,
+							offset, double_offset, ttl, op, &ops, each_operation, &operate_policy,
 							serializer_policy, &temp_rec TSRMLS_CC))) {
 			#endif
 

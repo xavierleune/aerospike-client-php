@@ -513,7 +513,13 @@ process_filer_bins(HashTable *bins_array_p, const char **select_p TSRMLS_DC)
 	int                 count = 0;
 
 	AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
-		switch (Z_TYPE_PP(bin_names)) {
+		switch (
+				#if PHP_VERSION_ID < 70000
+						Z_TYPE_PP(bin_names
+				#else
+						Z_TYPE_P(bin_names
+				#endif
+			)) {
 			case IS_STRING:
 #if PHP_VERSION_ID < 70000
 				select_p[count++] = Z_STRVAL_PP(bin_names);
