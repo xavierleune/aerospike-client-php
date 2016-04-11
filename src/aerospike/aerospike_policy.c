@@ -857,7 +857,7 @@ set_policy_ex(as_config *as_config_p,
 								"Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
 						goto exit;
 					}
-					if (!as_scan_set_concurrent(as_scan_p, (uint32_t) Z_BVAL_P(options_value))) {
+					if (!as_scan_set_concurrent(as_scan_p, (uint32_t) Z_DVAL_P(options_value))) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set scan concurrency");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan concurrency");
 						goto exit;
@@ -873,7 +873,7 @@ set_policy_ex(as_config *as_config_p,
 								"Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
 						goto exit;
 					}
-					if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_BVAL_P(options_value))) {
+					if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_DVAL_P(options_value))) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set scan no bins");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan no bins");
 						goto exit;

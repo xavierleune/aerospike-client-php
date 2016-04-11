@@ -2072,7 +2072,7 @@ PHP_METHOD(Aerospike, listAppend)
 	  MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
 		add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
   #else
-	 	MAKE_COPY_ZVAL(&append_val_p, &append_val_copy);
+	 	//MAKE_COPY_ZVAL(&append_val_p, &append_val_copy);
 		add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
   #endif
 
@@ -2209,7 +2209,7 @@ PHP_METHOD(Aerospike, listInsert)
 		add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
 	#else
 		array_init(&temp_record_p);
-		MAKE_COPY_ZVAL(&insert_val_p, &insert_val_copy);
+		//MAKE_COPY_ZVAL(&insert_val_p, &insert_val_copy);
 		add_assoc_zval(&temp_record_p, bin_name_p, &insert_val_copy);
 	#endif
 
@@ -2348,9 +2348,8 @@ PHP_METHOD(Aerospike, listSet)
 		array_init(&temp_record_p);
 	#endif
 
-	MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
-
 	#if PHP_VERSION_ID < 70000
+	  MAKE_COPY_ZVAL(&set_val_p, set_val_copy); //
     ALLOC_ZVAL(set_val_copy);
 		add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
   #else
