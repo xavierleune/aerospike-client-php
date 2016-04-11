@@ -3823,13 +3823,8 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 		goto exit;
 	}
 
-#if PHP_VERSION_ID < 70000
-	as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_PP(record_pp)));
-	num_of_bins = zend_hash_num_elements(Z_ARRVAL_PP(record_pp));
-#else
-	as_record_inita(&record, zend_hash_num_elements(Z_ARRVAL_P(*record_pp)));
-	num_of_bins = zend_hash_num_elements(Z_ARRVAL_P(*record_pp));
-#endif
+	as_record_inita(&record, zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(record_pp)));
+	num_of_bins = zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(record_pp));
 
 	if (num_of_bins < 1) {
 		error_p->code = AEROSPIKE_ERR_PARAM;
