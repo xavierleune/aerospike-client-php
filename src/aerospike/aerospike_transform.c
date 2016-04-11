@@ -151,16 +151,22 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 								  zend_fcall_info_cache *user_callback_info_cache,
 								  zval *user_callback_retval_p,
 								  as_bytes *bytes,
-								  zval **value,
+									#if PHP_VERSION_ID < 70000
+										zval **value
+									#else
+										zval *value
+									#endif
+								  ,
 								  bool serialize_flag,
 								  as_error *error_p TSRMLS_DC)
 {
-	zval**      params[1];
 	#if PHP_VERSION_ID < 70000
 		zval*       bytes_string = NULL;
+		zval**      params[1];
 		ALLOC_INIT_ZVAL(bytes_string);
 	#else
 		zval        bytes_string;
+		zval*       params[1];
 	#endif
 
 	char*       bytes_val_p = (char*)bytes->value;

@@ -402,7 +402,6 @@ set_policy_ex(as_config *as_config_p,
       #else
         zend_ulong options_index;
       #endif
-			ulong options_index;
 			if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
 					&options_key_len, &options_index, 0, &options_pointer)) {
 				DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
