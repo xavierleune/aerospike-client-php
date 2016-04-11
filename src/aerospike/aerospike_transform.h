@@ -470,7 +470,7 @@ do {                                                                           \
     HashPosition pointer;                                                      \
     zval* dataval;                                                            \
     uint key_len;                                                              \
-    ulong index;                                                               \
+    zend_ulong index;                                                               \
     hashtable = Z_ARRVAL_P((zval*) *value);                                    \
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
@@ -752,7 +752,7 @@ do {                                                                           \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
     uint inner_key_len;                                                        \
-    ulong index;                                                               \
+    zend_ulong index;                                                               \
     uint key_iterator = 0;                                                     \
     hashtable = Z_ARRVAL_P((zval*)value);                                      \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \

@@ -1620,7 +1620,7 @@ set_config_policies(as_config *as_config_p,
 										   "Unable to set USE_BATCH_DIRECT:Incorrect Value type for USE_BATCH_DIRECT");
 						goto exit;
 					}
-					as_config_p->policies.batch.use_batch_direct = (bool) Z_BVAL_P(options_value);
+					as_config_p->policies.batch.use_batch_direct = (bool) Z_DVAL_P(options_value);
 					break;
 				case COMPRESSION_THRESHOLD:
 					if (Z_TYPE_P(options_value) != IS_LONG) {

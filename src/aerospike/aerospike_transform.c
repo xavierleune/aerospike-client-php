@@ -201,15 +201,10 @@ if (zend_call_function(user_callback_info,
 ) {
 
 if (serialize_flag) {
-  COPY_PZVAL_TO_ZVAL(
-  #if PHP_VERSION_ID < 70000
-	  *bytes_string,
-    *user_callback_info->retval_ptr_ptr
-  #else
-	  bytes_string,
-    user_callback_info->retval
-  #endif
-);
+
+#if PHP_VERSION_ID < 70000
+  COPY_PZVAL_TO_ZVAL(*bytes_string, *user_callback_info->retval_ptr_ptr);
+#endif
 			set_as_bytes(bytes, (uint8_t*)Z_STRVAL_P(bytes_string),
 #if PHP_VERSION_ID < 70000
 						 bytes_string->value.str.len, AS_BYTES_BLOB, error_p TSRMLS_CC
@@ -218,10 +213,9 @@ if (serialize_flag) {
 #endif
 						 );
 		} else {
+
 #if PHP_VERSION_ID < 70000
 			COPY_PZVAL_TO_ZVAL(**value, *user_callback_info->retval_ptr_ptr);
-#else
-			COPY_PZVAL_TO_ZVAL(value, user_callback_info->retval);
 #endif
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 		}
@@ -1738,11 +1732,11 @@ static void AS_LIST_PUT_APPEND_DOUBLE(Aerospike_object* as, void* key, void *val
 				as_arraylist_append_double((as_arraylist *)array,
 					(double)(
 					#if PHP_VERSION_ID < 70000
-					  (zval**)Z_DVAL_PP(value
+						Z_DVAL_PP((zval**)value
 					#else
-						(zval*)Z_DVAL_P(value
+						Z_DVAL_P((zval*)value
 					#endif
-				)))) {
+				))))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to append integer to list");
 		PHP_EXT_SET_AS_ERR(error_p, error_p->code,
 				"Unable to append integer to list");
@@ -2037,14 +2031,14 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
 	const char* name = NULL;
 	#if PHP_VERSION_ID < 70000
     zend_uint name_len = 0;
+		int dup;
+
+		if ((FETCH_VALUE_PUT((zval**)value)) == IS_OBJECT) {
+			dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_CC);
+		}
 	#else
     size_t name_len = 0;
 	#endif
-	int dup;
-
-	if ((FETCH_VALUE_PUT((zval**)value)) == IS_OBJECT) {
-		dup = zend_get_object_classname(*((zval**)value), &name, &name_len TSRMLS_CC);
-	}
 
 	if (name && (!strcmp(name, GEOJSONCLASS)) && (as->hasGeoJSON)) {
 		AS_DEFAULT_PUT_ASSOC_GEOJSON(as, key, value, array, static_pool, serializer_policy,
@@ -2464,13 +2458,7 @@ void AS_MAP_PUT(Aerospike_object* as, void *key, void *value, void *store, void 
 {
 	as_val *map_key = NULL;
 	AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(as, error_p, static_pool,
-			map_key, ((
-        #if PHP_VERSION_ID < 70000
-				  zval**)value
-				#else
-				  zval*)value
-				#endif
-			), store, exit, serializer_policy);
+			map_key, ((zval**)value), store, exit, serializer_policy);
 exit:
 	return;
 }
