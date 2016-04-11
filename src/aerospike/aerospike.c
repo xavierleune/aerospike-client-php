@@ -1048,7 +1048,12 @@ PHP_METHOD(Aerospike, put)
 	}
 
 	if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p,
-					&record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+					#if PHP_VERSION_ID < 70000
+			      &record_p
+			    #else
+			      record_p
+			    #endif
+					, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
 		DEBUG_PHP_EXT_ERROR("put function returned an error");
 		goto exit;
 	}
