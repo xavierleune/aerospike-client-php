@@ -2650,13 +2650,14 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 		HashPosition		options_pointer;
 		#if PHP_VERSION_ID < 70000
 			zval**			  options_value;
+			ulong options_index;
 		#else
 			zval*			  options_value;
+			zend_ulong options_index;
 		#endif
 		(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->use_shm = true;
 		AEROSPIKE_FOREACH_HASHTABLE(ht_shm, options_pointer, options_value) {
 			uint options_key_len;
-			ulong options_index;
 			int8_t* options_key;
 			if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_shm, (char **) &options_key,
 						&options_key_len, &options_index, 0, &options_pointer)
@@ -2771,15 +2772,16 @@ aerospike_transform_iterateKey(HashTable* ht_p, zval** retdata_pp,
 #endif
 
 #if PHP_VERSION_ID < 70000
+  ulong index_u64 = 0;
 	AEROSPIKE_FOREACH_HASHTABLE (ht_p, hashPosition_p, keyData_pp) {
 		int8_t*	 key_value_p = NULL;
 #else
+  zend_ulong index_u64 = 0;
 	AEROSPIKE_FOREACH_HASHTABLE (ht_p, hashPosition_p, keyData_p) {
 
 		zend_string*	 key_value_p = NULL;
 #endif
 		u_int32_t   key_len_u32 = 0;
-		ulong	   index_u64 = 0;
 
 u_int32_t key_type_u32 = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_p, (char **)&key_value_p, &key_len_u32, &index_u64, 0, &hashPosition_p);
 #if PHP_VERSION_ID >= 70000

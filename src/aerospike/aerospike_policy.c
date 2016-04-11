@@ -397,6 +397,11 @@ set_policy_ex(as_config *as_config_p,
 
 		AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
 			uint options_key_len;
+      #if PHP_VERSION_ID < 70000
+        ulong options_index;
+      #else
+        zend_ulong options_index;
+      #endif
 			ulong options_index;
 			if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
 					&options_key_len, &options_index, 0, &options_pointer)) {
@@ -1359,7 +1364,11 @@ set_config_policies(as_config *as_config_p,
 
 		AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
 			uint options_key_len;
-			ulong options_index;
+      #if PHP_VERSION_ID < 70000
+        ulong options_index;
+      #else
+        zend_ulong options_index;
+      #endif
 
 			if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
 					&options_key_len, &options_index, 0, &options_pointer)) {
