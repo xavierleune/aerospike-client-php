@@ -181,34 +181,31 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 	user_callback_info->param_count = 1;
 #if PHP_VERSION_ID < 70000
 	user_callback_info->params = params;
-#else
-	user_callback_info->params = *params;
-#endif
-
-#if PHP_VERSION_ID < 70000
 	user_callback_info->retval_ptr_ptr = &user_callback_retval_p;
 #else
+	user_callback_info->params = *params;
 	user_callback_info->retval = user_callback_retval_p;
 #endif
 
-	if (zend_call_function(user_callback_info,
+if (zend_call_function(user_callback_info,
 				user_callback_info_cache TSRMLS_CC) == SUCCESS &&
 #if PHP_VERSION_ID < 70000
-						user_callback_info->retval_ptr_ptr &&
-							*user_callback_info->retval_ptr_ptr
+  user_callback_info->retval_ptr_ptr && *user_callback_info->retval_ptr_ptr
 #else
-							user_callback_info->retval
+  user_callback_info->retval
 #endif
-	   ) {
+) {
 
-		if (serialize_flag) {
-			COPY_PZVAL_TO_ZVAL(*bytes_string,
-#if PHP_VERSION_ID < 70000
-					*user_callback_info->retval_ptr_ptr
-#else
-					user_callback_info->retval
-#endif
-					);
+if (serialize_flag) {
+  COPY_PZVAL_TO_ZVAL(
+  #if PHP_VERSION_ID < 70000
+	  *bytes_string,
+    *user_callback_info->retval_ptr_ptr
+  #else
+	  bytes_string,
+    user_callback_info->retval
+  #endif
+);
 			set_as_bytes(bytes, (uint8_t*)Z_STRVAL_P(bytes_string),
 #if PHP_VERSION_ID < 70000
 						 bytes_string->value.str.len, AS_BYTES_BLOB, error_p TSRMLS_CC
@@ -259,7 +256,12 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
  */
 static void serialize_based_on_serializer_policy(int32_t serializer_policy,
 												 as_bytes *bytes,
-												 zval **value,
+												 #if PHP_VERSION_ID < 70000
+												   zval **value
+												 #else
+												   zval *value
+												 #endif
+												 ,
 												 as_error *error_p TSRMLS_DC)
 {
 	switch(serializer_policy) {
@@ -347,7 +349,12 @@ exit:
  *******************************************************************************************************
  */
 static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
-											   zval	  **retval,
+	                       #if PHP_VERSION_ID < 70000
+				                   zval	**retval
+	                       #else
+				                   zval	*retval
+	                       #endif
+											   ,
 											   as_error  *error_p TSRMLS_DC)
 {
 	int8_t*	 bytes_val_p = NULL;
@@ -575,7 +582,12 @@ static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, 
 	 zval        *unserialized_zval = NULL;
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
-								&unserialized_zval, (as_error *) err TSRMLS_CC);
+	#if PHP_VERSION_ID < 70000
+				&unserialized_zval
+	#else
+				unserialized_zval
+	#endif
+	, (as_error *) err TSRMLS_CC);
 
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
 		DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
@@ -748,7 +760,12 @@ static void ADD_MAP_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, vo
 	zval        *unserialized_zval = NULL;
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
-								&unserialized_zval, (as_error *) err TSRMLS_CC);
+	#if PHP_VERSION_ID < 70000
+				&unserialized_zval
+	#else
+				unserialized_zval
+	#endif
+	, (as_error *) err TSRMLS_CC);
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
 		DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
 		goto exit;
@@ -913,7 +930,12 @@ static void ADD_MAP_INDEX_BYTES(Aerospike_object* as, void *key, void *value, vo
 	zval        *unserialized_zval = NULL;
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
-								&unserialized_zval, (as_error *) err TSRMLS_CC);
+								#if PHP_VERSION_ID < 70000
+											&unserialized_zval
+								#else
+											unserialized_zval
+								#endif
+								, (as_error *) err TSRMLS_CC);
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
 		DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
 		goto exit;
@@ -1188,7 +1210,12 @@ static void ADD_DEFAULT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value
 	zval        *unserialized_zval = NULL;
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
-								&unserialized_zval, (as_error *) err TSRMLS_CC);
+	#if PHP_VERSION_ID < 70000
+				&unserialized_zval
+	#else
+				unserialized_zval
+	#endif
+								, (as_error *) err TSRMLS_CC);
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
 		DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
 		goto exit;
