@@ -131,8 +131,13 @@ exit:
 extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *error_p TSRMLS_DC)
 {
-	zval**                  gen_policy_pp = NULL;
-	zval**                  gen_value_pp = NULL;
+  #if PHP_VERSION_ID < 70000
+    zval** gen_value_pp = NULL;
+  	zval** gen_policy_pp = NULL;
+  #else
+    zval* gen_value_pp = NULL;
+  	zval* gen_policy_pp = NULL;
+  #endif
 
 	if (options_p) {
     #if PHP_VERSION_ID < 70000
@@ -143,7 +148,13 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
 			//error_p->code = AEROSPIKE_ERR_CLIENT;
 			goto exit;
 		}
-		if (Z_TYPE_PP(gen_policy_pp) != IS_ARRAY) {
+    if (
+    #if PHP_VERSION_ID < 70000
+      Z_TYPE_PP(gen_policy_pp)
+    #else
+      Z_TYPE_P(gen_policy_pp)
+    #endif
+		!= IS_ARRAY) {
 			error_p->code = AEROSPIKE_ERR_PARAM;
 			goto exit;
 		}
@@ -153,13 +164,23 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
   	  gen_value_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_TTL);
     #endif
 
-		if (gen_value_pp && (Z_TYPE_PP(gen_value_pp) != IS_LONG)) {
-			error_p->code = AEROSPIKE_ERR_PARAM;
+		if (gen_value_pp && (
+      #if PHP_VERSION_ID < 70000
+        Z_TYPE_PP(gen_value_pp)
+      #else
+        Z_TYPE_P(gen_value_pp)
+      #endif
+      != IS_LONG)) {
+			  error_p->code = AEROSPIKE_ERR_PARAM;
 			goto exit;
 		}
 
 		if (gen_value_pp) {
-			*generation_value_p = Z_LVAL_PP(gen_value_pp);
+      #if PHP_VERSION_ID < 70000
+        *generation_value_p = Z_LVAL_PP(gen_value_pp);
+      #else
+        *generation_value_p = Z_LVAL_P(gen_value_pp);
+      #endif
 		}
 	}
 exit:
@@ -182,7 +203,11 @@ exit:
 extern as_status
 get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p TSRMLS_DC)
 {
-	zval**                  ttl_value_pp = NULL;
+  #if PHP_VERSION_ID < 70000
+    zval** ttl_value_pp = NULL;
+  #else
+    zval* ttl_value_pp = NULL;
+  #endif
 
 	if (options_p) {
     #if PHP_VERSION_ID < 70000
@@ -194,7 +219,14 @@ get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p 
 		//error_p->code = AEROSPIKE_ERR_CLIENT;
 		goto exit;
 		}
-		if (Z_TYPE_PP(ttl_value_pp) != IS_LONG) {
+		if (
+      #if PHP_VERSION_ID < 70000
+      	Z_TYPE_PP(ttl_value_pp)
+      #else
+      	Z_TYPE_P(ttl_value_pp)
+      #endif
+
+      != IS_LONG) {
 			DEBUG_PHP_EXT_DEBUG("OPT_TTL should be of type integer");
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 					"OPT_TTL should be of type integer");
@@ -202,7 +234,11 @@ get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p 
 		}
 
 		if (ttl_value_pp) {
-			*ttl_value_p = Z_LVAL_PP(ttl_value_pp);
+      #if PHP_VERSION_ID < 70000
+      	*ttl_value_p = Z_LVAL_PP(ttl_value_pp);
+      #else
+      	*ttl_value_p = Z_LVAL_P(ttl_value_pp);
+      #endif
 		}
 	}
 

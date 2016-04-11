@@ -1783,7 +1783,11 @@ PHP_METHOD(Aerospike, increment)
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p;
 	int                    bin_name_len;
-	long                   offset = 0;
+	#if PHP_VERSION_ID < 70000
+		long                 offset = 0;
+	#else
+		zend_long            offset = 0;
+	#endif
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 	as_error_init(&error);
 
@@ -1830,7 +1834,7 @@ PHP_METHOD(Aerospike, increment)
 
 	if(Z_TYPE_P(offset_p) == IS_LONG) {
 		offset = Z_LVAL_P(offset_p);
-	} else if( !(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
+	} else if(!(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
 		DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
@@ -1970,8 +1974,13 @@ PHP_METHOD(Aerospike, listAppend)
 	as_static_pool         static_pool = {0};
 	zval*                  key_record_p = NULL;
 	zval*                  append_val_p = NULL;
-	zval*                  append_val_copy = NULL;
-	zval*                  temp_record_p = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval* temp_record_p = NULL;
+		zval* append_val_copy = NULL;
+	#else
+	  zval temp_record_p;
+		zval append_val_copy;
+	#endif
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p;
@@ -2033,8 +2042,13 @@ PHP_METHOD(Aerospike, listAppend)
 		goto exit;
 	}
 
-	MAKE_STD_ZVAL(temp_record_p);
-	array_init(temp_record_p);
+	#if PHP_VERSION_ID < 70000
+    MAKE_STD_ZVAL(temp_record_p);
+		array_init(temp_record_p);
+		ALLOC_ZVAL(append_val_copy);
+	#else
+		array_init(&temp_record_p);
+	#endif
 
 	/*
 	 #if PHP_VERSION_ID < 70000
@@ -2049,9 +2063,13 @@ PHP_METHOD(Aerospike, listAppend)
 	 #endif
 	 */
 
-	ALLOC_ZVAL(append_val_copy);
-	MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
-	add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+  #if PHP_VERSION_ID < 70000
+	  MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
+		add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+  #else
+	 	MAKE_COPY_ZVAL(&append_val_p, &append_val_copy);
+		add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+  #endif
 
 	aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
 			aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2078,9 +2096,16 @@ exit:
 	if (initializeKey) {
 		as_key_destroy(&as_key_for_list);
 	}
+	#if PHP_VERSION_ID < 70000
 	if (temp_record_p) {
-	 	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+		AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
 	}
+  #else
+	if (&temp_record_p) {
+		AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
+	}
+  #endif
+
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
 	PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -2102,8 +2127,13 @@ PHP_METHOD(Aerospike, listInsert)
 	as_static_pool         static_pool = {0};
 	zval*                  key_record_p = NULL;
 	zval*                  insert_val_p = NULL;
-	zval*                  insert_val_copy = NULL;
-	zval*                  temp_record_p = NULL;
+	#if PHP_VERSION_ID < 70000
+		zval* insert_val_copy = NULL;
+		zval* temp_record_p = NULL;
+	#else
+	  zval insert_val_copy;
+		zval temp_record_p;
+	#endif
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p;
@@ -2166,12 +2196,17 @@ PHP_METHOD(Aerospike, listInsert)
 		goto exit;
 	}
 
-	MAKE_STD_ZVAL(temp_record_p);
-	array_init(temp_record_p);
-
-	ALLOC_ZVAL(insert_val_copy);
-	MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
-	add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
+	#if PHP_VERSION_ID < 70000
+	  MAKE_STD_ZVAL(temp_record_p);
+	  array_init(temp_record_p);
+		ALLOC_ZVAL(insert_val_copy);
+		MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
+		add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
+	#else
+		array_init(&temp_record_p);
+		MAKE_COPY_ZVAL(&insert_val_p, &insert_val_copy);
+		add_assoc_zval(&temp_record_p, bin_name_p, &insert_val_copy);
+	#endif
 
 	aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
 			aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2198,9 +2233,17 @@ exit:
 	if (initializeKey) {
 		as_key_destroy(&as_key_for_list);
 	}
+
+	#if PHP_VERSION_ID < 70000
 	if (temp_record_p) {
-	 	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+		AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
 	}
+  #else
+	if (&temp_record_p) {
+		AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
+	}
+  #endif
+
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
 	PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -2222,8 +2265,14 @@ PHP_METHOD(Aerospike, listSet)
 	as_static_pool         static_pool = {0};
 	zval*                  key_record_p = NULL;
 	zval*                  set_val_p = NULL;
-	zval*                  set_val_copy = NULL;
-	zval*                  temp_record_p = NULL;
+	#if PHP_VERSION_ID < 70000
+    zval* set_val_copy = NULL;
+		zval* temp_record_p = NULL;
+	#else
+		zval set_val_copy;
+		zval temp_record_p;
+	#endif
+
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p;
@@ -2286,12 +2335,22 @@ PHP_METHOD(Aerospike, listSet)
 		goto exit;
 	}
 
-	MAKE_STD_ZVAL(temp_record_p);
-	array_init(temp_record_p);
+	#if PHP_VERSION_ID < 70000
+	  MAKE_STD_ZVAL(temp_record_p);
+		array_init(temp_record_p);
+		ALLOC_ZVAL(set_val_copy);
+	#else
+		array_init(&temp_record_p);
+	#endif
 
-	ALLOC_ZVAL(set_val_copy);
 	MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
-	add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
+
+	#if PHP_VERSION_ID < 70000
+    ALLOC_ZVAL(set_val_copy);
+		add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
+  #else
+	  add_assoc_zval(&temp_record_p, bin_name_p, &set_val_copy);
+	#endif
 
 	aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
 			aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2318,9 +2377,16 @@ exit:
 	if (initializeKey) {
 		as_key_destroy(&as_key_for_list);
 	}
+	#if PHP_VERSION_ID < 70000
 	if (temp_record_p) {
-	 	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+		AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
 	}
+  #else
+	if (&temp_record_p) {
+		AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
+	}
+  #endif
+
 	as_operations_destroy(&ops);
 	as_record_destroy(&record);
 	PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -2838,7 +2904,11 @@ PHP_METHOD(Aerospike, listGet)
 	as_record              *rec = NULL;
 	as_policy_operate      operate_policy;
 	zval*                  key_record_p = NULL;
-	zval*                  element_p = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval* element_p = NULL;
+	#else
+	  zval element_p;
+	#endif
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p = NULL;
@@ -2907,14 +2977,25 @@ PHP_METHOD(Aerospike, listGet)
 		goto exit;
 	}
 
-	if (element_p) {
-		zval_dtor(element_p);
-	} else {
-		MAKE_STD_ZVAL(element_p);
-	}
+	#if PHP_VERSION_ID < 70000
+	  if (element_p) {
+		  zval_dtor(element_p);
+	  } else {
+	    MAKE_STD_ZVAL(element_p);
+	  }
+	#else
+	  if (&element_p) {
+		  zval_dtor(&element_p);
+ 	  }
+	#endif
 
 	if (rec && rec->bins.size) {
-		list_get_callback_udata.udata_p = element_p;
+		list_get_callback_udata.udata_p =
+		#if PHP_VERSION_ID < 70000
+		  element_p;
+		#else
+		  &element_p;
+		#endif
 		list_get_callback_udata.error_p = &error;
 		AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
 	}
@@ -2945,7 +3026,12 @@ PHP_METHOD(Aerospike, listGetRange)
 	as_record              *rec = NULL;
 	as_policy_operate      operate_policy;
 	zval*                  key_record_p = NULL;
-	zval*                  elements_p = NULL;
+	#if PHP_VERSION_ID < 70000
+		zval*                  elements_p = NULL;
+	#else
+	  zval insert_val_copy;
+		zval                  elements_p;
+	#endif
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p = NULL;
@@ -3015,19 +3101,35 @@ PHP_METHOD(Aerospike, listGetRange)
 		goto exit;
 	}
 
-	if (elements_p) {
-		zval_dtor(elements_p);
-	} else {
-		MAKE_STD_ZVAL(elements_p);
-	}
+	#if PHP_VERSION_ID < 70000
+	  if (elements_p) {
+		  zval_dtor(elements_p);
+	  } else {
+	    MAKE_STD_ZVAL(elements_p);
+	  }
+	#else
+	  if (&elements_p) {
+		  zval_dtor(&elements_p);
+ 	  }
+	#endif
 
-	list_get_callback_udata.udata_p = elements_p;
+	list_get_callback_udata.udata_p =
+	#if PHP_VERSION_ID < 70000
+	  elements_p;
+	#else
+	  &elements_p;
+	#endif
 	list_get_callback_udata.error_p = &error;
 
 	if (rec && rec->bins.size) {
 		AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
 	} else if (rec && rec->bins.size == 0) {
-		array_init(elements_p);
+		array_init(
+		#if PHP_VERSION_ID < 70000
+		  elements_p);
+		#else
+		  &elements_p);
+		#endif
 	}
 
 exit:
@@ -3055,7 +3157,11 @@ PHP_METHOD(Aerospike, listPop)
 	as_record              *rec = NULL;
 	as_policy_operate      operate_policy;
 	zval*                  key_record_p = NULL;
-	zval*                  element_p = NULL;
+	#if PHP_VERSION_ID < 70000
+			zval*                  element_p = NULL;
+	#else
+			zval                   element_p;
+	#endif
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p = NULL;
@@ -3128,14 +3234,25 @@ PHP_METHOD(Aerospike, listPop)
 		goto exit;
 	}
 
-	if (element_p) {
-		zval_dtor(element_p);
-	} else {
-		MAKE_STD_ZVAL(element_p);
-	}
+	#if PHP_VERSION_ID < 70000
+	  if (element_p) {
+		  zval_dtor(element_p);
+	  } else {
+	    MAKE_STD_ZVAL(element_p);
+	  }
+	#else
+	  if (&element_p) {
+		  zval_dtor(&element_p);
+ 	  }
+	#endif
 
 	if (rec && rec->bins.size) {
-		list_get_callback_udata.udata_p = element_p;
+		list_get_callback_udata.udata_p =
+		#if PHP_VERSION_ID < 70000
+		  element_p;
+		#else
+		  &element_p;
+		#endif
 		list_get_callback_udata.error_p = &error;
 		AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
 	}
@@ -3166,7 +3283,11 @@ PHP_METHOD(Aerospike, listPopRange)
 	as_record              *rec = NULL;
 	as_policy_operate      operate_policy;
 	zval*                  key_record_p = NULL;
-	zval*                  elements_p = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval*                  elements_p = NULL;
+	#else
+	  zval                   elements_p;
+	#endif
 	zval*                  options_p = NULL;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p = NULL;
@@ -3240,14 +3361,25 @@ PHP_METHOD(Aerospike, listPopRange)
 		goto exit;
 	}
 
-	if (elements_p) {
-		zval_dtor(elements_p);
-	} else {
-		MAKE_STD_ZVAL(elements_p);
-	}
+	#if PHP_VERSION_ID < 70000
+	  if (elements_p) {
+		  zval_dtor(elements_p);
+	  } else {
+	    MAKE_STD_ZVAL(elements_p);
+	  }
+	#else
+	  if (&elements_p) {
+		  zval_dtor(&elements_p);
+ 	  }
+	#endif
 
 	if (rec && rec->bins.size) {
-		list_get_callback_udata.udata_p = elements_p;
+		list_get_callback_udata.udata_p =
+		#if PHP_VERSION_ID < 70000
+		  elements_p;
+		#else
+		  &elements_p;
+		#endif
 		list_get_callback_udata.error_p = &error;
 		AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
 	}

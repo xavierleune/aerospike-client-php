@@ -308,10 +308,11 @@ set_shm_key_from_alias_hash_or_generate(
 {
   #if PHP_VERSION_ID < 70000
     zend_rsrc_list_entry *le, new_shm_entry;
+    zval* rsrc_result = NULL;
   #else
     zend_resource *le, new_shm_entry;
+    zval rsrc_result;
   #endif
-	zval* rsrc_result = NULL;
 	as_status status = AEROSPIKE_OK;
 	int itr_user = 0;
 	char *alias_to_search = NULL;
@@ -340,7 +341,7 @@ set_shm_key_from_alias_hash_or_generate(
 	if (zend_hash_num_elements(shm_key_list) == 0) {
 		shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
 		shm_key_ptr->key = conf->shm_key;
-		ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
+    ZVAL_RES(&rsrc_result, zend_register_resource(shm_key_ptr, 1));
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
     #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
@@ -378,7 +379,7 @@ set_shm_key_from_alias_hash_or_generate(
 
 		shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
 		shm_key_ptr->key = conf->shm_key;
-		ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
+		ZVAL_RES(&rsrc_result, zend_register_resource(shm_key_ptr, 1));
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
     #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)

@@ -1271,7 +1271,7 @@ check_val_type_list(zval **value);
 	for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
 		datavalue = zend_hash_get_current_data_ex(ht,                               \
 			&position);                                                             \
-		zend_hash_move_forward_ex(ht, &position))
+		zend_hash_move_forward_ex(ht, position))
 
  /*
 	******************************************************************************************************

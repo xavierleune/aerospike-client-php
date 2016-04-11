@@ -156,10 +156,14 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 								  as_error *error_p TSRMLS_DC)
 {
 	zval**      params[1];
-	zval*       bytes_string = NULL;
-	char*       bytes_val_p = (char*)bytes->value;
+	#if PHP_VERSION_ID < 70000
+		zval*       bytes_string = NULL;
+		ALLOC_INIT_ZVAL(bytes_string);
+	#else
+		zval        bytes_string;
+	#endif
 
-	ALLOC_INIT_ZVAL(bytes_string);
+	char*       bytes_val_p = (char*)bytes->value;
 
 	if (serialize_flag) {
 		params[0] = value;
@@ -229,7 +233,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 #if PHP_VERSION_ID < 70000
 	zval_ptr_dtor(&bytes_string);
 #else
-	zval_ptr_dtor(bytes_string);
+	zval_ptr_dtor(&bytes_string);
 #endif
 }
 
@@ -3141,7 +3145,13 @@ as_status aerospike_transform_addrport_callback(HashTable* ht_p,
 		} else {
 			snprintf(addrport_transform_iter_map_p->transform_result.ip_port_p +
 					strlen(addrport_transform_iter_map_p->transform_result.ip_port_p),
-					IP_PORT_MAX_LEN, ":%s", Z_STRVAL_PP(value_pp));
+					IP_PORT_MAX_LEN, ":%s",
+					#if PHP_VERSION_ID < 70000
+					  Z_STRVAL_PP(value_pp)
+					#else
+					  Z_STRVAL_P(*value_pp)
+					#endif
+					);
 		}
 	} else {
 		status = AEROSPIKE_ERR_PARAM;
@@ -4550,13 +4560,15 @@ extern int check_val_type_list(zval **value)
 	char *inner_key = NULL;
 	void *inner_store;
 	uint inner_key_len;
-	ulong index;
+
 	uint key_iterator = 0;
 
 	#if PHP_VERSION_ID < 70000
 		hashtable = Z_ARRVAL_PP((zval**)value);
+		ulong index;
 	#else
 	  hashtable = Z_ARRVAL_P((zval*)value);
+		zend_ulong index;
 	#endif
 	zend_hash_internal_pointer_reset_ex(hashtable, &pointer);
 	TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index,
