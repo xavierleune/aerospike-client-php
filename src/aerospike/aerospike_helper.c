@@ -134,7 +134,11 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 	zval*    err_msg_p;
 
 	array_init(&err_code_p);
-	array_init(&err_msg_p);
+  #if PHP_VERSION_ID < 70000
+    array_init(&err_msg_p);
+  #else
+    array_init(err_msg_p);
+  #endif
 	if (error_t.reset) {
 		AEROSPIKE_ZVAL_STRINGL(
       #if PHP_VERSION_ID < 70000
@@ -155,12 +159,18 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 		ZVAL_LONG(&err_code_p, error_t.error.code);
 	}
 
-	zend_update_property(ce_p, object_p, "error", strlen("error"), &err_msg_p TSRMLS_CC);
+	zend_update_property(ce_p, object_p, "error", strlen("error"),
+  #if PHP_VERSION_ID < 70000
+    &err_msg_p
+  #else
+    err_msg_p
+  #endif
+  TSRMLS_CC);
 	zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), &err_code_p TSRMLS_CC);
 #endif
 
+  AEROSPIKE_ZVAL_PTR_DTOR(err_msg_p);
 	zval_ptr_dtor(&err_code_p);
-	zval_ptr_dtor(&err_msg_p);
 }
 
 /*
