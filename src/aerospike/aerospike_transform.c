@@ -3751,8 +3751,13 @@ exit:
  *******************************************************************************************************
  */
 void
-aerospike_transform_iterate_records(Aerospike_object* as, zval **record_pp,
-		as_record* as_record_p,
+aerospike_transform_iterate_records(Aerospike_object* as,
+	  #if PHP_VERSION_ID < 70000
+		  zval **record_pp
+	  #else
+		  zval *record_pp
+	  #endif
+		, as_record* as_record_p,
 		as_static_pool* static_pool,
 		int8_t serializer_policy,
 		bool server_support_double,
@@ -3792,8 +3797,12 @@ exit:
  */
 extern as_status
 aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
-		zval **record_pp,
-		as_key* as_key_p,
+	  #if PHP_VERSION_ID < 70000
+		  zval** record_pp
+	  #else
+		  zval* record_pp
+	  #endif
+		, as_key* as_key_p,
 		as_error *error_p,
 		u_int32_t ttl_u32,
 		zval* options_p,
