@@ -641,7 +641,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 			bin_name_p = NULL;
 			AEROSPIKE_FOREACH_HASHTABLE(each_operation_array_p, each_pointer, each_operation) {
 				uint options_key_len;
-				ulong options_index;
+				#if PHP_VERSION_ID < 70000
+					ulong options_index;
+				#else
+					zend_ulong options_index;
+				#endif
 				char* options_key;
 
 #if PHP_VERSION_ID < 70000
