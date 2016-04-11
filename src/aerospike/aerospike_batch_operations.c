@@ -328,10 +328,11 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 #endif
 #if PHP_VERSION_ID < 70000
 		array_init(record_metadata_p);
+		ALLOC_INIT_ZVAL(get_record_p);
 #else
 		array_init(&record_metadata_p);
 #endif
-		ALLOC_INIT_ZVAL(get_record_p);
+
 		array_init(get_record_p);
 
 		/*  if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
@@ -813,8 +814,8 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 		foreach_record_callback_udata.obj = batch_get_callback_udata.obj;
 
 		if (record_batch->result == AEROSPIKE_OK) {
-			ALLOC_INIT_ZVAL(get_record_p);
 			#if PHP_VERSION_ID < 70000
+			    ALLOC_INIT_ZVAL(get_record_p);
 					array_init(get_record_p);
 					foreach_record_callback_udata.udata_p = get_record_p;
 			#else

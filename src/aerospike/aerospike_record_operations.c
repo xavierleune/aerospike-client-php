@@ -173,15 +173,11 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			  MAKE_STD_ZVAL(temp_record_p);
 			  array_init(temp_record_p);
         ALLOC_ZVAL(append_val_copy);
-		  #else
-	      array_init(&temp_record_p);
-		  #endif
-
-			MAKE_COPY_ZVAL(&each_operation, append_val_copy);
-			#if PHP_VERSION_ID < 70000
+				MAKE_COPY_ZVAL(&each_operation, append_val_copy);
 			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		  #else
-	      add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+	      array_init(&temp_record_p);
+				add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
 		  #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
@@ -205,15 +201,11 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			  MAKE_STD_ZVAL(temp_record_p);
 			  array_init(temp_record_p);
 			  ALLOC_ZVAL(append_val_copy);
+				MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+				add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		  #else
 			  array_init(&temp_record_p);
-		  #endif
-
-		  MAKE_COPY_ZVAL(&each_operation, append_val_copy);
-		  #if PHP_VERSION_ID < 70000
-			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
-		  #else
-			  add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+				add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
 		  #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
@@ -303,15 +295,11 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			  MAKE_STD_ZVAL(temp_record_p);
 			  array_init(temp_record_p);
 			  ALLOC_ZVAL(append_val_copy);
-		  #else
-			  array_init(&temp_record_p);
-		  #endif
-
-		  MAKE_COPY_ZVAL(&each_operation, append_val_copy);
-		  #if PHP_VERSION_ID < 70000
+				MAKE_COPY_ZVAL(&each_operation, append_val_copy);
 			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		  #else
-			  add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+			  array_init(&temp_record_p);
+				add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
 		  #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
