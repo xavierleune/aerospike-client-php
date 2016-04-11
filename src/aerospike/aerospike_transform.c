@@ -160,15 +160,13 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 								  bool serialize_flag,
 								  as_error *error_p TSRMLS_DC)
 {
+	zval* bytes_string = NULL;
 	#if PHP_VERSION_ID < 70000
-		zval*       bytes_string = NULL;
 		zval**      params[1];
 		ALLOC_INIT_ZVAL(bytes_string);
 	#else
-		zval        bytes_string;
 		zval*       params[1];
 	#endif
-
 	char*       bytes_val_p = (char*)bytes->value;
 
 	if (serialize_flag) {
@@ -1152,14 +1150,15 @@ static void ADD_DEFAULT_ASSOC_PAIR(Aerospike_object* as, void *key, void *value,
 static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	int result;
+	zval* fname;
 	#if PHP_VERSION_ID < 70000
 	  zval *geojson_zval_p;
-	  zval* retval = NULL, fname;
+	  zval* retval = NULL;
 	  geojson_zval_p = NULL;
 		zval** param[1];
 	#else
 	  zval geojson_zval_p;
-	  zval retval, fname;
+	  zval retval;
 		zval param[1];
 	#endif
 
@@ -1956,10 +1955,11 @@ exit:
 static void AS_DEFAULT_PUT_ASSOC_GEOJSON(Aerospike_object* as, void* key, void* value, void* array,
 		void* static_pool, int8_t serializer_policy, as_error* error_p TSRMLS_DC)
 {
+	zval* fname;
 	#if PHP_VERSION_ID < 70000
-	  zval* retval = NULL, fname;
+	  zval* retval = NULL;
 	#else
-	  zval retval, fname;
+	  zval retval;
 	#endif
 	char* geoStr = NULL;
 	int result;

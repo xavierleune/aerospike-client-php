@@ -131,7 +131,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 	zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), err_code_p TSRMLS_CC);
 #else
 	zval     err_code_p;
-	zval     err_msg_p;
+	zval*    err_msg_p;
 
 	array_init(&err_code_p);
 	array_init(&err_msg_p);
