@@ -62,15 +62,27 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 								u_int32_t time_to_live,
 								u_int64_t operation,
 								as_operations* ops,
-								zval** each_operation,
-								as_policy_operate* operate_policy,
+								#if PHP_VERSION_ID < 70000
+									zval** each_operation
+								#else
+									zval*  each_operation
+								#endif
+								, as_policy_operate* operate_policy,
 								int8_t serializer_policy,
 								as_record** get_rec TSRMLS_DC)
 {
 	as_val*                value_p = NULL;
 	const char             *select[] = {bin_name_p, NULL};
-	zval*                  temp_record_p = NULL;
-	zval*                  append_val_copy = NULL;
+
+
+	#if PHP_VERSION_ID < 70000
+		zval* temp_record_p = NULL;
+		zval* append_val_copy = NULL;
+	#else
+		zval temp_record_p;
+		zval append_val_copy;
+	#endif
+
 	as_record              record;
 	as_static_pool         static_pool = {0};
 	as_val                 *val = NULL;
@@ -157,12 +169,20 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_APPEND_NEW:
-			MAKE_STD_ZVAL(temp_record_p);
-			array_init(temp_record_p);
+		  #if PHP_VERSION_ID < 70000
+			  MAKE_STD_ZVAL(temp_record_p);
+			  array_init(temp_record_p);
+        ALLOC_ZVAL(append_val_copy);
+		  #else
+	      array_init(&temp_record_p);
+		  #endif
 
-			ALLOC_ZVAL(append_val_copy);
-			MAKE_COPY_ZVAL(each_operation, append_val_copy);
-			add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+			MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+			#if PHP_VERSION_ID < 70000
+			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+		  #else
+	      add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+		  #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
 			if (AEROSPIKE_OK != error_p->code) {
@@ -181,12 +201,20 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_INSERT_NEW:
-			MAKE_STD_ZVAL(temp_record_p);
-			array_init(temp_record_p);
+		  #if PHP_VERSION_ID < 70000
+			  MAKE_STD_ZVAL(temp_record_p);
+			  array_init(temp_record_p);
+			  ALLOC_ZVAL(append_val_copy);
+		  #else
+			  array_init(&temp_record_p);
+		  #endif
 
-			ALLOC_ZVAL(append_val_copy);
-			MAKE_COPY_ZVAL(each_operation, append_val_copy);
-			add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+		  MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+		  #if PHP_VERSION_ID < 70000
+			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+		  #else
+			  add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+		  #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
 			if (AEROSPIKE_OK != error_p->code) {
@@ -205,15 +233,17 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_INSERT_ITEMS_NEW:
-			if (Z_TYPE_PP(each_operation) != IS_ARRAY) {
+			if (
+			  #if PHP_VERSION_ID < 70000
+			    Z_TYPE_PP(each_operation
+			  #else
+			    Z_TYPE_P(each_operation
+			  #endif
+				) != IS_ARRAY) {
 				DEBUG_PHP_EXT_DEBUG("Value passed if not array type.");
 				goto exit;
 			}
-			#if PHP_VERSION_ID < 70000
-			  as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_PP(each_operation)));
-			#else
-			  as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P((zval*) *each_operation)));
-			#endif
+		  as_arraylist_inita(&args_list, zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(each_operation)));
 			args_list_p = &args_list;
 
 			AS_LIST_PUT(aerospike_obj_p, NULL, each_operation, args_list_p, &items_pool, serializer_policy,
@@ -269,12 +299,20 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_SET_NEW:
-			MAKE_STD_ZVAL(temp_record_p);
-			array_init(temp_record_p);
+		  #if PHP_VERSION_ID < 70000
+			  MAKE_STD_ZVAL(temp_record_p);
+			  array_init(temp_record_p);
+			  ALLOC_ZVAL(append_val_copy);
+		  #else
+			  array_init(&temp_record_p);
+		  #endif
 
-			ALLOC_ZVAL(append_val_copy);
-			MAKE_COPY_ZVAL(each_operation, append_val_copy);
-			add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+		  MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+		  #if PHP_VERSION_ID < 70000
+			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+		  #else
+			  add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+		  #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
 			if (AEROSPIKE_OK != error_p->code) {
@@ -584,7 +622,13 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 	AEROSPIKE_FOREACH_HASHTABLE(operations_array_p, pointer, operation) {
 		as_record *temp_rec = NULL;
 
-		if (IS_ARRAY == Z_TYPE_PP(operation)) {
+		if (IS_ARRAY ==
+		  #if PHP_VERSION_ID < 70000
+		    Z_TYPE_PP(operation
+		  #else
+			  Z_TYPE_P(operation
+		  #endif
+			)) {
 #if PHP_VERSION_ID < 70000
 			each_operation_array_p = Z_ARRVAL_PP(operation);
 #else

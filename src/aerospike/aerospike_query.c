@@ -58,7 +58,11 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 {
 	zval**              op_pp = NULL;
 	zval**              bin_pp = NULL;
-	zval**              val_pp = NULL;
+	#if PHP_VERSION_ID < 70000
+				zval**              val_pp = NULL;
+	#else
+				zval*               val_pp = NULL;
+	#endif
 	zval**              index_type_pp = NULL;
 
 	if (predicate_ht_p && (zend_hash_num_elements(predicate_ht_p) != 0)) {
