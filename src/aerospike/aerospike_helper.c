@@ -131,46 +131,24 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 	zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), err_code_p TSRMLS_CC);
 #else
 	zval     err_code_p;
-	zval*    err_msg_p;
+	zval    err_msg_p;
 
 	array_init(&err_code_p);
-  #if PHP_VERSION_ID < 70000
-    array_init(&err_msg_p);
-  #else
-    array_init(err_msg_p);
-  #endif
+  array_init(&err_msg_p);
 	if (error_t.reset) {
-		AEROSPIKE_ZVAL_STRINGL(
-      #if PHP_VERSION_ID < 70000
-        &err_msg_p
-      #else
-        err_msg_p
-      #endif
-      , DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
+    AEROSPIKE_ZVAL_STRINGL(&err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
 		ZVAL_LONG(&err_code_p, DEFAULT_ERRORNO);
 	} else {
-		AEROSPIKE_ZVAL_STRINGL(
-      #if PHP_VERSION_ID < 70000
-        &err_msg_p
-      #else
-        err_msg_p
-      #endif
-      , error_t.error.message, strlen(error_t.error.message), 1);
+    AEROSPIKE_ZVAL_STRINGL(&err_msg_p, error_t.error.message, strlen(error_t.error.message), 1);
 		ZVAL_LONG(&err_code_p, error_t.error.code);
 	}
 
-	zend_update_property(ce_p, object_p, "error", strlen("error"),
-  #if PHP_VERSION_ID < 70000
-    &err_msg_p
-  #else
-    err_msg_p
-  #endif
-  TSRMLS_CC);
+  zend_update_property(ce_p, object_p, "error", strlen("error"), &err_msg_p TSRMLS_CC);
 	zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), &err_code_p TSRMLS_CC);
 #endif
 
+  AEROSPIKE_ZVAL_PTR_DTOR(err_code_p);
   AEROSPIKE_ZVAL_PTR_DTOR(err_msg_p);
-	zval_ptr_dtor(&err_code_p);
 }
 
 /*
@@ -363,7 +341,11 @@ set_shm_key_from_alias_hash_or_generate(
 	if (zend_hash_num_elements(shm_key_list) == 0) {
 		shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
 		shm_key_ptr->key = conf->shm_key;
-    ZVAL_RES(&rsrc_result, zend_register_resource(shm_key_ptr, 1));
+    #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+      ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
+    #else
+      ZVAL_RES(&rsrc_result, zend_register_resource(shm_key_ptr, 1));
+    #endif
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
     #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
@@ -401,7 +383,13 @@ set_shm_key_from_alias_hash_or_generate(
 
 		shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
 		shm_key_ptr->key = conf->shm_key;
-		ZVAL_RES(&rsrc_result, zend_register_resource(shm_key_ptr, 1));
+		
+    #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+      ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
+    #else
+      ZVAL_RES(&rsrc_result, zend_register_resource(shm_key_ptr, 1));
+    #endif
+
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
     #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)

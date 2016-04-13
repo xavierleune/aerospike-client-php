@@ -541,8 +541,13 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
 		as_key* as_key_p, int16_t* set_val_p);
 
 extern as_status
-aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
-		void* config_p);
+aerospike_transform_check_and_set_config(HashTable* ht_p,
+	#if PHP_VERSION_ID < 70000
+		zval** retdata_pp
+	#else
+		zval* retdata_pp
+	#endif
+	, void* config_p);
 
 extern as_status
 aerospike_transform_key_data_put(Aerospike_object* as_object_p,
@@ -1341,7 +1346,7 @@ check_val_type_list(zval **value);
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ZVAL_PTR_DTOR(object) \
-		zval_ptr_dtor(object)
+		zval_ptr_dtor(&object)
 	/*
 	******************************************************************************************************
 	* Macro to add key in hastable

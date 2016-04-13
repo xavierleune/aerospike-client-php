@@ -173,7 +173,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			  MAKE_STD_ZVAL(temp_record_p);
 			  array_init(temp_record_p);
         ALLOC_ZVAL(append_val_copy);
-				MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+				MAKE_COPY_ZVAL(each_operation, append_val_copy);
 			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		  #else
 	      array_init(&temp_record_p);
@@ -201,7 +201,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			  MAKE_STD_ZVAL(temp_record_p);
 			  array_init(temp_record_p);
 			  ALLOC_ZVAL(append_val_copy);
-				MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+				MAKE_COPY_ZVAL(each_operation, append_val_copy);
 				add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		  #else
 			  array_init(&temp_record_p);
@@ -295,7 +295,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			  MAKE_STD_ZVAL(temp_record_p);
 			  array_init(temp_record_p);
 			  ALLOC_ZVAL(append_val_copy);
-				MAKE_COPY_ZVAL(&each_operation, append_val_copy);
+				MAKE_COPY_ZVAL(each_operation, append_val_copy);
 			  add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		  #else
 			  array_init(&temp_record_p);
