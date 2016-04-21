@@ -3616,12 +3616,17 @@ PHP_METHOD(Aerospike, initKey)
 	as_status              status = AEROSPIKE_OK;
 	as_error               error;
 	char                   *ns_p = NULL;
-	int                    ns_p_length = 0;
+	#if PHP_VERSION_ID < 70000
+	  int                    ns_p_length = 0;
+	  int                    set_p_length = 0;
+	#else
+	  size_t                 ns_p_length = 0;
+	  size_t                 set_p_length = 0;
+	#endif
 	char                   *set_p = NULL;
-	int                    set_p_length = 0;
+
 	zval                   *pk_p ;
 	zend_bool              is_digest = false;
-
 
 	as_error_init(&error);
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz|b", &ns_p, &ns_p_length,
@@ -3655,8 +3660,13 @@ PHP_METHOD(Aerospike, getKeyDigest)
 	as_error                error;
 	as_key                  key;
 	char                    *ns_p = NULL;
-	int                     ns_p_length = 0;
-	int                     set_p_length = 0;
+	#if PHP_VERSION_ID < 70000
+	  int                    ns_p_length = 0;
+	  int                    set_p_length = 0;
+	#else
+	  size_t                 ns_p_length = 0;
+	  size_t                 set_p_length = 0;
+	#endif
 	char                    *set_p = NULL;
 	zval                    *pk_p = NULL;
 	char                    *digest_p = NULL;
@@ -4066,9 +4076,14 @@ PHP_METHOD(Aerospike, query)
 	as_status                   status = AEROSPIKE_OK;
 	as_error                    error;
 	char*                       ns_p = NULL;
-	int                         ns_p_length = 0;
+	#if PHP_VERSION_ID < 70000
+	  int                    ns_p_length = 0;
+	  int                    set_p_length = 0;
+	#else
+	  size_t                 ns_p_length = 0;
+	  size_t                 set_p_length = 0;
+	#endif
 	char*                       set_p = NULL;
-	int                         set_p_length = 0;
 	zval*                       predicate_p = NULL;
 	char*                       bin_name = NULL;
 	zval*                       options_p = NULL;
@@ -4266,9 +4281,14 @@ PHP_METHOD(Aerospike, scan)
 	int                     e_level = 0;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 	char                    *ns_p = NULL;
-	int                     ns_p_length = 0;
+	#if PHP_VERSION_ID < 70000
+	  int                    ns_p_length = 0;
+	  int                    set_p_length = 0;
+	#else
+	  size_t                 ns_p_length = 0;
+	  size_t                 set_p_length = 0;
+	#endif
 	char                    *set_p = NULL;
-	int                     set_p_length = 0;
 	char                    *bin_name = NULL;
 	zval                    *bins_p = NULL;
 	zval                    *options_p = NULL;
@@ -5240,9 +5260,14 @@ PHP_METHOD(Aerospike, addIndex)
 	as_status               status = AEROSPIKE_OK;
 	as_error                error;
 	char                    *ns_p = NULL;
-	int                     ns_p_length = 0;
+	#if PHP_VERSION_ID < 70000
+		int                    ns_p_length = 0;
+		int                    set_p_length = 0;
+	#else
+		size_t                 ns_p_length = 0;
+		size_t                 set_p_length = 0;
+	#endif
 	char                    *set_p = NULL;
-	int                     set_p_length = 0;
 	char                    *bin_p = NULL;
 	int                     bin_p_length = 0;
 	long                    index_type = -1;
@@ -5316,9 +5341,14 @@ PHP_METHOD(Aerospike, dropIndex)
 	as_status               status = AEROSPIKE_OK;
 	as_error                error;
 	char                    *ns_p = NULL;
-	int                     ns_p_length = 0;
+	#if PHP_VERSION_ID < 70000
+		int                    ns_p_length = 0;
+		int                    name_p_length = 0;
+	#else
+		size_t                 ns_p_length = 0;
+		size_t                 name_p_length = 0;
+	#endif
 	char                    *name_p = NULL;
-	int                     name_p_length = 0;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
