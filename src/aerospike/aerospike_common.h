@@ -230,17 +230,33 @@ typedef struct csdk_aerospike_obj {
  * Structure to map the zend Aerospike object with the C client's aerospike object ref structure.
  *******************************************************************************************************
  */
+
+#if PHP_VERSION_ID < 70000
+  typedef struct Aerospike_object {
+	  zend_object std;
+	  bool is_persistent;
+	  aerospike_ref *as_ref_p;
+	  u_int16_t is_conn_16;
+	  int8_t serializer_opt;
+	  bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported or not */
+    #ifdef ZTS
+	    void ***ts;
+    #endif
+  } Aerospike_object;
+#else
 typedef struct Aerospike_object {
-	zend_object std;
 	bool is_persistent;
 	aerospike_ref *as_ref_p;
 	u_int16_t is_conn_16;
 	int8_t serializer_opt;
 	bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported or not */
-#ifdef ZTS
-	void ***ts;
-#endif
+	#ifdef ZTS
+		void ***ts;
+	#endif
+	zend_object std;
 } Aerospike_object;
+#endif
+
 
 /*
  *******************************************************************************************************
@@ -1346,7 +1362,7 @@ check_val_type_list(zval **value);
 	******************************************************************************************************
 	*/
 #define AEROSPIKE_ZVAL_PTR_DTOR(object) \
-		zval_ptr_dtor(&object)
+		zval_ptr_dtor(object)
 	/*
 	******************************************************************************************************
 	* Macro to add key in hastable
