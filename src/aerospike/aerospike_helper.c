@@ -130,7 +130,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 	zend_update_property(ce_p, object_p, "error", strlen("error"), err_msg_p TSRMLS_CC);
 	zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), err_code_p TSRMLS_CC);
 #else
-	zval     err_code_p;
+	zval    err_code_p;
 	zval    err_msg_p;
 
 	array_init(&err_code_p);
@@ -147,8 +147,13 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
 	zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), &err_code_p TSRMLS_CC);
 #endif
 
-  AEROSPIKE_ZVAL_PTR_DTOR(err_code_p);
-  AEROSPIKE_ZVAL_PTR_DTOR(err_msg_p);
+  #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+    AEROSPIKE_ZVAL_PTR_DTOR(err_code_p);
+    AEROSPIKE_ZVAL_PTR_DTOR(err_msg_p);
+  #else
+    AEROSPIKE_ZVAL_PTR_DTOR(&err_code_p);
+    AEROSPIKE_ZVAL_PTR_DTOR(&err_msg_p);
+  #endif
 }
 
 /*
@@ -383,7 +388,7 @@ set_shm_key_from_alias_hash_or_generate(
 
 		shm_key_ptr = pemalloc(sizeof(shared_memory_key), 1);
 		shm_key_ptr->key = conf->shm_key;
-		
+
     #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
       ZEND_REGISTER_RESOURCE(rsrc_result, shm_key_ptr, 1);
     #else
