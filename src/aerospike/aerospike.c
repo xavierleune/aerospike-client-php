@@ -527,11 +527,12 @@ static zend_function_entry Aerospike_class_functions[] =
  * Aerospike object freeing up on scope termination
  ********************************************************************
  */
-static void Aerospike_object_free_storage(void *object TSRMLS_DC)
-{
-	Aerospike_object    *intern_obj_p = (Aerospike_object *) object;
-	as_error            error;
+ static void Aerospike_object_free_storage(zend_object *object TSRMLS_DC)
+ {
+ 	Aerospike_object    *intern_obj_p;
+ 	intern_obj_p = (Aerospike_object *)((char *)object - XtOffsetOf(Aerospike_object, std));
 
+	as_error            error;
 	as_error_init(&error);
 
 	if (intern_obj_p) {
@@ -784,6 +785,9 @@ PHP_METHOD(Aerospike, __destruct)
 {
 	as_status              status = AEROSPIKE_OK;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	if (!aerospike_obj_p) {
 		status = AEROSPIKE_ERR_CLIENT;
@@ -831,6 +835,9 @@ PHP_METHOD(Aerospike, close)
 	as_status              status = AEROSPIKE_OK;
 	as_error               error;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
