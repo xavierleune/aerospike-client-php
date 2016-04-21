@@ -596,8 +596,17 @@ static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
 {
 	Aerospike_object *intern_obj_p;
 	if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object) + zend_object_properties_size(ce)))) {
-		zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
-		object_properties_init((zend_object*) &(intern_obj_p->std), ce);
+    #if PHP_VERSION_ID < 70000
+		  zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
+	    object_properties_init((zend_object*) &(intern_obj_p->std), ce);
+		#else
+		  zend_object_std_init(&intern_obj_p->std, ce TSRMLS_CC);
+		  object_properties_init(&intern_obj_p->std, ce);
+
+		  Aerospike_handlers.offset = XtOffsetOf(Aerospike_object, std);
+      Aerospike_handlers.free_obj = Aerospike_object_free_storage;
+
+		#endif
 
 		intern_obj_p->std.handlers = &Aerospike_handlers;
 		intern_obj_p->as_ref_p = NULL;
@@ -621,6 +630,15 @@ static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
  ********************************************************************
  */
 
+ /*
+  ********************************************************************
+  * Aerospike Custom Object Fetching
+  ********************************************************************
+  */
+static inline struct Aerospike_object * php_custom_object_fetch_object(zend_object *obj) {
+      return (Aerospike_object *)((char *)obj - XtOffsetOf(Aerospike_object, std));
+}
+
 /* {{{ proto Aerospike::__construct(array config [, bool persistent_connection=true [, array options]]))
    Creates a new Aerospike object, with optional persistent connection control */
 PHP_METHOD(Aerospike, __construct)
@@ -635,9 +653,12 @@ PHP_METHOD(Aerospike, __construct)
 	HashTable              *persistent_list;
 	HashTable              *shm_key_list;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
+
 	persistent_list =      (AEROSPIKE_G(persistent_list_g));
 	shm_key_list =         (AEROSPIKE_G(shm_key_list_g));
-
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -708,6 +729,7 @@ PHP_METHOD(Aerospike, __construct)
 		DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
 		goto exit;
 	}
+
 	aerospike_obj_p->as_ref_p->as_p->config.shm_key = config.shm_key;
 	/* Connect to the cluster */
 	if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
@@ -782,6 +804,9 @@ exit:
 PHP_METHOD(Aerospike, isConnected)
 {
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 	as_error               error;
 
 	if (!(aerospike_obj_p && aerospike_obj_p->as_ref_p && aerospike_obj_p->as_ref_p->as_p)) {
@@ -3631,8 +3656,8 @@ PHP_METHOD(Aerospike, getKeyDigest)
 	as_key                  key;
 	char                    *ns_p = NULL;
 	int                     ns_p_length = 0;
-	char                    *set_p = NULL;
 	int                     set_p_length = 0;
+	char                    *set_p = NULL;
 	zval                    *pk_p = NULL;
 	char                    *digest_p = NULL;
 
