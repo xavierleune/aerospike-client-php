@@ -606,7 +606,6 @@ static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
 
 		  Aerospike_handlers.offset = XtOffsetOf(Aerospike_object, std);
       Aerospike_handlers.free_obj = Aerospike_object_free_storage;
-
 		#endif
 
 		intern_obj_p->std.handlers = &Aerospike_handlers;
@@ -614,7 +613,7 @@ static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
 	} else {
 		DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
 	}
-	return &(intern_obj_p->std);
+	return &intern_obj_p->std;
 }
 
 #endif
@@ -952,6 +951,9 @@ PHP_METHOD(Aerospike, get)
 	as_key                 as_key_for_get_record;
 	int16_t                initializeKey = 0;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -969,7 +971,7 @@ PHP_METHOD(Aerospike, get)
 		goto exit;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz",
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|zz",
 				&key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for get function");
@@ -994,8 +996,10 @@ PHP_METHOD(Aerospike, get)
 		options_p = NULL;
 	}
 
-	zval_dtor(record_p);
-	array_init(record_p);
+  #if PHP_VERSION_ID < 70000
+	  zval_dtor(record_p);
+	#endif
+ array_init(record_p);
 
 	if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
 					&as_key_for_get_record,
@@ -1039,6 +1043,9 @@ PHP_METHOD(Aerospike, put)
 	as_key                 as_key_for_put_record;
 	int16_t                initializeKey = 0;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1407,6 +1414,9 @@ PHP_METHOD(Aerospike, operate)
 	as_key                 as_key_for_get_record;
 	int16_t                initializeKey = 0;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1491,6 +1501,9 @@ PHP_METHOD(Aerospike, append)
 	long                   bin_name_len;
 	long                   append_str_len;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1740,6 +1753,9 @@ PHP_METHOD(Aerospike, prepend)
 	long                   bin_name_len;
 	long                   prepend_str_len;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1819,13 +1835,20 @@ PHP_METHOD(Aerospike, increment)
 	as_key                 as_key_for_get_record;
 	int16_t                initializeKey = 0;
 	char*                  bin_name_p;
-	int                    bin_name_len;
+	#if PHP_VERSION_ID < 70000
+		int                    bin_name_len;
+	#else
+		size_t                 bin_name_len;
+	#endif
 	#if PHP_VERSION_ID < 70000
 		long                 offset = 0;
 	#else
 		zend_long            offset = 0;
 	#endif
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 	as_error_init(&error);
 
 	if (!aerospike_obj_p) {
@@ -3777,6 +3800,9 @@ PHP_METHOD(Aerospike, removeBin)
 	as_key                 as_key_for_put_record;
 	int16_t                initializeKey = 0;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+		aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {

@@ -237,8 +237,7 @@
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
-            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len,   \
-                    &index, 0, &pointer);                                      \
+            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len,&index, 0, &pointer);\
             if ((char*)key == NULL) {                                          \
                 err->code = AEROSPIKE_ERR_CLIENT;                              \
                 goto label;                                                    \
@@ -250,17 +249,18 @@
 #else
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
-            zend_string* z_str = zend_string_init(key, strlen(key), 0);        \
-            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, &z_str, &key_len,  \
-                    &index, 0, &pointer);                                      \
-            if ((char*)key == NULL) {                                          \
+        zend_string* z_str;                                         \
+        ZEND_HASH_FOREACH_KEY(hashtable, pointer, z_str) {\
+            key = z_str->val;\
+            if (z_str == NULL) {                                          \
                 err->code = AEROSPIKE_ERR_CLIENT;                              \
                 goto label;                                                    \
             }                                                                  \
-            if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
+            if ((strlen(ZSTR_VAL(z_str)) + 1) > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
                 PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
-            }
+            }\
+        } ZEND_HASH_FOREACH_END();
 #endif
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
         err, label)                                                            \
@@ -471,8 +471,8 @@ do {                                                                           \
     zval* dataval;                                                            \
     uint key_len;                                                              \
     zend_ulong index;                                                               \
-    hashtable = Z_ARRVAL_P((zval*) *value);                                    \
-    AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
+    hashtable = Z_ARRVAL_P((zval*) value);                                    \
+    ZEND_HASH_FOREACH_VAL (hashtable, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
         switch (FETCH_VALUE_##method(&dataval)) {                               \
@@ -503,7 +503,7 @@ do {                                                                           \
                         "Invalid Datatype");                                   \
                 goto label;                                                    \
         }                                                                      \
-    }                                                                          \
+    } ZEND_HASH_FOREACH_END();                                                                     \
 } while(0)
 
 #endif

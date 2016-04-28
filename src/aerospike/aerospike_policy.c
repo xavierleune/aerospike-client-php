@@ -385,30 +385,41 @@ set_policy_ex(as_config *as_config_p,
 		uint8_t             options_passed_for_read = 0x0;
 		uint8_t             options_passed_for_operate = 0x0;
 		uint8_t             options_passed_for_remove = 0x0;
-		zval**              gen_policy_pp = NULL;
 		zval*               gen_policy_p = NULL;
 #if PHP_VERSION_ID < 70000
+    zval**              gen_policy_pp = NULL;
 		int8_t*             options_key;
 		zval**              options_value;
 #else
+    zval*              gen_policy_pp = NULL;
 		zend_string*        options_key;
 		zval*               options_value = NULL;
 #endif
 
-		AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
-			uint options_key_len;
+      uint options_key_len;
       #if PHP_VERSION_ID < 70000
+        AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
         ulong options_index;
+        if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
+  					&options_key_len, &options_index, 0, &options_pointer)) {
+  				DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+  				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+  						"Unable to set policy: Invalid Policy Constant Key");
+  				goto exit;
+  			}
       #else
+        ZEND_HASH_FOREACH_VAL(options_array, options_value) {
         zend_ulong options_index;
+        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_pointer, options_key, options_value) {
+          if (!options_key) {
+            DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                "Unable to set policy: Invalid Policy Constant Key");
+            goto exit;
+          }
+        } ZEND_HASH_FOREACH_END();
       #endif
-			if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
-					&options_key_len, &options_index, 0, &options_pointer)) {
-				DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
-				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-						"Unable to set policy: Invalid Policy Constant Key");
-				goto exit;
-			}
+
 			switch((int) options_index) {
 #if PHP_VERSION_ID < 70000
 				case OPT_CONNECT_TIMEOUT:
@@ -991,7 +1002,13 @@ set_policy_ex(as_config *as_config_p,
 					goto exit;
 #endif
 			}
-		}
+   #if PHP_VERSION_ID < 70000
+     }
+   #else
+     } ZEND_HASH_FOREACH_END();
+   #endif
+
+
 	}
 
 	/*
@@ -1356,29 +1373,37 @@ set_config_policies(as_config *as_config_p,
 #if PHP_VERSION_ID < 70000
 		int8_t*			 options_key;
 		zval**			  options_value;
+    AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
+    ulong options_index;
 #else
 		zend_string*		options_key;
 		zval*			   options_value;
+    ZEND_HASH_FOREACH_VAL(options_array, options_value) {
+    zend_ulong options_index;
 #endif
-
-		AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
 			uint options_key_len;
+
       #if PHP_VERSION_ID < 70000
-        ulong options_index;
+      if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
+          &options_key_len, &options_index, 0, &options_pointer)) {
+            DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+    				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+    						"Unable to set policy: Invalid Policy Constant Key");
+    				goto exit;
+    			}
       #else
-        zend_ulong options_index;
+        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_pointer, options_key, options_value) {
+          if (!options_key) {
+            DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+    				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+    						"Unable to set policy: Invalid Policy Constant Key");
+    				goto exit;
+    			}
+        } ZEND_HASH_FOREACH_END();
       #endif
 
-			if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
-					&options_key_len, &options_index, 0, &options_pointer)) {
-				DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
-				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-						"Unable to set policy: Invalid Policy Constant Key");
-				goto exit;
-			}
-
-			switch((int) options_index) {
 #if PHP_VERSION_ID < 70000
+    switch((int) options_index) {
 				case OPT_CONNECT_TIMEOUT:
 					if ((!as_config_p) || (Z_TYPE_PP(options_value) != IS_LONG)) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
@@ -1507,8 +1532,10 @@ set_config_policies(as_config *as_config_p,
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 									   "Unable to set policy: Invalid Policy Constant Key");
 					goto exit;
-
+    }
+}
 #else
+ switch((int) options_index) {
 				case OPT_CONNECT_TIMEOUT:
 					if ((!as_config_p) || (Z_TYPE_P(options_value) != IS_LONG)) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
@@ -1644,11 +1671,10 @@ set_config_policies(as_config *as_config_p,
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 									   "Unable to set policy: Invalid Policy Constant Key");
 					goto exit;
-
+}
+} ZEND_HASH_FOREACH_END();
 #endif
-			}
-		}
-	}
+}
 exit:
 	return;
 }

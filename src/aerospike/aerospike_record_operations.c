@@ -93,7 +93,6 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 	as_error_init(error_p);
 	as_record_inita(&record, 1);
 
-
 	switch (operation) {
 		case AS_OPERATOR_APPEND:
 			if (!as_operations_add_append_str(ops, bin_name_p, str)) {
@@ -575,13 +574,12 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 		zend_long                 l_offset = 0;
 	#endif
 	int                         op;
+	HashTable*                  each_operation_array_p = NULL;
 	#if PHP_VERSION_ID < 70000
-	      HashTable*                  each_operation_array_p = NULL;
 				zval**                      each_operation;
 				zval**                      operation;
 				zval**                      each_operation_back;
 	#else
-	      HashTable*                  each_operation_array_p;
 				zval*                       each_operation;
 		    zval*                       operation;
 				zval*                       each_operation_back;
@@ -611,201 +609,116 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 		goto exit;
 	}
 
-	AEROSPIKE_FOREACH_HASHTABLE(operations_array_p, pointer, operation) {
-		as_record *temp_rec = NULL;
+    #if PHP_VERSION_ID < 70000
+	    AEROSPIKE_FOREACH_HASHTABLE(operations_array_p, pointer, operation) {
+		#else
+		  ZEND_HASH_FOREACH_VAL(operations_array_p, operation) {
+		#endif
 
-		if (IS_ARRAY ==
-		  #if PHP_VERSION_ID < 70000
-		    Z_TYPE_PP(operation
-		  #else
-			  Z_TYPE_P(operation
-		  #endif
-			)) {
-#if PHP_VERSION_ID < 70000
-			each_operation_array_p = Z_ARRVAL_PP(operation);
-#else
-			each_operation_array_p = Z_ARRVAL_P(operation);
-#endif
+	  as_record *temp_rec = NULL;
+
+		if (IS_ARRAY == AEROSPIKE_Z_TYPE_P(operation)) {
+		  each_operation_array_p = AEROSPIKE_Z_ARRVAL_P(operation);
 			str = NULL;
 			geoStr = NULL;
 			op = 0;
 			ttl = 0;
 			bin_name_p = NULL;
-			AEROSPIKE_FOREACH_HASHTABLE(each_operation_array_p, each_pointer, each_operation) {
+				#if PHP_VERSION_ID < 70000
+			    AEROSPIKE_FOREACH_HASHTABLE(each_operation_array_p, each_pointer, each_operation) {
+				#else
+				  ZEND_HASH_FOREACH_VAL(each_operation_array_p, each_operation) {
+				#endif
 				uint options_key_len;
+				char* options_key;
 				#if PHP_VERSION_ID < 70000
 					ulong options_index;
 				#else
 					zend_ulong options_index;
 				#endif
-				char* options_key;
 
-#if PHP_VERSION_ID < 70000
-				if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key,
-							&options_key_len, &options_index, 0, &each_pointer)
-#else
-				zend_string* z_str = zend_string_init(options_key, strlen(options_key), 0);
-				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(each_operation_array_p, &z_str,
-							&options_key_len, &options_index, 0, &each_pointer)
-#endif
-						!= HASH_KEY_IS_STRING) {
-					DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
-					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-							"Unable to set policy: Invalid Policy Constant Key");
-					goto exit;
-				} else {
-					if (!strcmp(options_key, "op") && (IS_LONG ==
-							#if PHP_VERSION_ID < 70000
-						    Z_TYPE_PP(each_operation
-						  #else
-							  Z_TYPE_P(operation
-						  #endif
-						))) {
-						op = (uint32_t)
-						#if PHP_VERSION_ID < 70000
-						  Z_LVAL_PP(each_operation
-						#else
-						  Z_LVAL_P(each_operation
-						#endif
-						);
-					} else if (!strcmp(options_key, "bin") && (IS_STRING ==
-					    #if PHP_VERSION_ID < 70000
-						    Z_TYPE_PP(each_operation
-						  #else
-							  Z_TYPE_P(operation
-						  #endif
-						))) {
-#if PHP_VERSION_ID < 70000
-						bin_name_p = (char *) Z_STRVAL_PP(each_operation);
-#else
-						bin_name_p = (char *) Z_STRVAL_P(each_operation);
-#endif
-					} else if (!strcmp(options_key, "val")) {
-						if (IS_STRING ==
-						  #if PHP_VERSION_ID < 70000
-							  Z_TYPE_PP(each_operation
-							#else
-								Z_TYPE_P(operation
-							#endif
-							)) {
-#if PHP_VERSION_ID < 70000
-							str = (char *) Z_STRVAL_PP(each_operation);
-#else
-							str = (char *) Z_STRVAL_P(each_operation);
-#endif
-							each_operation_back = each_operation;
-						} else if (IS_LONG ==
-							  #if PHP_VERSION_ID < 70000
-								  Z_TYPE_PP(each_operation
-								#else
-								  Z_TYPE_P(operation
-								#endif
-							)) {
-							offset = (uint32_t)
-							#if PHP_VERSION_ID < 70000
-						    Z_LVAL_PP(each_operation
-							#else
-							  Z_LVAL_P(each_operation
-							#endif
-							);
-						} else if (IS_DOUBLE ==
-								#if PHP_VERSION_ID < 70000
-									Z_TYPE_PP(each_operation
-								#else
-									Z_TYPE_P(operation
-								#endif
-							) && aerospike_has_double((as_object_p ))) {
-							double_offset = (double)
-							#if PHP_VERSION_ID < 70000
-						    Z_DVAL_PP(each_operation
-							#else
-							  Z_DVAL_P(each_operation
-							#endif
-							);
-						} else if (IS_OBJECT ==
-								#if PHP_VERSION_ID < 70000
-									Z_TYPE_PP(each_operation
-								#else
-									Z_TYPE_P(operation
-								#endif
-							)) {
-							const char* name;
-							#if PHP_VERSION_ID < 70000
-						    zend_uint name_len;
-							#else
-						    size_t name_len;
-							#endif
-							int dup;
-							#if PHP_VERSION_ID < 70000
-							dup = zend_get_object_classname(*((zval**)each_operation),
-									&name, &name_len TSRMLS_CC);
-							#endif
-							if((!strcmp(name, GEOJSONCLASS))
-									&& (aerospike_obj_p->hasGeoJSON)
-									&& op == AS_OPERATOR_WRITE) {
-								int result;
-								#if PHP_VERSION_ID < 70000
-								  zval* retval = NULL, fname;
-									AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
-									result = call_user_function_ex(NULL, each_operation, &fname, &retval,
-													0, NULL, 0, NULL TSRMLS_CC);
-									geoStr = Z_STRVAL_P(retval);
-								#else
-								  zval retval, fname;
-									AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
-								  result = call_user_function_ex(NULL, each_operation, &fname, &retval,
-										0, NULL, 0, NULL TSRMLS_CC);
-										geoStr = Z_STRVAL_P(&retval);
-								#endif
-							}
-							else {
+        #if PHP_VERSION_ID < 70000
+				  if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key,
+					    &options_key_len, &options_index, 0, &each_pointer) != HASH_KEY_IS_STRING)
+        #else
+				    zend_string* z_str;// = zend_string_init(options_key, strlen(options_key), 0);
+				    /*if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(each_operation_array_p, &z_str,
+							  &options_key_len, &options_index, 0, &each_pointer)*/
+						ZEND_HASH_FOREACH_KEY_VAL(each_operation_array_p, each_pointer, z_str, each_operation) {
+							options_key = z_str->val;
+							if (!z_str)
+        #endif
+					  {
+					  DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+					  PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+						  "Unable to set policy: Invalid Policy Constant Key");
+					  goto exit;
+				    } else {
+					    if (!strcmp(options_key, "op") && (IS_LONG ==
+						    AEROSPIKE_Z_TYPE_P(each_operation))) {
+						    op = (uint32_t) AEROSPIKE_Z_LVAL_P(each_operation);
+					    } else if (!strcmp(options_key, "bin") && (IS_STRING ==
+						      AEROSPIKE_Z_TYPE_P(each_operation))) {
+						      bin_name_p = (char *) AEROSPIKE_Z_STRVAL_P(each_operation);
+					    } else if (!strcmp(options_key, "val")) {
+						      if (IS_STRING == AEROSPIKE_Z_TYPE_P(each_operation)) {
+						        str = AEROSPIKE_Z_STRVAL_P(each_operation);
+							      each_operation_back = each_operation;
+						      } else if (IS_LONG == AEROSPIKE_Z_TYPE_P(each_operation)) {
+							        offset = (uint32_t)
+						          AEROSPIKE_Z_LVAL_P(each_operation);
+						      } else if (IS_DOUBLE == AEROSPIKE_Z_TYPE_P(each_operation) &&
+									           aerospike_has_double((as_object_p ))) {
+							             double_offset = (double)
+						               AEROSPIKE_Z_DVAL_P(each_operation);
+						      } else if (IS_OBJECT == AEROSPIKE_Z_TYPE_P(each_operation)) {
+							              const char* name;
+							              #if PHP_VERSION_ID < 70000
+						                  zend_uint name_len;
+							              #else
+						                  size_t name_len;
+							              #endif
+							              int dup;
+							              #if PHP_VERSION_ID < 70000
+							                dup = zend_get_object_classname(*((zval**)each_operation),
+									                  &name, &name_len TSRMLS_CC);
+							             #endif
+							            if((!strcmp(name, GEOJSONCLASS))
+									          && (aerospike_obj_p->hasGeoJSON)
+									          && op == AS_OPERATOR_WRITE) {
+								            int result;
+								              #if PHP_VERSION_ID < 70000
+								                zval* retval = NULL, fname;
+									              AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
+									              result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+													        0, NULL, 0, NULL TSRMLS_CC);
+									              geoStr = Z_STRVAL_P(retval);
+							             	 #else
+								               zval retval, fname;
+									               AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
+								                  result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+										              0, NULL, 0, NULL TSRMLS_CC);
+										           geoStr = Z_STRVAL_P(&retval);
+								              #endif
+							             } else {
 								status = AEROSPIKE_ERR_CLIENT;
 								DEBUG_PHP_EXT_DEBUG("Invalid operation on GeoJSON datatype OR Old version of server, "
 										"GeoJSON not supported on this server");
 								PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid operation on GeoJSON "
 										"datatype OR Old version of server, GeoJSON not supported on this server");
 								goto exit;
-							}
-						} else if (IS_ARRAY ==
-								#if PHP_VERSION_ID < 70000
-									Z_TYPE_PP(each_operation
-								#else
-									Z_TYPE_P(operation
-								#endif
-							)) {
-
-						} else {
+							             }
+						} else if (IS_ARRAY == AEROSPIKE_Z_TYPE_P(each_operation)) {
+            } else {
 							status = AEROSPIKE_ERR_CLIENT;
 							goto exit;
 						}
-					} else if (!strcmp(options_key, "ttl") && (IS_LONG ==
-						  #if PHP_VERSION_ID < 70000
-							  Z_TYPE_PP(each_operation
-							#else
-								Z_TYPE_P(operation
-							#endif
-						))) {
-						ttl = (uint32_t)
-						#if PHP_VERSION_ID < 70000
-						  Z_LVAL_PP(each_operation
-						#else
-						  Z_LVAL_P(each_operation
-						#endif
-						);
-					} else if (!strcmp(options_key, "index") && (IS_LONG ==
-						#if PHP_VERSION_ID < 70000
-						  Z_TYPE_PP(each_operation
-					  #else
-						  Z_TYPE_P(operation
-						#endif
-						))) {
-						ttl = (uint32_t)
-							#if PHP_VERSION_ID < 70000
-							  Z_LVAL_PP(each_operation
-							#else
-							  Z_LVAL_P(each_operation
-							#endif
-						);
+					} else if (!strcmp(options_key, "ttl") && (IS_LONG == AEROSPIKE_Z_TYPE_P(each_operation))) {
+						  ttl = (uint32_t)
+						  AEROSPIKE_Z_LVAL_P(each_operation);
+					} else if (!strcmp(options_key, "index") && (IS_LONG == AEROSPIKE_Z_TYPE_P(each_operation))) {
+						  ttl = (uint32_t)
+						  AEROSPIKE_Z_LVAL_P(each_operation);
 					} else {
 						status = AEROSPIKE_ERR_CLIENT;
 						DEBUG_PHP_EXT_DEBUG("Unable to set Operate: Invalid Optiopns Key");
@@ -813,38 +726,31 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 						goto exit;
 					}
 				}
-			}
+			#if PHP_VERSION_ID < 70000
+			 }
+			#else
+			// HERE
+			} ZEND_HASH_FOREACH_END();
+			 } ZEND_HASH_FOREACH_END();
+			#endif
 			if (op == AS_OPERATOR_INCR) {
 				if (str) {
 					l_offset = (long) offset;
-					if  (!(
-#if PHP_VERSION_ID < 70000
-							is_numeric_string(Z_STRVAL_PP(each_operation_back), Z_STRLEN_PP(each_operation_back), &l_offset, NULL, 0)
-#else
-							is_numeric_string(Z_STRVAL_P(each_operation_back), Z_STRLEN_P(each_operation_back), &l_offset, NULL, 0)
-#endif
-								)) {
-						status = AEROSPIKE_ERR_PARAM;
+					if  (!(is_numeric_string(AEROSPIKE_Z_STRVAL_P(each_operation_back),
+					       AEROSPIKE_Z_STRLEN_P(each_operation_back), &l_offset, NULL, 0))) {
+					  status = AEROSPIKE_ERR_PARAM;
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
 						DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
 						goto exit;
 					}
 				}
 			}
-			#if PHP_VERSION_ID < 70000
-			  if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
+			if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
 							as_key_p, options_p, error_p, bin_name_p, str, geoStr,
 							offset, double_offset, ttl, op, &ops, each_operation, &operate_policy,
 							serializer_policy, &temp_rec TSRMLS_CC))) {
-			#else
-			  if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
-							as_key_p, options_p, error_p, bin_name_p, str, geoStr,
-							offset, double_offset, ttl, op, &ops, each_operation, &operate_policy,
-							serializer_policy, &temp_rec TSRMLS_CC))) {
-			#endif
-
-				DEBUG_PHP_EXT_ERROR("Operate function returned an error");
-				goto exit;
+			  	 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
+				   goto exit;
 			}
 			if (temp_rec) {
 				as_record_destroy(temp_rec);
@@ -853,7 +759,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 			status = AEROSPIKE_ERR_CLIENT;
 			goto exit;
 		}
-	}
+	#if PHP_VERSION_ID < 70000
+	 }
+	#else
+	 } ZEND_HASH_FOREACH_END();
+	#endif
 
 	if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, error_p TSRMLS_CC)) {
 		goto exit;
