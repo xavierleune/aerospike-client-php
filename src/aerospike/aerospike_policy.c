@@ -143,25 +143,21 @@ get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *er
     #if PHP_VERSION_ID < 70000
   	  if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
     #else
-  	  if ((gen_policy_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_POLICY_GEN)) == NULL) {
+  	  if ((gen_policy_pp = zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN)) == NULL) {
     #endif
 			//error_p->code = AEROSPIKE_ERR_CLIENT;
 			goto exit;
 		}
-    if (
-    #if PHP_VERSION_ID < 70000
-      Z_TYPE_PP(gen_policy_pp)
-    #else
-      Z_TYPE_P(gen_policy_pp)
-    #endif
-		!= IS_ARRAY) {
+    if (AEROSPIKE_Z_TYPE_P(gen_policy_pp) != IS_ARRAY) {
 			error_p->code = AEROSPIKE_ERR_PARAM;
 			goto exit;
 		}
+
     #if PHP_VERSION_ID < 70000
   	  zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
     #else
-  	  gen_value_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_TTL);
+  	  //gen_value_pp = zend_hash_index_find(Z_ARRVAL_P(gen_policy_pp), OPT_TTL);
+      gen_value_pp = zend_hash_index_find(Z_ARRVAL_P(gen_policy_pp), 1);
     #endif
 
 		if (gen_value_pp && (
@@ -187,7 +183,6 @@ exit:
 	return;
 
 }
-
 
 /*
  *******************************************************************************************************
@@ -391,7 +386,7 @@ set_policy_ex(as_config *as_config_p,
 		int8_t*             options_key;
 		zval**              options_value;
 #else
-    zval*              gen_policy_pp = NULL;
+    zval*               gen_policy_pp = NULL;
 		zend_string*        options_key;
 		zval*               options_value = NULL;
 #endif
@@ -410,8 +405,8 @@ set_policy_ex(as_config *as_config_p,
       #else
         ZEND_HASH_FOREACH_VAL(options_array, options_value) {
         zend_ulong options_index;
-        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_pointer, options_key, options_value) {
-          if (!options_key) {
+        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
+          if (options_key) {
             DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
             PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
                 "Unable to set policy: Invalid Policy Constant Key");
@@ -1392,7 +1387,7 @@ set_config_policies(as_config *as_config_p,
     				goto exit;
     			}
       #else
-        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_pointer, options_key, options_value) {
+        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
           if (!options_key) {
             DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
     				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,

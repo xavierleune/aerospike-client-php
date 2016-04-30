@@ -367,7 +367,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
   #if PHP_VERSION_ID < 70000
 	  zval	**retval
 	#else
-	  zval	*retval
+	  zval	retval
 	#endif
 											   , as_error  *error_p TSRMLS_DC)
 {
@@ -393,7 +393,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
 					#if PHP_VERSION_ID < 70000
 						retval
 					#else
-					  retval
+					  &retval
 					#endif
 					,
 							(const unsigned char **) &(bytes_val_p),
@@ -417,7 +417,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
 											#if PHP_VERSION_ID < 70000
 												retval
 											#else
-											  retval
+											  &retval
 											#endif
 											, false, error_p TSRMLS_CC);
 					if(AEROSPIKE_OK != (error_p->code)) {
@@ -599,7 +599,11 @@ static void ADD_LIST_APPEND_PAIR(Aerospike_object* as, void *key, void *value, v
  */
 static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-	 zval        *unserialized_zval = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval        *unserialized_zval = NULL;
+ 	#else
+ 	  zval        unserialized_zval;
+ 	#endif
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
 	#if PHP_VERSION_ID < 70000
@@ -613,16 +617,22 @@ static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, 
 		DEBUG_PHP_EXT_ERROR("Unable to unserialize bytes");
 		goto exit;
 	}
-	add_next_index_zval(*((zval **) array), unserialized_zval);
+	add_next_index_zval(*((zval **) array),
+	#if PHP_VERSION_ID < 70000
+	  unserialized_zval
+	#else
+	  &unserialized_zval
+	#endif
+  );
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
-		if (unserialized_zval)
+		if (&unserialized_zval)
 #if PHP_VERSION_ID < 70000
 			zval_ptr_dtor(&unserialized_zval);
 #else
-			zval_ptr_dtor(unserialized_zval);
+			zval_ptr_dtor(&unserialized_zval);
 #endif
 	}
 	return;
@@ -777,7 +787,11 @@ static void ADD_MAP_ASSOC_PAIR(Aerospike_object *as, void *key, void *value, voi
  */
 static void ADD_MAP_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-	zval        *unserialized_zval = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval        *unserialized_zval = NULL;
+ 	#else
+ 	  zval        unserialized_zval;
+ 	#endif
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
 	#if PHP_VERSION_ID < 70000
@@ -791,7 +805,12 @@ static void ADD_MAP_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, vo
 		goto exit;
 	}
 	add_assoc_zval(*((zval **) array), as_string_get((as_string *) key),
-			unserialized_zval);
+	#if PHP_VERSION_ID < 70000
+		unserialized_zval
+	#else
+		&unserialized_zval
+	#endif
+	);
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
@@ -947,7 +966,11 @@ static void ADD_MAP_INDEX_PAIR(Aerospike_object* as, void *key, void *value, voi
  */
 static void ADD_MAP_INDEX_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-	zval        *unserialized_zval = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval        *unserialized_zval = NULL;
+ 	#else
+ 	  zval        unserialized_zval;
+ 	#endif
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
 	#if PHP_VERSION_ID < 70000
@@ -961,16 +984,21 @@ static void ADD_MAP_INDEX_BYTES(Aerospike_object* as, void *key, void *value, vo
 		goto exit;
 	}
 	add_index_zval(*((zval**)array), (uint) as_integer_get((as_integer *) key),
-			unserialized_zval);
+	#if PHP_VERSION_ID < 70000
+		unserialized_zval
+	#else
+		&unserialized_zval
+	#endif
+	);
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
-		if (unserialized_zval)
+		if (&unserialized_zval)
 #if PHP_VERSION_ID < 70000
 			zval_ptr_dtor(&unserialized_zval);
 #else
-			zval_ptr_dtor(unserialized_zval);
+			zval_ptr_dtor(&unserialized_zval);
 #endif
 	}
 	return;
@@ -1238,7 +1266,11 @@ static void ADD_DEFAULT_ASSOC_GEOJSON(Aerospike_object* as, void *key, void *val
  */
 static void ADD_DEFAULT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-	zval        *unserialized_zval = NULL;
+	#if PHP_VERSION_ID < 70000
+	  zval        *unserialized_zval = NULL;
+	#else
+    zval        unserialized_zval;
+	#endif
 
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
 	#if PHP_VERSION_ID < 70000
@@ -1257,19 +1289,37 @@ static void ADD_DEFAULT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value
 	 * NULL will differentiate UDF from normal GET calls.
 	 */
 	if (key == NULL) {
-		ZVAL_ZVAL((zval *) array, unserialized_zval, 1, 1);
+		ZVAL_ZVAL((zval *) array,
+		#if PHP_VERSION_ID < 70000
+		  unserialized_zval
+		#else
+		  &unserialized_zval
+		#endif
+		, 1, 1);
 	} else {
-		add_assoc_zval(((zval*)array), (char*) key, unserialized_zval);
+		add_assoc_zval(((zval*)array), (char*) key,
+		#if PHP_VERSION_ID < 70000
+		  unserialized_zval
+		#else
+		  &unserialized_zval
+		#endif
+	);
 	}
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
-		if (unserialized_zval)
+		if (
+			#if PHP_VERSION_ID < 70000
+			  unserialized_zval
+			#else
+			  &unserialized_zval
+			#endif
+		)
 #if PHP_VERSION_ID < 70000
 			zval_ptr_dtor(&unserialized_zval);
 #else
-			zval_ptr_dtor(unserialized_zval);
+			zval_ptr_dtor(&unserialized_zval);
 #endif
 	}
 	return;
@@ -2473,7 +2523,13 @@ extern void AS_LIST_PUT(Aerospike_object *as, void *key, void *value, void *stor
 		int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
 	AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(as, error_p, static_pool,
-			key, ((zval**)value), store, exit, serializer_policy);
+			key,
+			#if PHP_VERSION_ID < 70000
+						((zval**)value)
+			#else
+						((zval*)value)
+			#endif
+			, store, exit, serializer_policy);
 exit:
 	return;
 }
@@ -2497,7 +2553,13 @@ void AS_MAP_PUT(Aerospike_object* as, void *key, void *value, void *store, void 
 {
 	as_val *map_key = NULL;
 	AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(as, error_p, static_pool,
-			map_key, ((zval**)value), store, exit, serializer_policy);
+			map_key,
+			#if PHP_VERSION_ID < 70000
+						((zval**)value)
+			#else
+						((zval*)value)
+			#endif
+			, store, exit, serializer_policy);
 exit:
 	return;
 }

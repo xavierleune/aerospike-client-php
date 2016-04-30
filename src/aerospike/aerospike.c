@@ -1283,6 +1283,10 @@ PHP_METHOD(Aerospike, existsMany)
 	zval*                   metadata_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
+
 	as_error_init(&error);
 
 	if (!aerospike_obj_p) {
@@ -1299,7 +1303,7 @@ PHP_METHOD(Aerospike, existsMany)
 		goto exit;
 	}
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a", &keys_p, &metadata_p, &options_p)) {
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az/|a", &keys_p, &metadata_p, &options_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for existsMany");
 		DEBUG_PHP_EXT_ERROR("Unable to parse parameters for existsMany");
@@ -1350,6 +1354,9 @@ PHP_METHOD(Aerospike, getMany)
 	zval*                   filter_bins_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1367,7 +1374,7 @@ PHP_METHOD(Aerospike, getMany)
 		goto exit;
 	}
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a!a", &keys_p,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az/|a!a", &keys_p,
 				&records_p, &filter_bins_p, &options_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -1581,6 +1588,9 @@ PHP_METHOD(Aerospike, remove)
 	as_key                 as_key_for_put_record;
 	int16_t                initializeKey = 0;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1642,6 +1652,9 @@ PHP_METHOD(Aerospike, exists)
 	zval*                  metadata_p = NULL;
 	zval*                  options_p = NULL;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1657,7 +1670,7 @@ PHP_METHOD(Aerospike, exists)
 		DEBUG_PHP_EXT_ERROR("exists: connection not established");
 	}
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, &options_p)) {
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|z", &key_record_p, &metadata_p, &options_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for exists");
 		DEBUG_PHP_EXT_ERROR("Unable to parse parameters for exists");
@@ -1687,6 +1700,9 @@ PHP_METHOD(Aerospike, getMetadata)
 	zval*                  metadata_p = NULL;
 	zval*                  options_p = NULL;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+		aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -1937,6 +1953,9 @@ PHP_METHOD(Aerospike, touch)
 	int16_t                initializeKey = 0;
 	long                   time_to_live;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+  #endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -4893,6 +4912,9 @@ PHP_METHOD(Aerospike, register)
 	zval*                  path_zval_p = NULL;
  	zval*                  options_p = NULL;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5039,6 +5061,9 @@ PHP_METHOD(Aerospike, apply)
 	int16_t                initializeKey = 0;
 	zval*                  options_p = NULL;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5465,6 +5490,9 @@ PHP_METHOD(Aerospike, createUser)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5531,6 +5559,9 @@ PHP_METHOD(Aerospike, dropUser)
 	int                     user_p_length = 0;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5733,6 +5764,9 @@ PHP_METHOD(Aerospike, grantRoles)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5800,6 +5834,9 @@ PHP_METHOD(Aerospike, revokeRoles)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5867,6 +5904,9 @@ PHP_METHOD(Aerospike, queryUser)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5935,6 +5975,9 @@ PHP_METHOD(Aerospike, queryUsers)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 	as_error_init(&error);
 
 	if (!aerospike_obj_p) {
@@ -5952,7 +5995,7 @@ PHP_METHOD(Aerospike, queryUsers)
 		goto exit;
 	}
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/|a",
 				&roles_p, &options_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -5997,6 +6040,9 @@ PHP_METHOD(Aerospike, createRole)
 	zval*                   privileges_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -6072,6 +6118,9 @@ PHP_METHOD(Aerospike, dropRole)
 	int                     role_p_length = 0;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -6139,6 +6188,9 @@ PHP_METHOD(Aerospike, grantPrivileges)
 	zval*                   privileges_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -6218,6 +6270,9 @@ PHP_METHOD(Aerospike, revokePrivileges)
 	zval*                   privileges_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -6296,6 +6351,9 @@ PHP_METHOD(Aerospike, queryRole)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -6313,7 +6371,7 @@ PHP_METHOD(Aerospike, queryRole)
 		goto exit;
 	}
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|a",
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|a",
 				&role_zval_p, &roles_p, &options_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -6374,6 +6432,9 @@ PHP_METHOD(Aerospike, queryRoles)
 	zval*                   roles_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -6391,7 +6452,7 @@ PHP_METHOD(Aerospike, queryRoles)
 		goto exit;
 	}
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/|a",
 				&roles_p, &options_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,

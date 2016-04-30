@@ -292,23 +292,21 @@ do {                                                                           \
         err, label)                                                            \
 do {                                                                           \
     char *local_key;                                                           \
-    zend_string* z_str = zend_string_init(local_key, strlen(local_key), 0);    \
-    uint key_type = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable,          \
-            &z_str, &key_len, &index, 0, &pointer);               \
-    if (key_type == HASH_KEY_IS_STRING) {                                      \
-        as_string *map_str;                                                    \
-        GET_STR_POOL(map_str, static_pool, err, label);                        \
-        as_string_init(map_str, local_key, false);                             \
-        key = (as_val*) (map_str);                                             \
-    } else if (key_type == HASH_KEY_IS_LONG) {                                 \
-        as_integer *map_int;                                                   \
-        GET_INT_POOL(map_int, static_pool, err, label);                        \
-        as_integer_init(map_int, index);                                       \
-        key = (as_val*) map_int;                                               \
-    } else {                                                                   \
-        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_CLIENT, "Invalid Key type for Map"); \
-        goto label;                                                            \
-    }                                                                          \
+    zend_string* z_str;\
+    ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
+      local_key = z_str->val;\
+      if (z_str) {                                      \
+          as_string *map_str;                                                    \
+          GET_STR_POOL(map_str, static_pool, err, label);                        \
+          as_string_init(map_str, local_key, false);                             \
+          key = (as_val*) (map_str);                                             \
+      } else {                                 \
+          as_integer *map_int;                                                   \
+          GET_INT_POOL(map_int, static_pool, err, label);                        \
+          as_integer_init(map_int, index);                                       \
+          key = (as_val*) map_int;                                               \
+      }\
+    } ZEND_HASH_FOREACH_END();\
 } while(0);
 #endif
 
@@ -745,30 +743,34 @@ do {                                                                           \
         }                                                                      \
     }
 #else
-#define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,       \
+#define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,   \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
     uint inner_key_len;                                                        \
-    zend_ulong index;                                                               \
+    zend_ulong index;                                                          \
     uint key_iterator = 0;                                                     \
     hashtable = Z_ARRVAL_P((zval*)value);                                      \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
-    zend_string* z_str = zend_string_init(inner_key, strlen(inner_key), 0);    \
-    TRAVERSE_KEYS(hashtable, z_str, inner_key_len, index, pointer,             \
-            key_iterator)                                                      \
+    zend_string* z_str;                                                        \
+    ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {                           \
+      if (!z_str && index == key_iterator) {                                   \
+        key_iterator++;                                                        \
+      }                                                                        \
+    } ZEND_HASH_FOREACH_END();                                                 \
+    inner_key = z_str->val;                                                    \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
         AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_LIST(as, inner_key,                     \
+        AEROSPIKE_##level##_PUT_##action##_LIST(as, inner_key,                 \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_LIST(as, store,                         \
+        AEROSPIKE_##level##_SET_##action##_LIST(as, store,                     \
                        inner_store, key, err);                                 \
         if(AEROSPIKE_OK != (err->code)) {                                      \
             goto label;                                                        \
@@ -776,13 +778,13 @@ do {                                                                           \
     } else {                                                                   \
         AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_MAP(as, inner_key,                      \
+        AEROSPIKE_##level##_PUT_##action##_MAP(as, inner_key,                  \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
         }                                                                      \
-        AEROSPIKE_##level##_SET_##action##_MAP(as, store,                          \
+        AEROSPIKE_##level##_SET_##action##_MAP(as, store,                      \
                        inner_store, key, err);                                 \
         if (AEROSPIKE_OK != (err->code)) {                                     \
             goto label;                                                        \
