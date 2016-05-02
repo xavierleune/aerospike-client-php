@@ -3935,12 +3935,13 @@ PHP_METHOD(Aerospike, predicateBetween)
 {
 	as_status              status = AEROSPIKE_OK;
 	char                   *bin_name_p  =  NULL;
-	int                    bin_name_len = 0;
 	long                   min_p;
 	long                   max_p;
 #if PHP_VERSION_ID < 70000
+  int                    bin_name_len = 0;
 	zval                   *minmax_arr = NULL;
 #else
+  size_t                 bin_name_len = 0;
 	zval                   minmax_arr;
 #endif
 
@@ -4029,13 +4030,14 @@ PHP_METHOD(Aerospike, predicateRange)
 {
 	as_status              status = AEROSPIKE_OK;
 	char                   *bin_name_p  =  NULL;
-	int                    bin_name_len = 0;
 	long                   index_type;
 	zval                   *min_p = NULL;
 	zval                   *max_p = NULL;
 #if PHP_VERSION_ID < 70000
+  int                    bin_name_len = 0;
 	zval                   *minmax_arr = NULL;
 #else
+  size_t                 bin_name_len = 0;
 	zval                   minmax_arr;
 #endif
 
@@ -4143,6 +4145,9 @@ PHP_METHOD(Aerospike, query)
 	HashTable*                  bins_ht_p = NULL;
 	HashTable*                  predicate_ht_p = NULL;
 	Aerospike_object*           aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 	userland_callback           user_func = {0};
 
 	as_error_init(&error);
@@ -5328,21 +5333,27 @@ PHP_METHOD(Aerospike, addIndex)
 	as_error                error;
 	char                    *ns_p = NULL;
 	#if PHP_VERSION_ID < 70000
-		int                    ns_p_length = 0;
-		int                    set_p_length = 0;
+		int                   ns_p_length = 0;
+		int                   set_p_length = 0;
+		int                   bin_p_length = 0;
+		int                   name_p_length = 0;
 	#else
-		size_t                 ns_p_length = 0;
-		size_t                 set_p_length = 0;
+		size_t                ns_p_length = 0;
+		size_t                set_p_length = 0;
+		size_t                bin_p_length = 0;
+		size_t                name_p_length = 0;
 	#endif
 	char                    *set_p = NULL;
 	char                    *bin_p = NULL;
-	int                     bin_p_length = 0;
+
 	long                    index_type = -1;
 	long                    datatype = -1;
 	char                    *name_p = NULL;
-	int                     name_p_length = 0;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
