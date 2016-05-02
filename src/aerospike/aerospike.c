@@ -4986,6 +4986,9 @@ PHP_METHOD(Aerospike, deregister)
 	zval*                  module_zval_p = NULL;
 	zval*                  options_p = NULL;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
@@ -5152,7 +5155,13 @@ PHP_METHOD(Aerospike, apply)
 	if (AEROSPIKE_OK !=
 			(status = aerospike_udf_apply(aerospike_obj_p,
 										  &as_key_for_apply_udf, &error,
-										  module_p, function_name_p, &args_p,
+										  module_p, function_name_p,
+											#if PHP_VERSION_ID < 70000
+											  &args_p
+                      #else
+											  args_p
+											#endif
+											,
 										  return_value_of_udf_p, options_p,
 										  &aerospike_obj_p->serializer_opt))) {
 		DEBUG_PHP_EXT_ERROR("apply function returned an error");

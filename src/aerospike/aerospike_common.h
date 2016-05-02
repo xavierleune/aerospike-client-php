@@ -713,7 +713,13 @@ aerospike_udf_deregister(Aerospike_object* aerospike_obj_p, as_error* error_p,
 
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* as_key_p,
-		as_error* error_p, char* module_p, char* function_p, zval** args_pp,
+		as_error* error_p, char* module_p, char* function_p,
+		#if PHP_VERSION_ID < 70000
+      zval** args_pp
+    #else
+      zval* args_pp
+    #endif
+		,
 		zval* return_value_p, zval* options_p, int8_t* serializer_policy_p);
 
 extern as_status
