@@ -744,7 +744,13 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
 
 extern as_status
 aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
-		char *module_p, char *function_p, zval** args_pp, char* namespace_p,
+		char *module_p, char *function_p,
+		#if PHP_VERSION_ID < 70000
+			zval** args_pp
+		#else
+			zval* args_pp
+		#endif
+		, char* namespace_p,
 		char* set_p, zval* scan_id_p, zval *options_p, bool block, int8_t* serializer_policy_p TSRMLS_DC);
 
 extern as_status

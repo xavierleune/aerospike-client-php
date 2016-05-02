@@ -89,22 +89,21 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 		HashPosition pos;
 		#if PHP_VERSION_ID < 70000
 		  zval **bin_names_pp;
+			AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
 		#else
 		  zval *bin_names_pp;
+			ZEND_HASH_FOREACH_VAL(bins_ht_p, bin_names_pp) {
 		#endif
-		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-#if PHP_VERSION_ID < 70000
-			if (Z_TYPE_PP(bin_names_pp) != IS_STRING) {
+      if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
 				convert_to_string_ex(bin_names_pp);
 			}
-			as_scan_select(&scan, Z_STRVAL_PP(bin_names_pp));
-#else
-			if (Z_TYPE_P(bin_names_pp) != IS_STRING) {
-				convert_to_string_ex(bin_names_pp);
-			}
-			as_scan_select(&scan, Z_STRVAL_P(bin_names_pp));
-#endif
-		}
+			as_scan_select(&scan, AEROSPIKE_Z_STRVAL_P(bin_names_pp));
+
+    #if PHP_VERSION_ID < 70000
+	    }
+    #else
+	    } ZEND_HASH_FOREACH_END();
+    #endif
 		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, &scan_policy,
 						&scan, aerospike_helper_record_stream_callback, user_func_p))) {
 			goto exit;
@@ -155,7 +154,13 @@ exit:
  */
 extern as_status
 aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
-		char* module_p, char* function_p, zval** args_pp, char* namespace_p,
+		char* module_p, char* function_p,
+		#if PHP_VERSION_ID < 70000
+		  zval** args_pp
+    #else
+		  zval* args_pp
+		#endif
+		, char* namespace_p,
 		char* set_p, zval* scan_id_p, zval* options_p, bool block,
 		int8_t* serializer_policy_p TSRMLS_DC)
 {
@@ -176,12 +181,18 @@ aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
 		goto exit;
 	}
 
-	if ((*args_pp)) {
+	if ((
+		#if PHP_VERSION_ID < 70000
+			*args_pp
+		#else
+			args_pp
+		#endif
+	)) {
 		as_arraylist_inita(&args_list,
 #if PHP_VERSION_ID < 70000
 				zend_hash_num_elements(Z_ARRVAL_PP(args_pp))
 #else
-				zend_hash_num_elements(Z_ARRVAL_P(*args_pp))
+				zend_hash_num_elements(Z_ARRVAL_P(args_pp))
 #endif
 				);
 		args_list_p = &args_list;
