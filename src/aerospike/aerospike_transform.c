@@ -1088,13 +1088,18 @@ static void ADD_DEFAULT_ASSOC_LONG(Aerospike_object* as, void *key, void *value,
 	 * NULL will differentiate UDF from normal GET calls.
 	 */
 	if (key == NULL) {
-		zval* long_zval_p = NULL;
 		#if PHP_VERSION_ID < 70000
+		  zval* long_zval_p;
 			ALLOC_INIT_ZVAL(long_zval_p);
+			ZVAL_LONG(long_zval_p, (long) as_integer_get((as_integer *) value));
+			zval_dtor((zval *)array);
+			ZVAL_ZVAL((zval *)array, long_zval_p, 1, 1);
+		#else
+		  zval long_zval_p;
+			ZVAL_LONG(&long_zval_p, (long) as_integer_get((as_integer *) value));
+			zval_dtor((zval *)array);
+			ZVAL_ZVAL((zval *)array, &long_zval_p, 1, 1);
 		#endif
-		ZVAL_LONG(long_zval_p, (long) as_integer_get((as_integer *) value));
-		zval_dtor((zval *)array);
-		ZVAL_ZVAL((zval *)array, long_zval_p, 1, 1);
 	} else {
 	   add_assoc_long(((zval *) array),  (char *) key,
 			   (long) as_integer_get((as_integer *) value));

@@ -2358,6 +2358,9 @@ PHP_METHOD(Aerospike, listSet)
 	long                   bin_name_len;
 	long                   index;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	as_record_inita(&record, 1);
@@ -2600,6 +2603,9 @@ PHP_METHOD(Aerospike, listSize)
 	char*                  bin_name_p = NULL;
 	long                   bin_name_len;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -2694,6 +2700,9 @@ PHP_METHOD(Aerospike, listClear)
 	char*                  bin_name_p = NULL;
 	long                   bin_name_len;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -2785,6 +2794,9 @@ PHP_METHOD(Aerospike, listTrim)
 	long                   index;
 	long                   count;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -2879,6 +2891,9 @@ PHP_METHOD(Aerospike, listInsertItems)
 	long                   bin_name_len;
 	long                   index = 0;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -2994,6 +3009,9 @@ PHP_METHOD(Aerospike, listGet)
 	long                   index;
 	foreach_callback_udata list_get_callback_udata;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -3118,6 +3136,9 @@ PHP_METHOD(Aerospike, listGetRange)
 	long                   count;
 	foreach_callback_udata list_get_callback_udata;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -3247,6 +3268,9 @@ PHP_METHOD(Aerospike, listPop)
 	long                   index;
 	foreach_callback_udata list_get_callback_udata;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -3492,6 +3516,9 @@ PHP_METHOD(Aerospike, listRemove)
 	long                   bin_name_len;
 	long                   index;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 
@@ -4435,6 +4462,9 @@ PHP_METHOD(Aerospike, queryApply)
 	zval*                  args_p = NULL;
 	zval*                  options_p = NULL;
 	Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {
