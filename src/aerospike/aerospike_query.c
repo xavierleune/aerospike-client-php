@@ -253,8 +253,8 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 					(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
 										   (void **) &index_type_pp))
 #else
-					((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-										   (void **) &index_type_pp)) == NULL)
+					(index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+										   (void **) &index_type_pp))
 #endif
 					) {
 				DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
@@ -433,8 +433,8 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 					(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
 										   (void **) &index_type_pp))
 #else
-					((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-										   (void **) &index_type_pp)) == NULL)
+					(index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+										   (void **) &index_type_pp))
 #endif
 					) {
 				DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
@@ -798,7 +798,6 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate query");
 		goto exit;
 	}
-
 	set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, NULL, NULL,
 			&query_policy, NULL, options_p, error_p TSRMLS_CC);
 	if (AEROSPIKE_OK != (error_p->code)) {
@@ -810,7 +809,6 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 	if (predicate_ht_p && zend_hash_num_elements(predicate_ht_p) != 0) {
 		as_query_where_inita(&query, 1);
 	}
-
 	if (AEROSPIKE_OK != (aerospike_query_define(&query, error_p, namespace_p,
 					set_p, predicate_ht_p, NULL, NULL, NULL TSRMLS_CC))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to define scan");

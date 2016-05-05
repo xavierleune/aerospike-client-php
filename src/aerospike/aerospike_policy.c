@@ -208,7 +208,7 @@ get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p 
     #if PHP_VERSION_ID < 70000
     	if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
     #else
-    	if ((ttl_value_pp = zend_hash_index_find_ptr(Z_ARRVAL_P(options_p), OPT_TTL)) == NULL) {
+    	if ((ttl_value_pp = zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL)) == NULL) {
     #endif
 
 		//error_p->code = AEROSPIKE_ERR_CLIENT;
