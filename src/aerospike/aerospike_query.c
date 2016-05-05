@@ -56,6 +56,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 		char* set_p, HashTable *predicate_ht_p, const char* module_p,
 		const char* function_p, as_arraylist* args_list_p TSRMLS_DC)
 {
+	php_printf("HERE 1\n");
 	#if PHP_VERSION_ID < 70000
 				zval**              val_pp = NULL;
 				zval**              op_pp  = NULL;
@@ -198,8 +199,8 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
 						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
 #else
-						(min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) &&
-						(max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp))
+						((min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) != NULL) &&
+						((max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp)) != NULL)
 #endif
 						) {
 					convert_to_long_ex(min_pp);
@@ -253,8 +254,8 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 					(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
 										   (void **) &index_type_pp))
 #else
-					(index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-										   (void **) &index_type_pp))
+					((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+										   (void **) &index_type_pp)) == NULL)
 #endif
 					) {
 				DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
@@ -433,8 +434,8 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 					(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
 										   (void **) &index_type_pp))
 #else
-					(index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-										   (void **) &index_type_pp))
+					((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+						 					 (void **) &index_type_pp)) == NULL)
 #endif
 					) {
 				DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
@@ -464,8 +465,8 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
 						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
 #else
-						(min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) &&
-						(max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp))
+						((min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) != NULL) &&
+						((max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp)) != NULL)
 #endif
 						) {
           convert_to_long_ex(min_pp);
@@ -609,6 +610,7 @@ extern as_status
 aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
 		uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC)
 {
+	php_printf("HERE 2\n");
 	as_job_info			 job_info;
 	as_policy_info		  info_policy;
 
@@ -671,6 +673,7 @@ aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
 		char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p,
 		bool block, int8_t *serializer_policy_p TSRMLS_DC)
 {
+	php_printf("HERE 3\n");
 	as_arraylist			args_list;
 	as_arraylist*		   args_list_p = NULL;
 	as_static_pool		  udf_pool = {0};
@@ -789,6 +792,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 		char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
 		HashTable* predicate_ht_p, zval* options_p TSRMLS_DC)
 {
+	php_printf("HERE 4\n");
   as_query			query;
 	bool				is_init_query = false;
 	as_policy_query	 query_policy;
@@ -895,6 +899,7 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 		HashTable* predicate_ht_p, zval* return_value_p,
 		zval* options_p, int8_t* serializer_policy_p  TSRMLS_DC)
 {
+	php_printf("HERE 5\n");
 	as_arraylist                args_list;
 	as_arraylist*               args_list_p = NULL;
 	as_static_pool              udf_pool = {0};
