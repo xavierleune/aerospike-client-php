@@ -59,7 +59,8 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 								char* geoStr,
 								u_int64_t offset,
 								double double_offset,
-								u_int32_t time_to_live,
+								uint64_t time_to_live,
+								int64_t index,
 								u_int64_t operation,
 								as_operations* ops,
 								#if PHP_VERSION_ID < 70000
@@ -215,7 +216,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			val = (as_val*) as_record_get(&record, bin_name_p);
 			if (val) {
-				if (!as_operations_add_list_insert(ops, bin_name_p, time_to_live, val)) {
+				if (!as_operations_add_list_insert(ops, bin_name_p, index, val)) {
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to insert");
 					DEBUG_PHP_EXT_DEBUG("Unable to insert");
 					goto exit;
@@ -250,7 +251,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_POP_NEW:
-			if (!as_operations_add_list_pop(ops, bin_name_p, time_to_live)) {
+			if (!as_operations_add_list_pop(ops, bin_name_p, index)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to pop.");
 				DEBUG_PHP_EXT_DEBUG("Unable to pop.");
 				goto exit;
@@ -258,7 +259,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_POP_RANGE_NEW:
-			if (!as_operations_add_list_pop_range(ops, bin_name_p, time_to_live, offset)) {
+			if (!as_operations_add_list_pop_range(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to pop range.");
 				DEBUG_PHP_EXT_DEBUG("Unable to pop range.");
 				goto exit;
@@ -266,7 +267,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_REMOVE_NEW:
-			if (!as_operations_add_list_remove(ops, bin_name_p, time_to_live)) {
+			if (!as_operations_add_list_remove(ops, bin_name_p, index)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to remove.");
 				DEBUG_PHP_EXT_DEBUG("Unable to remove.");
 				goto exit;
@@ -274,7 +275,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_REMOVE_RANGE_NEW:
-			if (!as_operations_add_list_remove_range(ops, bin_name_p, time_to_live, offset)) {
+			if (!as_operations_add_list_remove_range(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to remove range.");
 				DEBUG_PHP_EXT_DEBUG("Unable to remove range.");
 				goto exit;
@@ -309,7 +310,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			val = (as_val*) as_record_get(&record, bin_name_p);
 			if (val) {
-				if (!as_operations_add_list_set(ops, bin_name_p, time_to_live, val)){
+				if (!as_operations_add_list_set(ops, bin_name_p, index, val)){
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to set.");
 					DEBUG_PHP_EXT_DEBUG("Unable to set.");
 					goto exit;
@@ -318,7 +319,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_GET_NEW:
-			if (!as_operations_add_list_get(ops, bin_name_p, time_to_live)) {
+			if (!as_operations_add_list_get(ops, bin_name_p, index)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get.");
 				DEBUG_PHP_EXT_DEBUG("Unable to get.");
 				goto exit;
@@ -326,7 +327,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_GET_RANGE_NEW:
-			if (!as_operations_add_list_get_range(ops, bin_name_p, time_to_live, offset)) {
+			if (!as_operations_add_list_get_range(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get range.");
 				DEBUG_PHP_EXT_DEBUG("Unable to  get range.");
 				goto exit;
@@ -334,7 +335,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_TRIM_NEW:
-			if (!as_operations_add_list_trim(ops, bin_name_p, time_to_live, offset)) {
+			if (!as_operations_add_list_trim(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to trim.");
 				DEBUG_PHP_EXT_DEBUG("Unable to trim.");
 				goto exit;
@@ -527,7 +528,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 	if (AEROSPIKE_OK != aerospike_record_operations_ops(aerospike_obj_p, as_object_p, as_key_p,
 				options_p, error_p,
 				bin_name_p, str, NULL,
-				offset, double_offset, time_to_live, operation,
+				offset, double_offset, time_to_live, 0, operation,
 				&ops, NULL, NULL, 0, &get_rec TSRMLS_CC)) {
 
 		DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
@@ -547,7 +548,6 @@ exit:
 	as_operations_destroy(&ops);
 	return error_p->code;
 }
-
 extern as_status
 aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 		as_key* as_key_p,
@@ -585,11 +585,8 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 				zval*                       each_operation_back;
 	#endif
 	int8_t                      serializer_policy;
-	uint32_t                    ttl;                /* Using this same variable for 'index' as well
-                                                     * in case of OP_LIST_INSERT.
-                                                     * This will avoid adding another parameter to
-                                                     * further function and can reuse 'ttl'.
-                                                     */
+	uint32_t                    ttl;
+	int64_t                     index;
 	foreach_callback_udata      foreach_record_callback_udata;
 
 	TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
@@ -714,14 +711,12 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 							goto exit;
 						}
 					} else if (!strcmp(options_key, "ttl") && (IS_LONG == AEROSPIKE_Z_TYPE_P(each_operation))) {
-						  ttl = (uint32_t)
-						  AEROSPIKE_Z_LVAL_P(each_operation);
+						  ttl = (uint32_t)AEROSPIKE_Z_LVAL_P(each_operation);
 					} else if (!strcmp(options_key, "index") && (IS_LONG == AEROSPIKE_Z_TYPE_P(each_operation))) {
-						  ttl = (uint32_t)
-						  AEROSPIKE_Z_LVAL_P(each_operation);
+						  index = AEROSPIKE_Z_LVAL_P(each_operation);
 					} else {
 						status = AEROSPIKE_ERR_CLIENT;
-						DEBUG_PHP_EXT_DEBUG("Unable to set Operate: Invalid Optiopns Key");
+						DEBUG_PHP_EXT_DEBUG("Unable to set Operate: Invalid Options Key");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to set Operate: Invalid Options Key");
 						goto exit;
 					}
@@ -729,7 +724,6 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 			#if PHP_VERSION_ID < 70000
 			 }
 			#else
-			// HERE
 			} ZEND_HASH_FOREACH_END();
 			 } ZEND_HASH_FOREACH_END();
 			#endif
@@ -747,7 +741,7 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 			}
 			if (AEROSPIKE_OK != (status = aerospike_record_operations_ops(aerospike_obj_p, as_object_p,
 							as_key_p, options_p, error_p, bin_name_p, str, geoStr,
-							offset, double_offset, ttl, op, &ops, each_operation, &operate_policy,
+							offset, double_offset, ttl, index, op, &ops, each_operation, &operate_policy,
 							serializer_policy, &temp_rec TSRMLS_CC))) {
 			  	 DEBUG_PHP_EXT_ERROR("Operate function returned an error");
 				   goto exit;
