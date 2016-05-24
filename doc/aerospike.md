@@ -258,7 +258,7 @@ class Aerospike
     public int existsMany ( array $keys, array &$metadata [, array $options ] )
 
     // UDF methods
-    public int register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA] )
+    public int register ( string $path, string $module [, int $language = Aerospike::UDF_TYPE_LUA, [ array $options ]] )
     public int deregister ( string $module )
     public int listRegistered ( array &$modules [, int $language ] )
     public int getRegistered ( string $module, string &$code )
