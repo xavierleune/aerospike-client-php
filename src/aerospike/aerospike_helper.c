@@ -215,8 +215,6 @@ do {                                                                           \
     new_le.type = val_persist;                                                 \
     if (new_flag) {                                                            \
         pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));                  \
-        zend_hash_add_new_ptr(persistent_list,                                 \
-                zend_string_init(alias, alias_len, 0), (void *) &new_le);      \
         ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;                     \
         pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));                  \
     } else {                                                                   \
@@ -726,6 +724,10 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 	args[0] = outer_container_p;
 	user_func_p->fci.retval = &retval;
 #endif
+userland_callback       *user_func_p1 = (userland_callback *) udata;
+//php_printf("TEST 1\n");
+int result = zend_call_function(&user_func_p1->fci, &user_func_p1->fcc TSRMLS_C);
+//php_printf("TEST 2\n");
 
 	if (zend_call_function(&user_func_p->fci, &user_func_p->fcc TSRMLS_CC) == FAILURE) {
 		DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
@@ -734,7 +736,6 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 		pthread_rwlock_unlock(&AEROSPIKE_G(query_cb_mutex));
 		return true;
 	}
-
 	zval_ptr_dtor(&outer_container_p);
 
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)

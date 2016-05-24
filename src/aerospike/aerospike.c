@@ -692,7 +692,6 @@ PHP_METHOD(Aerospike, __construct)
 		goto exit;
 	}
 
-
 	/* configuration */
 	as_config_init(&config);
 	strcpy(config.lua.system_path, ini_value = LUA_SYSTEM_PATH_PHP_INI);
@@ -709,7 +708,7 @@ PHP_METHOD(Aerospike, __construct)
 	transform_zval_config_into_as_config.transform_result_type = TRANSFORM_INTO_AS_CONFIG;
 
 	if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
-					NULL, &transform_zval_config_into_as_config/*&config*/))) {
+					NULL, &transform_zval_config_into_as_config))) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find host parameter");
 		DEBUG_PHP_EXT_ERROR("Unable to find host parameter");
@@ -3852,11 +3851,17 @@ PHP_METHOD(Aerospike, setDeserializer)
 {
 	as_status              status = AEROSPIKE_OK;
 
-	if (&user_deserializer_call_info.function_name &&
-			(AEROSPIKE_Z_ISREF_P(user_deserializer_call_info.function_name))) {
+		#if PHP_VERSION_ID < 70000
+		if (user_deserializer_call_info.function_name &&
+            (Z_ISREF_P(user_deserializer_call_info.function_name))) {
+        RETURN_TRUE;
+    }
+		#else
+		if (&user_deserializer_call_info.function_name && Z_ISREF_P(&(user_deserializer_call_info.function_name))) {
+		        RETURN_TRUE;
+		    }
+		#endif
 
-		RETURN_TRUE;
-	}
 	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
 				&user_deserializer_call_info,
 				&user_deserializer_call_info_cache,
@@ -3880,16 +3885,22 @@ PHP_METHOD(Aerospike, setSerializer)
 {
 	as_status              status = AEROSPIKE_OK;
 
-	if (&user_serializer_call_info.function_name &&
-			(AEROSPIKE_Z_ISREF_P(user_serializer_call_info.function_name))) {
+#if PHP_VERSION_ID < 70000
+if (user_serializer_call_info.function_name &&
+							(Z_ISREF_P(user_serializer_call_info.function_name))) {
+								RETURN_TRUE;
+							}
+#else
+if (&(user_serializer_call_info.function_name) && Z_ISREF_P(&(user_serializer_call_info.function_name))) {
+        RETURN_TRUE;
+    }
+#endif
 
 		/*
 		 * once set the same serializer would be used. Incase a new
 		 * serializer is to be given, then we would have to unref the older
 		 * serialiser function and then attach the new serializer callback
 		 */
-		RETURN_TRUE;
-	}
 
 	if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
 				&user_serializer_call_info,
@@ -3902,7 +3913,11 @@ PHP_METHOD(Aerospike, setSerializer)
 
 	is_user_serializer_registered = 1;
 
-	AEROSPIKE_Z_ADDREF_P(user_serializer_call_info.function_name);
+	#if PHP_VERSION_ID < 70000
+	  Z_ADDREF_P(user_serializer_call_info.function_name);
+	#else
+	  Z_TRY_ADDREF_P(&(user_serializer_call_info.function_name));
+	#endif
 
 	RETURN_TRUE;
 }

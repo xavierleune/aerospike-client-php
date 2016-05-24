@@ -222,6 +222,16 @@
         AEROSPIKE_WALKER_SWITCH_CASE_##method(as, method, level, action,          \
                 err, static_pool, key, value, array, label, serializer_policy)
 
+#define AEROSPIKE_WALKER_SWITCH_CASE_PDA(as, method, level, action,               \
+        err, static_pool, key, value, array, label, serializer_policy)         \
+        AEROSPIKE_WALKER_SWITCH_CASE_PDA_##method(as, method, level, action,      \
+                err, static_pool, key, value, array, label, serializer_policy)
+
+#define AEROSPIKE_WALKER_SWITCH_CASEE(as, method, level, action,                   \
+        err, static_pool, key, value, array, label, serializer_policy)            \
+        AEROSPIKE_WALKER_SWITCH_CASEE_##method(as, method, level, action,          \
+                err, static_pool, key, value, array, label, serializer_policy)
+
 #define AEROSPIKE_HASHMAP_BUCKET_SIZE     32
 #define AEROSPIKE_ASLIST_BLOCK_SIZE       0
 
@@ -237,7 +247,7 @@
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
-            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len,&index, 0, &pointer);\
+            AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len, &index, 0, &pointer);\
             if ((char*)key == NULL) {                                          \
                 err->code = AEROSPIKE_ERR_CLIENT;                              \
                 goto label;                                                    \
@@ -250,16 +260,22 @@
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
         zend_string* z_str;                                         \
-        ZEND_HASH_FOREACH_KEY(hashtable, pointer, z_str) {\
+        int t = zend_hash_num_elements(hashtable);\
+        key_len = 0;\
+        ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
+          if (z_str) {\
             key = z_str->val;\
-            if (z_str == NULL) {                                          \
+            key_len = strlen(z_str->val) + 1;\
+          }\
+            if (z_str->val == NULL) {                                          \
                 err->code = AEROSPIKE_ERR_CLIENT;                              \
                 goto label;                                                    \
             }                                                                  \
-            if ((strlen(ZSTR_VAL(z_str)) + 1) > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
+            if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
                 PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
             }\
+            break;\
         } ZEND_HASH_FOREACH_END();
 #endif
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
@@ -290,24 +306,24 @@ do {                                                                           \
 #else
 #define AS_MAP_KEY(hashtable, key, key_len, index, pointer, static_pool,       \
         err, label)                                                            \
-do {                                                                           \
-    char *local_key;                                                           \
-    zend_string* z_str;\
-    ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
-      local_key = z_str->val;\
-      if (z_str) {                                      \
-          as_string *map_str;                                                    \
-          GET_STR_POOL(map_str, static_pool, err, label);                        \
-          as_string_init(map_str, local_key, false);                             \
-          key = (as_val*) (map_str);                                             \
-      } else {                                 \
-          as_integer *map_int;                                                   \
-          GET_INT_POOL(map_int, static_pool, err, label);                        \
-          as_integer_init(map_int, index);                                       \
-          key = (as_val*) map_int;                                               \
-      }\
-    } ZEND_HASH_FOREACH_END();\
-} while(0);
+        do {                                                                           \
+                char *local_key;                                                           \
+                zend_string* z_str;\
+                int t = zend_hash_num_elements(hashtable);\
+                ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
+                } ZEND_HASH_FOREACH_END();\
+                if (z_str) {                                      \
+                    as_string *map_str;                                                    \
+                    GET_STR_POOL(map_str, static_pool, err, label);                        \
+                    as_string_init(map_str, z_str->val, false);                             \
+                    key = (as_val*) (map_str);                                             \
+                } else {                                 \
+                    as_integer *map_int;                                                   \
+                    GET_INT_POOL(map_int, static_pool, err, label);                        \
+                    as_integer_init(map_int, index);                                       \
+                    key = (as_val*) map_int;\
+                }\
+            } while(0);
 #endif
 
 /*
@@ -426,7 +442,9 @@ do {                                                                           \
     zval **dataval;                                                            \
     uint key_len;                                                              \
     ulong index;                                                               \
-    hashtable = Z_ARRVAL_PP((zval**) value);                                   \
+    hashtable = Z_ARRVAL_PP((zval**) value);\
+    int t = zend_hash_num_elements(hashtable);\
+    char *local_key;\
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
@@ -462,19 +480,21 @@ do {                                                                           \
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT(as, method, level, action, err,           \
         static_pool, key, value, store, label, serializer_policy)              \
-do {                                                                           \
+do {\
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
     zval* dataval;                                                            \
     uint key_len;                                                              \
     zend_ulong index;                                                               \
+    zend_string* z;\
     hashtable = Z_ARRVAL_P((zval*) value);                                    \
-    ZEND_HASH_FOREACH_VAL (hashtable, dataval) {                \
+    int t = zend_hash_num_elements(hashtable);\
+    ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {                \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
-                static_pool, err, label)                                       \
+                static_pool, err, label)                                        \
         switch (FETCH_VALUE_##method(&dataval)) {                               \
-            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,                 \
+            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
             EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
@@ -501,8 +521,127 @@ do {                                                                           \
                         "Invalid Datatype");                                   \
                 goto label;                                                    \
         }                                                                      \
-    } ZEND_HASH_FOREACH_END();                                                                     \
+    } ZEND_HASH_FOREACH_END();\
 } while(0)
+
+#define AEROSPIKE_WALKER_SWITCH_CASEE_PUT(as, method, level, action, err,           \
+        static_pool, key, value, store, label, serializer_policy)              \
+        do {\
+            HashTable *hashtable;                                                      \
+            int htable_count;                                                          \
+            HashPosition pointer;                                                      \
+            zval* dataval;                                                            \
+            uint key_len;                                                              \
+            zend_ulong index;                                                               \
+            hashtable = Z_ARRVAL_P((zval*) value);                                    \
+            zend_string* z_strr;\
+            zval* data;\
+            HashPosition pointerr;\
+            zend_string* z;\
+            int t = zend_hash_num_elements(hashtable);\
+            ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {                \
+              do {                                                                           \
+                      char *local_key;                                                           \
+                      zend_string* z_str;\
+                      int t = zend_hash_num_elements(hashtable);\
+                      if (z) {                                      \
+                          as_string *map_str;                                                    \
+                          GET_STR_POOL(map_str, static_pool, err, label);                        \
+                          as_string_init(map_str, z->val, false);                             \
+                          key = (as_val*) (map_str);                                             \
+                      } else {                                 \
+                          as_integer *map_int;                                                   \
+                          GET_INT_POOL(map_int, static_pool, err, label);                        \
+                          as_integer_init(map_int, index);                                       \
+                          key = (as_val*) map_int;\
+                      }\
+                switch (FETCH_VALUE_##method(&dataval)) {                               \
+                    EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
+                            dataval, store, err, static_pool, label,                   \
+                            serializer_policy);                                        \
+                    EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
+                            dataval, store, err, static_pool, label, -1);              \
+                    EXPAND_CASE_PUT(as, level, method, action, LONG, key,                  \
+                            dataval, store, err, static_pool, label, -1);              \
+                    EXPAND_CASE_PUT(as, level, method, action, DOUBLE, key,                \
+                            dataval, store, err, static_pool, label,                   \
+                            serializer_policy);                                        \
+                    EXPAND_CASE_PUT(as, level, method, action, NULL, key,                  \
+                            dataval, store, err, static_pool, label,                   \
+                            serializer_policy);                                        \
+                    EXPAND_CASE_PUT(as, level, method, action, OBJECT, key,                \
+                            dataval, store, err, static_pool, label,                   \
+                            serializer_policy);                                        \
+                    EXPAND_CASE_PUT(as, level, method, action, TRUE, key,                  \
+                            dataval, store, err, static_pool, label,                   \
+                            serializer_policy);                                        \
+                    EXPAND_CASE_PUT(as, level, method, action, FALSE, key,                 \
+                            dataval, store, err, static_pool, label,                   \
+                            serializer_policy);                                        \
+                    default:                                                           \
+                        PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_PARAM,                   \
+                                "Invalid Datatype");                                   \
+                        goto label;                                                    \
+                }                                                                      \
+          } while(0);\
+            } ZEND_HASH_FOREACH_END();\
+        } while(0)
+
+        #define AEROSPIKE_WALKER_SWITCH_CASE_PDA_PUT(as, method, level, action, err,           \
+                static_pool, key, value, store, label, serializer_policy)              \
+                do {\
+                    HashTable *hashtable;                                                      \
+                    int htable_count;                                                          \
+                    HashPosition pointer;                                                      \
+                    zval* dataval;                                                            \
+                    uint key_len;                                                              \
+                    zend_ulong index;                                 \
+                    hashtable = Z_ARRVAL_P((zval*) value);                                    \
+                    zend_string* z_str;\
+                    int t = zend_hash_num_elements(hashtable);\
+                    ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z_str, dataval) {                \
+                      do {               \
+                        key_len = strlen(z_str->val) + 1;\
+                          key = z_str->val;\
+                          if (z_str->val == NULL) {                                          \
+                              err->code = AEROSPIKE_ERR_CLIENT;                              \
+                              goto label;                                                    \
+                          }                                                                  \
+                          if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
+                              PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
+                              goto label;                                                    \
+                          }\
+                        switch (FETCH_VALUE_##method(&dataval)) {                               \
+                            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
+                                    dataval, store, err, static_pool, label,                   \
+                                    serializer_policy);                                        \
+                            EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
+                                    dataval, store, err, static_pool, label, -1);              \
+                            EXPAND_CASE_PUT(as, level, method, action, LONG, key,                  \
+                                    dataval, store, err, static_pool, label, -1);              \
+                            EXPAND_CASE_PUT(as, level, method, action, DOUBLE, key,                \
+                                    dataval, store, err, static_pool, label,                   \
+                                    serializer_policy);                                        \
+                            EXPAND_CASE_PUT(as, level, method, action, NULL, key,                  \
+                                    dataval, store, err, static_pool, label,                   \
+                                    serializer_policy);                                        \
+                            EXPAND_CASE_PUT(as, level, method, action, OBJECT, key,                \
+                                    dataval, store, err, static_pool, label,                   \
+                                    serializer_policy);                                        \
+                            EXPAND_CASE_PUT(as, level, method, action, TRUE, key,                  \
+                                    dataval, store, err, static_pool, label,                   \
+                                    serializer_policy);                                        \
+                            EXPAND_CASE_PUT(as, level, method, action, FALSE, key,                 \
+                                    dataval, store, err, static_pool, label,                   \
+                                    serializer_policy);                                        \
+                            default:                                                           \
+                                PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_PARAM,                   \
+                                        "Invalid Datatype");                                   \
+                                goto label;                                                    \
+                        }                                                                      \
+                  } while(0);\
+                    } ZEND_HASH_FOREACH_END();\
+                } while(0)
 
 #endif
 
@@ -511,21 +650,33 @@ do {                                                                           \
  * Wrappers over the walker of PUT for all levels with all actions.
  *******************************************************************************************************
  */
-#define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(as, err, static_pool,   \
-        key,                                                                   \
-        value, store, label, serializer_policy)                                \
-            AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, DEFAULT, ASSOC, err,         \
-                    static_pool, key, value, store, label, serializer_policy)
 
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(as, err, static_pool, key,\
         value, store, label, serializer_policy)                                \
             AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, LIST, APPEND, err,           \
                     static_pool, key, value, store, label, serializer_policy)
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(as, err, static_pool,   \
+        key,                                                                   \
+        value, store, label, serializer_policy)                                \
+            AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, DEFAULT, ASSOC, err,         \
+                    static_pool, key, value, store, label, serializer_policy)
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(as, err, static_pool, key,  \
         value, store, label, serializer_policy)                                \
-            AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, MAP, ASSOC, err,             \
+        AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, MAP, ASSOC, err,             \
+        static_pool, key, value, store, label, serializer_policy)
+#else
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(as, err, static_pool,   \
+        key,                                                                   \
+        value, store, label, serializer_policy)                                \
+            AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, DEFAULT, ASSOC, err,         \
                     static_pool, key, value, store, label, serializer_policy)
+#define AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(as, err, static_pool, key,  \
+      value, store, label, serializer_policy)                                \
+      AEROSPIKE_WALKER_SWITCH_CASEE(as, PUT, MAP, ASSOC, err,          \
+      static_pool, key, value, store, label, serializer_policy)
+#endif
 /*
  *******************************************************************************************************
  * End of Wrappers over the walker of PUT.
@@ -711,8 +862,7 @@ do {                                                                           \
     uint key_iterator = 0;                                                     \
     hashtable = Z_ARRVAL_PP((zval**)value);                                    \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
-    TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index, pointer,         \
-            key_iterator)                                                      \
+    TRAVERSE_KEYS(hashtable, inner_key, inner_key_len, index, pointer, key_iterator);\
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
         AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 err, label);                                                   \
@@ -756,15 +906,17 @@ do {                                                                           \
     zend_hash_internal_pointer_reset_ex(hashtable, &pointer);                  \
     zend_string* z_str;                                                        \
     ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {                           \
-      if (!z_str && index == key_iterator) {                                   \
-        key_iterator++;                                                        \
+      while (!z_str && index == key_iterator) {                                \
+          key_iterator++;                                                      \
+          ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {                     \
+          } ZEND_HASH_FOREACH_END();                                           \
       }                                                                        \
     } ZEND_HASH_FOREACH_END();                                                 \
     inner_key = z_str->val;                                                    \
     if (key_iterator == zend_hash_num_elements(hashtable)) {                   \
         AS_LIST_INIT_STORE(inner_store, hashtable, static_pool,                \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_LIST(as, inner_key,                 \
+        AEROSPIKE_##level##_PUT_##action##_LIST(as, z_str->val,                \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
@@ -778,7 +930,7 @@ do {                                                                           \
     } else {                                                                   \
         AS_MAP_INIT_STORE(inner_store, hashtable, static_pool,                 \
                 err, label);                                                   \
-        AEROSPIKE_##level##_PUT_##action##_MAP(as, inner_key,                  \
+        AEROSPIKE_##level##_PUT_##action##_MAP(as, z_str->val,                 \
                         value, inner_store, static_pool,                       \
                             serializer_policy, err);                           \
         if (AEROSPIKE_OK != (err->code)) {                                     \
@@ -868,10 +1020,21 @@ do {                                                                           \
     AS_LIST_PUT_APPEND_BYTES(as, key, value, array, static_pool,               \
         serializer_policy, err TSRMLS_CC)
 
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AEROSPIKE_LIST_PUT_APPEND_BOOL(as, key, value, array, static_pool,     \
            serializer_policy, err)                                             \
     AS_LIST_PUT_APPEND_BYTES(as, key, value, array, static_pool,               \
         serializer_policy, err TSRMLS_CC)
+#else
+#define AEROSPIKE_LIST_PUT_APPEND_TRUE(as, key, value, array, static_pool,     \
+           serializer_policy, err)                                             \
+    AS_LIST_PUT_APPEND_BYTES(as, key, value, array, static_pool,               \
+        serializer_policy, err TSRMLS_CC)
+#define AEROSPIKE_LIST_PUT_APPEND_FALSE(as, key, value, array, static_pool,     \
+           serializer_policy, err)                                             \
+    AS_LIST_PUT_APPEND_BYTES(as, key, value, array, static_pool,               \
+serializer_policy, err TSRMLS_CC)
+#endif
 
 /*
  *******************************************************************************************************
@@ -1220,9 +1383,9 @@ do {                                                                           \
 extern void
 aerospike_transform_iterate_records(Aerospike_object* as,
 #if PHP_VERSION_ID < 70000
-	zval **record_pp
+    zval **record_pp
 #else
-	zval *record_pp
+    zval *record_pp
 #endif
 , as_record* as_record_p, as_static_pool* static_pool, int8_t serializer_policy,
 bool server_support_double, as_error *error_p TSRMLS_DC);
