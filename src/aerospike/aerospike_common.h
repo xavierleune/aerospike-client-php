@@ -317,7 +317,11 @@ extern uint32_t              is_callback_registered;
  */
 extern zend_fcall_info       user_serializer_call_info;
 extern zend_fcall_info_cache user_serializer_call_info_cache;
-extern zval                  user_serializer_callback_retval_p;
+#if PHP_VERSION_ID < 70000
+  extern zval                  *user_serializer_callback_retval_p;
+#else
+  extern zval                  user_serializer_callback_retval_p;
+#endif
 extern uint32_t              is_user_serializer_registered;
 
 /*
@@ -332,7 +336,11 @@ extern uint32_t              is_user_serializer_registered;
  extern zend_fcall_info       user_deserializer_call_info;
  extern zend_fcall_info_cache user_deserializer_call_info_cache;
  #endif
-extern zval                  user_deserializer_callback_retval_p;
+ #if PHP_VERSION_ID < 70000
+   extern zval*                  user_deserializer_callback_retval_p;
+ #else
+   extern zval                  user_deserializer_callback_retval_p;
+ #endif
 extern uint32_t              is_user_deserializer_registered;
 
 /*

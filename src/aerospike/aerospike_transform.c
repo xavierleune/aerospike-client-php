@@ -73,7 +73,11 @@ aerospike_transform_iteratefor_addr_port(HashTable* ht_p,
  */
 zend_fcall_info       user_serializer_call_info;
 zend_fcall_info_cache user_serializer_call_info_cache;
-zval                  user_serializer_callback_retval_p;
+#if PHP_VERSION_ID < 70000
+  zval                  *user_serializer_callback_retval_p;
+#else
+  zval                  user_serializer_callback_retval_p;
+#endif
 uint32_t              is_user_serializer_registered = 0;
 
 /*
@@ -83,7 +87,12 @@ uint32_t              is_user_serializer_registered = 0;
  */
 zend_fcall_info       user_deserializer_call_info;
 zend_fcall_info_cache user_deserializer_call_info_cache;
-zval                  user_deserializer_callback_retval_p;
+#if PHP_VERSION_ID < 70000
+  zval                  *user_deserializer_callback_retval_p;
+#else
+  zval                  user_deserializer_callback_retval_p;
+#endif
+
 uint32_t              is_user_deserializer_registered = 0;
 
 /*
@@ -148,7 +157,12 @@ exit:
  */
 static void execute_user_callback(zend_fcall_info *user_callback_info,
 								  zend_fcall_info_cache *user_callback_info_cache,
-								  zval user_callback_retval_p,
+									#if PHP_VERSION_ID < 70000
+									  zval *user_callback_retval_p
+									#else
+									  zval user_callback_retval_p
+									#endif
+								  ,
 								  as_bytes *bytes,
 									#if PHP_VERSION_ID < 70000
 										zval **value
