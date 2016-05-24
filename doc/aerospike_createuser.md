@@ -46,9 +46,9 @@ if (!$client->isConnected()) {
 $res = $client->createUser("john", "mypass@123", array("reader"));
 if ($res == Aerospike::OK) {
     echo "User john successfully created";
-} elseif ($res == Aerospike::ROLE_VIOLATION) {
+} elseif ($res == Aerospike::ERR_ROLE_VIOLATION) {
     echo "User does not possess the required role to create a new user";
-} elseif ($res == Aerospike::USER_ALREADY_EXISTS) {
+} elseif ($res == Aerospike::ERR_USER_ALREADY_EXISTS) {
     echo "User john already exists";
 } else {
     echo "[{$client->errorno()}] ".$client->error();

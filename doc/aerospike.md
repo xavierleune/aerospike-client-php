@@ -294,7 +294,7 @@ class Aerospike
     public int queryRoles ( array &$roles [, array $options ] )
     public int dropRole ( string $role [, array $options ] )
     public int createUser ( string $user, string $password, array $roles [, array $options ] )
-    public int setPassword ( string $user, string $password [, array $options ] )
+    <!--public int setPassword ( string $user, string $password [, array $options ] )-->
     public int changePassword ( string $user, string $password [, array $options ] )
     public int grantRoles ( string $user, array $roles [, array $options ] )
     public int revokeRoles ( string $user, array $roles [, array $options ] )
