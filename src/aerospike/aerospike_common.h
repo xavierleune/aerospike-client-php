@@ -597,7 +597,12 @@ aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
 								as_key* get_rec_key_p,
 								zval* options_p,
 								as_error *error_p,
-								zval* get_record_p,
+								#if PHP_VERSION_ID < 70000
+                  zval* get_record_p
+								#else
+								  zval get_record_p
+								#endif
+								,
 								zval* bins_p TSRMLS_DC);
 
 extern as_status

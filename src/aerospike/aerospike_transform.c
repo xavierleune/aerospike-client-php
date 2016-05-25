@@ -4982,7 +4982,12 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 		as_key* get_rec_key_p,
 		zval* options_p,
 		as_error *error_p,
-		zval* outer_container_p,
+		#if PHP_VERSION_ID < 70000
+			zval* outer_container_p
+		#else
+			zval outer_container_p
+		#endif
+		,
 		zval* bins_p TSRMLS_DC)
 {
 	as_status               status = AEROSPIKE_OK;
@@ -5001,7 +5006,13 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 	foreach_record_callback_udata.error_p = error_p;
 	foreach_record_callback_udata.obj = aerospike_obj_p;
 
-	if ((!as_object_p) || (!get_rec_key_p) || (!error_p) || (!outer_container_p)) {
+	if ((!as_object_p) || (!get_rec_key_p) || (!error_p) || (!
+		#if PHP_VERSION_ID < 70000
+		  outer_container_p
+		#else
+		  &outer_container_p
+		#endif
+	)) {
 		status = AEROSPIKE_ERR_CLIENT;
 		goto exit;
 	}
@@ -5033,14 +5044,26 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 
 	if (AEROSPIKE_OK != (status = aerospike_get_key_meta_bins_of_record(
 					&as_object_p->config, get_record,
-					get_rec_key_p, outer_container_p, options_p,
+					get_rec_key_p,
+					#if PHP_VERSION_ID < 70000
+					  outer_container_p
+					#else
+					  &outer_container_p
+					#endif
+					, options_p,
 					true TSRMLS_CC))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get record key and metadata");
 		status = AEROSPIKE_ERR_CLIENT;
 		goto exit;
 	}
 
-	if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p))	{
+	if (0 != add_assoc_zval(
+		#if PHP_VERSION_ID < 70000
+		  outer_container_p
+		#else
+		  &outer_container_p
+		#endif
+		, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p))	{
 		DEBUG_PHP_EXT_DEBUG("Unable to get a record");
 		status = AEROSPIKE_ERR_CLIENT;
 		goto exit;
