@@ -950,11 +950,7 @@ PHP_METHOD(Aerospike, get)
 {
 	as_status              status = AEROSPIKE_OK;
 	zval*                  key_record_p = NULL;
-	#if PHP_VERSION_ID < 70000
-		zval*                  record_p = NULL;
-	#else
-	  zval                  record_p;
-	#endif
+	zval*                  record_p = NULL;
 	zval*                  options_p = NULL;
 	zval*                  bins_p = NULL;
 	as_error               error;
@@ -1014,10 +1010,8 @@ PHP_METHOD(Aerospike, get)
 
   #if PHP_VERSION_ID < 70000
 	  zval_dtor(record_p);
-		array_init(record_p);
-	#else
-	  array_init(&record_p);
 	#endif
+ array_init(record_p);
 
 	if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
 					&as_key_for_get_record,

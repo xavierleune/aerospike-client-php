@@ -157,10 +157,34 @@
  */
 #define EXPAND_CASE_PUT(as, level, method, action, datatype, key, value,         \
         array, err, static_pool, label, serializer_policy)                       \
+        /*php_printf("++++++++++++++++++++++++++++++++++++++++TEST1\n");*/\
     case IS_##datatype:                                                          \
+    /*switch (IS_##datatype) {\
+      case 0: php_printf("0 THIS IS_UNDEF\n");\
+      break;\
+      case 1: php_printf("1 IS_NULL\n");\
+      break;\
+      case 2: php_printf("2 THIS IS_FALSE\n");\
+      break;\
+      case 3: php_printf("3 THIS IS_TRUE\n");\
+      break;\
+      case 4: php_printf("4 THIS IS_LONG\n");\
+      break;\
+      case 5: php_printf("5 THIS IS_DOUBLE\n");\
+      break;\
+      case 6: php_printf("6 THIS IS_STRING\n");\
+      break;\
+      case 7: php_printf("7 THIS IS_ARRAY\n");\
+      break;\
+      case 8: php_printf("8 THIS IS_OBJECT\n");\
+      break;\
+      default: php_printf("PROBLEM\n");\
+    }\
+    php_printf("++++++++++++++++++++++++++++++++++++++++TEST2 %d\n", IS_##datatype);*/\
         AEROSPIKE_##level##_##method##_##action##_##datatype(as,                 \
                 key, value, array, static_pool, serializer_policy,               \
                 err);                                                            \
+                /*php_printf("++++++++++++++++++++++++++++++++++++++++TEST3\n");*/\
         if (AEROSPIKE_OK != (err->code)) {                                       \
             goto label;                                                          \
         }                                                                        \
@@ -247,7 +271,9 @@
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
+        /*php_printf("AS_DEFAULT_KEY\n");*/\
             AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len, &index, 0, &pointer);\
+            /*php_printf("AS_DEFAULT_KEY %s\n", *(char **)&key);*/\
             if ((char*)key == NULL) {                                          \
                 err->code = AEROSPIKE_ERR_CLIENT;                              \
                 goto label;                                                    \
@@ -260,10 +286,12 @@
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
         zend_string* z_str;                                         \
+        /*php_printf("AS_DEFAULT_KEY\n");*/\
         int t = zend_hash_num_elements(hashtable);\
         key_len = 0;\
         ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
           if (z_str) {\
+            /*php_printf("AS_DEFAULT_KEY %s\n", z_str->val);*/\
             key = z_str->val;\
             key_len = strlen(z_str->val) + 1;\
           }\
@@ -275,7 +303,6 @@
                 PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
                 goto label;                                                    \
             }\
-            break;\
         } ZEND_HASH_FOREACH_END();
 #endif
 #define AS_LIST_KEY(hashtable, key, key_len, index, pointer, static_pool,      \
@@ -286,14 +313,17 @@
         err, label)                                                            \
 do {                                                                           \
     char *local_key;                                                           \
+    /*php_printf("AS_MAP_KEY\n");*/\
     uint key_type = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable,          \
             (char **)&local_key, &key_len, &index, 0, &pointer);               \
     if (key_type == HASH_KEY_IS_STRING) {                                      \
+        /*php_printf("MAP KEY STRING: %s\n", local_key);*/\
         as_string *map_str;                                                    \
         GET_STR_POOL(map_str, static_pool, err, label);                        \
         as_string_init(map_str, local_key, false);                             \
         key = (as_val*) (map_str);                                             \
     } else if (key_type == HASH_KEY_IS_LONG) {                                 \
+        /*php_printf("MAP KEY LONG: %ld\n", (long)local_key);*/\
         as_integer *map_int;                                                   \
         GET_INT_POOL(map_int, static_pool, err, label);                        \
         as_integer_init(map_int, index);                                       \
@@ -308,16 +338,19 @@ do {                                                                           \
         err, label)                                                            \
         do {                                                                           \
                 char *local_key;                                                           \
+                /*php_printf("AS_MAP_KEY\n");*/\
                 zend_string* z_str;\
                 int t = zend_hash_num_elements(hashtable);\
                 ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
                 } ZEND_HASH_FOREACH_END();\
                 if (z_str) {                                      \
+                    /*php_printf("MAP KEY STRING: %s\n", z_str->val);*/\
                     as_string *map_str;                                                    \
                     GET_STR_POOL(map_str, static_pool, err, label);                        \
                     as_string_init(map_str, z_str->val, false);                             \
                     key = (as_val*) (map_str);                                             \
                 } else {                                 \
+                    /*php_printf("MAP KEY LONG: %ld\n", z_str->val);*/\
                     as_integer *map_int;                                                   \
                     GET_INT_POOL(map_int, static_pool, err, label);                        \
                     as_integer_init(map_int, index);                                       \
@@ -438,6 +471,7 @@ do {                                                                           \
 do {                                                                           \
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
+    /*php_printf("AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
     HashPosition pointer;                                                      \
     zval **dataval;                                                            \
     uint key_len;                                                              \
@@ -449,9 +483,11 @@ do {                                                                           \
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
         switch (FETCH_VALUE_##method(dataval)) {                               \
+          /*php_printf("TEST1\n");*/\
             EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
+                    /*php_printf("TEST2\n");*/\
             EXPAND_CASE_PUT(as, level, method, action, STRING, key,            \
                     dataval, store, err, static_pool, label, -1);              \
             EXPAND_CASE_PUT(as, level, method, action, LONG, key,              \
@@ -484,6 +520,7 @@ do {\
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
+    /*php_printf("AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
     zval* dataval;                                                            \
     uint key_len;                                                              \
     zend_ulong index;                                                               \
@@ -527,6 +564,7 @@ do {\
 #define AEROSPIKE_WALKER_SWITCH_CASEE_PUT(as, method, level, action, err,           \
         static_pool, key, value, store, label, serializer_policy)              \
         do {\
+            /*php_printf("AS_MAP_KEY AEROSPIKE_WALKER_SWITCH_CASEE_PUT\n");*/\
             HashTable *hashtable;                                                      \
             int htable_count;                                                          \
             HashPosition pointer;                                                      \
@@ -539,17 +577,20 @@ do {\
             HashPosition pointerr;\
             zend_string* z;\
             int t = zend_hash_num_elements(hashtable);\
+            int i = 0;\
             ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {                \
               do {                                                                           \
                       char *local_key;                                                           \
                       zend_string* z_str;\
                       int t = zend_hash_num_elements(hashtable);\
                       if (z) {                                      \
+                          /*php_printf("MAP KEY STRING: %s\n", z->val);*/\
                           as_string *map_str;                                                    \
                           GET_STR_POOL(map_str, static_pool, err, label);                        \
                           as_string_init(map_str, z->val, false);                             \
                           key = (as_val*) (map_str);                                             \
                       } else {                                 \
+                          /*php_printf("MAP KEY LONG: %ld\n", z->val);*/\
                           as_integer *map_int;                                                   \
                           GET_INT_POOL(map_int, static_pool, err, label);                        \
                           as_integer_init(map_int, index);                                       \
@@ -588,60 +629,62 @@ do {\
         } while(0)
 
         #define AEROSPIKE_WALKER_SWITCH_CASE_PDA_PUT(as, method, level, action, err,           \
-                static_pool, key, value, store, label, serializer_policy)              \
-                do {\
-                    HashTable *hashtable;                                                      \
-                    int htable_count;                                                          \
-                    HashPosition pointer;                                                      \
-                    zval* dataval;                                                            \
-                    uint key_len;                                                              \
-                    zend_ulong index;                                 \
-                    hashtable = Z_ARRVAL_P((zval*) value);                                    \
-                    zend_string* z_str;\
-                    int t = zend_hash_num_elements(hashtable);\
-                    ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z_str, dataval) {                \
-                      do {               \
-                        key_len = strlen(z_str->val) + 1;\
-                          key = z_str->val;\
-                          if (z_str->val == NULL) {                                          \
-                              err->code = AEROSPIKE_ERR_CLIENT;                              \
-                              goto label;                                                    \
-                          }                                                                  \
-                          if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
-                              PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
-                              goto label;                                                    \
-                          }\
-                        switch (FETCH_VALUE_##method(&dataval)) {                               \
-                            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
-                                    dataval, store, err, static_pool, label,                   \
-                                    serializer_policy);                                        \
-                            EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
-                                    dataval, store, err, static_pool, label, -1);              \
-                            EXPAND_CASE_PUT(as, level, method, action, LONG, key,                  \
-                                    dataval, store, err, static_pool, label, -1);              \
-                            EXPAND_CASE_PUT(as, level, method, action, DOUBLE, key,                \
-                                    dataval, store, err, static_pool, label,                   \
-                                    serializer_policy);                                        \
-                            EXPAND_CASE_PUT(as, level, method, action, NULL, key,                  \
-                                    dataval, store, err, static_pool, label,                   \
-                                    serializer_policy);                                        \
-                            EXPAND_CASE_PUT(as, level, method, action, OBJECT, key,                \
-                                    dataval, store, err, static_pool, label,                   \
-                                    serializer_policy);                                        \
-                            EXPAND_CASE_PUT(as, level, method, action, TRUE, key,                  \
-                                    dataval, store, err, static_pool, label,                   \
-                                    serializer_policy);                                        \
-                            EXPAND_CASE_PUT(as, level, method, action, FALSE, key,                 \
-                                    dataval, store, err, static_pool, label,                   \
-                                    serializer_policy);                                        \
-                            default:                                                           \
-                                PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_PARAM,                   \
-                                        "Invalid Datatype");                                   \
-                                goto label;                                                    \
-                        }                                                                      \
-                  } while(0);\
-                    } ZEND_HASH_FOREACH_END();\
-                } while(0)
+                                static_pool, key, value, store, label, serializer_policy)              \
+                                do {\
+                                    HashTable *hashtable;                                                      \
+                                    /*php_printf("AS_DEFAULT_KEY AEROSPIKE_WALKER_SWITCH_CASE_PDA_PUT\n");*/\
+                                    int htable_count;                                                          \
+                                    HashPosition pointer;                                                      \
+                                    zval* dataval;                                                            \
+                                    uint key_len;                                                              \
+                                    zend_ulong index;                                 \
+                                    zend_string* z;\
+                                    hashtable = Z_ARRVAL_P((zval*) value);                                    \
+                                    int t = zend_hash_num_elements(hashtable);\
+                                    ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {                \
+                                      /*php_printf("AS_DEFAULT_KEY\n");*/\
+                                      if (z != NULL) {\
+                                        key_len = strlen(z->val) + 1;\
+                                          key = z->val;\
+                                          if (z->val == NULL) {                                          \
+                                              err->code = AEROSPIKE_ERR_CLIENT;                              \
+                                              goto label;                                                    \
+                                          }                                                                  \
+                                          if (key_len > (AS_BIN_NAME_MAX_LEN + 1)) {                         \
+                                              PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_BIN_NAME, "Bin name longer than 14 chars");   \
+                                              goto label;                                                    \
+                                          }\
+                                      }\
+                                          switch (FETCH_VALUE_##method(&dataval)) {                               \
+                                            EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
+                                              dataval, store, err, static_pool, label,                   \
+                                              serializer_policy);                                        \
+                                            EXPAND_CASE_PUT(as, level, method, action, STRING, key,                \
+                                              dataval, store, err, static_pool, label, -1);              \
+                                            EXPAND_CASE_PUT(as, level, method, action, LONG, key,                  \
+                                              dataval, store, err, static_pool, label, -1);              \
+                                            EXPAND_CASE_PUT(as, level, method, action, DOUBLE, key,                \
+                                              dataval, store, err, static_pool, label,                   \
+                                              serializer_policy);                                        \
+                                            EXPAND_CASE_PUT(as, level, method, action, NULL, key,                  \
+                                              dataval, store, err, static_pool, label,                   \
+                                              serializer_policy);                                        \
+                                            EXPAND_CASE_PUT(as, level, method, action, OBJECT, key,                \
+                                              dataval, store, err, static_pool, label,                   \
+                                              serializer_policy);                                        \
+                                            EXPAND_CASE_PUT(as, level, method, action, TRUE, key,                  \
+                                              dataval, store, err, static_pool, label,                   \
+                                              serializer_policy);                                        \
+                                            EXPAND_CASE_PUT(as, level, method, action, FALSE, key,                 \
+                                              dataval, store, err, static_pool, label,                   \
+                                              serializer_policy);                                        \
+                                    default:                                                           \
+                                    PHP_EXT_SET_AS_ERR(err, AEROSPIKE_ERR_PARAM,                   \
+                                          "Invalid Datatype");                                   \
+                                  goto label;                                                    \
+                                        }                                                                      \
+                                    } ZEND_HASH_FOREACH_END();\
+                                } while(0)
 
 #endif
 
@@ -670,7 +713,7 @@ do {\
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_DEFAULT_ASSOC(as, err, static_pool,   \
         key,                                                                   \
         value, store, label, serializer_policy)                                \
-            AEROSPIKE_WALKER_SWITCH_CASE(as, PUT, DEFAULT, ASSOC, err,         \
+            AEROSPIKE_WALKER_SWITCH_CASE_PDA_PUT(as, PUT, DEFAULT, ASSOC, err,         \
                     static_pool, key, value, store, label, serializer_policy)
 #define AEROSPIKE_WALKER_SWITCH_CASE_PUT_MAP_ASSOC(as, err, static_pool, key,  \
       value, store, label, serializer_policy)                                \
@@ -854,6 +897,7 @@ do {                                                                           \
 #define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,   \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
+    /*php_printf("AEROSPIKE_PROCESS_ARRAY\n");*/\
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
@@ -896,6 +940,7 @@ do {                                                                           \
 #define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,   \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
+    /*php_printf("AEROSPIKE_PROCESS_ARRAY\n");*/\
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
