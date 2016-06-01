@@ -286,12 +286,12 @@
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
         zend_string* z_str;                                         \
-        /*php_printf("AS_DEFAULT_KEY\n");*/\
+        /*php_printf("+++++ AS_DEFAULT_KEY\n");*/\
         int t = zend_hash_num_elements(hashtable);\
         key_len = 0;\
         ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
           if (z_str) {\
-            /*php_printf("AS_DEFAULT_KEY %s\n", z_str->val);*/\
+            /*php_printf("++++++ AS_DEFAULT_KEY %s\n", z_str->val);*/\
             key = z_str->val;\
             key_len = strlen(z_str->val) + 1;\
           }\
@@ -520,7 +520,7 @@ do {\
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
-    /*php_printf("AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
+    /*php_printf("++++++ AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
     zval* dataval;                                                            \
     uint key_len;                                                              \
     zend_ulong index;                                                               \
@@ -642,7 +642,7 @@ do {\
                                     hashtable = Z_ARRVAL_P((zval*) value);                                    \
                                     int t = zend_hash_num_elements(hashtable);\
                                     ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {                \
-                                      /*php_printf("AS_DEFAULT_KEY\n");*/\
+                                      /*php_printf("AS_DEFAULT_KEY %s\n", z->val);*/\
                                       if (z != NULL) {\
                                         key_len = strlen(z->val) + 1;\
                                           key = z->val;\

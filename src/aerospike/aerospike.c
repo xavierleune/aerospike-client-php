@@ -950,7 +950,7 @@ PHP_METHOD(Aerospike, get)
 {
 	as_status              status = AEROSPIKE_OK;
 	zval*                  key_record_p = NULL;
-	zval*                  record_p = NULL;
+	zval*                  record_p;
 	zval*                  options_p = NULL;
 	zval*                  bins_p = NULL;
 	as_error               error;
@@ -1012,6 +1012,7 @@ PHP_METHOD(Aerospike, get)
 	  zval_dtor(record_p);
 	#endif
  array_init(record_p);
+ //array_init(return_value);
 
 	if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
 					&as_key_for_get_record,
@@ -4356,6 +4357,9 @@ PHP_METHOD(Aerospike, aggregate)
 	zval*                   options_p = NULL;
 	HashTable*              bins_ht_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	/*
@@ -5598,6 +5602,9 @@ PHP_METHOD(Aerospike, dropIndex)
 	char                    *name_p = NULL;
 	zval*                   options_p = NULL;
 	Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {

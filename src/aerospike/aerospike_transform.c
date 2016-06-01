@@ -231,6 +231,8 @@ if (serialize_flag) {
 
 #if PHP_VERSION_ID < 70000
 			COPY_PZVAL_TO_ZVAL(**value, *user_callback_info->retval_ptr_ptr);
+#else
+     *value = *user_callback_info->retval;
 #endif
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 		}
@@ -381,7 +383,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
   #if PHP_VERSION_ID < 70000
 	  zval	**retval
 	#else
-	  zval	retval
+	  zval*	retval
 	#endif
 											   , as_error  *error_p TSRMLS_DC)
 {
@@ -407,7 +409,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
 					#if PHP_VERSION_ID < 70000
 						retval
 					#else
-					  &retval
+					  retval
 					#endif
 					,
 							(const unsigned char **) &(bytes_val_p),
@@ -431,7 +433,7 @@ static void unserialize_based_on_as_bytes_type(as_bytes  *bytes,
 											#if PHP_VERSION_ID < 70000
 												retval
 											#else
-											  &retval
+											  retval
 											#endif
 											, false, error_p TSRMLS_CC);
 					if(AEROSPIKE_OK != (error_p->code)) {
@@ -627,11 +629,12 @@ static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, 
  	  zval        unserialized_zval;
  	#endif
 
+  //php_printf("8* %s\n", as_val_tostring((as_bytes *) value));
 	unserialize_based_on_as_bytes_type((as_bytes *) value,
 	#if PHP_VERSION_ID < 70000
 	  &unserialized_zval
 	#else
-	  unserialized_zval
+	  &unserialized_zval
 	#endif
 	, (as_error *) err TSRMLS_CC);
 
@@ -816,7 +819,7 @@ static void ADD_MAP_ASSOC_PAIR(Aerospike_object *as, void *key, void *value, voi
  */
 static void ADD_MAP_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-	//php_printf("16*\n");
+  //php_printf("16*\n");
 	#if PHP_VERSION_ID < 70000
 	  zval        *unserialized_zval = NULL;
  	#else
@@ -827,7 +830,7 @@ static void ADD_MAP_ASSOC_BYTES(Aerospike_object* as, void *key, void *value, vo
 	#if PHP_VERSION_ID < 70000
 	  &unserialized_zval
 	#else
-	  unserialized_zval
+	  &unserialized_zval
 	#endif
 	, (as_error *) err TSRMLS_CC);
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
@@ -1014,7 +1017,7 @@ static void ADD_MAP_INDEX_BYTES(Aerospike_object* as, void *key, void *value, vo
 	#if PHP_VERSION_ID < 70000
 	  &unserialized_zval
 	#else
-	  unserialized_zval
+	  &unserialized_zval
 	#endif
 								, (as_error *) err TSRMLS_CC);
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
@@ -1328,7 +1331,7 @@ static void ADD_DEFAULT_ASSOC_BYTES(Aerospike_object* as, void *key, void *value
 	#if PHP_VERSION_ID < 70000
 	  &unserialized_zval
 	#else
-	  unserialized_zval
+	  &unserialized_zval
 	#endif
 								, (as_error *) err TSRMLS_CC);
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
@@ -1435,7 +1438,7 @@ static void ADD_LIST_APPEND_LIST(Aerospike_object* as, void *key, void *value, v
  */
 static void ADD_MAP_ASSOC_MAP(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
-	//php_printf("36*\n");
+  //php_printf("36*\n");
 	AS_ASSOC_MAP_TO_MAP(key, value, array, err);
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -1589,6 +1592,8 @@ bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 	//php_printf("43*\n");
 	as_status status = AEROSPIKE_OK;
 	Aerospike_object *aerospike_object = ((foreach_callback_udata *) array)->obj;
+
+	//php_printf("43* as_val %s:\n", as_val_tostring(value));
 
 	TSRMLS_FETCH();
 	AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(aerospike_object, ((foreach_callback_udata *) array)->error_p,
@@ -1777,7 +1782,7 @@ exit:
 static void AS_DEFAULT_SET_ASSOC_MAP(Aerospike_object* as, void* outer_store, void* inner_store,
 		void* bin_name, as_error *error_p TSRMLS_DC)
 {
-	//php_printf("49*\n");
+  //php_printf("49*\n");
 	if (!(as_record_set_map((as_record *)outer_store, (const char *)bin_name,
 					(as_map *) inner_store))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to set record to a map");
@@ -2306,9 +2311,9 @@ static void AS_DEFAULT_PUT_ASSOC_INT64(Aerospike_object* as, void* key, void* va
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 
 	#if PHP_VERSION_ID < 70000
-		//php_printf("64* LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval**) value));
+		////php_printf("64* LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval**) value));
 	#else
-	  //php_printf("64* LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval*) value));
+	  ////php_printf("64* LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval*) value));
 	#endif
 
 exit:
@@ -2350,9 +2355,9 @@ static void AS_DEFAULT_PUT_ASSOC_STR(Aerospike_object* as, void *key, void *valu
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 
 	#if PHP_VERSION_ID < 70000
-		//php_printf("STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval**) value));
+		////php_printf("STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval**) value));
 	#else
-	  //php_printf("STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval*) value));
+	  ////php_printf("STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval*) value));
 	#endif
 
 exit:
@@ -2632,13 +2637,13 @@ void AS_DEFAULT_PUT(Aerospike_object* as, void *key, void *value, as_record *rec
 			#endif
 			, record_p, exit, serializer_policy);
 	////php_printf("Bins: Capacity %d Size %d Name %s\n", record_p->bins.capacity, record_p->bins.size, record_p->bins.entries[0].name);
-	//php_printf("73* Bins: Capacity %d Size %d\n", record_p->bins.capacity, record_p->bins.size);
-	/*//php_printf("Name1 %s\n", record_p->bins.entries[0].name);
-	char* val_as_stre = as_val_tostring(as_bin_get_value(&record_p->bins.entries[0]));
-	//php_printf("%s: \n", val_as_stre);
-	//php_printf("Name2 %s\n", record_p->bins.entries[1].name);
-	val_as_stre = as_val_tostring(as_bin_get_value(&record_p->bins.entries[1]));
-	//php_printf("%s: \n", val_as_stre);*/
+	////php_printf("73* Bins: Capacity %d Size %d\n", record_p->bins.capacity, record_p->bins.size);
+	////php_printf("Name1 %s\n", record_p->bins.entries[0].name);
+	//char* val_as_stre = as_val_tostring(as_bin_get_value(&record_p->bins.entries[0]));
+	////php_printf("%s: \n", val_as_stre);
+	////php_printf("Name2 %s\n", record_p->bins.entries[1].name);
+	//val_as_stre = as_val_tostring(as_bin_get_value(&record_p->bins.entries[1]));
+	////php_printf("%s: \n", val_as_stre);*/
 
 exit:
 	return;
@@ -2725,9 +2730,9 @@ static void AS_DEFAULT_PUT_ASSOC_ARRAY(Aerospike_object* as, void *key, void *va
 	//php_printf("76*\n");
 	AEROSPIKE_PROCESS_ARRAY(as, DEFAULT, ASSOC, exit, key, value, store,
 			error_p, static_pool, serializer_policy);
-			/*////php_printf("###### bins: capacity %d size %d name %s\n", ((as_record*)store)->bins.capacity, ((as_record*)store)->bins.size, ((as_record*)store)->bins.entries[0].name);
+			/*//php_printf("###### bins: capacity %d size %d name %s\n", ((as_record*)store)->bins.capacity, ((as_record*)store)->bins.size, ((as_record*)store)->bins.entries[0].name);
 	char* val_as_stre = as_val_tostring(as_bin_get_value(&((as_record*)store)->bins.entries[0]));
-	////php_printf("######%s: \n", val_as_stre);*/
+	//php_printf("######%s: \n", val_as_stre);*/
 exit:
 	return;
 }
@@ -3133,7 +3138,7 @@ aerospike_transform_iterateKey(HashTable* ht_p,
 	zend_string*	 key_value_p;
 	//ZEND_HASH_FOREACH_KEY_VAL(ht_p, hashPosition_p, key_value_p, keyData_pp) {
 	ZEND_HASH_FOREACH_KEY_VAL(ht_p, index_u64, key_value_p, keyData_pp) {
-		////php_printf("TIMES*********************************************************************\n");
+		//////php_printf("TIMES*********************************************************************\n");
 #endif
 
 u_int32_t   key_len_u32 = 0;
@@ -3145,9 +3150,9 @@ u_int32_t   key_len_u32 = 0;
 #if PHP_VERSION_ID >= 70000
   if (key_value_p) {
     key_len_u32 = strlen(ZSTR_VAL(key_value_p)) + 1;
-		////php_printf("KEY STRING: %s\n", key_value_p->val);
+		//////php_printf("KEY STRING: %s\n", key_value_p->val);
   } else {
-			////php_printf("KEY LONG: %ld\n", key_value_p->val);
+			//////php_printf("KEY LONG: %ld\n", key_value_p->val);
 	}
 #endif
 
@@ -3184,7 +3189,7 @@ exit:
 		*retdata_pp = *keyData_pp;
 	}
 //#endif
-////php_printf("END!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//////php_printf("END!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	return status;
 }
 
@@ -4079,12 +4084,12 @@ aerospike_transform_putkey_callback(HashTable* ht_p,
 		goto exit;
 	}
 
-	/*//php_printf("PHP_AS_KEY_DEFINE_FOR_KEY: %s\n", PHP_AS_KEY_DEFINE_FOR_KEY);
-	//php_printf("PHP_AS_KEY_DEFINE_FOR_KEY_LEN: %d\n", PHP_AS_KEY_DEFINE_FOR_KEY_LEN);
-	//php_printf("PHP_AS_KEY_DEFINE_FOR_DIGEST: %s\n", PHP_AS_KEY_DEFINE_FOR_KEY);
-	//php_printf("PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN: %d\n", PHP_AS_KEY_DEFINE_FOR_KEY_LEN);
-	//php_printf("key_p: %s\n", key_p);
-	//php_printf("key_len_u32 - 1: %d\n", key_len_u32 - 1);*/
+	/*////php_printf("PHP_AS_KEY_DEFINE_FOR_KEY: %s\n", PHP_AS_KEY_DEFINE_FOR_KEY);
+	////php_printf("PHP_AS_KEY_DEFINE_FOR_KEY_LEN: %d\n", PHP_AS_KEY_DEFINE_FOR_KEY_LEN);
+	////php_printf("PHP_AS_KEY_DEFINE_FOR_DIGEST: %s\n", PHP_AS_KEY_DEFINE_FOR_KEY);
+	////php_printf("PHP_AS_KEY_DEFINE_FOR_DIGEST_LEN: %d\n", PHP_AS_KEY_DEFINE_FOR_KEY_LEN);
+	////php_printf("key_p: %s\n", key_p);
+	////php_printf("key_len_u32 - 1: %d\n", key_len_u32 - 1);*/
 
 	if (PHP_IS_STRING(key_data_type_u32) &&
 		PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_NS, PHP_AS_KEY_DEFINE_FOR_NS_LEN, key_p, key_len_u32 - 1)) {
@@ -4236,7 +4241,7 @@ aerospike_transform_iterate_records(Aerospike_object* as,
 {
 
 	char*              key = NULL;
-	////php_printf("5 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
+	//////php_printf("5 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
 
 	if ((!record_pp) || !(as_record_p) || !(static_pool)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to put record");
@@ -4247,7 +4252,7 @@ aerospike_transform_iterate_records(Aerospike_object* as,
 
 	/* switch case statements for put for zend related data types */
 	AS_DEFAULT_PUT(as, key, record_pp, as_record_p, static_pool, serializer_policy, error_p TSRMLS_CC);
-	////php_printf("6 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
+	//////php_printf("6 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
 
 exit:
 	return;
@@ -4290,7 +4295,7 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 	uint16_t                    gen_value = 0;
 	int                         num_of_bins = 0;
 	bool                        server_support_double = false;
-	////php_printf("1 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
+	//////php_printf("1 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
 
 	if ((!record_pp) || (!as_key_p) || (!error_p) || (!aerospike_object_p->as_ref_p->as_p)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to put record");
@@ -4301,7 +4306,7 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 	as_record_inita(&record, zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(record_pp)));
 	num_of_bins = zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(record_pp));
 
-	////php_printf("2 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
+	//////php_printf("2 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
 
 	if (num_of_bins < 1) {
 		error_p->code = AEROSPIKE_ERR_PARAM;
@@ -4338,13 +4343,13 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 		goto exit;
 	}
 
-	////php_printf("3 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
+	//////php_printf("3 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
 
 	record.gen = gen_value;
 	record.ttl = ttl_u32;
 	aerospike_key_put(aerospike_object_p->as_ref_p->as_p, error_p, &write_policy, as_key_p, &record);
 
-	////php_printf("4 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
+	//////php_printf("4 ******** Bins: Capacity %d Size %d\n", record.bins.capacity, record.bins.size);
 
 exit:
 	/* clean up the as_* objects that were initialised */
