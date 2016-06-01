@@ -114,7 +114,7 @@ AerospikeConstants aerospike_constants[] = {
     { SERIALIZER_USER                       ,   "SERIALIZER_USER"                   },
     { AS_UDF_TYPE_LUA                       ,   "UDF_TYPE_LUA"                      },
     { AS_SCAN_PRIORITY_AUTO 		        ,   "SCAN_PRIORITY_AUTO" 		        },
-    { AS_SCAN_PRIORITY_LOW 		            ,   "SCAN_PRORITY_LOW" 			        },
+    { AS_SCAN_PRIORITY_LOW 		            ,   "SCAN_PRIORITY_LOW" 			    },
     { AS_SCAN_PRIORITY_MEDIUM 		        ,   "SCAN_PRIORITY_MEDIUM" 		        },
     { AS_SCAN_PRIORITY_HIGH 		        ,   "SCAN_PRIORITY_HIGH" 		        },
     { AS_SCAN_STATUS_UNDEF 		            ,   "SCAN_STATUS_UNDEF" 		        },
