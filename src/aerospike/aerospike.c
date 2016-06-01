@@ -1198,7 +1198,13 @@ PHP_METHOD(Aerospike, info)
 		goto exit;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|zz",
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	#if PHP_VERSION_ID < 70000
+	  "sz|zz"
+	#else
+	  "sz/|zz"
+	#endif
+	,
 				&request, &request_len, &response_p,
 				&host, &options_p) == FAILURE) {
 		status = AEROSPIKE_ERR_PARAM;
@@ -1214,7 +1220,9 @@ PHP_METHOD(Aerospike, info)
 		goto exit;
 	}
 
-	zval_dtor(response_p);
+  #if PHP_VERSION_ID < 70000
+	  zval_dtor(response_p);
+ #endif
 
 	if (AEROSPIKE_OK !=
 			(status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
