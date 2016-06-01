@@ -3765,7 +3765,6 @@ as_status aerospike_transform_array_callback_php7(HashTable* ht_p,
 		status = AEROSPIKE_ERR_PARAM;
 		goto exit;
 	}
-
 	if (!set_as_config) {
 		zval *tmp;
 #if PHP_VERSION_ID < 70000
@@ -3776,10 +3775,10 @@ as_status aerospike_transform_array_callback_php7(HashTable* ht_p,
 #else
 		if (tmp == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 					ip_port, strlen(ip_port), (void**)&tmp)) {
-			zval* z_temp;
-			ZVAL_STRING(z_temp, ip_port);
-			if (tmp != zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
-						ip_port, strlen(ip_port), z_temp)) {
+			zval z_temp;
+			ZVAL_STRING(&z_temp, ip_port);
+			if (!zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
+						ip_port, strlen(ip_port), &z_temp)) {
 #endif
 				status = AEROSPIKE_ERR_CLIENT;
 				goto exit;
@@ -3875,7 +3874,6 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
 		status = AEROSPIKE_ERR_PARAM;
 		goto exit;
 	}
-
 	if (!set_as_config) {
 		zval **tmp;
 #if PHP_VERSION_ID < 70000

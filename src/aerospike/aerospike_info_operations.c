@@ -73,7 +73,7 @@ aerospike_info_specific_host(aerospike* as_object_p,
 		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
 		goto exit;
 	}
-	
+
 	if (host) {
 #if PHP_VERSION_ID < 70000
 		if (FAILURE == AEROSPIKE_ZEND_HASH_FIND(Z_ARRVAL_P(host),
@@ -437,7 +437,7 @@ static char *get_ip_str(const struct sockaddr *sa)
  * It processes the as_val and translates it into an equivalent zval array.
  * It then calls the user registered callback passing the zval array as an
  * argument.
- *       
+ *
  * @param err               The as_error object sent by C client to this
  *                          callback.
  * @param node              The current as_node object for which the callback is
@@ -455,7 +455,7 @@ static char *get_ip_str(const struct sockaddr *sa)
 
 extern bool
 aerospike_info_callback(const as_error* err, const as_node* node,
-		char* request, char* response, void* udata) 
+		char* request, char* response, void* udata)
 {
 	TSRMLS_FETCH();
 	foreach_callback_info_udata*        udata_ptr = (foreach_callback_info_udata *) udata;
@@ -494,7 +494,7 @@ aerospike_info_callback(const as_error* err, const as_node* node,
 						response, strlen(response), 1)) {
 				DEBUG_PHP_EXT_DEBUG("Unable to get node info");
 				goto exit;
-			}	
+			}
 		}
 	} else {
 		return false;
