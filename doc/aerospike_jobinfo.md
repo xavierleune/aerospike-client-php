@@ -7,7 +7,7 @@ scanApply() or queryApply()
 ## Description
 
 ```
-public int Aerospike::jobInfo ( integer $job_id, array &$info [, array $options ] )
+public int Aerospike::jobInfo ( integer $job_id, string $module, array &$info [, array $options ] )
 ```
 
 **Aerospike::jobInfo()** will return *information* on a background job, identified
@@ -17,6 +17,8 @@ by *job_id*, which was triggered using **Aerospike::scanApply()** or
 ## Parameters
 
 **job_id** the job id
+
+**module** one of: ```Aerospike::JOB_QUERY``` or ```Aerospike::JOB_SCAN```
 
 **info** the status of the background job returned as an array conforming to the following:
 ```
