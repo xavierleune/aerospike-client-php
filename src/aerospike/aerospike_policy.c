@@ -581,7 +581,7 @@ set_policy_ex(as_config *as_config_p,
 					if ((!as_scan_p) || (Z_TYPE_PP(options_value) != IS_BOOL)) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-								"Unable to set policy: Invalid Value for OPT_SCAN_NOBINS");
+								"Unable to set policZ_BVAL_PPy: Invalid Value for OPT_SCAN_NOBINS");
 						goto exit;
 					}
 					if (!as_scan_set_nobins(as_scan_p, (uint32_t) Z_BVAL_PP(options_value))) {
@@ -885,6 +885,18 @@ set_policy_ex(as_config *as_config_p,
 						goto exit;
 					}
 					break;
+          case OPT_SCAN_INCLUDELDT:
+  					if (info_policy_p) {
+  						break;
+  					}
+  					if ((!as_scan_p) || (Z_TYPE_P(options_value) != _IS_BOOL)) {
+  						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+  						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+  								"Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
+  						goto exit;
+  					}
+  					as_scan_p->include_ldt = Z_DVAL_P(options_value);
+  					break;
 				case OPT_POLICY_KEY:
 					if (Z_TYPE_P(options_value) != IS_LONG) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_POLICY_KEY");
@@ -990,6 +1002,8 @@ set_policy_ex(as_config *as_config_p,
 						goto exit;
 					}
 					break;
+          case OPT_TTL:
+  					break;
 				default:
 					DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,

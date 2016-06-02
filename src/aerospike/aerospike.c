@@ -1470,7 +1470,7 @@ PHP_METHOD(Aerospike, operate)
 		goto exit;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|za",
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|z/a",
 				&key_record_p, &operations_p, &returned_p, &options_p) == FAILURE) {
 		status = AEROSPIKE_ERR_PARAM;
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operate function");
@@ -3144,7 +3144,6 @@ PHP_METHOD(Aerospike, listGet)
 		  zval_dtor(&element_p);
  	  }
 	#endif
-
 	if (rec && rec->bins.size) {
 		list_get_callback_udata.udata_p =
 		#if PHP_VERSION_ID < 70000
@@ -3155,7 +3154,6 @@ PHP_METHOD(Aerospike, listGet)
 		list_get_callback_udata.error_p = &error;
 		AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
 	}
-
 exit:
 	if (initializeKey) {
 		as_key_destroy(&as_key_for_list);
@@ -4877,6 +4875,9 @@ PHP_METHOD(Aerospike, jobInfo)
 	zval*               job_info_p = NULL;
 	zval*               options_p = NULL;
 	Aerospike_object*   aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+	#if PHP_VERSION_ID >= 70000
+	  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+	#endif
 
 	as_error_init(&error);
 	if (!aerospike_obj_p) {

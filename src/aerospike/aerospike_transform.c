@@ -3138,7 +3138,6 @@ aerospike_transform_iterateKey(HashTable* ht_p,
 	zend_string*	 key_value_p;
 	//ZEND_HASH_FOREACH_KEY_VAL(ht_p, hashPosition_p, key_value_p, keyData_pp) {
 	ZEND_HASH_FOREACH_KEY_VAL(ht_p, index_u64, key_value_p, keyData_pp) {
-		//////php_printf("TIMES*********************************************************************\n");
 #endif
 
 u_int32_t   key_len_u32 = 0;
@@ -3150,10 +3149,7 @@ u_int32_t   key_len_u32 = 0;
 #if PHP_VERSION_ID >= 70000
   if (key_value_p) {
     key_len_u32 = strlen(ZSTR_VAL(key_value_p)) + 1;
-		//////php_printf("KEY STRING: %s\n", key_value_p->val);
-  } else {
-			//////php_printf("KEY LONG: %ld\n", key_value_p->val);
-	}
+  }
 #endif
 
 		/* check for key type , need to know what it is*/
@@ -3189,7 +3185,6 @@ exit:
 		*retdata_pp = *keyData_pp;
 	}
 //#endif
-//////php_printf("END!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 	return status;
 }
 
