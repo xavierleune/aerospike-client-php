@@ -1736,6 +1736,7 @@ static void AS_DEFAULT_SET_ASSOC_LIST(Aerospike_object* as, void* outer_store, v
 				"Unable to set record to a list");
 		goto exit;
 	}
+
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 
 exit:
@@ -2675,6 +2676,35 @@ extern void AS_LIST_PUT(Aerospike_object *as, void *key, void *value, void *stor
 						((zval*)value)
 			#endif
 			, store, exit, serializer_policy);
+			#if PHP_VERSION_ID < 70000
+
+		if (AEROSPIKE_Z_TYPE_P((zval**)value) == IS_STRING) {
+			//php_printf("DATA STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval**)value));
+		} else if (AEROSPIKE_Z_TYPE_P((zval**)value) == IS_LONG) {
+			 //php_printf("DATA LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval**)value));
+		} else {
+			//php_printf("ARRAY\n");
+			zval** dataa;
+			HashPosition pointer2;
+		AEROSPIKE_FOREACH_HASHTABLE(AEROSPIKE_Z_ARRVAL_P((zval**)value), pointer2, dataa) {
+			if (AEROSPIKE_Z_TYPE_P(dataa) == IS_STRING) {
+				//php_printf("DATA ARRAY STRING: %s\n", AEROSPIKE_Z_STRVAL_P(dataa));
+			} else if (AEROSPIKE_Z_TYPE_P(dataa) == IS_LONG) {
+				 //php_printf("DATA ARRAY LONG: %ld\n", AEROSPIKE_Z_LVAL_P(dataa));
+			}
+		}
+			}
+
+	#else
+
+			if (AEROSPIKE_Z_TYPE_P((zval*)value) == IS_STRING) {
+				//php_printf("DATA STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval*)value));
+			} else if (Z_TYPE_P((zval*)value) == IS_LONG) {
+				 //php_printf("DATA LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval*)value));
+			} else {
+				//php_printf("ARRAY\n");
+		}
+	#endif
 exit:
 	return;
 }
@@ -4246,6 +4276,10 @@ aerospike_transform_iterate_records(Aerospike_object* as,
 	/* switch case statements for put for zend related data types */
 	AS_DEFAULT_PUT(as, key, record_pp, as_record_p, static_pool, serializer_policy, error_p TSRMLS_CC);
 	//////php_printf("6 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
+
+	/*//php_printf("Bins: Capacity %d Size %d Name %s %s\n", as_record_p->bins.capacity, as_record_p->bins.size, as_record_p->bins.entries[0].name, as_record_p->bins.entries[1].name);
+	char* val_as_stre = as_val_tostring(as_bin_get_value(&as_record_p->bins.entries[0]));
+	//php_printf("%s: \n", val_as_stre);*/
 
 exit:
 	return;
