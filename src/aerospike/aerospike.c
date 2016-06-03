@@ -3068,7 +3068,7 @@ PHP_METHOD(Aerospike, listGet)
     #if PHP_VERSION_ID < 70000
       zval* element_p = NULL;
     #else
-      zval element_p;
+      zval* element_p = NULL;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -3109,7 +3109,7 @@ PHP_METHOD(Aerospike, listGet)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &element_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3145,24 +3145,16 @@ PHP_METHOD(Aerospike, listGet)
         goto exit;
     }
 
-    #if PHP_VERSION_ID < 70000
-      if (element_p) {
-          zval_dtor(element_p);
-      } else {
-        MAKE_STD_ZVAL(element_p);
-      }
-    #else
-      if (&element_p) {
-          zval_dtor(&element_p);
-      }
-    #endif
+		if (element_p) {
+        zval_dtor(element_p);
+				#if PHP_VERSION_ID < 70000
+          } else {
+              MAKE_STD_ZVAL(element_p);
+			  #endif
+    }
+
     if (rec && rec->bins.size) {
-        list_get_callback_udata.udata_p =
-        #if PHP_VERSION_ID < 70000
-          element_p;
-        #else
-          &element_p;
-        #endif
+        list_get_callback_udata.udata_p = element_p;
         list_get_callback_udata.error_p = &error;
         AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
     }
@@ -3463,7 +3455,7 @@ PHP_METHOD(Aerospike, listPopRange)
     as_record              *rec = NULL;
     as_policy_operate      operate_policy;
     zval*                  key_record_p = NULL;
-		zval*                elements_p = NULL;
+		zval*                  elements_p = NULL;
     #if PHP_VERSION_ID < 70000
       long                 bin_name_len;
     #else
@@ -3544,25 +3536,16 @@ PHP_METHOD(Aerospike, listPopRange)
         goto exit;
     }
 
-    #if PHP_VERSION_ID < 70000
-      if (elements_p) {
-          zval_dtor(elements_p);
-      } else {
-        MAKE_STD_ZVAL(elements_p);
-      }
-    #else
-      if (elements_p) {
-          zval_dtor(elements_p);
-      }
-    #endif
+    if (elements_p) {
+        zval_dtor(elements_p);
+				#if PHP_VERSION_ID < 70000
+          } else {
+              MAKE_STD_ZVAL(elements_p);
+			  #endif
+    }
 
     if (rec && rec->bins.size) {
-        list_get_callback_udata.udata_p =
-        #if PHP_VERSION_ID < 70000
-          elements_p;
-        #else
-          elements_p;
-        #endif
+        list_get_callback_udata.udata_p = elements_p;
         list_get_callback_udata.error_p = &error;
         AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
     }
