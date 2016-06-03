@@ -1201,14 +1201,28 @@ static void ADD_DEFAULT_ASSOC_STRING(Aerospike_object* as, void *key, void *valu
 	 * NULL will differentiate UDF from normal GET calls.
 	 */
 	if (key == NULL) {
-		zval* string_zval_p = NULL;
 		#if PHP_VERSION_ID < 70000
+		  zval* string_zval_p = NULL;
 			ALLOC_INIT_ZVAL(string_zval_p);
+	  #else
+		  zval string_zval_p;
 		#endif
-		AEROSPIKE_ZVAL_STRINGL(string_zval_p, as_string_get((as_string *) value),
+		AEROSPIKE_ZVAL_STRINGL(
+			#if PHP_VERSION_ID < 70000
+			  string_zval_p
+		  #else
+			  &string_zval_p
+			#endif
+			, as_string_get((as_string *) value),
 				 strlen(as_string_get((as_string *) value)), 1);
 		zval_dtor((zval *)array);
-		ZVAL_ZVAL((zval *)array, string_zval_p, 1, 1);
+		ZVAL_ZVAL((zval *)array,
+		#if PHP_VERSION_ID < 70000
+			string_zval_p
+		#else
+			&string_zval_p
+		#endif
+		, 1, 1);
 	} else {
 		AEROSPIKE_ADD_ASSOC_STRINGL(((zval *) array), (char *) key,
 				as_string_get((as_string *) value),
@@ -2676,35 +2690,6 @@ extern void AS_LIST_PUT(Aerospike_object *as, void *key, void *value, void *stor
 						((zval*)value)
 			#endif
 			, store, exit, serializer_policy);
-			#if PHP_VERSION_ID < 70000
-
-		if (AEROSPIKE_Z_TYPE_P((zval**)value) == IS_STRING) {
-			//php_printf("DATA STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval**)value));
-		} else if (AEROSPIKE_Z_TYPE_P((zval**)value) == IS_LONG) {
-			 //php_printf("DATA LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval**)value));
-		} else {
-			//php_printf("ARRAY\n");
-			zval** dataa;
-			HashPosition pointer2;
-		AEROSPIKE_FOREACH_HASHTABLE(AEROSPIKE_Z_ARRVAL_P((zval**)value), pointer2, dataa) {
-			if (AEROSPIKE_Z_TYPE_P(dataa) == IS_STRING) {
-				//php_printf("DATA ARRAY STRING: %s\n", AEROSPIKE_Z_STRVAL_P(dataa));
-			} else if (AEROSPIKE_Z_TYPE_P(dataa) == IS_LONG) {
-				 //php_printf("DATA ARRAY LONG: %ld\n", AEROSPIKE_Z_LVAL_P(dataa));
-			}
-		}
-			}
-
-	#else
-
-			if (AEROSPIKE_Z_TYPE_P((zval*)value) == IS_STRING) {
-				//php_printf("DATA STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval*)value));
-			} else if (Z_TYPE_P((zval*)value) == IS_LONG) {
-				 //php_printf("DATA LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval*)value));
-			} else {
-				//php_printf("ARRAY\n");
-		}
-	#endif
 exit:
 	return;
 }

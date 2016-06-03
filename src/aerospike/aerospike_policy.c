@@ -1402,7 +1402,7 @@ set_config_policies(as_config *as_config_p,
     			}
       #else
         ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
-          if (!options_key) {
+          if (options_key) {
             DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
     				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
     						"Unable to set policy: Invalid Policy Constant Key");

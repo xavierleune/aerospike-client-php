@@ -879,7 +879,6 @@ PHP_METHOD(Aerospike, close)
 
     /* Now as connection is getting closed we need to set the connection flag to false */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
-
 exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
@@ -2395,11 +2394,12 @@ PHP_METHOD(Aerospike, listSet)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  set_val_p = NULL;
     #if PHP_VERSION_ID < 70000
-    zval* set_val_copy = NULL;
+		    zval* set_val_p = NULL;
+        zval* set_val_copy = NULL;
         zval* temp_record_p = NULL;
     #else
+		    zval set_val_p;
         zval set_val_copy;
         zval temp_record_p;
     #endif
@@ -2482,11 +2482,11 @@ PHP_METHOD(Aerospike, listSet)
     #endif
 
     #if PHP_VERSION_ID < 70000
-      MAKE_COPY_ZVAL(&set_val_p, set_val_copy); //
+      MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
     ALLOC_ZVAL(set_val_copy);
         add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
   #else
-      add_assoc_zval(&temp_record_p, bin_name_p, &set_val_copy);
+      add_assoc_zval(&temp_record_p, bin_name_p, &set_val_p);
     #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
@@ -5292,7 +5292,7 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zzz",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zz/z",
                 &key_record_p, &module_zval_p, &function_zval_p, &args_p,
                 &return_value_of_udf_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -5488,7 +5488,13 @@ PHP_METHOD(Aerospike, getRegistered)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|lz",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+		#if PHP_VERSION_ID < 70000
+      "zz|lz"
+    #else
+      "zz/|lz"
+    #endif
+    ,
                 &module_zval_p, &udf_code_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -6921,7 +6927,6 @@ PHP_MINIT_FUNCTION(aerospike)
 #else
     Aerospike_ce->create_object = Aerospike_object_new_php7;
 #endif
-
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
 #if PHP_VERSION_ID < 70000

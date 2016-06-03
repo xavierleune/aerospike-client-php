@@ -29,7 +29,7 @@
 
 #define MAX_STATUS_MSG_SIZE 512
 
-/* 
+/*
  *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike status constants.
  *******************************************************************************************************
@@ -39,7 +39,7 @@ typedef struct Aerospike_Status {
 	char status_msg[MAX_STATUS_MSG_SIZE];
 } AerospikeStatus;
 
-/* 
+/*
  *******************************************************************************************************
  * Instance of Mapper of constant number to constant name string for Aerospike status constants.
  *******************************************************************************************************
