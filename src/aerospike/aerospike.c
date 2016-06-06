@@ -3206,7 +3206,7 @@ PHP_METHOD(Aerospike, listGetRange)
         zval*                  elements_p = NULL;
     #else
       zval insert_val_copy;
-        zval                  elements_p;
+        zval*                  elements_p = NULL;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -3248,7 +3248,7 @@ PHP_METHOD(Aerospike, listGetRange)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &count, &elements_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3284,35 +3284,21 @@ PHP_METHOD(Aerospike, listGetRange)
         goto exit;
     }
 
-    #if PHP_VERSION_ID < 70000
-      if (elements_p) {
-          zval_dtor(elements_p);
-      } else {
-        MAKE_STD_ZVAL(elements_p);
-      }
-    #else
-      if (&elements_p) {
-          zval_dtor(&elements_p);
-      }
-    #endif
+		if (elements_p) {
+        zval_dtor(elements_p);
+				#if PHP_VERSION_ID < 70000
+          } else {
+              MAKE_STD_ZVAL(elements_p);
+			  #endif
+    }
 
-    list_get_callback_udata.udata_p =
-    #if PHP_VERSION_ID < 70000
-      elements_p;
-    #else
-      &elements_p;
-    #endif
+    list_get_callback_udata.udata_p = elements_p;
     list_get_callback_udata.error_p = &error;
 
     if (rec && rec->bins.size) {
         AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
     } else if (rec && rec->bins.size == 0) {
-        array_init(
-        #if PHP_VERSION_ID < 70000
-          elements_p);
-        #else
-          &elements_p);
-        #endif
+        array_init(elements_p);
     }
 
 exit:
