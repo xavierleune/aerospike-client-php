@@ -2595,7 +2595,13 @@ PHP_METHOD(Aerospike, listMerge)
         goto exit;
     }
 
-    if (!check_val_type_list(&items_p)) {
+		if (!check_val_type_list(
+      #if PHP_VERSION_ID < 70000
+			  &items_p
+			#else
+			  items_p
+			#endif
+		)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
         DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
@@ -3004,7 +3010,13 @@ PHP_METHOD(Aerospike, listInsertItems)
         goto exit;
     }
 
-    if (!check_val_type_list(&items_p)) {
+    if (!check_val_type_list(
+      #if PHP_VERSION_ID < 70000
+			  &items_p
+			#else
+			  items_p
+			#endif
+		)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
         DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
@@ -3027,7 +3039,13 @@ PHP_METHOD(Aerospike, listInsertItems)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL,
+          #if PHP_VERSION_ID < 70000
+					  &items_p
+					#else
+					  items_p
+					#endif
+					, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 

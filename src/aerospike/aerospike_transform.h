@@ -271,7 +271,7 @@
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
-        /*php_printf("AS_DEFAULT_KEY\n");*/\
+        /*php_printf("********* AS_DEFAULT_KEY\n");*/\
             AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable, (char **)&key, &key_len, &index, 0, &pointer);\
             /*php_printf("AS_DEFAULT_KEY %s\n", *(char **)&key);*/\
             if ((char*)key == NULL) {                                          \
@@ -286,7 +286,7 @@
 #define AS_DEFAULT_KEY(hashtable, key, key_len, index, pointer,                \
         static_pool, err, label)                                               \
         zend_string* z_str;                                         \
-        /*php_printf("+++++ AS_DEFAULT_KEY\n");*/\
+        /*php_printf("++++++++ AS_DEFAULT_KEY\n");*/\
         int t = zend_hash_num_elements(hashtable);\
         key_len = 0;\
         ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
@@ -313,7 +313,7 @@
         err, label)                                                            \
 do {                                                                           \
     char *local_key;                                                           \
-    /*php_printf("AS_MAP_KEY\n");*/\
+    /*php_printf("********** AS_MAP_KEY\n");*/\
     uint key_type = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(hashtable,          \
             (char **)&local_key, &key_len, &index, 0, &pointer);               \
     if (key_type == HASH_KEY_IS_STRING) {                                      \
@@ -338,7 +338,7 @@ do {                                                                           \
         err, label)                                                            \
         do {                                                                           \
                 char *local_key;                                                           \
-                /*php_printf("AS_MAP_KEY\n");*/\
+                /*php_printf("++++++++ AS_MAP_KEY\n");*/\
                 zend_string* z_str;\
                 int t = zend_hash_num_elements(hashtable);\
                 ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {\
@@ -471,7 +471,7 @@ do {                                                                           \
 do {                                                                           \
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
-    /*php_printf("AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
+    /*php_printf("******* AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
     HashPosition pointer;                                                      \
     zval **dataval;                                                            \
     uint key_len;                                                              \
@@ -480,10 +480,10 @@ do {                                                                           \
     int t = zend_hash_num_elements(hashtable);\
     char *local_key;\
     AEROSPIKE_FOREACH_HASHTABLE (hashtable, pointer, dataval) {                \
+      /*php_printf("TEST1\n");*/\
         AS_##level##_KEY(hashtable, key, key_len, index, pointer,              \
                 static_pool, err, label)                                       \
         switch (FETCH_VALUE_##method(dataval)) {                               \
-          /*php_printf("TEST1\n");*/\
             EXPAND_CASE_PUT(as, level, method, action, ARRAY, key,             \
                     dataval, store, err, static_pool, label,                   \
                     serializer_policy);                                        \
@@ -520,7 +520,7 @@ do {\
     HashTable *hashtable;                                                      \
     int htable_count;                                                          \
     HashPosition pointer;                                                      \
-    /*php_printf("++++++ AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
+    /*php_printf("++++++++ AEROSPIKE_WALKER_SWITCH_CASE_PUT\n");*/\
     zval* dataval;                                                            \
     uint key_len;                                                              \
     zend_ulong index;                                                               \
@@ -564,7 +564,7 @@ do {\
 #define AEROSPIKE_WALKER_SWITCH_CASEE_PUT(as, method, level, action, err,           \
         static_pool, key, value, store, label, serializer_policy)              \
         do {\
-            /*php_printf("AS_MAP_KEY AEROSPIKE_WALKER_SWITCH_CASEE_PUT\n");*/\
+            /*php_printf("******* AS_MAP_KEY AEROSPIKE_WALKER_SWITCH_CASEE_PUT\n");*/\
             HashTable *hashtable;                                                      \
             int htable_count;                                                          \
             HashPosition pointer;                                                      \
@@ -632,7 +632,7 @@ do {\
                                 static_pool, key, value, store, label, serializer_policy)              \
                                 do {\
                                     HashTable *hashtable;                                                      \
-                                    /*php_printf("AS_DEFAULT_KEY AEROSPIKE_WALKER_SWITCH_CASE_PDA_PUT\n");*/\
+                                    /*php_printf("*********** AS_DEFAULT_KEY AEROSPIKE_WALKER_SWITCH_CASE_PDA_PUT\n");*/\
                                     int htable_count;                                                          \
                                     HashPosition pointer;                                                      \
                                     zval* dataval;                                                            \
@@ -897,7 +897,7 @@ do {                                                                           \
 #define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,   \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
-    /*php_printf("AEROSPIKE_PROCESS_ARRAY\n");*/\
+    /*php_printf("*********** AEROSPIKE_PROCESS_ARRAY\n");*/\
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \
@@ -940,7 +940,7 @@ do {                                                                           \
 #define AEROSPIKE_PROCESS_ARRAY(as, level, action, label, key, value, store,   \
                                 err, static_pool, serializer_policy)           \
     HashTable *hashtable;                                                      \
-    /*php_printf("AEROSPIKE_PROCESS_ARRAY\n");*/\
+    /*php_printf("+++++++++++ AEROSPIKE_PROCESS_ARRAY\n");*/\
     HashPosition pointer;                                                      \
     char *inner_key = NULL;                                                    \
     void *inner_store;                                                         \

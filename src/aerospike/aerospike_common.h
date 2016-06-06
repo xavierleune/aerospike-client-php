@@ -947,7 +947,13 @@ aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *erro
 		zval* roles_p, zval* options_p TSRMLS_DC);
 
 extern int
-check_val_type_list(zval **value);
+check_val_type_list(
+	#if PHP_VERSION_ID < 70000
+		zval **value
+	#else
+		zval* value
+	#endif
+);
 #endif
 
 
