@@ -2631,7 +2631,13 @@ PHP_METHOD(Aerospike, listMerge)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL,
+					#if PHP_VERSION_ID < 70000
+					  &items_p
+					#else
+					  items_p
+					#endif
+					, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
