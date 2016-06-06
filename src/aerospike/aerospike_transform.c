@@ -4326,11 +4326,12 @@ aerospike_transform_iterate_records(Aerospike_object* as,
 
 	/* switch case statements for put for zend related data types */
 	AS_DEFAULT_PUT(as, key, record_pp, as_record_p, static_pool, serializer_policy, error_p TSRMLS_CC);
-	////////php_printf("6 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
 
-	/*////php_printf("Bins: Capacity %d Size %d Name %s %s\n", as_record_p->bins.capacity, as_record_p->bins.size, as_record_p->bins.entries[0].name, as_record_p->bins.entries[1].name);
+	////php_printf("6 ******** Bins: Capacity %d Size %d\n", as_record_p->bins.capacity, as_record_p->bins.size);
+
+	/*//php_printf("Bins: Capacity %d Size %d Name %s %s\n", as_record_p->bins.capacity, as_record_p->bins.size, as_record_p->bins.entries[0].name, as_record_p->bins.entries[1].name);
 	char* val_as_stre = as_val_tostring(as_bin_get_value(&as_record_p->bins.entries[0]));
-	////php_printf("%s: \n", val_as_stre);*/
+	//php_printf("%s: \n", val_as_stre);*/
 
 exit:
 	return;
