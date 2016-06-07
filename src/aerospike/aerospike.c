@@ -4808,7 +4808,11 @@ PHP_METHOD(Aerospike, scanInfo)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
-    long                   scan_id = -1;
+		#if PHP_VERSION_ID < 70000
+		  long                 scan_id = -1;
+		#else
+		  zend_long            scan_id = -1;
+		#endif
     zval*                  scan_info_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -4832,7 +4836,13 @@ PHP_METHOD(Aerospike, scanInfo)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz/|z",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+		#if PHP_VERSION_ID < 70000
+			"lz/|z"
+		#else
+			"zz/|z"
+		#endif
+		,
                 &scan_id, &scan_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,

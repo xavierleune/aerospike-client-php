@@ -857,7 +857,7 @@ set_policy_ex(as_config *as_config_p,
 					if (info_policy_p) {
 						break;
 					}
-					if ((!as_scan_p) || ((Z_TYPE_P(options_value) != _IS_BOOL))) {
+					if ((!as_scan_p) || ((Z_TYPE_P(options_value) != IS_TRUE && Z_TYPE_P(options_value) != IS_FALSE))) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 								"Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
@@ -873,7 +873,7 @@ set_policy_ex(as_config *as_config_p,
 					if (info_policy_p) {
 						break;
 					}
-					if ((!as_scan_p) || (Z_TYPE_P(options_value) != _IS_BOOL)) {
+					if ((!as_scan_p) || (Z_TYPE_P(options_value) != IS_TRUE && Z_TYPE_P(options_value) != IS_FALSE)) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 								"Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
@@ -889,7 +889,7 @@ set_policy_ex(as_config *as_config_p,
   					if (info_policy_p) {
   						break;
   					}
-  					if ((!as_scan_p) || (Z_TYPE_P(options_value) != _IS_BOOL)) {
+  					if ((!as_scan_p) || (Z_TYPE_P(options_value) != IS_TRUE && Z_TYPE_P(options_value) != IS_FALSE)) {
   						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
   						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
   								"Unable to set policy: Invalid Value for OPT_SCAN_INCLUDELDT");
