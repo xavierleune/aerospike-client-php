@@ -791,7 +791,13 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 
 extern as_status
 aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
-		const char* module_p, const char* function_p, zval** args_pp,
+		const char* module_p, const char* function_p,
+		#if PHP_VERSION_ID < 70000
+			zval** args_pp
+		#else
+			zval* args_pp
+		#endif
+		,
 		char* namespace_p, char* set_p, HashTable* bins_ht_p,
 		HashTable* predicate_ht_p, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
 

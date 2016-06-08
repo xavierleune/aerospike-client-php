@@ -890,7 +890,13 @@ exit:
  */
 extern as_status
 aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
-		const char* module_p, const char* function_p, zval** args_pp,
+		const char* module_p, const char* function_p,
+		#if PHP_VERSION_ID < 70000
+			zval** args_pp
+		#else
+			zval* args_pp
+		#endif
+		,
 		char* namespace_p, char* set_p, HashTable* bins_ht_p,
 		HashTable* predicate_ht_p, zval* return_value_p,
 		zval* options_p, int8_t* serializer_policy_p  TSRMLS_DC)
@@ -906,7 +912,13 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 	bool                        return_value_assoc = false;
 
 	if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) ||
-			(!args_pp && (!(*args_pp))) || (!namespace_p) || (!set_p) ||
+			(!args_pp && (!(
+				#if PHP_VERSION_ID < 70000
+					*args_pp
+				#else
+					args_pp
+				#endif
+			))) || (!namespace_p) || (!set_p) ||
 			(!predicate_ht_p) || (!return_value_p)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to initiate query aggregation");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate query aggregation");
@@ -920,13 +932,14 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 		goto exit;
 	}
 
-	if ((*args_pp)) {
 #if PHP_VERSION_ID < 70000
+    if ((*args_pp)) {
 		as_arraylist_init(&args_list,
 				zend_hash_num_elements(Z_ARRVAL_PP(args_pp)), 0);
 #else
+    if ((args_pp)) {
 		as_arraylist_init(&args_list,
-				zend_hash_num_elements(Z_ARRVAL_P(*args_pp)), 0);
+				zend_hash_num_elements(Z_ARRVAL_P(args_pp)), 0);
 #endif
 		args_list_p = &args_list;
 		AS_LIST_PUT(as_object_p, NULL, args_pp, &args_list, &udf_pool,

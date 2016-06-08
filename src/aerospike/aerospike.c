@@ -4448,7 +4448,12 @@ PHP_METHOD(Aerospike, aggregate)
     if (AEROSPIKE_OK !=
             (status = aerospike_query_aggregate(aerospike_obj_p,
                                                 &error, module_p, function_name_p,
-                                                &args_p, namespace_p, set_p,
+																								#if PHP_VERSION_ID < 70000
+																								  &args_p
+																								#else
+																								  args_p
+																								#endif
+																								, namespace_p, set_p,
                                                 bins_ht_p, Z_ARRVAL_P(predicate_p),
                                                 returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("aggregate returned an error");
