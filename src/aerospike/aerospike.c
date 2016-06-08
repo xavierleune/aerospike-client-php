@@ -2401,12 +2401,11 @@ PHP_METHOD(Aerospike, listSet)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
+		zval* set_val_p  = NULL;
     #if PHP_VERSION_ID < 70000
-		    zval* set_val_p = NULL;
         zval* set_val_copy = NULL;
         zval* temp_record_p = NULL;
     #else
-		    zval set_val_p;
         zval set_val_copy;
         zval temp_record_p;
     #endif
@@ -2450,7 +2449,7 @@ PHP_METHOD(Aerospike, listSet)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &set_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2489,11 +2488,11 @@ PHP_METHOD(Aerospike, listSet)
     #endif
 
     #if PHP_VERSION_ID < 70000
-      MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
-    ALLOC_ZVAL(set_val_copy);
-        add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
+      //MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
+      ALLOC_ZVAL(set_val_copy);
+      add_assoc_zval(temp_record_p, bin_name_p, set_val_p);
   #else
-      add_assoc_zval(&temp_record_p, bin_name_p, &set_val_p);
+      add_assoc_zval(&temp_record_p, bin_name_p, set_val_p);
     #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
