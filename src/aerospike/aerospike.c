@@ -4684,12 +4684,7 @@ PHP_METHOD(Aerospike, scanApply)
     zval*                  function_zval_p = NULL;
     zval*                  namespace_zval_p = NULL;
     zval*                  set_zval_p = NULL;
-    #if PHP_VERSION_ID < 70000
-      zval*                  scan_id_p = NULL;
-    #else
-      zval                  scan_id_p;
-    #endif
-
+    zval*                  scan_id_p = NULL;
     long                   module_len = 0;
     long                   function_len = 0;
     long                   namespace_len = 0;
@@ -4776,10 +4771,8 @@ PHP_METHOD(Aerospike, scanApply)
 
     #if PHP_VERSION_ID < 70000
         zval_dtor(scan_id_p);
-        ZVAL_LONG(scan_id_p, 0);
-    #else
-        ZVAL_LONG(&scan_id_p, 0);
     #endif
+    ZVAL_LONG(scan_id_p, 0);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run_background(aerospike_obj_p,
@@ -4789,13 +4782,8 @@ PHP_METHOD(Aerospike, scanApply)
                                                     #else
                                                         args_p
                                                     #endif
-                                                    , namespace_p, set_p,
-                                                    #if PHP_VERSION_ID < 70000
-                                                      scan_id_p
-                                                    #else
-                                                      &scan_id_p
-                                                    #endif
-                                                    , options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                                                    , namespace_p, set_p, scan_id_p,
+                                                    options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
@@ -4812,11 +4800,7 @@ PHP_METHOD(Aerospike, scanInfo)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
-		#if PHP_VERSION_ID < 70000
-		  long                 scan_id = -1;
-		#else
-		  zend_long            scan_id = -1;
-		#endif
+		long                   scan_id = -1;
     zval*                  scan_info_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -4840,13 +4824,7 @@ PHP_METHOD(Aerospike, scanInfo)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-		#if PHP_VERSION_ID < 70000
-			"lz/|z"
-		#else
-			"zz/|z"
-		#endif
-		,
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz/|z",
                 &scan_id, &scan_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
