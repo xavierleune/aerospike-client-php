@@ -3518,7 +3518,8 @@ aerospike_transform_check_and_set_config(HashTable* ht_p,
 						config_p)))
 #else
 	if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
-						&aerospike_transform_config_callback_php7,
+						//&aerospike_transform_config_callback_php7,
+						&aerospike_transform_config_callback,
 						config_p)))
 #endif
 	{
