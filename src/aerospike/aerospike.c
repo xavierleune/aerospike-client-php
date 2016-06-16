@@ -4593,7 +4593,7 @@ PHP_METHOD(Aerospike, queryApply)
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
+                "zzzzzzz/|z", &namespace_zval_p, &set_zval_p, &predicate_p,
                 &module_zval_p, &function_zval_p, &args_p, &job_id_p,
                 &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -4652,14 +4652,25 @@ PHP_METHOD(Aerospike, queryApply)
 
     predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
 
+    #if PHP_VERSION_ID < 70000
     zval_dtor(job_id_p);
     ZVAL_LONG(job_id_p, 0);
+    #else
+    zval_dtor(job_id_p);
+    ZVAL_LONG(job_id_p, 0);
+    #endif
+
     if (AEROSPIKE_OK !=
             (status = aerospike_query_run_background(aerospike_obj_p,
                                                      &error, module_p, function_name_p,
-                                                     &args_p, namespace_p, set_p,
-                                                     predicate_ht_p,
-                                                     job_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                                                     #if PHP_VERSION_ID < 70000
+                                                 		  &args_p
+                                                 		 #else
+                                                 		  args_p
+                                                 		 #endif
+                                                     , namespace_p, set_p,
+                                                     predicate_ht_p, job_id_p
+                                                     , options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("queryApply returned an error");
         goto exit;
     }
@@ -4900,7 +4911,7 @@ PHP_METHOD(Aerospike, jobInfo)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz|z",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz/|z",
                 &job_id, &module_p, &module_len, &job_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,

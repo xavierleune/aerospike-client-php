@@ -2690,59 +2690,7 @@ extern void AS_LIST_PUT(Aerospike_object *as, void *key, void *value, void *stor
 		int8_t serializer_policy, as_error *error_p TSRMLS_DC)
 {
 	//php_printf("+++++++++ 74*\n");
-	#if PHP_VERSION_ID < 70000
-		if (AEROSPIKE_Z_TYPE_P((zval**)value) == IS_STRING) {
-			//php_printf("DATA STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval**)value));
-		} else if (AEROSPIKE_Z_TYPE_P((zval**)value) == IS_LONG) {
-			 //php_printf("DATA LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval**)value));
-		} else {
-			zval** dataa;
-			HashPosition pointer2;
-		AEROSPIKE_FOREACH_HASHTABLE(AEROSPIKE_Z_ARRVAL_P((zval**)value), pointer2, dataa) {
-			if (AEROSPIKE_Z_TYPE_P(dataa) == IS_STRING) {
-				//php_printf("DATA ARRAY STRING: %s\n", AEROSPIKE_Z_STRVAL_P(dataa));
-			} else if (AEROSPIKE_Z_TYPE_P(dataa) == IS_LONG) {
-				 //php_printf("DATA ARRAY LONG: %ld\n", AEROSPIKE_Z_LVAL_P(dataa));
-			} else {
-				/*zval** dataa2;
-				HashPosition pointer3;
-			AEROSPIKE_FOREACH_HASHTABLE(AEROSPIKE_Z_ARRVAL_P(dataa), pointer3, dataa2) {
-				if (AEROSPIKE_Z_TYPE_P(dataa2) == IS_STRING) {
-					//php_printf("DATA ARRAY2 STRING: %s\n", AEROSPIKE_Z_STRVAL_P(dataa2));
-				} else if (AEROSPIKE_Z_TYPE_P(dataa2) == IS_LONG) {
-					 //php_printf("DATA ARRAY2 LONG: %ld\n", AEROSPIKE_Z_LVAL_P(dataa2));
-				} else {
-					//php_printf("ARRAY\n");
-				}
-			}*/
-		}
-		}
-			}
-	#else
-			if (AEROSPIKE_Z_TYPE_P((zval*)value) == IS_STRING) {
-				//php_printf("DATA STRING: %s\n", AEROSPIKE_Z_STRVAL_P((zval*)value));
-			} else if (Z_TYPE_P((zval*)value) == IS_LONG) {
-				 //php_printf("DATA LONG: %ld\n", AEROSPIKE_Z_LVAL_P((zval*)value));
-			} else {
-				zval* dataa;
-			ZEND_HASH_FOREACH_VAL(AEROSPIKE_Z_ARRVAL_P((zval*)value), dataa) {
-				if (AEROSPIKE_Z_TYPE_P(dataa) == IS_STRING) {
-					//php_printf("DATA ARRAY STRING: %s\n", AEROSPIKE_Z_STRVAL_P(dataa));
-				} else if (Z_TYPE_P(dataa) == IS_LONG) {
-					 //php_printf("DATA ARRAY LONG: %ld\n", AEROSPIKE_Z_LVAL_P(dataa));
-				} else {
-				/*	zval* dataa2;
-				ZEND_HASH_FOREACH_VAL(AEROSPIKE_Z_ARRVAL_P(dataa), dataa2) {
-					if (AEROSPIKE_Z_TYPE_P(dataa2) == IS_STRING) {
-						//php_printf("DATA ARRAY2 STRING: %s\n", AEROSPIKE_Z_STRVAL_P(dataa2));
-					} else if (Z_TYPE_P(dataa2) == IS_LONG) {
-						 //php_printf("DATA ARRAY2 LONG: %ld\n", AEROSPIKE_Z_LVAL_P(dataa2));
-					}*/
-				//} ZEND_HASH_FOREACH_END();
-				}
-			} ZEND_HASH_FOREACH_END();
-		}
-	#endif
+
 	AEROSPIKE_WALKER_SWITCH_CASE_PUT_LIST_APPEND(as, error_p, static_pool,
 			key,
 			#if PHP_VERSION_ID < 70000

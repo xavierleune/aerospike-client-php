@@ -667,8 +667,16 @@ exit:
  */
 extern as_status
 aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
-		char *module_p, char *function_p, zval **args_pp, char *namespace_p,
-		char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p,
+		char *module_p, char *function_p,
+    #if PHP_VERSION_ID < 70000
+		  zval **args_pp
+		#else
+		  zval *args_pp
+		#endif
+		, char *namespace_p,
+		char *set_p, HashTable *predicate_ht_p,
+		zval *job_id_p
+		, zval *options_p,
 		bool block, int8_t *serializer_policy_p TSRMLS_DC)
 {
 	as_arraylist			args_list;
@@ -688,16 +696,17 @@ aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
 		goto exit;
 	}
 
-	if ((*args_pp)) {
 		#if PHP_VERSION_ID < 70000
+		if ((*args_pp)) {
 		  as_arraylist_inita(&args_list,
 				  zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
 		#else
+		if ((args_pp)) {
 		  as_arraylist_inita(&args_list,
-				  zend_hash_num_elements(Z_ARRVAL_P((zval*) *args_pp)));
+				  zend_hash_num_elements(Z_ARRVAL_P(args_pp)));
 		#endif
 		args_list_p = &args_list;
-		AS_LIST_PUT(as_object_p, NULL, args_pp, args_list_p, &udf_pool,
+		AS_LIST_PUT(as_object_p, NULL, args_pp , args_list_p, &udf_pool,
 				serializer_policy, error_p TSRMLS_CC);
 		if (AEROSPIKE_OK != (error_p->code)) {
 			DEBUG_PHP_EXT_DEBUG("Unable to create args list for UDF");
