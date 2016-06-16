@@ -715,19 +715,15 @@ aerospike_helper_record_stream_callback(const as_val* p_val, void* udata)
 	 * Call the userland function with the array representing the record.
 	 */
 
-	user_func_p->fci.param_count = 1;
-	user_func_p->fci.params = args;
-#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
-	args[0] = &outer_container_p;
-	user_func_p->fci.retval_ptr_ptr = &retval;
-#else
-	args[0] = outer_container_p;
-	user_func_p->fci.retval = &retval;
-#endif
-userland_callback       *user_func_p1 = (userland_callback *) udata;
-//php_printf("TEST 1\n");
-int result = zend_call_function(&user_func_p1->fci, &user_func_p1->fcc TSRMLS_C);
-//php_printf("TEST 2\n");
+  #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+ 	  args[0] = &outer_container_p;
+ 	  user_func_p->fci.retval_ptr_ptr = &retval;
+  #else
+   args[0] = outer_container_p;
+   user_func_p->fci.retval = &retval;
+  #endif
+  user_func_p->fci.param_count = 1;
+  user_func_p->fci.params = args;
 
 	if (zend_call_function(&user_func_p->fci, &user_func_p->fcc TSRMLS_CC) == FAILURE) {
 		DEBUG_PHP_EXT_WARNING("stream callback could not invoke the userland function.");
