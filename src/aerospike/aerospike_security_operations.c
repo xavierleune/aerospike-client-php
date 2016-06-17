@@ -57,11 +57,12 @@ aerospike_security_operations_convert_roles_from_zval(HashTable *roles_ht_p,
 		goto exit;
 	}
 
-	AEROSPIKE_FOREACH_HASHTABLE(roles_ht_p, roles_position, roles_entry) {
 #if (PHP_VERSION_ID < 70000)
-		if (Z_TYPE_PP(roles_entry) != IS_STRING)
+    AEROSPIKE_FOREACH_HASHTABLE(roles_ht_p, roles_position, roles_entry) {
+		  if (Z_TYPE_PP(roles_entry) != IS_STRING)
 #else
-		if (Z_TYPE_P(roles_entry) != IS_STRING)
+    ZEND_HASH_FOREACH_VAL(roles_ht_p, roles_entry) {
+		  if (Z_TYPE_P(roles_entry) != IS_STRING)
 #endif
 		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Expected role of type string");
@@ -70,10 +71,12 @@ aerospike_security_operations_convert_roles_from_zval(HashTable *roles_ht_p,
 		}
 #if (PHP_VERSION_ID < 70000)
 		roles_array_p[roles_index++] = Z_STRVAL_PP(roles_entry);
+		}
 #else
 		roles_array_p[roles_index++] = Z_STRVAL_P(roles_entry);
+		} ZEND_HASH_FOREACH_END();
 #endif
-	}
+
 exit:
 	return error_p->code;
 }
