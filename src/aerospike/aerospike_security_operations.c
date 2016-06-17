@@ -106,10 +106,11 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
-	AEROSPIKE_FOREACH_HASHTABLE(privileges_ht_p, privileges_position, privileges_entry) {
 #if (PHP_VERSION_ID < 70000)
+  AEROSPIKE_FOREACH_HASHTABLE(privileges_ht_p, privileges_position, privileges_entry) {
 	zval**                      each_privilege_entry = NULL;
 #else
+  ZEND_HASH_FOREACH_VAL(privileges_ht_p, privileges_entry) {
 	zval*                       each_privilege_entry = NULL;
 #endif
 	HashTable*                  each_privilege_p = NULL;
@@ -129,26 +130,23 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 		strcpy(privileges[privileges_index]->set, "");
 #if (PHP_VERSION_ID < 70000)
 		each_privilege_p = Z_ARRVAL_P(*privileges_entry);
+		AEROSPIKE_FOREACH_HASHTABLE(each_privilege_p, privileges_individual_position, each_privilege_entry)  {
+		ulong options_index;
 #else
 		each_privilege_p = Z_ARRVAL_P(privileges_entry);
+		zend_string* z_str;
+		zend_ulong options_index;
+		ZEND_HASH_FOREACH_KEY_VAL(each_privilege_p, options_index, z_str, each_privilege_entry)  {
 #endif
-		AEROSPIKE_FOREACH_HASHTABLE(each_privilege_p, privileges_individual_position, each_privilege_entry)  {
-			char * options_key = NULL;
-			#if PHP_VERSION_ID < 70000
-				ulong options_index;
-			#else
-				zend_ulong options_index;
-			#endif
-			uint options_key_len;
+		char * options_key = NULL;
+		uint options_key_len;
 
 #if (PHP_VERSION_ID < 70000)
 			if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(Z_ARRVAL_P(*privileges_entry), (char **) &options_key,
 						&options_key_len, &options_index, 0, &privileges_individual_position)
 								!= HASH_KEY_IS_STRING)
 #else
-			if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(Z_ARRVAL_P(privileges_entry), (char **) &options_key,
-						&options_key_len, &options_index, 0, &privileges_individual_position)
-								!= HASH_KEY_IS_STRING)
+			if (!z_str)
 #endif
 			{
 				DEBUG_PHP_EXT_DEBUG("Privilege key should be a string");
@@ -156,19 +154,22 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 						"Privilege key should be a string");
 				goto exit;
 			}
-			if(strcmp(options_key, "ns") == 0) {
+			#if PHP_VERSION_ID >= 70000
+				options_key = z_str->val;
+			#endif
+			if (strcmp(options_key, "ns") == 0) {
 #if (PHP_VERSION_ID < 70000)
 				strcpy(privileges[privileges_index]->ns, Z_STRVAL_PP(each_privilege_entry));
 #else
 				strcpy(privileges[privileges_index]->ns, Z_STRVAL_P(each_privilege_entry));
 #endif
-			} else if(strcmp(options_key, "set") == 0) {
+			} else if (strcmp(options_key, "set") == 0) {
 #if (PHP_VERSION_ID < 70000)
 				strcpy(privileges[privileges_index]->set, Z_STRVAL_PP(each_privilege_entry));
 #else
 				strcpy(privileges[privileges_index]->set, Z_STRVAL_P(each_privilege_entry));
 #endif
-			} else if(strcmp(options_key, "code") == 0) {
+			} else if (strcmp(options_key, "code") == 0) {
 #if (PHP_VERSION_ID < 70000)
 				privileges[privileges_index]->code = Z_LVAL_PP(each_privilege_entry);
 #else
@@ -180,9 +181,17 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 						"Privilege key should be either code, ns or set");
 				goto exit;
 			}
-		}
+			#if PHP_VERSION_ID < 70000
+			  }
+			#else
+			  } ZEND_HASH_FOREACH_END();
+			#endif
 		privileges_index++;
-	}
+		#if PHP_VERSION_ID < 70000
+		  }
+		#else
+		  } ZEND_HASH_FOREACH_END();
+		#endif
 exit:
 	return error_p->code;
 }
