@@ -6565,7 +6565,7 @@ PHP_METHOD(Aerospike, revokePrivileges)
         goto exit;
     }
 
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/a|a",
                 &role_zval_p, &privileges_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
