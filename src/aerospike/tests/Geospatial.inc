@@ -112,7 +112,7 @@ class Geospatial extends AerospikeTestCommon
             return $this->db->errorno();
         }
 
-        if (!($returned['bins']['tstamp'] == $bins['tstamp'] && 
+        if (!($returned['bins']['tstamp'] == $bins['tstamp'] &&
               $returned['bins']['userid'] == $bins['userid'] &&
               $returned['bins']['loc']    == $bins['loc'])) {
                 return Aerospike::ERR_CLIENT;
@@ -136,7 +136,7 @@ class Geospatial extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPredicateGeoWithinGeoJSONRegion() {
-        $jStr = "{\"type\": \"Polygon\", \"coordinates\": 
+        $jStr = "{\"type\": \"Polygon\", \"coordinates\":
             [28.60000, -80.590000],
             [28.61800, -80.590000],
             [28.61800, -80.620000],
@@ -190,7 +190,7 @@ class Geospatial extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testPredicateGeoContainsGeoJSONPoint() {
-        $jStr = "{\"type\": \"Polygon\", \"coordinates\": 
+        $jStr = "{\"type\": \"Polygon\", \"coordinates\":
             [28.60000, -80.590000],
             [28.61800, -80.590000],
             [28.61800, -80.620000],
