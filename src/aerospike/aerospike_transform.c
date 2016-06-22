@@ -4593,7 +4593,11 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
 		 * pk_p == NULL in case of get() or scan().
 		 */
 
-		zval *key_policy_pp = NULL;
+        #if PHP_VERSION_ID < 70000
+		  zval **key_policy_pp = NULL;
+		#else
+		  zval *key_policy_pp = NULL;
+		#endif
 
 		if (!record_key_p) {
 			status = AEROSPIKE_ERR_CLIENT;
@@ -4625,16 +4629,12 @@ aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, cha
 #else
 			ZVAL_LONG(&number_zval, as_config_p->policies.read.key);
 #endif
-#if PHP_VERSION_ID < 70000
-			key_policy_pp = number_zval;
-#else
 			key_policy_pp = &number_zval;
-#endif
 			}
 		}
 
 		if ((!record_key_p->valuep) || (get_flag && ((!key_policy_pp) || (key_policy_pp &&
-					Z_LVAL_P(key_policy_pp) == AS_POLICY_KEY_DIGEST)))) {
+					AEROSPIKE_Z_LVAL_P(key_policy_pp) == AS_POLICY_KEY_DIGEST)))) {
 			if (0 != add_assoc_null(return_value, PHP_AS_KEY_DEFINE_FOR_KEY)) {
 				DEBUG_PHP_EXT_DEBUG("Unable to get primary key of a record");
 				status = AEROSPIKE_ERR_CLIENT;
