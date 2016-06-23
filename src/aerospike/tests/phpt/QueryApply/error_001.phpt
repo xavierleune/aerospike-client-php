@@ -12,4 +12,4 @@ aerospike_phpt_runtest("QueryApply", "error_001");
 ?>
 
 --EXPECT--
-ERR_REQUEST_INVALID
+ERR_NAMESPACE_NOT_FOUND
