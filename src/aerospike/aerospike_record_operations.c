@@ -669,33 +669,79 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 							             double_offset = (double)
 						               AEROSPIKE_Z_DVAL_P(each_operation);
 						      } else if (IS_OBJECT == AEROSPIKE_Z_TYPE_P(each_operation)) {
-							              const char* name;
 							              #if PHP_VERSION_ID < 70000
+										  const char* name;
 						                  zend_uint name_len;
 							              #else
+										  char* name;
+										  char *str;
 						                  size_t name_len;
 							              #endif
 							              int dup;
 							              #if PHP_VERSION_ID < 70000
 							                dup = zend_get_object_classname(*((zval**)each_operation),
 									                  &name, &name_len TSRMLS_CC);
+													  if((!strcmp(name, GEOJSONCLASS))
+										  #else
+										  zend_class_entry *ce;
+										  ce=Z_OBJCE_P((zval*)each_operation);
+										  str = ce->name->val;
+										 if((!strcmp(str, GEOJSONCLASS))
 							             #endif
-							            if((!strcmp(name, GEOJSONCLASS))
 									          && (aerospike_obj_p->hasGeoJSON)
 									          && op == AS_OPERATOR_WRITE) {
 								            int result;
-								              #if PHP_VERSION_ID < 70000
-								                zval* retval = NULL, fname;
-									              AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
-									              result = call_user_function_ex(NULL, each_operation, &fname, &retval,
-													        0, NULL, 0, NULL TSRMLS_CC);
-									              geoStr = Z_STRVAL_P(retval);
-							             	 #else
-								               zval retval, fname;
-									               AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
-								                  result = call_user_function_ex(NULL, each_operation, &fname, &retval,
-										              0, NULL, 0, NULL TSRMLS_CC);
-										           geoStr = Z_STRVAL_P(&retval);
+		#if PHP_VERSION_ID < 70000
+											  zval* retval = NULL, *fname = NULL;
+                                ALLOC_INIT_ZVAL(fname);
+                                ZVAL_STRINGL(fname, "__tostring", sizeof("__tostring") -1, 1);
+                                result = call_user_function_ex(NULL, each_operation, fname, &retval,
+										0, NULL, 0, NULL TSRMLS_CC);
+										geoStr = (char *) malloc (strlen(Z_STRVAL_P(retval)) + 1);
+                                 if (geoStr == NULL) {
+                                     DEBUG_PHP_EXT_DEBUG("Failed to allocate memory\n");
+                                     PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+                                             "Failed to allocate memory\n");
+                                     goto exit;
+                                 }
+                                 memset(geoStr, '\0', strlen(geoStr));
+                                 strcpy(geoStr, Z_STRVAL_P(retval));
+								 if (name) {
+									 efree((void *) name);
+									 name = NULL;
+								 }
+                                 if (fname) {
+                                     zval_ptr_dtor(&fname);
+                                 }
+                                 if (retval) {
+                                     zval_ptr_dtor(&retval);
+                                 }
+	#else
+											 zval retval;
+											 zval fname;
+							   AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
+							   result = call_user_function_ex(NULL, each_operation, &fname, &retval,
+									  0, NULL, 0, NULL TSRMLS_CC);
+									  geoStr = (char *) malloc (strlen(Z_STRVAL_P(&retval)) + 1);
+								if (geoStr == NULL) {
+									DEBUG_PHP_EXT_DEBUG("Failed to allocate memory\n");
+									PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+											"Failed to allocate memory\n");
+									goto exit;
+								}
+								memset(geoStr, '\0', strlen(geoStr));
+								strcpy(geoStr, Z_STRVAL_P(&retval));
+
+								/*if (name) {
+									efree((void *) name);
+									name = NULL;
+								}*/
+								if (&fname) {
+									zval_ptr_dtor(&fname);
+								}
+								if (&retval) {
+									zval_ptr_dtor(&retval);
+								}
 								              #endif
 							             } else {
 								status = AEROSPIKE_ERR_CLIENT;

@@ -112,22 +112,25 @@ PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("aerospike.compression_threshold", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, compression_threshold, zend_aerospike_globals, aerospike_globals)
 PHP_INI_END()
 
-
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
-#if PHP_VERSION_ID < 70000
-static void aerospike_check_close_and_destroy(void *hashtable_element)
-#else
-static void aerospike_check_close_and_destroy(zval *hashtable_element)
-#endif
+static void aerospike_check_close_and_destroy(
+    #if PHP_VERSION_ID < 70000
+        void
+    #else
+        zval
+    #endif
+    *hashtable_element)
 {
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In destructor function");
-#if PHP_VERSION_ID < 70000
-    aerospike_ref *as_ref_p = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
-#else
-    aerospike_ref *as_ref_p = Z_RES_P(hashtable_element)->ptr;
-#endif
+    aerospike_ref *as_ref_p =
+    #if PHP_VERSION_ID < 70000
+        ((zend_rsrc_list_entry *)
+    #else
+        Z_RES_P(
+    #endif
+    hashtable_element)->ptr;
     as_error error;
     if (as_ref_p) {
         if (as_ref_p->ref_hosts_entry > 1) {
@@ -157,20 +160,23 @@ static void aerospike_check_close_and_destroy(zval *hashtable_element)
 }
 
 /* Shared memory key persistent list destruction */
-#if PHP_VERSION_ID < 70000
-static void shm_key_hashtable_dtor(void *hashtable_element)
-#else
-static void shm_key_hashtable_dtor(zval *hashtable_element)
-#endif
+static void shm_key_hashtable_dtor(
+    #if PHP_VERSION_ID < 70000
+        void
+    #else
+        zval
+    #endif
+    *hashtable_element)
 {
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
-#if PHP_VERSION_ID < 70000
-    struct set_get_data *shm_key_ptr = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
-#else
-    //struct set_get_data *shm_key_ptr = ((zend_resource *) hashtable_element)->ptr;
-    struct set_get_data *shm_key_ptr = Z_RES_P(hashtable_element)->ptr;
-#endif
+    struct set_get_data *shm_key_ptr =
+    #if PHP_VERSION_ID < 70000
+        ((zend_rsrc_list_entry *)
+    #else
+        Z_RES_P(
+    #endif
+    hashtable_element)->ptr;
     if (shm_key_ptr) {
         pefree(shm_key_ptr, 1);
     }
@@ -189,7 +195,6 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
     } else {
         AEROSPIKE_G(persistent_ref_count)++;
     }
-
     if ((!(AEROSPIKE_G(shm_key_list_g))) || (AEROSPIKE_G(shm_key_ref_count) < 1)) {
         AEROSPIKE_G(shm_key_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
         zend_hash_init(AEROSPIKE_G(shm_key_list_g), 1000, NULL, &shm_key_hashtable_dtor, 1);
@@ -333,9 +338,9 @@ ZEND_END_ARG_INFO()
 
 zend_module_entry aerospike_module_entry =
 {
-#if ZEND_MODULE_API_NO >= 20010901
-    STANDARD_MODULE_HEADER,
-#endif
+    #if ZEND_MODULE_API_NO >= 20010901
+        STANDARD_MODULE_HEADER,
+    #endif
     PHP_AEROSPIKE_EXTNAME,
     NULL, /* N.B.:  No functions provided by this extension, only classes. */
     PHP_MINIT(aerospike),
@@ -343,14 +348,14 @@ zend_module_entry aerospike_module_entry =
     PHP_RINIT(aerospike),
     PHP_RSHUTDOWN(aerospike),
     PHP_MINFO(aerospike),
-#if  ZEND_MODULE_API_NO >= 20010901
-    PHP_AEROSPIKE_VERSION,
-#endif
+    #if  ZEND_MODULE_API_NO >= 20010901
+        PHP_AEROSPIKE_VERSION,
+    #endif
     STANDARD_MODULE_PROPERTIES
-    };
+};
 
 #ifdef COMPILE_DL_AEROSPIKE
-ZEND_GET_MODULE(aerospike)
+    ZEND_GET_MODULE(aerospike)
 #endif
 
 /*
@@ -2351,14 +2356,6 @@ PHP_METHOD(Aerospike, listInsert)
     }
 
     val = (as_val*) as_record_get(&record, bin_name_p);
-
-
-		//php_printf("Name2 %s\n", record_p->bins.entries[1].name);
-		//val_as_stre = as_val_tostring(as_bin_get_value(&record_p->bins.entries[1]));
-		//php_printf("%s: \n", val_as_stre);*/
-
-		//php_printf("BIN %s\n", bin_name_p);
-		//php_printf("VAL: %s\n", as_val_tostring(val));
 
     if (val) {
         as_operations_add_list_insert(&ops, bin_name_p, index, (as_val*) val);
@@ -4979,7 +4976,6 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
         size_t                region_len = 0;
     #endif
     zval                    *val_p;
-
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
                 &bin_name_p, &bin_name_len, &region_p, &region_len)) {
         DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithingGeoJSONRegion");
@@ -4993,7 +4989,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
 
     array_init(return_value);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
-    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, region_p, region_len, 1);
 }
 
@@ -5022,7 +5018,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
 
     array_init(return_value);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
-    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOWITHINREGION", strlen("OP_GEOWITHINREGION"), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
 
     snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
@@ -5053,7 +5049,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
 
     array_init(return_value);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
-    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geoPoint_p, geoPoint_len, 1);
 }
 
@@ -5082,7 +5078,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 
     array_init(return_value);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
-    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "OP_GEOCONTAINSPOINT", strlen("OP_GEOCONTAINSPOINT"), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
 
     snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
@@ -7006,24 +7002,28 @@ PHP_RSHUTDOWN_FUNCTION(aerospike)
             DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
         }
     }
-#else
-    /*if (1 == Z_REFCOUNT_P(&(user_serializer_call_info.function_name))) {
+#else/*
+if (&user_serializer_call_info.function_name) {
+    //if (1 == Z_REFCOUNT_P(&user_serializer_call_info.function_name)) {
         zval_ptr_dtor(&user_serializer_call_info.function_name);
-        if(Z_ISREF_P(&(user_serializer_call_info.function_name)))
+        if(Z_ISREF_P(&user_serializer_call_info.function_name))
         {
             AEROSPIKE_ZVAL_UNREF(user_serializer_call_info.function_name);
         }
-    } else {
-        DEBUG_PHP_EXT_ERROR("leak for user serializer function");
-    }
-    if (1 == Z_REFCOUNT_P(&(user_deserializer_call_info.function_name))) {
-        zval_ptr_dtor(&user_deserializer_call_info.function_name);
-        if(Z_ISREF_P(&(user_serializer_call_info.function_name)))
-        {
-            AEROSPIKE_ZVAL_UNREF(user_serializer_call_info.function_name);
-        }
-    } else {
-        DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+    //} else {
+    //    DEBUG_PHP_EXT_ERROR("leak for user serializer function");
+    //}
+}
+    if (&user_deserializer_call_info.function_name) {
+        //if (1 == Z_REFCOUNT_P(&(user_deserializer_call_info.function_name))) {
+            zval_ptr_dtor(&user_deserializer_call_info.function_name);
+            if(Z_ISREF_P(&user_deserializer_call_info.function_name))
+            {
+                AEROSPIKE_ZVAL_UNREF(user_deserializer_call_info.function_name);
+            }
+        //} else {
+        //    DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+        //}
     }*/
 #endif
 
