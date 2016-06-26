@@ -105,11 +105,8 @@ aerospike_info_specific_host(aerospike* as_object_p,
 			DEBUG_PHP_EXT_DEBUG("Unable to find port");
 			goto exit;
 		}
-#if PHP_VERSION_ID < 70000
-		if ((Z_TYPE_PP(host_name) != IS_STRING) || (Z_TYPE_PP(port) != IS_LONG))
-#else
-		if ((Z_TYPE_P(host_name) != IS_STRING) || (Z_TYPE_P(port) != IS_LONG))
-#endif
+
+		if ((AEROSPIKE_Z_TYPE_P(host_name) != IS_STRING) || (AEROSPIKE_Z_TYPE_P(port) != IS_LONG))
 		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
 					"Host parameters are not correct");
@@ -117,13 +114,9 @@ aerospike_info_specific_host(aerospike* as_object_p,
 			goto exit;
 		}
 
-#if PHP_VERSION_ID < 70000
-		address = Z_STRVAL_PP(host_name);
-		port_no = Z_LVAL_PP(port);
-#else
-		address = Z_STRVAL_P(host_name);
-		port_no = Z_LVAL_P(port);
-#endif
+		address = AEROSPIKE_Z_STRVAL_P(host_name);
+		port_no = AEROSPIKE_Z_LVAL_P(port);
+
 	}
 
 	if (AEROSPIKE_OK !=
@@ -182,18 +175,14 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 	bool                        break_flag = false;
 
 #if PHP_VERSION_ID < 70000
-	MAKE_STD_ZVAL(response_services_p);
-	MAKE_STD_ZVAL(response_service_p);
-#else
-	array_init(&response_services_p);
-	array_init(&response_service_p);
-#endif
-
-#if PHP_VERSION_ID < 70000
+    MAKE_STD_ZVAL(response_services_p);
+    MAKE_STD_ZVAL(response_service_p);
 	if (AEROSPIKE_OK !=
 			aerospike_info_specific_host(as_object_p, error_p,
 					"services", response_services_p, host, options_p TSRMLS_CC))
 #else
+    array_init(&response_services_p);
+    array_init(&response_service_p);
 	if (AEROSPIKE_OK !=
 			aerospike_info_specific_host(as_object_p, error_p,
 					"services", &response_services_p, host, options_p TSRMLS_CC))
@@ -202,33 +191,24 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 		DEBUG_PHP_EXT_ERROR("getNodes: services call returned an error");
 		goto exit;
 	}
-
-#if PHP_VERSION_ID < 70000
-	if (AEROSPIKE_OK !=
-			aerospike_info_specific_host(as_object_p, error_p,
-					"service", response_service_p, host, options_p TSRMLS_CC))
-#else
-	if (AEROSPIKE_OK !=
-			aerospike_info_specific_host(as_object_p, error_p,
-					"service", &response_service_p, host, options_p TSRMLS_CC))
-#endif
-	{
-		DEBUG_PHP_EXT_ERROR("getNodes: service call returned an error");
-		goto exit;
+	if (AEROSPIKE_OK != aerospike_info_specific_host(as_object_p, error_p, "service",
+		#if PHP_VERSION_ID < 70000
+			response_service_p
+		#else
+			&response_service_p
+		#endif
+		, host, options_p TSRMLS_CC)) {
+			DEBUG_PHP_EXT_ERROR("getNodes: service call returned an error");
+			goto exit;
 	}
-
 	host_index = 0;
 
 #if PHP_VERSION_ID < 70000
-	MAKE_STD_ZVAL(current_host_p[host_index]);
-	array_init(current_host_p[host_index]);
-#else
-	array_init(&current_host_p[host_index]);
-#endif
-
-#if PHP_VERSION_ID < 70000
+    MAKE_STD_ZVAL(current_host_p[host_index]);
+    array_init(current_host_p[host_index]);
 	if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
 #else
+    array_init(&current_host_p[host_index]);
 	if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
 #endif
 	{
@@ -304,15 +284,11 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 		}
 
 #if PHP_VERSION_ID < 70000
-		MAKE_STD_ZVAL(current_host_p[host_index]);
-		array_init(current_host_p[host_index]);
-#else
-		array_init(&current_host_p[host_index]);
-#endif
-
-#if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(current_host_p[host_index]);
+        array_init(current_host_p[host_index]);
 		if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
 #else
+        array_init(&current_host_p[host_index]);
 		if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
 #endif
 		{
@@ -371,17 +347,14 @@ exit:
 	if (response_services_p) {
 		zval_ptr_dtor(&response_services_p);
 	}
-#else
-	zval_ptr_dtor(&response_services_p);
-#endif
-
-#if PHP_VERSION_ID < 70000
 	if (response_service_p) {
 		zval_ptr_dtor(&response_service_p);
 	}
 #else
+	zval_ptr_dtor(&response_services_p);
 	zval_ptr_dtor(&response_service_p);
 #endif
+
 	return error_p->code;
 }
 

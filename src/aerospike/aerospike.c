@@ -576,52 +576,41 @@ static zend_function_entry Aerospike_class_functions[] =
  ********************************************************************
  */
 #if PHP_VERSION_ID < 70000
-static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
-{
-    zend_object_value retval = {0};
-    Aerospike_object *intern_obj_p;
-
-    if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
-        zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
-#if PHP_VERSION_ID < 50399
-        zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+    static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
+    {
+        zend_object_value retval = {0};
+        Aerospike_object *intern_obj_p;
+        if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
+            zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
+            #if PHP_VERSION_ID < 50399
+                zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+            #else
+                object_properties_init((zend_object*) &(intern_obj_p->std), ce);
+            #endif
+            retval.handle = zend_objects_store_put(intern_obj_p, NULL, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
+            retval.handlers = &Aerospike_handlers;
+            intern_obj_p->as_ref_p = NULL;
+        } else {
+            DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+        }
+        return (retval);
+    } 
 #else
-        object_properties_init((zend_object*) &(intern_obj_p->std), ce);
-#endif
-
-        retval.handle = zend_objects_store_put(intern_obj_p, NULL, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
-        retval.handlers = &Aerospike_handlers;
-        intern_obj_p->as_ref_p = NULL;
-    } else {
-        DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+    static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
+    {
+        Aerospike_object *intern_obj_p;
+        if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object) + zend_object_properties_size(ce)))) {
+            zend_object_std_init(&intern_obj_p->std, ce TSRMLS_CC);
+            object_properties_init(&intern_obj_p->std, ce);
+            Aerospike_handlers.offset = XtOffsetOf(Aerospike_object, std);
+            Aerospike_handlers.free_obj = Aerospike_object_free_storage;
+            intern_obj_p->std.handlers = &Aerospike_handlers;
+            intern_obj_p->as_ref_p = NULL;
+        } else {
+            DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+        }
+        return &intern_obj_p->std;
     }
-    return (retval);
-}
-#else
-
-static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
-{
-    Aerospike_object *intern_obj_p;
-    if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object) + zend_object_properties_size(ce)))) {
-    #if PHP_VERSION_ID < 70000
-          zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
-        object_properties_init((zend_object*) &(intern_obj_p->std), ce);
-        #else
-          zend_object_std_init(&intern_obj_p->std, ce TSRMLS_CC);
-          object_properties_init(&intern_obj_p->std, ce);
-
-          Aerospike_handlers.offset = XtOffsetOf(Aerospike_object, std);
-      Aerospike_handlers.free_obj = Aerospike_object_free_storage;
-        #endif
-
-        intern_obj_p->std.handlers = &Aerospike_handlers;
-        intern_obj_p->as_ref_p = NULL;
-    } else {
-        DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
-    }
-    return &intern_obj_p->std;
-}
-
 #endif
 
 /*

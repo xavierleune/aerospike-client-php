@@ -261,12 +261,7 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
   #endif
   )) {
 		as_arraylist_inita(&args_list,
-#if PHP_VERSION_ID < 70000
-				zend_hash_num_elements(Z_ARRVAL_PP(args_pp))
-#else
-				zend_hash_num_elements(Z_ARRVAL_P(args_pp))
-#endif
-				);
+		zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(args_pp)));
 		args_list_p = &args_list;
 		AS_LIST_PUT(aerospike_obj_p, NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
 	}

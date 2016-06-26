@@ -40,12 +40,19 @@
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
  *******************************************************************************************************
  */
-#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
-#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
 #else
-#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(Z_OBJ_P(getThis()))
-#define Z_CUSTOM_OBJ_P(zv)          php_custom_object_fetch_object(Z_OBJ_P(zv));
+	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(Z_OBJ_P(getThis()))
+	//#define PHP_AEROSPIKE_GET_OBJECT    php_custom_object_fetch_object(Z_OBJ_P(getThis() TSRMLS_CC))
+	#define Z_CUSTOM_OBJ_P(zv)          php_custom_object_fetch_object(Z_OBJ_P(zv));
 #endif
+
+
+/*Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+#if PHP_VERSION_ID >= 70000
+  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+#endif*/
 
 /*
  *******************************************************************************************************
@@ -1048,6 +1055,14 @@ check_val_type_list(
 #define AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr) \
 	  add_assoc_zval(return_value, VAL, minmax_arr)
 
+	  /*
+	  ******************************************************************************************************
+	  * Macro to append long at indexed key.
+	  ******************************************************************************************************
+	  */
+#define AEROSPIKE_ADD_ASSOC_LONG(z_value, index_key, n) \
+	  	add_assoc_long(z_value, index_key, n)
+
 	/*
 	******************************************************************************************************
 	* Macro to append string at indexed key.
@@ -1272,6 +1287,14 @@ check_val_type_list(
 	*/
 #define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, str, bin_name_p, bin_name_length, ifDuplicate) \
 		add_assoc_stringl(return_value, str, bin_name_p, bin_name_length)
+
+	/*
+	 ******************************************************************************************************
+	 * Macro to append long at indexed key.
+	 ******************************************************************************************************
+	 */
+#define AEROSPIKE_ADD_ASSOC_LONG(z_value, index_key, n) \
+	   add_assoc_long(&z_value, index_key, n)
 
 	/*
 	******************************************************************************************************

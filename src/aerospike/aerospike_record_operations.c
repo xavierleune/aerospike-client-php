@@ -225,13 +225,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			break;
 
 		case AS_CDT_OP_LIST_INSERT_ITEMS_NEW:
-			if (
-			  #if PHP_VERSION_ID < 70000
-			    Z_TYPE_PP(each_operation
-			  #else
-			    Z_TYPE_P(each_operation
-			  #endif
-				) != IS_ARRAY) {
+			if (AEROSPIKE_Z_TYPE_P(each_operation) != IS_ARRAY) {
 				DEBUG_PHP_EXT_DEBUG("Value passed if not array type.");
 				goto exit;
 			}
@@ -885,20 +879,8 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
 
 
 	AEROSPIKE_FOREACH_HASHTABLE (bins_array_p, pointer, bin_names) {
-		if (IS_STRING ==
-				#if PHP_VERSION_ID < 70000
-				  Z_TYPE_PP(bin_names
-				#else
-					Z_TYPE_P(bin_names
-				#endif
-			)) {
-			if (!(
-#if PHP_VERSION_ID < 70000
-						as_record_set_nil(&rec, Z_STRVAL_PP(bin_names))
-#else
-						as_record_set_nil(&rec, Z_STRVAL_P(bin_names))
-#endif
-						)) {
+		if (IS_STRING == AEROSPIKE_Z_TYPE_P(bin_names)) {
+			if (!(as_record_set_nil(&rec, AEROSPIKE_Z_STRVAL_P(bin_names)))) {
 				status = AEROSPIKE_ERR_CLIENT;
 				goto exit;
 			}
