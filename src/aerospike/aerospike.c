@@ -594,7 +594,7 @@ static zend_function_entry Aerospike_class_functions[] =
             DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
         }
         return (retval);
-    } 
+    }
 #else
     static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
     {
@@ -631,7 +631,7 @@ static zend_function_entry Aerospike_class_functions[] =
   ********************************************************************
   */
 static inline struct Aerospike_object * php_custom_object_fetch_object(zend_object *obj) {
-      return (Aerospike_object *)((char *)obj - XtOffsetOf(Aerospike_object, std));
+    return (Aerospike_object *)((char *)obj - XtOffsetOf(Aerospike_object, std));
 }
 
 /* {{{ proto Aerospike::__construct(array config [, bool persistent_connection=true [, array options]]))
@@ -782,7 +782,7 @@ PHP_METHOD(Aerospike, __destruct)
     as_status              status = AEROSPIKE_OK;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+        aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
     #endif
 
     if (!aerospike_obj_p) {
@@ -1001,11 +1001,11 @@ PHP_METHOD(Aerospike, get)
         options_p = NULL;
     }
 
-  #if PHP_VERSION_ID < 70000
-      zval_dtor(record_p);
+    #if PHP_VERSION_ID < 70000
+        zval_dtor(record_p);
     #endif
- array_init(record_p);
- //array_init(return_value);
+
+    array_init(record_p);
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
                     &as_key_for_get_record,
@@ -1093,12 +1093,12 @@ PHP_METHOD(Aerospike, put)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p,
-                    #if PHP_VERSION_ID < 70000
-                  &record_p
-                #else
-                  record_p
-                #endif
-                    , &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+            #if PHP_VERSION_ID < 70000
+                &record_p
+            #else
+                record_p
+            #endif
+            , &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
     }
@@ -1134,7 +1134,7 @@ PHP_METHOD(Aerospike, getNodes)
 
     if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "getNodes: connection not established");
+            "getNodes: connection not established");
         DEBUG_PHP_EXT_ERROR("getNodes: connection not established");
         status = AEROSPIKE_ERR_CLUSTER;
         goto exit;
@@ -1144,8 +1144,7 @@ PHP_METHOD(Aerospike, getNodes)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_info_get_cluster_nodes(aerospike_obj_p->as_ref_p->as_p,
-                                                       &error, return_value,
-                                                       NULL, NULL TSRMLS_CC))) {
+                &error, return_value, NULL, NULL TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("getNodes function returned an error");
         goto exit;
     }
@@ -1192,14 +1191,13 @@ PHP_METHOD(Aerospike, info)
     }
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-    #if PHP_VERSION_ID < 70000
-      "sz|zz"
-    #else
-      "sz/|zz"
-    #endif
-    ,
-                &request, &request_len, &response_p,
-                &host, &options_p) == FAILURE) {
+        #if PHP_VERSION_ID < 70000
+            "sz|zz"
+        #else
+            "sz/|zz"
+        #endif
+            , &request, &request_len, &response_p,
+            &host, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for Info function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for Info function.");
@@ -1876,14 +1874,12 @@ PHP_METHOD(Aerospike, increment)
     char*                  bin_name_p;
     #if PHP_VERSION_ID < 70000
         int                    bin_name_len;
-    #else
-        size_t                 bin_name_len;
-    #endif
-    #if PHP_VERSION_ID < 70000
         long                 offset = 0;
     #else
+        size_t                 bin_name_len;
         zend_long            offset = 0;
     #endif
+
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     #if PHP_VERSION_ID >= 70000
       aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
@@ -1977,8 +1973,8 @@ PHP_METHOD(Aerospike, touch)
     long                   time_to_live;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-  #endif
+        aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -2076,13 +2072,13 @@ PHP_METHOD(Aerospike, listAppend)
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
     #if PHP_VERSION_ID < 70000
-      zval* temp_record_p = NULL;
-      zval* append_val_copy = NULL;
-			zval* append_val_p = NULL;
+        zval* temp_record_p = NULL;
+        zval* append_val_copy = NULL;
+        zval* append_val_p = NULL;
     #else
-      zval temp_record_p;
-      zval append_val_copy;
-			zval append_val_p;
+        zval temp_record_p;
+        zval append_val_copy;
+        zval append_val_p;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -2118,15 +2114,9 @@ PHP_METHOD(Aerospike, listAppend)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-		#if PHP_VERSION_ID < 70000
-      "zsz|a"
-    #else
-      "zsz|a"
-    #endif
-    ,
-                &key_record_p, &bin_name_p, &bin_name_len,
-                &append_val_p, &options_p) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
+        &key_record_p, &bin_name_p, &bin_name_len,
+        &append_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listAppend function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listAppend function");
@@ -2158,8 +2148,11 @@ PHP_METHOD(Aerospike, listAppend)
     MAKE_STD_ZVAL(temp_record_p);
         array_init(temp_record_p);
         ALLOC_ZVAL(append_val_copy);
+        MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
+        add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
     #else
         array_init(&temp_record_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, &append_val_p);
     #endif
 
     /*
@@ -2174,14 +2167,6 @@ PHP_METHOD(Aerospike, listAppend)
      }
      #endif
      */
-
-  #if PHP_VERSION_ID < 70000
-      MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
-        add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
-  #else
-        //MAKE_COPY_ZVAL(&append_val_p, &append_val_copy);
-        add_assoc_zval(&temp_record_p, bin_name_p, &append_val_p);
-  #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2242,20 +2227,17 @@ PHP_METHOD(Aerospike, listInsert)
     #if PHP_VERSION_ID < 70000
         zval* insert_val_copy = NULL;
         zval* temp_record_p = NULL;
-				zval*                  insert_val_p = NULL;
+		zval* insert_val_p = NULL;
+        long bin_name_len;
     #else
-      zval insert_val_copy;
+        zval insert_val_copy;
         zval temp_record_p;
-				zval                  insert_val_p;
+        zval insert_val_p;
+        zend_ulong bin_name_len;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
-    #if PHP_VERSION_ID < 70000
-      long                 bin_name_len;
-    #else
-      zend_ulong           bin_name_len;
-    #endif
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     #if PHP_VERSION_ID >= 70000
@@ -2318,16 +2300,14 @@ PHP_METHOD(Aerospike, listInsert)
     }
 
     #if PHP_VERSION_ID < 70000
-      MAKE_STD_ZVAL(temp_record_p);
-      array_init(temp_record_p);
+        MAKE_STD_ZVAL(temp_record_p);
+        array_init(temp_record_p);
         ALLOC_ZVAL(insert_val_copy);
         MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
         add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
     #else
         array_init(&temp_record_p);
-        //MAKE_COPY_ZVAL(&insert_val_p, &insert_val_copy);
         add_assoc_zval(&temp_record_p, bin_name_p, &insert_val_p);
-				//add_assoc_zval(&temp_record_p, bin_name_p, &insert_val_copy);
     #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
@@ -2387,23 +2367,20 @@ PHP_METHOD(Aerospike, listSet)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-		zval* set_val_p  = NULL;
+	zval* set_val_p  = NULL;
     #if PHP_VERSION_ID < 70000
         zval* set_val_copy = NULL;
         zval* temp_record_p = NULL;
+        long bin_name_len;
     #else
         zval set_val_copy;
         zval temp_record_p;
+        zend_ulong bin_name_len;
     #endif
 
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
-    #if PHP_VERSION_ID < 70000
-      long                 bin_name_len;
-    #else
-      zend_ulong           bin_name_len;
-    #endif
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
     #if PHP_VERSION_ID >= 70000
@@ -2466,19 +2443,14 @@ PHP_METHOD(Aerospike, listSet)
     }
 
     #if PHP_VERSION_ID < 70000
-      MAKE_STD_ZVAL(temp_record_p);
+        MAKE_STD_ZVAL(temp_record_p);
         array_init(temp_record_p);
         ALLOC_ZVAL(set_val_copy);
+        ALLOC_ZVAL(set_val_copy);
+        add_assoc_zval(temp_record_p, bin_name_p, set_val_p);
     #else
         array_init(&temp_record_p);
-    #endif
-
-    #if PHP_VERSION_ID < 70000
-      //MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
-      ALLOC_ZVAL(set_val_copy);
-      add_assoc_zval(temp_record_p, bin_name_p, set_val_p);
-  #else
-      add_assoc_zval(&temp_record_p, bin_name_p, set_val_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, set_val_p);
     #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
@@ -2588,10 +2560,10 @@ PHP_METHOD(Aerospike, listMerge)
     }
 
 		if (!check_val_type_list(
-      #if PHP_VERSION_ID < 70000
-			  &items_p
+            #if PHP_VERSION_ID < 70000
+                &items_p
 			#else
-			  items_p
+                items_p
 			#endif
 		)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3038,12 +3010,12 @@ PHP_METHOD(Aerospike, listInsertItems)
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
         AS_LIST_PUT(aerospike_obj_p, NULL,
-          #if PHP_VERSION_ID < 70000
-					  &items_p
-					#else
-					  items_p
-					#endif
-					, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+            #if PHP_VERSION_ID < 70000
+                &items_p
+		    #else
+                items_p
+		    #endif
+			, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
@@ -3083,17 +3055,14 @@ PHP_METHOD(Aerospike, listGet)
     zval*                  key_record_p = NULL;
     #if PHP_VERSION_ID < 70000
       zval* element_p = NULL;
+      long                 bin_name_len;
     #else
       zval* element_p = NULL;
+      zend_ulong           bin_name_len;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    #if PHP_VERSION_ID < 70000
-      long                 bin_name_len;
-    #else
-      zend_ulong           bin_name_len;
-    #endif
     long                   index;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -3163,10 +3132,10 @@ PHP_METHOD(Aerospike, listGet)
 
 		if (element_p) {
         zval_dtor(element_p);
-				#if PHP_VERSION_ID < 70000
-          } else {
-              MAKE_STD_ZVAL(element_p);
-			  #endif
+		#if PHP_VERSION_ID < 70000
+            } else {
+                MAKE_STD_ZVAL(element_p);
+	    #endif
     }
 
     if (rec && rec->bins.size) {
@@ -3202,18 +3171,14 @@ PHP_METHOD(Aerospike, listGetRange)
     zval*                  key_record_p = NULL;
     #if PHP_VERSION_ID < 70000
         zval*                  elements_p = NULL;
+        long                 bin_name_len;
     #else
-      zval insert_val_copy;
         zval*                  elements_p = NULL;
+        zend_ulong           bin_name_len;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    #if PHP_VERSION_ID < 70000
-      long                 bin_name_len;
-    #else
-      zend_ulong           bin_name_len;
-    #endif
     long                   index;
     long                   count;
     foreach_callback_udata list_get_callback_udata;
@@ -3284,10 +3249,10 @@ PHP_METHOD(Aerospike, listGetRange)
 
 		if (elements_p) {
         zval_dtor(elements_p);
-				#if PHP_VERSION_ID < 70000
-          } else {
-              MAKE_STD_ZVAL(elements_p);
-			  #endif
+		#if PHP_VERSION_ID < 70000
+            } else {
+                MAKE_STD_ZVAL(elements_p);
+		#endif
     }
 
     list_get_callback_udata.udata_p = elements_p;
@@ -3840,29 +3805,27 @@ PHP_METHOD(Aerospike, getKeyDigest)
 PHP_METHOD(Aerospike, setDeserializer)
 {
     as_status              status = AEROSPIKE_OK;
-
-        #if PHP_VERSION_ID < 70000
+    #if PHP_VERSION_ID < 70000
         if (user_deserializer_call_info.function_name &&
             (Z_ISREF_P(user_deserializer_call_info.function_name))) {
-        RETURN_TRUE;
-    }
-        #else
-        if (&user_deserializer_call_info.function_name && Z_ISREF_P(&(user_deserializer_call_info.function_name))) {
                 RETURN_TRUE;
-            }
-        #endif
+        }
+    #else
+        if (&user_deserializer_call_info.function_name && Z_ISREF_P(&(user_deserializer_call_info.function_name))) {
+            RETURN_TRUE;
+        }
+    #endif
 
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                &user_deserializer_call_info,
-                &user_deserializer_call_info_cache,
-                &user_deserializer_call_info.params,
-                &user_deserializer_call_info.param_count) == FAILURE) {
-        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setDeserializer");
-        RETURN_FALSE;
+        &user_deserializer_call_info,
+        &user_deserializer_call_info_cache,
+        &user_deserializer_call_info.params,
+        &user_deserializer_call_info.param_count) == FAILURE) {
+            DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setDeserializer");
+            RETURN_FALSE;
     }
 
     is_user_deserializer_registered = 1;
-
     AEROSPIKE_Z_ADDREF_P(user_deserializer_call_info.function_name);
 
     RETURN_TRUE;
@@ -3874,39 +3837,37 @@ PHP_METHOD(Aerospike, setDeserializer)
 PHP_METHOD(Aerospike, setSerializer)
 {
     as_status              status = AEROSPIKE_OK;
-
-#if PHP_VERSION_ID < 70000
-if (user_serializer_call_info.function_name &&
-                            (Z_ISREF_P(user_serializer_call_info.function_name))) {
-                                RETURN_TRUE;
-                            }
-#else
-if (&(user_serializer_call_info.function_name) && Z_ISREF_P(&(user_serializer_call_info.function_name))) {
-        RETURN_TRUE;
-    }
-#endif
+    #if PHP_VERSION_ID < 70000
+        if (user_serializer_call_info.function_name &&
+            (Z_ISREF_P(user_serializer_call_info.function_name))) {
+                RETURN_TRUE;
+        }
+    #else
+        if (&(user_serializer_call_info.function_name) && Z_ISREF_P(&(user_serializer_call_info.function_name))) {
+            RETURN_TRUE;
+        }
+    #endif
 
         /*
          * once set the same serializer would be used. Incase a new
          * serializer is to be given, then we would have to unref the older
          * serialiser function and then attach the new serializer callback
          */
-
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                &user_serializer_call_info,
-                &user_serializer_call_info_cache,
-                &user_serializer_call_info.params,
-                &user_serializer_call_info.param_count) == FAILURE) {
-        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setSerializer");
-        RETURN_FALSE;
+        &user_serializer_call_info,
+        &user_serializer_call_info_cache,
+        &user_serializer_call_info.params,
+        &user_serializer_call_info.param_count) == FAILURE) {
+            DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setSerializer");
+            RETURN_FALSE;
     }
 
     is_user_serializer_registered = 1;
 
     #if PHP_VERSION_ID < 70000
-      Z_ADDREF_P(user_serializer_call_info.function_name);
+        Z_ADDREF_P(user_serializer_call_info.function_name);
     #else
-      Z_TRY_ADDREF_P(&(user_serializer_call_info.function_name));
+        Z_TRY_ADDREF_P(&(user_serializer_call_info.function_name));
     #endif
 
     RETURN_TRUE;
@@ -4047,13 +4008,13 @@ PHP_METHOD(Aerospike, predicateBetween)
     char                   *bin_name_p  =  NULL;
     long                   min_p;
     long                   max_p;
-#if PHP_VERSION_ID < 70000
-  int                    bin_name_len = 0;
-    zval                   *minmax_arr = NULL;
-#else
-  size_t                 bin_name_len = 0;
-    zval                   minmax_arr;
-#endif
+    #if PHP_VERSION_ID < 70000
+        int                    bin_name_len = 0;
+        zval                   *minmax_arr = NULL;
+    #else
+        size_t                 bin_name_len = 0;
+        zval                   minmax_arr;
+    #endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll",
                 &bin_name_p, &bin_name_len, &min_p, &max_p)) {
@@ -4070,9 +4031,9 @@ PHP_METHOD(Aerospike, predicateBetween)
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
 
-#if PHP_VERSION_ID < 70000
-    MAKE_STD_ZVAL(minmax_arr);
-#endif
+    #if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(minmax_arr);
+    #endif
     AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
     AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, min_p);
     AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, max_p);
@@ -4147,13 +4108,13 @@ PHP_METHOD(Aerospike, predicateRange)
     long                   index_type;
     zval                   *min_p = NULL;
     zval                   *max_p = NULL;
-#if PHP_VERSION_ID < 70000
-  int                    bin_name_len = 0;
-    zval                   *minmax_arr = NULL;
-#else
-  size_t                 bin_name_len = 0;
-    zval                   minmax_arr;
-#endif
+    #if PHP_VERSION_ID < 70000
+        int                    bin_name_len = 0;
+        zval                   *minmax_arr = NULL;
+    #else
+        size_t                 bin_name_len = 0;
+        zval                   minmax_arr;
+    #endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slzz",
                 &bin_name_p, &bin_name_len, &index_type, &min_p, &max_p)) {
@@ -4181,10 +4142,10 @@ PHP_METHOD(Aerospike, predicateRange)
     add_assoc_long(return_value, INDEX_TYPE, index_type);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "RANGE", sizeof("RANGE") - 1, 1);
 
-#if PHP_VERSION_ID < 70000
-    MAKE_STD_ZVAL(minmax_arr);
-#endif
-AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
+    #if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(minmax_arr);
+    #endif
+    AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
     /*
      * Range min value
      */
@@ -4432,17 +4393,17 @@ PHP_METHOD(Aerospike, aggregate)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_query_aggregate(aerospike_obj_p,
-                                                &error, module_p, function_name_p,
-																								#if PHP_VERSION_ID < 70000
-																								  &args_p
-																								#else
-																								  args_p
-																								#endif
-																								, namespace_p, set_p,
-                                                bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                                returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
-        DEBUG_PHP_EXT_ERROR("aggregate returned an error");
-        goto exit;
+                &error, module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                , namespace_p, set_p,
+                bins_ht_p, Z_ARRVAL_P(predicate_p),
+                returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                    DEBUG_PHP_EXT_ERROR("aggregate returned an error");
+                    goto exit;
     }
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -4648,15 +4609,15 @@ PHP_METHOD(Aerospike, queryApply)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_query_run_background(aerospike_obj_p,
-                                                     &error, module_p, function_name_p,
-                                                     #if PHP_VERSION_ID < 70000
-                                                 		  &args_p
-                                                 		 #else
-                                                 		  args_p
-                                                 		 #endif
-                                                     , namespace_p, set_p,
-                                                     predicate_ht_p, job_id_p
-                                                     , options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                &error, module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                , namespace_p, set_p,
+                predicate_ht_p, job_id_p
+                , options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("queryApply returned an error");
         goto exit;
     }
@@ -4773,14 +4734,14 @@ PHP_METHOD(Aerospike, scanApply)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run_background(aerospike_obj_p,
-                                                    &error, module_p, function_name_p,
-                                                    #if PHP_VERSION_ID < 70000
-                                                        &args_p
-                                                    #else
-                                                        args_p
-                                                    #endif
-                                                    , namespace_p, set_p, scan_id_p,
-                                                    options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                &error, module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                , namespace_p, set_p, scan_id_p,
+                options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
@@ -4797,7 +4758,7 @@ PHP_METHOD(Aerospike, scanInfo)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
-		long                   scan_id = -1;
+	long                   scan_id = -1;
     zval*                  scan_info_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -4958,10 +4919,10 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
     char                    *bin_name_p = NULL;
     char                    *region_p = NULL;
     #if PHP_VERSION_ID < 70000
-      int                   bin_name_len = 0;
+        int                   bin_name_len = 0;
         int                     region_len = 0;
     #else
-      size_t                bin_name_len = 0;
+        size_t                bin_name_len = 0;
         size_t                region_len = 0;
     #endif
     zval                    *val_p;
@@ -5023,10 +4984,10 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
     char                      *bin_name_p = NULL;
     char                      *geoPoint_p = NULL;
     #if PHP_VERSION_ID < 70000
-      int                   bin_name_len = 0;
+        int                   bin_name_len = 0;
         int                   geoPoint_len = 0;
     #else
-      size_t                bin_name_len = 0;
+        size_t                bin_name_len = 0;
         size_t                geoPoint_len = 0;
     #endif
 
@@ -5336,16 +5297,16 @@ PHP_METHOD(Aerospike, apply)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_udf_apply(aerospike_obj_p,
-                                          &as_key_for_apply_udf, &error,
-                                          module_p, function_name_p,
-                                            #if PHP_VERSION_ID < 70000
-                                              &args_p
-                      #else
-                                              args_p
-                                            #endif
-                                            ,
-                                          return_value_of_udf_p, options_p,
-                                          &aerospike_obj_p->serializer_opt))) {
+                &as_key_for_apply_udf, &error,
+                module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                ,
+                return_value_of_udf_p, options_p,
+                &aerospike_obj_p->serializer_opt))) {
         DEBUG_PHP_EXT_ERROR("apply function returned an error");
         goto exit;
     }
@@ -5390,11 +5351,11 @@ PHP_METHOD(Aerospike, listRegistered)
     }
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-		#if PHP_VERSION_ID < 70000
-      "z|lz"
-    #else
-      "z/|lz"
-    #endif
+        #if PHP_VERSION_ID < 70000
+            "z|lz"
+        #else
+            "z/|lz"
+        #endif
     ,
                 &array_of_modules_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -5464,10 +5425,10 @@ PHP_METHOD(Aerospike, getRegistered)
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 		#if PHP_VERSION_ID < 70000
-      "zz|lz"
-    #else
-      "zz/|lz"
-    #endif
+            "zz|lz"
+        #else
+            "zz/|lz"
+        #endif
     ,
                 &module_zval_p, &udf_code_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -5540,7 +5501,6 @@ PHP_METHOD(Aerospike, addIndex)
     #endif
     char                    *set_p = NULL;
     char                    *bin_p = NULL;
-
     long                    index_type = -1;
     long                    datatype = -1;
     char                    *name_p = NULL;
@@ -5705,11 +5665,11 @@ PHP_METHOD(Aerospike, createUser)
     char*                   password_p = NULL;
 
     #if PHP_VERSION_ID < 70000
-      int                     user_p_length = 0;
-      int                     password_p_length = 0;
+        int                     user_p_length = 0;
+        int                     password_p_length = 0;
     #else
-      size_t                  user_p_length = 0;
-    size_t                  password_p_length = 0;
+        size_t                  user_p_length = 0;
+        size_t                  password_p_length = 0;
     #endif
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
@@ -6153,9 +6113,9 @@ PHP_METHOD(Aerospike, queryUser)
     as_error                error;
     char*                   user_p = NULL;
     #if PHP_VERSION_ID < 70000
-    int                   user_p_length = 0;
+        int                   user_p_length = 0;
     #else
-      size_t                user_p_length = 0;
+        size_t                user_p_length = 0;
     #endif
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
@@ -6868,12 +6828,12 @@ PHP_METHOD(Aerospike, error)
    Displays the status code associated with the last operation */
 PHP_METHOD(Aerospike, errorno)
 {
-#if PHP_VERSION_ID < 70000
-    int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1 TSRMLS_CC));
-#else
-    zval rv;
-    int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1, &rv TSRMLS_CC));
-#endif
+    #if PHP_VERSION_ID < 70000
+        int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1 TSRMLS_CC));
+    #else
+        zval rv;
+        int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1, &rv TSRMLS_CC));
+    #endif
     RETURN_LONG(error_code);
 }
 /* }}} */
@@ -6896,24 +6856,24 @@ PHP_MINIT_FUNCTION(aerospike)
         return FAILURE;
     }
 
-#if PHP_VERSION_ID < 70000
-    Aerospike_ce->create_object = Aerospike_object_new;
-#else
-    Aerospike_ce->create_object = Aerospike_object_new_php7;
-#endif
+    #if PHP_VERSION_ID < 70000
+        Aerospike_ce->create_object = Aerospike_object_new;
+    #else
+        Aerospike_ce->create_object = Aerospike_object_new_php7;
+    #endif
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
-#if PHP_VERSION_ID < 70000
-    Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
-#else
-    Aerospike_ce->ce_flags |= ZEND_ACC_FINAL;
-#endif
+    #if PHP_VERSION_ID < 70000
+        Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+    #else
+        Aerospike_ce->ce_flags |= ZEND_ACC_FINAL;
+    #endif
 
-#ifdef ZTS
-    ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
-#else
-    ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
-#endif
+    #ifdef ZTS
+        ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
+    #else
+        ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
+    #endif
     REGISTER_INI_ENTRIES();
     /* Refer aerospike_policy.h
      * This will expose the policy values for PHP
@@ -6946,11 +6906,11 @@ PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
     DEBUG_PHP_EXT_DEBUG("Inside mshutdown");
     UNREGISTER_INI_ENTRIES();
-#ifndef ZTS
-    aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
-#else
-    ts_free_id(aerospike_globals_id);
-#endif
+    #ifndef ZTS
+        aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
+    #else
+        ts_free_id(aerospike_globals_id);
+    #endif
     return SUCCESS;
 }
 
@@ -6974,47 +6934,47 @@ PHP_RINIT_FUNCTION(aerospike)
  */
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
-#if PHP_VERSION_ID < 70000
-    if (user_serializer_call_info.function_name) {
-        if (1 == Z_REFCOUNT_P(user_serializer_call_info.function_name)) {
-            zval_ptr_dtor(&user_serializer_call_info.function_name);
-            user_serializer_call_info.function_name = NULL;
-        } else {
-            DEBUG_PHP_EXT_ERROR("leak for user serializer function");
-        }
-    }
-    if (user_deserializer_call_info.function_name) {
-        if (1 == Z_REFCOUNT_P(user_deserializer_call_info.function_name)) {
-            zval_ptr_dtor(&user_deserializer_call_info.function_name);
-            user_deserializer_call_info.function_name = NULL;
-        } else {
-            DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
-        }
-    }
-#else/*
-if (&user_serializer_call_info.function_name) {
-    //if (1 == Z_REFCOUNT_P(&user_serializer_call_info.function_name)) {
-        zval_ptr_dtor(&user_serializer_call_info.function_name);
-        if(Z_ISREF_P(&user_serializer_call_info.function_name))
-        {
-            AEROSPIKE_ZVAL_UNREF(user_serializer_call_info.function_name);
-        }
-    //} else {
-    //    DEBUG_PHP_EXT_ERROR("leak for user serializer function");
-    //}
-}
-    if (&user_deserializer_call_info.function_name) {
-        //if (1 == Z_REFCOUNT_P(&(user_deserializer_call_info.function_name))) {
-            zval_ptr_dtor(&user_deserializer_call_info.function_name);
-            if(Z_ISREF_P(&user_deserializer_call_info.function_name))
-            {
-                AEROSPIKE_ZVAL_UNREF(user_deserializer_call_info.function_name);
+    #if PHP_VERSION_ID < 70000
+        if (user_serializer_call_info.function_name) {
+            if (1 == Z_REFCOUNT_P(user_serializer_call_info.function_name)) {
+                zval_ptr_dtor(&user_serializer_call_info.function_name);
+                user_serializer_call_info.function_name = NULL;
+            } else {
+                DEBUG_PHP_EXT_ERROR("leak for user serializer function");
             }
-        //} else {
-        //    DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
-        //}
-    }*/
-#endif
+        }
+        if (user_deserializer_call_info.function_name) {
+            if (1 == Z_REFCOUNT_P(user_deserializer_call_info.function_name)) {
+                zval_ptr_dtor(&user_deserializer_call_info.function_name);
+                user_deserializer_call_info.function_name = NULL;
+            } else {
+                DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+            }
+        }
+    #else/*
+        if (&user_serializer_call_info.function_name) {
+            //if (1 == Z_REFCOUNT_P(&user_serializer_call_info.function_name)) {
+            zval_ptr_dtor(&user_serializer_call_info.function_name);
+            if (Z_ISREF_P(&user_serializer_call_info.function_name))
+            {
+                AEROSPIKE_ZVAL_UNREF(user_serializer_call_info.function_name);
+            }
+            //} else {
+                // DEBUG_PHP_EXT_ERROR("leak for user serializer function");
+            //}
+        }
+        if (&user_deserializer_call_info.function_name) {
+            //if (1 == Z_REFCOUNT_P(&(user_deserializer_call_info.function_name))) {
+                zval_ptr_dtor(&user_deserializer_call_info.function_name);
+                if(Z_ISREF_P(&user_deserializer_call_info.function_name))
+                {
+                    AEROSPIKE_ZVAL_UNREF(user_deserializer_call_info.function_name);
+                }
+                //} else {
+                    // DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+                //}
+        }*/
+    #endif
 
     DEBUG_PHP_EXT_DEBUG("Inside rshutdown of this build");
     return SUCCESS;

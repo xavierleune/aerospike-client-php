@@ -126,6 +126,8 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
        }
        zend_update_property(ce_p, object_p, "error", strlen("error"), err_msg_p TSRMLS_CC);
        zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), err_code_p TSRMLS_CC);
+       AEROSPIKE_ZVAL_PTR_DTOR(err_code_p);
+       AEROSPIKE_ZVAL_PTR_DTOR(err_msg_p);
     #else
         zval    err_code_p;
         zval    err_msg_p;
@@ -141,12 +143,6 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
         }
         zend_update_property(ce_p, object_p, "error", strlen("error"), &err_msg_p TSRMLS_CC);
         zend_update_property(ce_p, object_p, "errorno", strlen("errorno"), &err_code_p TSRMLS_CC);
-    #endif
-
-    #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
-        AEROSPIKE_ZVAL_PTR_DTOR(err_code_p);
-        AEROSPIKE_ZVAL_PTR_DTOR(err_msg_p);
-    #else
         AEROSPIKE_ZVAL_PTR_DTOR(&err_code_p);
         AEROSPIKE_ZVAL_PTR_DTOR(&err_msg_p);
     #endif

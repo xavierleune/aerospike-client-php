@@ -164,13 +164,12 @@ batch_exists_cb(const as_batch_read* results, uint32_t n, void* udata)
 						"Unable to get generation of a record");
 					goto cleanup;
 			}
-
 			if (0 != AEROSPIKE_ADD_ASSOC_LONG(record_metadata_p,
 				PHP_AS_RECORD_DEFINE_FOR_TTL, results[i].record.ttl)) {
 					DEBUG_PHP_EXT_DEBUG("Unable to get ttl of a record");
-					PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_SERVER,
-						"Unable to get ttl of a record");
-					goto cleanup;
+				PHP_EXT_SET_AS_ERR(udata_ptr->error_p, AEROSPIKE_ERR_SERVER,
+					"Unable to get ttl of a record");
+				goto cleanup;
 			}
 			null_flag = false;
 		} else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
@@ -244,21 +243,20 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 		zval                    record_metadata_p;
 		zval*                   key_entry;
 		zval                    get_record_p;
-#endif
+	#endif
 
-	foreach_callback_udata  metadata_callback;
-	foreach_callback_udata  foreach_record_callback_udata;
-	as_batch_read_record*   record_batch = NULL;
-	as_batch_read_records   records;
-	as_vector*              list = NULL;
+	foreach_callback_udata metadata_callback;
+	foreach_callback_udata foreach_record_callback_udata;
+	as_batch_read_record*  record_batch = NULL;
+	as_batch_read_records  records;
+	as_vector*             list = NULL;
 
 	if (!(as_object_p) || !(keys_p) || !(metadata_p)) {
 		status = AEROSPIKE_ERR_PARAM;
 		goto exit;
 	}
 
-	set_policy_batch(&as_object_p->config, &batch_policy, options_p,
-			error_p TSRMLS_CC);
+	set_policy_batch(&as_object_p->config, &batch_policy, options_p, error_p TSRMLS_CC);
 
 	if (AEROSPIKE_OK != (error_p->code)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
@@ -266,7 +264,7 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 	}
 
 	keys_array = Z_ARRVAL_P(keys_p);
-	if(zend_hash_num_elements(keys_array) == 0 ) {
+	if (zend_hash_num_elements(keys_array) == 0 ) {
 		goto exit;
 	}
 
@@ -274,7 +272,7 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 	as_batch_read_record* record = NULL;
 
   	#if PHP_VERSION_ID < 70000
-		AEROSPIKE_FOREACH_HASHTABLE (keys_array, key_pointer, key_entry) {
+		AEROSPIKE_FOREACH_HASHTABLE(keys_array, key_pointer, key_entry) {
 	#else
 		ZEND_HASH_FOREACH_VAL(keys_array, key_entry) {
 	#endif
@@ -312,7 +310,7 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 			array_init(&get_record_p);
 		#endif
 
-		/*  if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
+		/* if (0 != add_assoc_long(record_metadata_p, PHP_AS_RECORD_DEFINE_FOR_GENERATION,
 				record_batch->record.gen)) {
 				DEBUG_PHP_EXT_DEBUG("Unable to get generation of a record");
 				PHP_EXT_SET_AS_ERR(metadata_callback.error_p, AEROSPIKE_ERR_SERVER,
@@ -325,7 +323,8 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 				PHP_EXT_SET_AS_ERR(metadata_callback.error_p, AEROSPIKE_ERR_SERVER,
 				"Unable to get ttl of a record");
 				goto cleanup;
-			}  */
+			} */
+
 		foreach_record_callback_udata.error_p = metadata_callback.error_p;
 		foreach_record_callback_udata.obj = metadata_callback.obj;
 
@@ -367,7 +366,6 @@ aerospike_batch_operations_exists_many_new(aerospike* as_object_p, as_error* err
 		if (record_batch->bin_names) {
 			efree(record_batch->bin_names);
 		}
-
 		if(metadata_callback.error_p->code == AEROSPIKE_OK){
 			continue;
 		}
@@ -462,7 +460,7 @@ aerospike_batch_operations_exists_many(aerospike* as_object_p, as_error* error_p
 	metadata_callback.error_p = error_p;
 
 	if (AEROSPIKE_OK != (status = aerospike_batch_exists(as_object_p, error_p,
-					&batch_policy, &batch, batch_exists_cb, &metadata_callback))) {
+			&batch_policy, &batch, batch_exists_cb, &metadata_callback))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get metadata of batch records");
 		goto exit;
 	}
@@ -550,11 +548,11 @@ batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
 
         foreach_record_callback_udata.udata_p =
 		#if PHP_VERSION_ID < 70000
-		get_record_p
+			get_record_p
 		#else
-		&get_record_p
+			&get_record_p
 		#endif
-		;
+			;
 		foreach_record_callback_udata.error_p = udata_ptr->error_p;
 		foreach_record_callback_udata.obj = udata_ptr->obj;
 		if (results[i].result == AEROSPIKE_OK) {
@@ -745,7 +743,6 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 			} else {
 				select_p = (char**)emalloc(sizeof(char*) * filter_bins_count);
 				process_filer_bins(Z_ARRVAL_P(filter_bins_p), (const char**)select_p TSRMLS_CC);
-
 				record->bin_names = select_p;
 				record->n_bin_names = filter_bins_count;
 			}

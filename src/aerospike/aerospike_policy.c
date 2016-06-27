@@ -105,9 +105,9 @@ as_status declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC)
 
 	for (i = 0; i <= AEROSPIKE_CONSTANTS_ARR_SIZE; i++) {
 		zend_declare_class_constant_long(
-				Aerospike_ce, aerospike_constants[i].constant_str,
-					strlen(aerospike_constants[i].constant_str),
-						aerospike_constants[i].constantno TSRMLS_CC);
+        Aerospike_ce, aerospike_constants[i].constant_str,
+		strlen(aerospike_constants[i].constant_str),
+		aerospike_constants[i].constantno TSRMLS_CC);
 	}
 
 	zend_declare_class_constant_stringl (Aerospike_ce, "JOB_QUERY", strlen("JOB_QUERY"), "query", strlen("query") TSRMLS_CC);
@@ -131,40 +131,39 @@ exit:
 extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p, as_error *error_p TSRMLS_DC)
 {
-  #if PHP_VERSION_ID < 70000
-    zval** gen_value_pp = NULL;
-  	zval** gen_policy_pp = NULL;
-  #else
-    zval* gen_value_pp = NULL;
-  	zval* gen_policy_pp = NULL;
-  #endif
+    #if PHP_VERSION_ID < 70000
+        zval** gen_value_pp = NULL;
+        zval** gen_policy_pp = NULL;
+    #else
+        zval* gen_value_pp = NULL;
+        zval* gen_policy_pp = NULL;
+    #endif
 
 	if (options_p) {
-    #if PHP_VERSION_ID < 70000
-  	  if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
-    #else
-  	  if ((gen_policy_pp = zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN)) == NULL) {
-    #endif
-			//error_p->code = AEROSPIKE_ERR_CLIENT;
+        #if PHP_VERSION_ID < 70000
+            if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN, (void **) &gen_policy_pp) == FAILURE) {
+        #else
+            if ((gen_policy_pp = zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_POLICY_GEN)) == NULL) {
+        #endif
+            //error_p->code = AEROSPIKE_ERR_CLIENT;
 			goto exit;
 		}
-    if (AEROSPIKE_Z_TYPE_P(gen_policy_pp) != IS_ARRAY) {
+        if (AEROSPIKE_Z_TYPE_P(gen_policy_pp) != IS_ARRAY) {
 			error_p->code = AEROSPIKE_ERR_PARAM;
 			goto exit;
 		}
 
-    #if PHP_VERSION_ID < 70000
-  	  zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
-    #else
-  	  //gen_value_pp = zend_hash_index_find(Z_ARRVAL_P(gen_policy_pp), OPT_TTL);
-      gen_value_pp = zend_hash_index_find(Z_ARRVAL_P(gen_policy_pp), 1);
-    #endif
+        #if PHP_VERSION_ID < 70000
+            zend_hash_index_find(Z_ARRVAL_P(*gen_policy_pp), 1, (void **) &gen_value_pp);
+        #else
+            //gen_value_pp = zend_hash_index_find(Z_ARRVAL_P(gen_policy_pp), OPT_TTL);
+            gen_value_pp = zend_hash_index_find(Z_ARRVAL_P(gen_policy_pp), 1);
+        #endif
 
 		if (gen_value_pp && (AEROSPIKE_Z_TYPE_P(gen_value_pp) != IS_LONG)) {
 			  error_p->code = AEROSPIKE_ERR_PARAM;
 			goto exit;
 		}
-
 		if (gen_value_pp) {
             *generation_value_p = AEROSPIKE_Z_LVAL_P(gen_value_pp);
 		}
@@ -188,26 +187,25 @@ exit:
 extern as_status
 get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p, as_error *error_p TSRMLS_DC)
 {
-  #if PHP_VERSION_ID < 70000
-    zval** ttl_value_pp = NULL;
-  #else
-    zval* ttl_value_pp = NULL;
-  #endif
-
-	if (options_p) {
     #if PHP_VERSION_ID < 70000
-    	if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
+        zval** ttl_value_pp = NULL;
     #else
-    	if ((ttl_value_pp = zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL)) == NULL) {
+        zval* ttl_value_pp = NULL;
     #endif
 
-		//error_p->code = AEROSPIKE_ERR_CLIENT;
-		goto exit;
+	if (options_p) {
+        #if PHP_VERSION_ID < 70000
+            if (zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL, (void **) &ttl_value_pp) == FAILURE) {
+        #else
+            if ((ttl_value_pp = zend_hash_index_find(Z_ARRVAL_P(options_p), OPT_TTL)) == NULL) {
+        #endif
+            //error_p->code = AEROSPIKE_ERR_CLIENT;
+            goto exit;
 		}
 		if (AEROSPIKE_Z_TYPE_P(ttl_value_pp) != IS_LONG) {
 			DEBUG_PHP_EXT_DEBUG("OPT_TTL should be of type integer");
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-					"OPT_TTL should be of type integer");
+				"OPT_TTL should be of type integer");
 			goto exit;
 		}
 
@@ -251,20 +249,20 @@ exit:
  */
 static  void
 set_policy_ex(as_config *as_config_p,
-				as_policy_read *read_policy_p,
-				as_policy_write *write_policy_p,
-				as_policy_operate *operate_policy_p,
-				as_policy_remove *remove_policy_p,
-				as_policy_info *info_policy_p,
-				as_policy_scan *scan_policy_p,
-				as_policy_query *query_policy_p,
-				int8_t *serializer_policy_p,
-				as_scan* as_scan_p,
-				as_policy_batch *batch_policy_p,
-				as_policy_apply *apply_policy_p,
-				as_policy_admin *admin_policy_p,
-				zval *options_p,
-				as_error *error_p TSRMLS_DC)
+    as_policy_read *read_policy_p,
+	as_policy_write *write_policy_p,
+	as_policy_operate *operate_policy_p,
+	as_policy_remove *remove_policy_p,
+	as_policy_info *info_policy_p,
+	as_policy_scan *scan_policy_p,
+	as_policy_query *query_policy_p,
+	int8_t *serializer_policy_p,
+	as_scan* as_scan_p,
+	as_policy_batch *batch_policy_p,
+	as_policy_apply *apply_policy_p,
+	as_policy_admin *admin_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC)
 {
 	//int16_t             serializer_flag = 0;
 
@@ -360,38 +358,38 @@ set_policy_ex(as_config *as_config_p,
 		uint8_t             options_passed_for_operate = 0x0;
 		uint8_t             options_passed_for_remove = 0x0;
 		zval*               gen_policy_p = NULL;
-#if PHP_VERSION_ID < 70000
-    zval**              gen_policy_pp = NULL;
-		int8_t*             options_key;
-		zval**              options_value;
-#else
-    zval*               gen_policy_pp = NULL;
-		zend_string*        options_key;
-		zval*               options_value = NULL;
-#endif
+        #if PHP_VERSION_ID < 70000
+            zval**              gen_policy_pp = NULL;
+            int8_t*             options_key;
+            zval**              options_value;
+        #else
+            zval*               gen_policy_pp = NULL;
+            zend_string*        options_key;
+            zval*               options_value = NULL;
+        #endif
 
       uint options_key_len;
       #if PHP_VERSION_ID < 70000
-        AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
-        ulong options_index;
-        if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
-  					&options_key_len, &options_index, 0, &options_pointer)) {
-  				DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
-  				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+            AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
+            ulong options_index;
+            if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
+  				&options_key_len, &options_index, 0, &options_pointer)) {
+  				    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+  				    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
   						"Unable to set policy: Invalid Policy Constant Key");
-  				goto exit;
+  				    goto exit;
   			}
       #else
-        ZEND_HASH_FOREACH_VAL(options_array, options_value) {
-        zend_ulong options_index;
-        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
-          if (options_key) {
-            DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                "Unable to set policy: Invalid Policy Constant Key");
-            goto exit;
-          }
-        } ZEND_HASH_FOREACH_END();
+            ZEND_HASH_FOREACH_VAL(options_array, options_value) {
+                zend_ulong options_index;
+                ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
+                    if (options_key) {
+                        DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+                        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                            "Unable to set policy: Invalid Policy Constant Key");
+                        goto exit;
+                    }
+                } ZEND_HASH_FOREACH_END();
       #endif
       switch((int) options_index) {
           case OPT_CONNECT_TIMEOUT:
@@ -488,33 +486,33 @@ set_policy_ex(as_config *as_config_p,
                   goto exit;
               }
               break;
-              case OPT_SERIALIZER:
-                  if ((!serializer_policy_p) || (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG)) {
-                      DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SERIALIZER");
-                      PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                              "Unable to set policy: Invalid Value for OPT_SERIALIZER");
-                      goto exit;
-                  }
-                  *serializer_policy_p = AEROSPIKE_Z_LVAL_P(options_value);
-                  //serializer_flag = 1;
-                  break;
-              case OPT_SCAN_PRIORITY:
-                  if (info_policy_p) {
-                      break;
-                  }
-                  if ((!as_scan_p) || (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG)) {
-                      DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_PRIORITY");
-                      PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-                              "Unable to set policy: Invalid Value for OPT_SCAN_PRIORITY");
-                      goto exit;
-                  }
-                  if (!as_scan_set_priority(as_scan_p, (uint32_t) AEROSPIKE_Z_LVAL_P(options_value))) {
-                      DEBUG_PHP_EXT_DEBUG("Unable to set scan priority");
-                      PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan priority");
-                      goto exit;
-                  }
-                  break;
-              case OPT_SCAN_PERCENTAGE:
+          case OPT_SERIALIZER:
+              if ((!serializer_policy_p) || (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG)) {
+                  DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SERIALIZER");
+                  PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                      "Unable to set policy: Invalid Value for OPT_SERIALIZER");
+                  goto exit;
+              }
+              *serializer_policy_p = AEROSPIKE_Z_LVAL_P(options_value);
+              //serializer_flag = 1;
+              break;
+          case OPT_SCAN_PRIORITY:
+               if (info_policy_p) {
+                   break;
+               }
+               if ((!as_scan_p) || (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG)) {
+                   DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_SCAN_PRIORITY");
+                   PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+                       "Unable to set policy: Invalid Value for OPT_SCAN_PRIORITY");
+                   goto exit;
+               }
+               if (!as_scan_set_priority(as_scan_p, (uint32_t) AEROSPIKE_Z_LVAL_P(options_value))) {
+                   DEBUG_PHP_EXT_DEBUG("Unable to set scan priority");
+                   PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to set scan priority");
+                   goto exit;
+               }
+               break;
+          case OPT_SCAN_PERCENTAGE:
                   if (info_policy_p) {
                       break;
                   }
@@ -758,7 +756,7 @@ if (serializer_flag == 0) {
 
 PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, DEFAULT_ERROR);
 exit:
-return;
+    return;
 }
 
 /*
@@ -774,12 +772,10 @@ return;
  *******************************************************************************************************
  */
 extern void
-set_policy_read(as_policy_read *read_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+set_policy_read(as_policy_read *read_policy_p, zval *options_p, as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(NULL, read_policy_p, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+        NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -798,13 +794,11 @@ set_policy_read(as_policy_read *read_policy_p,
  */
 extern void
 set_policy_write(as_policy_write *write_policy_p,
-		int8_t *serializer_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+    int8_t *serializer_policy_p, zval *options_p, as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(NULL, NULL, write_policy_p, NULL, NULL, NULL, NULL,
-			NULL, serializer_policy_p, NULL, NULL, NULL, NULL, options_p,
-			error_p TSRMLS_CC);
+        NULL, serializer_policy_p, NULL, NULL, NULL, NULL, options_p,
+        error_p TSRMLS_CC);
 }
 
 /*
@@ -823,9 +817,7 @@ set_policy_write(as_policy_write *write_policy_p,
  */
 extern void
 set_policy_operate(as_policy_operate *operate_policy_p,
-		int8_t *serializer_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+	int8_t *serializer_policy_p, zval *options_p, as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(NULL, NULL, NULL, operate_policy_p, NULL, NULL, NULL,
 			NULL, serializer_policy_p, NULL, NULL, NULL, NULL,
@@ -845,12 +837,10 @@ set_policy_operate(as_policy_operate *operate_policy_p,
  *******************************************************************************************************
  */
 extern void
-set_policy_remove(as_policy_remove *remove_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+set_policy_remove(as_policy_remove *remove_policy_p, zval *options_p, as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(NULL, NULL, NULL, NULL, remove_policy_p, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+		NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -867,13 +857,10 @@ set_policy_remove(as_policy_remove *remove_policy_p,
  *******************************************************************************************************
  */
 extern void
-set_policy_info(as_policy_info *info_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+set_policy_info(as_policy_info *info_policy_p, zval *options_p, as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(NULL, NULL, NULL, NULL, NULL, info_policy_p, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL, options_p,
-			error_p TSRMLS_CC);
+		NULL, NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -891,20 +878,20 @@ set_policy_info(as_policy_info *info_policy_p,
  */
 extern void
 set_policy(as_config *as_config_p,
-			as_policy_read *read_policy_p,
-			as_policy_write *write_policy_p,
-			as_policy_operate *operate_policy_p,
-			as_policy_remove *remove_policy_p,
-			as_policy_info *info_policy_p,
-			as_policy_scan *scan_policy_p,
-			as_policy_query *query_policy_p,
-			int8_t *serializer_policy_p,
-			zval *options_p,
-			as_error *error_p TSRMLS_DC)
+		as_policy_read *read_policy_p,
+		as_policy_write *write_policy_p,
+		as_policy_operate *operate_policy_p,
+		as_policy_remove *remove_policy_p,
+		as_policy_info *info_policy_p,
+		as_policy_scan *scan_policy_p,
+		as_policy_query *query_policy_p,
+		int8_t *serializer_policy_p,
+		zval *options_p,
+		as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(as_config_p, read_policy_p, write_policy_p, operate_policy_p,
-			remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
-			serializer_policy_p, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+        remove_policy_p, info_policy_p, scan_policy_p, query_policy_p,
+		serializer_policy_p, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -924,14 +911,14 @@ set_policy(as_config *as_config_p,
  */
 extern void
 set_policy_scan(as_config *as_config_p,
-		as_policy_scan *scan_policy_p,
-		int8_t *serializer_policy_p,
-		as_scan *as_scan_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+    as_policy_scan *scan_policy_p,
+	int8_t *serializer_policy_p,
+	as_scan *as_scan_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, scan_policy_p, NULL,
-			serializer_policy_p, as_scan_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+		serializer_policy_p, as_scan_p, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 
@@ -951,12 +938,12 @@ set_policy_scan(as_config *as_config_p,
  */
 extern void
 set_policy_query_apply(as_config *as_config_p,
-		as_policy_write *write_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+	as_policy_write *write_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(as_config_p, NULL, write_policy_p, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+		NULL, NULL, NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 
@@ -974,12 +961,12 @@ set_policy_query_apply(as_config *as_config_p,
  */
 extern void
 set_policy_batch(as_config *as_config_p,
-		as_policy_batch *batch_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+	as_policy_batch *batch_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, batch_policy_p, NULL, NULL, options_p, error_p TSRMLS_CC);
+		NULL, NULL, batch_policy_p, NULL, NULL, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -996,13 +983,13 @@ set_policy_batch(as_config *as_config_p,
  */
 extern void
 set_policy_udf_apply(as_config *as_config_p,
-		as_policy_apply *apply_policy_p,
-		int8_t *serializer_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+	as_policy_apply *apply_policy_p,
+	int8_t *serializer_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(as_config_p, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			serializer_policy_p, NULL, NULL, apply_policy_p, NULL, options_p, error_p TSRMLS_CC);
+		serializer_policy_p, NULL, NULL, apply_policy_p, NULL, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -1019,12 +1006,11 @@ set_policy_udf_apply(as_config *as_config_p,
  */
 extern void
 set_policy_admin(as_policy_admin *admin_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC)
+	zval *options_p,
+	as_error *error_p TSRMLS_DC)
 {
 	set_policy_ex(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, admin_policy_p, options_p,
-			error_p TSRMLS_CC);
+		NULL, NULL, NULL, NULL, admin_policy_p, options_p, error_p TSRMLS_CC);
 }
 
 /*
@@ -1044,9 +1030,9 @@ set_policy_admin(as_policy_admin *admin_policy_p,
  */
 void
 set_config_policies(as_config *as_config_p,
-		zval *options_p,
-		as_error *error_p,
-		int8_t *serializer_opt TSRMLS_DC)
+	zval *options_p,
+	as_error *error_p,
+	int8_t *serializer_opt TSRMLS_DC)
 {
 	/*
 	 * Copy INI values to global_config_policy
@@ -1105,50 +1091,48 @@ set_config_policies(as_config *as_config_p,
 	if (options_p != NULL) {
 		HashTable*		  options_array = Z_ARRVAL_P(options_p);
 		HashPosition		options_pointer;
-#if PHP_VERSION_ID < 70000
-		int8_t*			 options_key;
-		zval**			  options_value;
-    AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
-    ulong options_index;
-#else
-		zend_string*		options_key;
-		zval*			   options_value;
-    ZEND_HASH_FOREACH_VAL(options_array, options_value) {
-    zend_ulong options_index;
-#endif
+        #if PHP_VERSION_ID < 70000
+            int8_t*			 options_key;
+            zval**			  options_value;
+            AEROSPIKE_FOREACH_HASHTABLE(options_array, options_pointer, options_value) {
+                ulong options_index;
+        #else
+            zend_string*		options_key;
+            zval*			   options_value;
+            ZEND_HASH_FOREACH_VAL(options_array, options_value) {
+                zend_ulong options_index;
+        #endif
 			uint options_key_len;
 
-      #if PHP_VERSION_ID < 70000
-      if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
-          &options_key_len, &options_index, 0, &options_pointer)) {
-            DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+        #if PHP_VERSION_ID < 70000
+            if (HASH_KEY_IS_LONG != AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(options_array, &options_key,
+                &options_key_len, &options_index, 0, &options_pointer)) {
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
     				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-    						"Unable to set policy: Invalid Policy Constant Key");
+    					"Unable to set policy: Invalid Policy Constant Key");
     				goto exit;
     			}
-      #else
-        ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
-          if (options_key) {
-            DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
+        #else
+            ZEND_HASH_FOREACH_KEY_VAL(options_array, options_index, options_key, options_value) {
+                if (options_key) {
+                    DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Policy Constant Key");
     				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-    						"Unable to set policy: Invalid Policy Constant Key");
+    					"Unable to set policy: Invalid Policy Constant Key");
     				goto exit;
     			}
-        } ZEND_HASH_FOREACH_END();
+            } ZEND_HASH_FOREACH_END();
       #endif
-
-
-    switch((int) options_index) {
-				case OPT_CONNECT_TIMEOUT:
-					if ((!as_config_p) || (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG)) {
-						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
-						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-								"Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
-						goto exit;
-					}
-					as_config_p->conn_timeout_ms = (uint32_t) AEROSPIKE_Z_LVAL_P(options_value);
-					break;
-				case OPT_READ_TIMEOUT:
+      switch((int) options_index) {
+          case OPT_CONNECT_TIMEOUT:
+            if ((!as_config_p) || (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG)) {
+                DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+					"Unable to set policy: Invalid Value for OPT_CONNECT_TIMEOUT");
+				goto exit;
+			}
+			as_config_p->conn_timeout_ms = (uint32_t) AEROSPIKE_Z_LVAL_P(options_value);
+			break;
+        case OPT_READ_TIMEOUT:
 					if (AEROSPIKE_Z_TYPE_P(options_value) != IS_LONG) {
 						DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid Value for OPT_READ_TIMEOUT");
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -1317,10 +1301,8 @@ exit:
  *******************************************************************************************************
  */
 extern void
-set_general_policies(as_config *as_config_p,
-					 zval *options_p,
-					 as_error *error_p,
-					 int8_t *serializer_opt TSRMLS_DC)
+set_general_policies(as_config *as_config_p, zval *options_p, as_error *error_p,
+	int8_t *serializer_opt TSRMLS_DC)
 {
 	if (!as_config_p) {
 		DEBUG_PHP_EXT_DEBUG("Unable to set policy: Invalid as_config");
