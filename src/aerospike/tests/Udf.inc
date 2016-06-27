@@ -95,7 +95,7 @@ class Udf extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testUdfNegativeRegisterUnknownModule() {
-        $status = $this->ensureUdfModule("tests/lua/unknown.lua", "unknown.lua");
+        $status = $this->db->register("tests/lua/unknown.lua", "unknown.lua");
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }
@@ -228,7 +228,7 @@ class Udf extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testUdfPositiveApplyOnInteger() 
+    function testUdfPositiveApplyOnInteger()
     {
         if (!$this->db->isConnected()) {
             return ($this->db->errorno());
@@ -854,7 +854,7 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($this->db->errorno());
             }
-        } 
+        }
         return($status);
     }
     /**

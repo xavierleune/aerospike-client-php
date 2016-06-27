@@ -229,7 +229,12 @@ exit:
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
 		as_key* as_key_p, as_error* error_p, char* module_p, char* function_p,
-		zval** args_pp, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p)
+    #if PHP_VERSION_ID < 70000
+      zval** args_pp
+    #else
+      zval* args_pp
+    #endif
+		, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p)
 {
 	as_arraylist                args_list;
 	as_arraylist*               args_list_p = NULL;
@@ -248,14 +253,15 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
 		goto exit;
 	}
 
-	if ((*args_pp)) {
+	if ((
+  #if PHP_VERSION_ID < 70000
+    *args_pp
+  #else
+    args_pp
+  #endif
+  )) {
 		as_arraylist_inita(&args_list,
-#if PHP_VERSION_ID < 70000
-				zend_hash_num_elements(Z_ARRVAL_PP(args_pp))
-#else
-				zend_hash_num_elements(Z_ARRVAL_P(*args_pp))
-#endif
-				);
+		zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(args_pp)));
 		args_list_p = &args_list;
 		AS_LIST_PUT(aerospike_obj_p, NULL, args_pp, args_list_p, &udf_pool, serializer_policy, error_p TSRMLS_CC);
 	}
@@ -272,12 +278,12 @@ aerospike_udf_apply(Aerospike_object* aerospike_obj_p,
 		udf_result_callback_udata.error_p = error_p;
 		AS_DEFAULT_GET(NULL, udf_result_p, &udf_result_callback_udata);
 	}
-	 
+
 exit:
 	if (udf_result_p) {
 		as_val_destroy(udf_result_p);
 	}
-	
+
 	if (args_list_p) {
 		as_arraylist_destroy(args_list_p);
 	}
@@ -400,7 +406,7 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
 
 	as_udf_file_init(&udf_file);
 	init_udf_file = 1;
-	
+
 	if (AEROSPIKE_OK != aerospike_udf_get(aerospike_obj_p->as_ref_p->as_p,
 				error_p, &info_policy, module_p, language, &udf_file)) {
 		DEBUG_PHP_EXT_ERROR("%s", error_p->message);
@@ -414,4 +420,3 @@ exit:
 	}
 	return error_p->code;
 }
-

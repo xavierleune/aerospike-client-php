@@ -45,8 +45,8 @@
  */
 extern as_status
 aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
-		char* ns_p, char* set_p, char* bin_p, char *name_p,
-		uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
+	char* ns_p, char* set_p, char* bin_p, char *name_p,
+	uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
 {
 	as_status                   status = AEROSPIKE_OK;
 	as_policy_info              info_policy;
@@ -69,9 +69,9 @@ aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
 
 	if (AEROSPIKE_OK !=
 			(status = aerospike_index_create_complex(as_object_p, error_p,
-											&task, &info_policy, ns_p,
-											set_p, bin_p, name_p,
-											index_type, datatype))) {
+					&task, &info_policy, ns_p,
+					set_p, bin_p, name_p,
+					index_type, datatype))) {
 		DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
 		goto exit;
 	} else if (AEROSPIKE_OK !=
@@ -101,7 +101,7 @@ exit:
  */
 extern as_status
 aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
-		char* ns_p, char *name_p, zval* options_p TSRMLS_DC)
+	char* ns_p, char *name_p, zval* options_p TSRMLS_DC)
 {
 	as_status                   status = AEROSPIKE_OK;
 	as_policy_info              info_policy;

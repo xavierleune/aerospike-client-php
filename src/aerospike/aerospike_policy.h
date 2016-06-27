@@ -28,25 +28,25 @@
  *******************************************************************************************************
  */
 enum Aerospike_constants {
-	OPT_CONNECT_TIMEOUT = 1,  /* value in milliseconds, default: 1000 */
-	OPT_READ_TIMEOUT,         /* value in milliseconds, default: 1000 */
-	OPT_WRITE_TIMEOUT,        /* value in milliseconds, default: 1000 */
-	OPT_POLICY_RETRY,         /* set to a Aerospike::POLICY_RETRY_* value */
-	OPT_POLICY_EXISTS,        /* set to a Aerospike::POLICY_EXISTS_* value */
-	OPT_SERIALIZER,           /* set the unsupported type handler */
-	OPT_SCAN_PRIORITY,        /* set to a Aerospike::SCAN_PRIORITY_* value*/
-	OPT_SCAN_PERCENTAGE,      /* integer value 1-100, default: 100 */
-	OPT_SCAN_CONCURRENTLY,    /* boolean value, default: false */
-	OPT_SCAN_NOBINS,          /* boolean value, default: false */
-	OPT_SCAN_INCLUDELDT,      /* Include large data type bin values in addition to large data type bin names */
-	OPT_POLICY_KEY,           /* records store the digest unique ID, optionally also its (ns,set,key) inputs */
-	OPT_POLICY_GEN,
-	OPT_POLICY_REPLICA,       /* set to one of Aerospike::POLICY_REPLICA_* */
-	OPT_POLICY_CONSISTENCY,   /* set to one of Aerospike::POLICY_CONSISTENCY_* */
-	OPT_POLICY_COMMIT_LEVEL,  /* set to one of Aerospike::POLICY_COMMIT_LEVEL_* */
-	OPT_TTL,                  /* set to time-to-live of the record in seconds */
-	USE_BATCH_DIRECT,         /* use new batch index protocol if server supports it*/
-	COMPRESSION_THRESHOLD,    /* Minimum record size beyond which it is compressed and sent to the server */
+	OPT_CONNECT_TIMEOUT = 1, /* value in milliseconds, default: 1000                                          */
+	OPT_READ_TIMEOUT,        /* value in milliseconds, default: 1000                                          */
+	OPT_WRITE_TIMEOUT,       /* value in milliseconds, default: 1000                                          */
+	OPT_POLICY_RETRY,        /* set to a Aerospike::POLICY_RETRY_* value                                      */
+	OPT_POLICY_EXISTS,       /* set to a Aerospike::POLICY_EXISTS_* value                                     */
+	OPT_SERIALIZER,          /* set the unsupported type handler                                              */
+	OPT_SCAN_PRIORITY,       /* set to a Aerospike::SCAN_PRIORITY_* value                                     */
+	OPT_SCAN_PERCENTAGE,     /* integer value 1-100, default: 100                                             */
+	OPT_SCAN_CONCURRENTLY,   /* boolean value, default: false                                                 */
+	OPT_SCAN_NOBINS,         /* boolean value, default: false                                                 */
+	OPT_SCAN_INCLUDELDT,     /* Include large data type bin values in addition to large data type bin names   */
+	OPT_POLICY_KEY,          /* records store the digest unique ID, optionally also its (ns, set, key) inputs */
+	OPT_POLICY_GEN,          /* set to one of Aerospike::OPT_POLICY_GEN_*                                     */
+	OPT_POLICY_REPLICA,      /* set to one of Aerospike::POLICY_REPLICA_*                                     */
+	OPT_POLICY_CONSISTENCY,  /* set to one of Aerospike::POLICY_CONSISTENCY_*                                 */
+	OPT_POLICY_COMMIT_LEVEL, /* set to one of Aerospike::POLICY_COMMIT_LEVEL_*                                */
+	OPT_TTL,                 /* set to time-to-live of the record in seconds                                  */
+	USE_BATCH_DIRECT,        /* use new batch index protocol if server supports it                            */
+	COMPRESSION_THRESHOLD,   /* Minimum record size beyond which it is compressed and sent to the server      */
 };
 
 /*
@@ -57,7 +57,7 @@ enum Aerospike_constants {
  */
 enum Aerospike_serializer_values {
 	SERIALIZER_NONE,
-	SERIALIZER_PHP,                                     /* default handler for serializer type */
+	SERIALIZER_PHP, /* default handler for serializer type */
 	SERIALIZER_USER,
 };
 
@@ -70,8 +70,8 @@ enum Aerospike_serializer_values {
  *******************************************************************************************************
  */
 typedef struct Aerospike_Constants {
-	long    constantno;
-	char    constant_str[MAX_CONSTANT_STR_SIZE];
+	long constantno;
+	char constant_str[MAX_CONSTANT_STR_SIZE];
 } AerospikeConstants;
 
 #define AEROSPIKE_CONSTANTS_ARR_SIZE (sizeof(aerospike_constants)/sizeof(AerospikeConstants))
@@ -149,49 +149,49 @@ AerospikeConstants aerospike_constants[] = {
  */
 extern void
 set_policy(as_config* as_config_p,
-			as_policy_read *read_policy_p,
-			as_policy_write *write_policy_p,
-			as_policy_operate *operate_policy_p,
-			as_policy_remove *remove_policy_p,
-			as_policy_info *info_policy_p,
-			as_policy_scan *scan_policy_p,
-			as_policy_query *query_policy_p,
-			int8_t *serializer_policy_p,
-			zval *options_p,
-			as_error *error_p TSRMLS_DC);
+	as_policy_read *read_policy_p,
+	as_policy_write *write_policy_p,
+	as_policy_operate *operate_policy_p,
+	as_policy_remove *remove_policy_p,
+	as_policy_info *info_policy_p,
+	as_policy_scan *scan_policy_p,
+	as_policy_query *query_policy_p,
+	int8_t *serializer_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC);
 
 extern void
 set_general_policies(as_config* as_config_p,
-					 zval *options_p,
-					 as_error *error_p,
-					 int8_t *serializer_opt TSRMLS_DC);
+	zval *options_p,
+	as_error *error_p,
+	int8_t *serializer_opt TSRMLS_DC);
 
 extern void
 set_policy_scan(as_config* as_config_p,
-		as_policy_scan *scan_policy_p,
-		int8_t *serializer_policy_p,
-		as_scan *as_scan_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC);
+	as_policy_scan *scan_policy_p,
+	int8_t *serializer_policy_p,
+	as_scan *as_scan_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_batch(as_config* as_config_p,
-		as_policy_batch *batch_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC);
+	as_policy_batch *batch_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_udf_apply(as_config* as_config_p,
-		as_policy_apply *apply_policy_p,
-		int8_t *serializer_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC);
+	as_policy_apply *apply_policy_p,
+	int8_t *serializer_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_query_apply(as_config *as_config_p,
-		as_policy_write *write_policy_p,
-		zval *options_p,
-		as_error *error_p TSRMLS_DC);
+	as_policy_write *write_policy_p,
+	zval *options_p,
+	as_error *error_p TSRMLS_DC);
 
 extern as_status
 declare_policy_constants_php(zend_class_entry *Aerospike_ce TSRMLS_DC);

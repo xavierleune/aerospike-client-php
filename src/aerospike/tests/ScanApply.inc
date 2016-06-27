@@ -586,8 +586,6 @@ class ScanApply extends AerospikeTestCommon
             }
         } while($info['status'] != Aerospike::SCAN_STATUS_COMPLETED);
         $status = $this->db->get($this->keys[5], $get_record, array('age'));
-        var_dump($get_record);
-        // if(52.6 != $get_record['bins']['age']) {
         return Aerospike::OK;
     }
 }

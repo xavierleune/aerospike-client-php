@@ -29,7 +29,7 @@
 
 #define MAX_STATUS_MSG_SIZE 512
 
-/* 
+/*
  *******************************************************************************************************
  * Structure to map constant number to constant name string for Aerospike status constants.
  *******************************************************************************************************
@@ -39,7 +39,7 @@ typedef struct Aerospike_Status {
 	char status_msg[MAX_STATUS_MSG_SIZE];
 } AerospikeStatus;
 
-/* 
+/*
  *******************************************************************************************************
  * Instance of Mapper of constant number to constant name string for Aerospike status constants.
  *******************************************************************************************************
@@ -103,6 +103,7 @@ AerospikeStatus aerospike_status[] = {
 	{ AEROSPIKE_NOT_AUTHENTICATED             ,   "ERR_NOT_AUTHENTICATED"              },
 	{ AEROSPIKE_ROLE_VIOLATION                ,   "ERR_ROLE_VIOLATION"                 },
 	{ AEROSPIKE_ROLE_ALREADY_EXISTS           ,   "ERR_ROLE_ALREADY_EXISTS"            },
+	{ AEROSPIKE_ERR_GEO_INVALID_GEOJSON       ,   "ERR_GEO_INVALID_GEOJSON"             },
 };
 
 #define AEROSPIKE_STATUS_ARR_SIZE (sizeof(aerospike_status)/sizeof(AerospikeStatus))
