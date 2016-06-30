@@ -315,6 +315,9 @@ PS_READ_FUNC(aerospike)
 
             *val = estrndup(session_raw_p, as_bytes_size(session_bytes_p));
             *vallen = as_bytes_size(session_bytes_p);
+
+            as_val_destroy(session_data_p);
+            as_bytes_destroy(session_bytes_p);
             break;
         default: 
             PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
