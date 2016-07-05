@@ -369,10 +369,10 @@ PS_WRITE_FUNC(aerospike)
         goto exit;
     }
 
-    if (val == NULL || !strcmp(val, "")) {
+    /*if (val == NULL || !strcmp(val, "")) {
         DEBUG_PHP_EXT_DEBUG("Empty session data");
         goto exit;
-    }
+    }*/
 
     as_key_init_str(&key_put, session_p->ns_p, session_p->set_p, key);
     init_key = 1;
