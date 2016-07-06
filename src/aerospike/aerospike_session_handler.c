@@ -312,9 +312,9 @@ PS_READ_FUNC(aerospike)
             session_bytes = as_bytes_fromval((as_val *) session_data_p);
             session_bytes_value = as_bytes_get(session_bytes);
             session_bytes_str = (unsigned char *) session_bytes_value;
-
-            *val = estrndup(session_bytes_str, as_bytes_size(session_bytes));
+            
             *vallen = as_bytes_size(session_bytes);
+            *val = estrndup(session_bytes_str, *vallen);
 
             as_val_destroy(session_data_p);
             as_bytes_destroy(session_bytes);
