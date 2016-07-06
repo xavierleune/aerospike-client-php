@@ -281,6 +281,9 @@ PS_READ_FUNC(aerospike)
     as_key                  key_get;
     int16_t                 init_key = 0;
     as_bin_value*           session_data_p = NULL;
+    as_bytes*               session_bytes = NULL;
+    uint8_t*                session_bytes_value = NULL;
+    const unsigned char*    session_bytes_str = NULL;
 
     DEBUG_PHP_EXT_INFO("In PS_READ_FUNC");
 
@@ -304,20 +307,17 @@ PS_READ_FUNC(aerospike)
          goto exit;
     }
 
-    as_bytes*               session_bytes_p = NULL;
-    uint8_t*                session_raw = NULL;
-    const unsigned char*    session_raw_p = NULL;
     switch (as_val_type(session_data_p)) {
         case AS_BYTES:
-            session_bytes_p = as_bytes_fromval((as_val *) session_data_p);
-            session_raw = as_bytes_get(session_bytes_p);
-            session_raw_p = (unsigned char *) session_raw;
+            session_bytes = as_bytes_fromval((as_val *) session_data_p);
+            session_bytes_value = as_bytes_get(session_bytes);
+            session_bytes_str = (unsigned char *) session_bytes_value;
 
-            *val = estrndup(session_raw_p, as_bytes_size(session_bytes_p));
-            *vallen = as_bytes_size(session_bytes_p);
+            *val = estrndup(session_bytes_str, as_bytes_size(session_bytes));
+            *vallen = as_bytes_size(session_bytes);
 
             as_val_destroy(session_data_p);
-            as_bytes_destroy(session_bytes_p);
+            as_bytes_destroy(session_bytes);
             break;
         default: 
             PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
@@ -368,11 +368,6 @@ PS_WRITE_FUNC(aerospike)
         DEBUG_PHP_EXT_ERROR("Invalid Session ID");
         goto exit;
     }
-
-    /*if (val == NULL || !strcmp(val, "")) {
-        DEBUG_PHP_EXT_DEBUG("Empty session data");
-        goto exit;
-    }*/
 
     as_key_init_str(&key_put, session_p->ns_p, session_p->set_p, key);
     init_key = 1;
