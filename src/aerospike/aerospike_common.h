@@ -57,9 +57,11 @@
 #if PHP_VERSION_ID < 70000
 	#define DECLARE_ZVAL(__var)     zval* __var = NULL
 	#define DECLARE_ZVAL_P(__var)   zval** __var = NULL
+	#define PARAM_ZVAL_P(__var)     zval** __var
 #else
 	#define DECLARE_ZVAL(__var)     zval __var
 	#define DECLARE_ZVAL_P(__var)   zval* __var = NULL
+	#define PARAM_ZVAL_P(__var)     zval* __var
 #endif
 
 /*
