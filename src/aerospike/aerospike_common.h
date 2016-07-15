@@ -43,9 +43,8 @@
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
 	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
 #else
-	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(Z_OBJ_P(getThis()))
-	//#define PHP_AEROSPIKE_GET_OBJECT    php_custom_object_fetch_object(Z_OBJ_P(getThis() TSRMLS_CC))
 	#define Z_CUSTOM_OBJ_P(zv)          php_custom_object_fetch_object(Z_OBJ_P(zv));
+	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(php_custom_object_fetch_object(Z_OBJ_P(getThis())))
 #endif
 
 

@@ -648,9 +648,6 @@ PHP_METHOD(Aerospike, __construct)
     HashTable              *persistent_list;
     HashTable              *shm_key_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     persistent_list =      (AEROSPIKE_G(persistent_list_g));
     shm_key_list =         (AEROSPIKE_G(shm_key_list_g));
@@ -756,9 +753,6 @@ exit:
 PHP_METHOD(Aerospike, shmKey)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
             !(aerospike_obj_p->as_ref_p->as_p)) {
@@ -781,9 +775,6 @@ PHP_METHOD(Aerospike, __destruct)
 {
     as_status              status = AEROSPIKE_OK;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-        aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     if (!aerospike_obj_p) {
         status = AEROSPIKE_ERR_CLIENT;
@@ -804,9 +795,6 @@ exit:
 PHP_METHOD(Aerospike, isConnected)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
     as_error               error;
 
     if (!(aerospike_obj_p && aerospike_obj_p->as_ref_p && aerospike_obj_p->as_ref_p->as_p)) {
@@ -831,9 +819,6 @@ PHP_METHOD(Aerospike, close)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
@@ -886,9 +871,6 @@ PHP_METHOD(Aerospike, reconnect)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p || !(aerospike_obj_p->as_ref_p) ||
@@ -950,9 +932,6 @@ PHP_METHOD(Aerospike, get)
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -1049,9 +1028,6 @@ PHP_METHOD(Aerospike, put)
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1120,9 +1096,6 @@ PHP_METHOD(Aerospike, getNodes)
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1171,9 +1144,6 @@ PHP_METHOD(Aerospike, info)
     zval*                  host = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1240,9 +1210,6 @@ PHP_METHOD(Aerospike, infoMany)
     zval*                  config_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1304,9 +1271,6 @@ PHP_METHOD(Aerospike, existsMany)
     zval*                   metadata_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -1375,9 +1339,6 @@ PHP_METHOD(Aerospike, getMany)
     zval*                   filter_bins_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1442,9 +1403,6 @@ PHP_METHOD(Aerospike, operate)
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1529,9 +1487,6 @@ PHP_METHOD(Aerospike, append)
     long                   bin_name_len;
     long                   append_str_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1609,9 +1564,6 @@ PHP_METHOD(Aerospike, remove)
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1673,9 +1625,6 @@ PHP_METHOD(Aerospike, exists)
     zval*                  metadata_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1721,9 +1670,6 @@ PHP_METHOD(Aerospike, getMetadata)
     zval*                  metadata_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-        aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1763,11 +1709,7 @@ exit:
 PHP_METHOD(Aerospike, getHeader)
 {
     zval *object = getThis();
-#if PHP_VERSION_ID < 70000
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
-#else
-    Aerospike_object *intern = (Aerospike_object *) Z_OBJ_P(object TSRMLS_CC);
-#endif
+    Aerospike_object *intern = PHP_AEROSPIKE_GET_OBJECT;
 
     /*** TO BE IMPLEMENTED ***/
 
@@ -1790,9 +1732,6 @@ PHP_METHOD(Aerospike, prepend)
     long                   bin_name_len;
     long                   prepend_str_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -1881,9 +1820,7 @@ PHP_METHOD(Aerospike, increment)
     #endif
 
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
+
     as_error_init(&error);
 
     if (!aerospike_obj_p) {
@@ -1972,9 +1909,6 @@ PHP_METHOD(Aerospike, touch)
     int16_t                initializeKey = 0;
     long                   time_to_live;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-        aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -2085,9 +2019,6 @@ PHP_METHOD(Aerospike, listAppend)
     char*                  bin_name_p;
     long                   bin_name_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     as_record_inita(&record, 1);
@@ -2240,9 +2171,6 @@ PHP_METHOD(Aerospike, listInsert)
     char*                  bin_name_p;
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     as_record_inita(&record, 1);
@@ -2383,9 +2311,6 @@ PHP_METHOD(Aerospike, listSet)
     char*                  bin_name_p;
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     as_record_inita(&record, 1);
@@ -2514,9 +2439,6 @@ PHP_METHOD(Aerospike, listMerge)
     char*                  bin_name_p = NULL;
     long                   bin_name_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -2638,9 +2560,6 @@ PHP_METHOD(Aerospike, listSize)
     char*                  bin_name_p = NULL;
     long                   bin_name_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -2735,9 +2654,6 @@ PHP_METHOD(Aerospike, listClear)
     char*                  bin_name_p = NULL;
     long                   bin_name_len;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -2833,9 +2749,6 @@ PHP_METHOD(Aerospike, listTrim)
     long                   index;
     long                   count;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -2935,9 +2848,6 @@ PHP_METHOD(Aerospike, listInsertItems)
 
     long                   index = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3066,9 +2976,6 @@ PHP_METHOD(Aerospike, listGet)
     long                   index;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3183,9 +3090,6 @@ PHP_METHOD(Aerospike, listGetRange)
     long                   count;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3301,9 +3205,6 @@ PHP_METHOD(Aerospike, listPop)
     long                   index;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3422,9 +3323,6 @@ PHP_METHOD(Aerospike, listPopRange)
     long                   count;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3538,9 +3436,6 @@ PHP_METHOD(Aerospike, listRemove)
     #endif
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3636,9 +3531,6 @@ PHP_METHOD(Aerospike, listRemoveRange)
     long                   index;
     long                   count;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
 
@@ -3886,9 +3778,6 @@ PHP_METHOD(Aerospike, removeBin)
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-        aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -4220,9 +4109,7 @@ PHP_METHOD(Aerospike, query)
     HashTable*                  bins_ht_p = NULL;
     HashTable*                  predicate_ht_p = NULL;
     Aerospike_object*           aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
+
     userland_callback           user_func = {0};
 
     as_error_init(&error);
@@ -4307,9 +4194,6 @@ PHP_METHOD(Aerospike, aggregate)
     zval*                   options_p = NULL;
     HashTable*              bins_ht_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     /*
@@ -4420,9 +4304,7 @@ PHP_METHOD(Aerospike, scan)
     as_error                error;
     int                     e_level = 0;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
+
     char                    *ns_p = NULL;
     #if PHP_VERSION_ID < 70000
       int                    ns_p_length = 0;
@@ -4519,9 +4401,6 @@ PHP_METHOD(Aerospike, queryApply)
     zval*                  args_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -4650,9 +4529,6 @@ PHP_METHOD(Aerospike, scanApply)
     zval*                  args_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -4762,9 +4638,6 @@ PHP_METHOD(Aerospike, scanInfo)
     zval*                  scan_info_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -4838,9 +4711,6 @@ PHP_METHOD(Aerospike, jobInfo)
     zval*               job_info_p = NULL;
     zval*               options_p = NULL;
     Aerospike_object*   aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5055,9 +4925,6 @@ PHP_METHOD(Aerospike, register)
     zval*                  path_zval_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5129,9 +4996,6 @@ PHP_METHOD(Aerospike, deregister)
     zval*                  module_zval_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5207,9 +5071,6 @@ PHP_METHOD(Aerospike, apply)
     int16_t                initializeKey = 0;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5330,9 +5191,6 @@ PHP_METHOD(Aerospike, listRegistered)
     long                   language = -1;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5403,9 +5261,7 @@ PHP_METHOD(Aerospike, getRegistered)
     zval*                  udf_code_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
+
     as_error_init(&error);
 
     if (!aerospike_obj_p) {
@@ -5506,9 +5362,6 @@ PHP_METHOD(Aerospike, addIndex)
     char                    *name_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5584,9 +5437,6 @@ PHP_METHOD(Aerospike, dropIndex)
     char                    *name_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5674,9 +5524,6 @@ PHP_METHOD(Aerospike, createUser)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5747,9 +5594,6 @@ PHP_METHOD(Aerospike, dropUser)
     #endif
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5822,9 +5666,6 @@ PHP_METHOD(Aerospike, changePassword)
     #endif
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5898,9 +5739,6 @@ PHP_METHOD(Aerospike, setPassword)
     char*                   password_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -5972,9 +5810,6 @@ PHP_METHOD(Aerospike, grantRoles)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6046,9 +5881,6 @@ PHP_METHOD(Aerospike, revokeRoles)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6120,9 +5952,6 @@ PHP_METHOD(Aerospike, queryUser)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6191,9 +6020,7 @@ PHP_METHOD(Aerospike, queryUsers)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
+
     as_error_init(&error);
 
     if (!aerospike_obj_p) {
@@ -6256,9 +6083,6 @@ PHP_METHOD(Aerospike, createRole)
     zval*                   privileges_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6338,9 +6162,6 @@ PHP_METHOD(Aerospike, dropRole)
     #endif
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6408,9 +6229,6 @@ PHP_METHOD(Aerospike, grantPrivileges)
     zval*                   privileges_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6490,9 +6308,6 @@ PHP_METHOD(Aerospike, revokePrivileges)
     zval*                   privileges_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6571,9 +6386,6 @@ PHP_METHOD(Aerospike, queryRole)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6652,9 +6464,6 @@ PHP_METHOD(Aerospike, queryRoles)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6720,9 +6529,6 @@ PHP_METHOD(Aerospike, setLogLevel)
     as_error               error;
     long                   log_level;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
 
     as_error_init(&error);
     if (!aerospike_obj_p) {
@@ -6764,9 +6570,6 @@ exit:
 PHP_METHOD(Aerospike, setLogHandler)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
-    #if PHP_VERSION_ID >= 70000
-      aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
-    #endif
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     uint32_t               ret_val = -1;
