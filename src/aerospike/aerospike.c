@@ -60,6 +60,22 @@
 #include "aerospike_general_constants.h"
 #include "aerospike_transform.h"
 
+#define CHECK_AEROSPIKE_OBJECT()\
+	if (!aerospike_obj_p) {\
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");\
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");\
+        status = AEROSPIKE_ERR_CLIENT;\
+        goto exit;\
+    }
+
+#define CHECK_CONNECTED()\
+	 if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {\
+        status = AEROSPIKE_ERR_CLUSTER;\
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "put: connection not established");\
+        DEBUG_PHP_EXT_ERROR("put: connection not established");\
+        goto exit;\
+    }
+
 bool record_stream_callback(const as_val* p_val, void* udata);
 
 /*
@@ -653,12 +669,8 @@ PHP_METHOD(Aerospike, __construct)
     shm_key_list =         (AEROSPIKE_G(shm_key_list_g));
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
@@ -934,20 +946,9 @@ PHP_METHOD(Aerospike, get)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
+    CHECK_AEROSPIKE_OBJECT();
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "get: connection not established");
-        DEBUG_PHP_EXT_ERROR("get: connection not established");
-        goto exit;
-    }
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
     #if PHP_VERSION_ID < 70000
@@ -1030,19 +1031,9 @@ PHP_METHOD(Aerospike, put)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
 
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "put: connection not established");
-        DEBUG_PHP_EXT_ERROR("put: connection not established");
-        goto exit;
-    }
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|la", &key_record_p, &record_p, &ttl_u32, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1098,20 +1089,8 @@ PHP_METHOD(Aerospike, getNodes)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        status = AEROSPIKE_ERR_CLIENT;
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-            "getNodes: connection not established");
-        DEBUG_PHP_EXT_ERROR("getNodes: connection not established");
-        status = AEROSPIKE_ERR_CLUSTER;
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     array_init(return_value);
 
@@ -1146,19 +1125,8 @@ PHP_METHOD(Aerospike, info)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Info: connection not established");
-        DEBUG_PHP_EXT_ERROR("Info: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
         #if PHP_VERSION_ID < 70000
@@ -1212,19 +1180,8 @@ PHP_METHOD(Aerospike, infoMany)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        status = AEROSPIKE_ERR_CLIENT;
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "InfoMany: connection not established");
-        DEBUG_PHP_EXT_ERROR("InfoMany: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa",
                 &request_p, &request_len, &config_p, &options_p) == FAILURE) {
@@ -1273,20 +1230,8 @@ PHP_METHOD(Aerospike, existsMany)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "existsMany : connection not established");
-        DEBUG_PHP_EXT_ERROR("existsMany : connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az/|a", &keys_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1341,20 +1286,8 @@ PHP_METHOD(Aerospike, getMany)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "getMany : connection not established");
-        DEBUG_PHP_EXT_ERROR("getMany : connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az/|a!a", &keys_p,
                 &records_p, &filter_bins_p, &options_p)) {
@@ -1405,19 +1338,8 @@ PHP_METHOD(Aerospike, operate)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "operate: connection not established");
-        DEBUG_PHP_EXT_ERROR("operate: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|z/a",
                 &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE) {
@@ -1489,19 +1411,8 @@ PHP_METHOD(Aerospike, append)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "append: connection not established");
-        DEBUG_PHP_EXT_ERROR("append: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
@@ -1566,19 +1477,8 @@ PHP_METHOD(Aerospike, remove)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "remove: connection not established");
-        DEBUG_PHP_EXT_ERROR("remove: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &key_record_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1627,18 +1527,8 @@ PHP_METHOD(Aerospike, exists)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "exists: connection not established");
-        DEBUG_PHP_EXT_ERROR("exists: connection not established");
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|z", &key_record_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1672,19 +1562,8 @@ PHP_METHOD(Aerospike, getMetadata)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "getMetadata: connection not established");
-        DEBUG_PHP_EXT_ERROR("getMetadata: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1734,19 +1613,8 @@ PHP_METHOD(Aerospike, prepend)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "prepend: connection not established");
-        DEBUG_PHP_EXT_ERROR("prepend: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
@@ -1822,20 +1690,8 @@ PHP_METHOD(Aerospike, increment)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "increment: connection not established");
-        DEBUG_PHP_EXT_ERROR("increment: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
@@ -1911,19 +1767,8 @@ PHP_METHOD(Aerospike, touch)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "touch: connection not established");
-        DEBUG_PHP_EXT_ERROR("touch: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zl|a",
                 &key_record_p, &time_to_live, &options_p) == FAILURE) {
@@ -2026,19 +1871,8 @@ PHP_METHOD(Aerospike, listAppend)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listAppend: connection not established");
-        DEBUG_PHP_EXT_ERROR("listAppend: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2178,19 +2012,8 @@ PHP_METHOD(Aerospike, listInsert)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listInsert: connection not established");
-        DEBUG_PHP_EXT_ERROR("listInsert: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2318,19 +2141,8 @@ PHP_METHOD(Aerospike, listSet)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listSet: connection not established");
-        DEBUG_PHP_EXT_ERROR("listSet: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2445,19 +2257,8 @@ PHP_METHOD(Aerospike, listMerge)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listMerge: connection not established");
-        DEBUG_PHP_EXT_ERROR("listMerge: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2566,19 +2367,8 @@ PHP_METHOD(Aerospike, listSize)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listSize: connection not established");
-        DEBUG_PHP_EXT_ERROR("listSize: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2660,19 +2450,8 @@ PHP_METHOD(Aerospike, listClear)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listClear: connection not established");
-        DEBUG_PHP_EXT_ERROR("listClear: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2755,19 +2534,8 @@ PHP_METHOD(Aerospike, listTrim)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listTrim: connection not established");
-        DEBUG_PHP_EXT_ERROR("listTrim: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2854,19 +2622,8 @@ PHP_METHOD(Aerospike, listInsertItems)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listInsertItems: connection not established");
-        DEBUG_PHP_EXT_ERROR("listInsertItems: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2982,19 +2739,8 @@ PHP_METHOD(Aerospike, listGet)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listGet: connection not established");
-        DEBUG_PHP_EXT_ERROR("listGet: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -3096,19 +2842,8 @@ PHP_METHOD(Aerospike, listGetRange)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listGetRange: connection not established");
-        DEBUG_PHP_EXT_ERROR("listGetRange: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -3211,19 +2946,8 @@ PHP_METHOD(Aerospike, listPop)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listPop: connection not established");
-        DEBUG_PHP_EXT_ERROR("listPop: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -3329,19 +3053,8 @@ PHP_METHOD(Aerospike, listPopRange)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listPopRange: connection not established");
-        DEBUG_PHP_EXT_ERROR("listPopRange: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -3442,19 +3155,8 @@ PHP_METHOD(Aerospike, listRemove)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listRemove: connection not established");
-        DEBUG_PHP_EXT_ERROR("listRemove: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -3537,20 +3239,8 @@ PHP_METHOD(Aerospike, listRemoveRange)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listRemoveRange: connection not established");
-        DEBUG_PHP_EXT_ERROR("listRemoveRange: connection not established");
-        goto exit;
-    }
-
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
@@ -3780,19 +3470,8 @@ PHP_METHOD(Aerospike, removeBin)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "removeBin: connection not established");
-        DEBUG_PHP_EXT_ERROR("removeBin: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a", &key_record_p, &bins_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -4115,21 +3794,8 @@ PHP_METHOD(Aerospike, query)
     as_error_init(&error);
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
-                "Aerospike::query() has no valid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() has no connection to the database");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "Aerospike::query() has no connection to the database");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!f|a!a!",
                 &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
@@ -4202,20 +3868,8 @@ PHP_METHOD(Aerospike, aggregate)
      * parameter in zend_parse_parameters().
      */
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "aggregate: Connection not established");
-        DEBUG_PHP_EXT_ERROR("aggregate: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                 "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
@@ -4326,19 +3980,8 @@ PHP_METHOD(Aerospike, scan)
      */
     as_error_init(&error);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Aerospike::scan() has no valid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Aerospike::scan() has no connection to the database");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!f|aza",
                 &ns_p, &ns_p_length, &set_p, &set_p_length,
@@ -4403,20 +4046,8 @@ PHP_METHOD(Aerospike, queryApply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryApply: Connection not established");
-        DEBUG_PHP_EXT_ERROR("queryApply : Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                 "zzzzzzz/|z", &namespace_zval_p, &set_zval_p, &predicate_p,
@@ -4531,20 +4162,8 @@ PHP_METHOD(Aerospike, scanApply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "scanApply: Connection not established");
-        DEBUG_PHP_EXT_ERROR("scanApply : Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                 "zzzzzz/|z", &namespace_zval_p, &set_zval_p,
@@ -4640,20 +4259,8 @@ PHP_METHOD(Aerospike, scanInfo)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "scanInfo: Connection not established");
-        DEBUG_PHP_EXT_ERROR("scanInfo: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz/|z",
                 &scan_id, &scan_info_p, &options_p)) {
@@ -4713,20 +4320,8 @@ PHP_METHOD(Aerospike, jobInfo)
     Aerospike_object*   aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "jobInfo: Connection not established");
-        DEBUG_PHP_EXT_ERROR("jobInfo: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz/|z",
                 &job_id, &module_p, &module_len, &job_info_p, &options_p)) {
@@ -4927,20 +4522,8 @@ PHP_METHOD(Aerospike, register)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "register: connection not established");
-        DEBUG_PHP_EXT_ERROR("register: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|la",
                 &path_zval_p, &module_zval_p, &language, &options_p)) {
@@ -4998,20 +4581,8 @@ PHP_METHOD(Aerospike, deregister)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "deregister: connection not established");
-        DEBUG_PHP_EXT_ERROR("deregister: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
                 &module_zval_p, &options_p)) {
@@ -5073,20 +4644,8 @@ PHP_METHOD(Aerospike, apply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "apply: Connection not established");
-        DEBUG_PHP_EXT_ERROR("apply: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zz/z",
                 &key_record_p, &module_zval_p, &function_zval_p, &args_p,
@@ -5193,20 +4752,8 @@ PHP_METHOD(Aerospike, listRegistered)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "listRegistered: Connection not established");
-        DEBUG_PHP_EXT_ERROR("listRegistered: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
         #if PHP_VERSION_ID < 70000
@@ -5264,20 +4811,8 @@ PHP_METHOD(Aerospike, getRegistered)
 
     as_error_init(&error);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "getRegistered: Connection not established");
-        DEBUG_PHP_EXT_ERROR("getRegistered: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 		#if PHP_VERSION_ID < 70000
@@ -5364,20 +4899,8 @@ PHP_METHOD(Aerospike, addIndex)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "addIndex: Connection not established");
-        DEBUG_PHP_EXT_ERROR("addIndex: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssssll|z",
                 &ns_p, &ns_p_length, &set_p, &set_p_length, &bin_p,
@@ -5439,20 +4962,8 @@ PHP_METHOD(Aerospike, dropIndex)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "dropIndex: Connection not established");
-        DEBUG_PHP_EXT_ERROR("dropIndex: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|z",
                 &ns_p, &ns_p_length, &name_p, &name_p_length, &options_p)) {
@@ -5526,20 +5037,8 @@ PHP_METHOD(Aerospike, createUser)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "createUser: Connection not established");
-        DEBUG_PHP_EXT_ERROR("createUser: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa|a",
                 &user_p, &user_p_length, &password_p, &password_p_length,
@@ -5596,20 +5095,8 @@ PHP_METHOD(Aerospike, dropUser)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "dropUser: Connection not established");
-        DEBUG_PHP_EXT_ERROR("dropUser: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a",
                 &user_p, &user_p_length, &options_p)) {
@@ -5668,20 +5155,8 @@ PHP_METHOD(Aerospike, changePassword)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "changePassword: Connection not established");
-        DEBUG_PHP_EXT_ERROR("changePassword: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
                 &user_p, &user_p_length, &password_p, &password_p_length,
@@ -5741,20 +5216,8 @@ PHP_METHOD(Aerospike, setPassword)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "setPassword: Connection not established");
-        DEBUG_PHP_EXT_ERROR("setPassword: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
                 &user_p, &user_p_length, &password_p, &password_p_length,
@@ -5812,20 +5275,8 @@ PHP_METHOD(Aerospike, grantRoles)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "grantRoles: Connection not established");
-        DEBUG_PHP_EXT_ERROR("grantRoles: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
                 &user_p, &user_p_length, &roles_p, &options_p)) {
@@ -5883,20 +5334,8 @@ PHP_METHOD(Aerospike, revokeRoles)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "revokeRoles: Connection not established");
-        DEBUG_PHP_EXT_ERROR("revokeRoles: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
                 &user_p, &user_p_length, &roles_p, &options_p)) {
@@ -5954,20 +5393,8 @@ PHP_METHOD(Aerospike, queryUser)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryUser: Connection not established");
-        DEBUG_PHP_EXT_ERROR("queryUser: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz/|a",
                 &user_p, &user_p_length, &roles_p, &options_p)) {
@@ -6023,20 +5450,8 @@ PHP_METHOD(Aerospike, queryUsers)
 
     as_error_init(&error);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryUsers: Connection not established");
-        DEBUG_PHP_EXT_ERROR("queryUsers: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/|a",
                 &roles_p, &options_p)) {
@@ -6085,20 +5500,8 @@ PHP_METHOD(Aerospike, createRole)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "createRole: Connection not established");
-        DEBUG_PHP_EXT_ERROR("createRole: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a",
                 &role_zval_p, &privileges_p, &options_p)) {
@@ -6164,20 +5567,8 @@ PHP_METHOD(Aerospike, dropRole)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "dropRole: Connection not established");
-        DEBUG_PHP_EXT_ERROR("dropRole: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a",
                 &role_p, &role_p_length, &options_p)) {
@@ -6231,20 +5622,8 @@ PHP_METHOD(Aerospike, grantPrivileges)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "grantPrivileges: Connection not established");
-        DEBUG_PHP_EXT_ERROR("grantPrivileges: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a",
                 &role_zval_p, &privileges_p, &options_p)) {
@@ -6310,20 +5689,8 @@ PHP_METHOD(Aerospike, revokePrivileges)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "revokePrivileges: Connection not established");
-        DEBUG_PHP_EXT_ERROR("revokePrivileges: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/a|a",
                 &role_zval_p, &privileges_p, &options_p)) {
@@ -6388,21 +5755,8 @@ PHP_METHOD(Aerospike, queryRole)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryRole: Connection not established");
-        DEBUG_PHP_EXT_ERROR("querRole: Connection not established");
-        goto exit;
-    }
-
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|a",
                 &role_zval_p, &roles_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -6466,20 +5820,8 @@ PHP_METHOD(Aerospike, queryRoles)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryRoles: Connection not established");
-        DEBUG_PHP_EXT_ERROR("querRoles: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/|a",
                 &roles_p, &options_p)) {
@@ -6531,19 +5873,8 @@ PHP_METHOD(Aerospike, setLogLevel)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogLevel: connection not established");
-        DEBUG_PHP_EXT_ERROR("setLogLevel: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &log_level)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -6576,10 +5907,10 @@ PHP_METHOD(Aerospike, setLogHandler)
     is_callback_registered = 0;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
+	if (!aerospike_obj_p) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
         RETURN_FALSE;
     }
 
