@@ -75,14 +75,8 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 	as_val*                value_p = NULL;
 	const char             *select[] = {bin_name_p, NULL};
 
-
-	#if PHP_VERSION_ID < 70000
-		zval* temp_record_p = NULL;
-		zval* append_val_copy = NULL;
-	#else
-		zval temp_record_p;
-		zval append_val_copy;
-	#endif
+	DECLARE_ZVAL(temp_record_p);
+	DECLARE_ZVAL(append_val_copy);
 
 	as_record              record;
 	as_static_pool         static_pool = {0};
@@ -569,15 +563,11 @@ aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
 	#endif
 	int                         op;
 	HashTable*                  each_operation_array_p = NULL;
-	#if PHP_VERSION_ID < 70000
-				zval**                      each_operation;
-				zval**                      operation;
-				zval**                      each_operation_back;
-	#else
-				zval*                       each_operation;
-		    zval*                       operation;
-				zval*                       each_operation_back;
-	#endif
+	
+	DECLARE_ZVAL_P(each_operation);
+	DECLARE_ZVAL_P(operation);
+	DECLARE_ZVAL_P(each_operation_back);
+	
 	int8_t                      serializer_policy;
 	uint32_t                    ttl;
 	int64_t                     index;

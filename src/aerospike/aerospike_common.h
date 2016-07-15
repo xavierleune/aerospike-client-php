@@ -53,6 +53,15 @@
   aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
 #endif*/
 
+
+#if PHP_VERSION_ID < 70000
+	#define DECLARE_ZVAL(__var)     zval* __var = NULL
+	#define DECLARE_ZVAL_P(__var)   zval** __var = NULL
+#else
+	#define DECLARE_ZVAL(__var)     zval __var
+	#define DECLARE_ZVAL_P(__var)   zval* __var = NULL
+#endif
+
 /*
  *******************************************************************************************************
  * MACROS FOR MAX STORE SIZE.

@@ -43,11 +43,9 @@ aerospike_security_operations_convert_roles_from_zval(HashTable *roles_ht_p,
 		char **roles_array_p, int *roles_count, as_error *error_p TSRMLS_DC)
 {
 	HashPosition                roles_position;
-#if (PHP_VERSION_ID < 70000)
-	zval**                      roles_entry = NULL;
-#else
-	zval*                       roles_entry = NULL;
-#endif
+	
+	DECLARE_ZVAL_P(roles_entry);
+
 	int                         roles_index = 0;
 
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
@@ -100,22 +98,20 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 {
 	HashPosition                privileges_position;
 	HashPosition                privileges_individual_position;
-#if (PHP_VERSION_ID < 70000)
-	zval**                      privileges_entry = NULL;
-#else
-	zval *                      privileges_entry = NULL;
-#endif
+
+	DECLARE_ZVAL_P(privileges_entry);
+	
 	int                         privileges_index = 0;
 
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
 #if (PHP_VERSION_ID < 70000)
   AEROSPIKE_FOREACH_HASHTABLE(privileges_ht_p, privileges_position, privileges_entry) {
-	zval**                      each_privilege_entry = NULL;
 #else
   ZEND_HASH_FOREACH_VAL(privileges_ht_p, privileges_entry) {
-	zval*                       each_privilege_entry = NULL;
 #endif
+
+	DECLARE_ZVAL_P(each_privilege_entry);
 	HashTable*                  each_privilege_p = NULL;
 
 #if (PHP_VERSION_ID < 70000)
