@@ -710,6 +710,8 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Invalid type for keys");
 	}
 
+	as_batch_read_inita(&records, zend_hash_num_elements(keys_ht_p));
+
 	if (zend_hash_num_elements(keys_ht_p) == 0) {
 		/*
 		 * No need to set error here. This condition can be eliminated after C
@@ -718,7 +720,6 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 		goto exit;
 	}
 
-	as_batch_read_inita(&records, zend_hash_num_elements(keys_ht_p));
 	as_batch_read_record* record = NULL;
 
 	#if PHP_VERSION_ID < 70000
