@@ -538,7 +538,6 @@
             uint key_len;                                                      \
             zend_ulong index;                                                  \
             hashtable = Z_ARRVAL_P((zval*) value);                             \
-            zend_string* z_strr;                                               \
             zval* data;                                                        \
             HashPosition pointerr;                                             \
             zend_string* z;                                                    \
@@ -547,7 +546,6 @@
             ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {          \
                 do {                                                           \
                     char *local_key;                                           \
-                    zend_string* z_str;                                        \
                     int t = zend_hash_num_elements(hashtable);                 \
                     if (z) {                                                   \
                         as_string *map_str;                                    \

@@ -19,9 +19,9 @@
 #include "php.h"
 #include "ext/standard/php_var.h"
 #if PHP_VERSION_ID < 70000
-#include "ext/standard/php_smart_str.h"
+	#include "ext/standard/php_smart_str.h"
 #else
-#include "ext/standard/php_smart_string.h"
+	#include <zend_smart_str.h>
 #endif
 
 #include "aerospike/as_status.h"
@@ -44,7 +44,7 @@
  *******************************************************************************************************
  */
 #define PHP_COMPARE_KEY(key_const, key_const_len, key_obtained, key_obtained_len)	\
-	 ((key_const_len == key_obtained_len) && (0 == memcmp(key_obtained, key_const, key_const_len)))
+	((key_const_len == key_obtained_len) && (0 == memcmp(key_obtained, key_const, key_const_len)))
 
 /*
  *******************************************************************************************************
@@ -52,19 +52,14 @@
  *******************************************************************************************************
  */
 void AS_DEFAULT_PUT(Aerospike_object* as, void *key, void *value, as_record *record,
-					void *static_pool, int8_t serializer_policy,
-					as_error *error_p TSRMLS_DC);
+	void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 void AS_LIST_PUT(Aerospike_object* as, void *key, void *value, void *store,
-				 void *static_pool, int8_t serializer_policy,
-				 as_error *error_p TSRMLS_DC);
+	void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 void AS_MAP_PUT(Aerospike_object* as, void *key, void *value, void *store,
-				void *static_pool, int8_t serializer_policy,
-				as_error *error_p TSRMLS_DC);
+	void *static_pool, int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 bool AS_LIST_GET_CALLBACK(as_val *value, void *array);
 bool AS_MAP_GET_CALLBACK(as_val *key, as_val *value, void *array);
-static as_status
-aerospike_transform_iteratefor_addr_port(HashTable* ht_p,
-		void* as_config_p);
+static as_status aerospike_transform_iteratefor_addr_port(HashTable* ht_p, void* as_config_p);
 
 /*
  *******************************************************************************************************
@@ -114,7 +109,6 @@ static void set_as_bytes(as_bytes *bytes,
 	}
 
 	as_bytes_init(bytes, bytes_string_len);
-
 	if (!as_bytes_set(bytes, 0, bytes_string, bytes_string_len)) {
 		DEBUG_PHP_EXT_ERROR("Unable to set as_bytes");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to set as_bytes");
@@ -286,11 +280,7 @@ static void serialize_based_on_serializer_policy(int32_t serializer_policy,
 
 				PHP_VAR_SERIALIZE_DESTROY(var_hash);
 				if (EG(exception)) {
-					#if PHP_VERSION_ID < 70000
-							smart_str_free(&buf);
-					#else
-							smart_string_free(&buf);
-					#endif
+					smart_str_free(&buf);
 					DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 							"Unable to serialize using standard php serializer");
@@ -303,29 +293,17 @@ static void serialize_based_on_serializer_policy(int32_t serializer_policy,
 					set_as_bytes(bytes, (uint8_t*)buf.s->val, buf.s->len, AS_BYTES_PHP, error_p TSRMLS_CC);
 #endif
 					if (AEROSPIKE_OK != (error_p->code)) {
-						#if PHP_VERSION_ID < 70000
-								smart_str_free(&buf);
-						#else
-								smart_string_free(&buf);
-						#endif
+						smart_str_free(&buf);
 						goto exit;
 					}
 				} else {
-					#if PHP_VERSION_ID < 70000
-							smart_str_free(&buf);
-					#else
-							smart_string_free(&buf);
-					#endif
+					smart_str_free(&buf);
 					DEBUG_PHP_EXT_ERROR("Unable to serialize using standard php serializer");
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 							"Unable to serialize using standard php serializer");
 					goto exit;
 				}
-				#if PHP_VERSION_ID < 70000
-						smart_str_free(&buf);
-				#else
-						smart_string_free(&buf);
-				#endif
+				smart_str_free(&buf);
 			}
 			break;
 		case SERIALIZER_USER:
@@ -920,7 +898,7 @@ static void ADD_MAP_INDEX_REC(Aerospike_object* as, void *key, void *value, void
  *******************************************************************************************************
  */
 static void ADD_MAP_INDEX_PAIR(Aerospike_object* as, void *key, void *value, void *array, void *err TSRMLS_DC)
-{;
+{
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
 
@@ -1518,7 +1496,6 @@ bool AS_LIST_GET_CALLBACK(as_val *value, void *array)
 	TSRMLS_FETCH();
 	AEROSPIKE_WALKER_SWITCH_CASE_GET_LIST_APPEND(aerospike_object, ((foreach_callback_udata *) array)->error_p,
 			NULL, NULL, (void *) value, ((foreach_callback_udata *) array)->udata_p, exit);
-
 exit:
 	return (((((foreach_callback_udata *) array)->error_p)->code == AEROSPIKE_OK) ? true : false);
 }
@@ -2141,7 +2118,7 @@ static void AS_DEFAULT_PUT_ASSOC_BYTES(Aerospike_object* as, void* key, void* va
 		}
 	#else
 	const char* name = NULL;
-	char *str;
+	char *str = NULL;
     size_t name_len = 0;
 	if ((Z_TYPE_P((zval*)value)) == IS_OBJECT) {
 	  zend_class_entry *ce;
@@ -3559,10 +3536,10 @@ as_status aerospike_transform_array_callback_php7(HashTable* ht_p,
 #else
 		if (tmp == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 					ip_port, strlen(ip_port), (void**)&tmp)) {
-			zval z_temp;
-			ZVAL_STRING(&z_temp, ip_port);
+			zval* z_temp;
+			ZVAL_STRING(z_temp, ip_port);
 			if (!zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
-						ip_port, strlen(ip_port), &z_temp)) {
+						ip_port, strlen(ip_port), z_temp)) {
 #endif
 				status = AEROSPIKE_ERR_CLIENT;
 				goto exit;
@@ -3612,7 +3589,7 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
 	#if PHP_VERSION_ID < 70000
 		zval**                                  addrport_data_pp = NULL;
 	#else
-		zval*                                   addrport_data_pp;
+		zval*                                   addrport_data_pp = NULL;
 	#endif
 	char                                    ip_port[IP_PORT_MAX_LEN];
 	addrport_transform_iter_map_t           addrport_transform_iter_map_p;
@@ -3651,14 +3628,15 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
 		goto exit;
 	}
 	if (!set_as_config) {
-		zval **tmp;
 #if PHP_VERSION_ID < 70000
+    zval **tmp;
 		if (FAILURE == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 					ip_port, strlen(ip_port), (void**)&tmp)) {
 			if (0 != zend_hash_add((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 						ip_port, strlen(ip_port), (void *) ip_port, strlen(ip_port), NULL)) {
 #else
-		if (*tmp == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
+    zval **tmp;
+		if (FAILURE == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 					ip_port, strlen(ip_port), (void**)&tmp)) {
 			zval* z_temp;
 			ZVAL_STRING(z_temp, ip_port);
@@ -3715,7 +3693,7 @@ aerospike_transform_iteratefor_addr_port(HashTable* ht_p, void* data_p)
 																 (void *) &config_transform_iter_map))) {
 #else
 	if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
-																 &aerospike_transform_array_callback_php7,
+																 &aerospike_transform_array_callback,
 																 (void *) &config_transform_iter_map))) {
 #endif
 		goto exit;
@@ -3902,7 +3880,7 @@ aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p, as_key* as_key_p
 #else
   HashPosition         hashPosition_p;
 	zval*                keyData_pp = NULL;
-	zval                key_record_p;
+	zval                 key_record_p;
 #endif
 
 	if ((!ht_p) || (!as_key_p) || (!as_key_p) || (!set_val_p)) {
@@ -4637,6 +4615,7 @@ extern as_status
 aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p, as_record* get_record_p,
 		as_key* record_key_p, zval* outer_container_p, zval* options_p, bool nullflag, bool get_flag TSRMLS_DC)
 {
+	//php_printf("106\n");
 	as_status           status = AEROSPIKE_OK;
 #if PHP_VERSION_ID < 70000
 	zval*               metadata_container_p = NULL;
@@ -4770,14 +4749,18 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 	as_record               *get_record = NULL;
 	aerospike               *as_object_p = aerospike_obj_p->as_ref_p->as_p;
 	foreach_callback_udata  foreach_record_callback_udata;
-	zval*                   get_record_p;
 
 	#if PHP_VERSION_ID < 70000
+	  zval* get_record_p;
 		ALLOC_INIT_ZVAL(get_record_p);
+		array_init(get_record_p);
+		foreach_record_callback_udata.udata_p = get_record_p;
+	#else
+	  zval get_record_p;
+		array_init(&get_record_p);
+		foreach_record_callback_udata.udata_p = &get_record_p;
 	#endif
-	array_init(get_record_p);
 
-	foreach_record_callback_udata.udata_p = get_record_p;
 	foreach_record_callback_udata.error_p = error_p;
 	foreach_record_callback_udata.obj = aerospike_obj_p;
 
@@ -4820,7 +4803,13 @@ aerospike_transform_get_record(Aerospike_object* aerospike_obj_p,
 		goto exit;
 	}
 
-	if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS, get_record_p))	{
+	if (0 != add_assoc_zval(outer_container_p, PHP_AS_RECORD_DEFINE_FOR_BINS,
+  #if PHP_VERSION_ID < 70000
+		get_record_p
+  #else
+    &get_record_p
+	#endif
+	))	{
 		DEBUG_PHP_EXT_DEBUG("Unable to get a record");
 		status = AEROSPIKE_ERR_CLIENT;
 		goto exit;
@@ -4832,16 +4821,16 @@ exit:
 	}
 
 	if (AEROSPIKE_OK != status) {
-		if (get_record_p) {
-#if PHP_VERSION_ID < 70000
-			zval_ptr_dtor(&get_record_p);
-#else
-			zval_ptr_dtor(get_record_p);
-#endif
-		}
+		#if PHP_VERSION_ID < 70000
+			if (get_record_p) {
+		#else
+				if (&get_record_p) {
+		#endif
+					zval_ptr_dtor(&get_record_p);
+				}
+			}
+		return status;
 	}
-	return status;
-}
 
 /*
  *******************************************************************************************************
