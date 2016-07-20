@@ -1252,8 +1252,11 @@ PHP_METHOD(Aerospike, existsMany)
         goto exit;
     }
 
-    zval_dtor(metadata_p);
-    array_init(metadata_p);
+	convert_to_null(metadata_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(metadata_p);
+	#endif
+	array_init(metadata_p);
 
     if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
         aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
