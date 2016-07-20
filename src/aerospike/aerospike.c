@@ -577,7 +577,9 @@ static zend_function_entry Aerospike_class_functions[] =
         }
         intern_obj_p->as_ref_p = NULL;
         zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
-        efree(intern_obj_p);
+		#if PHP_VERSION_ID < 7
+        	efree(intern_obj_p);
+        #endif
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
@@ -964,6 +966,8 @@ PHP_METHOD(Aerospike, get)
         goto exit;
     }
 
+	convert_to_null(record_p);
+
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
             ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) && (PHP_TYPE_ISNOTNULL(bins_p)))) ||
             ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) && (PHP_TYPE_ISNOTNULL(options_p))))) {
@@ -1298,8 +1302,11 @@ PHP_METHOD(Aerospike, getMany)
         goto exit;
     }
 
-    zval_dtor(records_p);
-    array_init(records_p);
+	convert_to_null(records_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(records_p);
+	#endif
+	array_init(records_p);
 
     if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
         aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {

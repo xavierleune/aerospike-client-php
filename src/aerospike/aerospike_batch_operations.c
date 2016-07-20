@@ -793,7 +793,6 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 				array_init(get_record_p);
 				foreach_record_callback_udata.udata_p = get_record_p;
 			#else
-				array_init(&get_record_p);
 				foreach_record_callback_udata.udata_p = &get_record_p;
 			#endif
 			null_flag = false;
@@ -801,7 +800,7 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* error_
 			null_flag = true;
 		}
 
-        populate_result_for_get_exists_many_new((as_key *)(&(record_batch->key)),
+    populate_result_for_get_exists_many_new((as_key *)(&(record_batch->key)),
 		batch_get_callback_udata.udata_p,
 		#if PHP_VERSION_ID < 70000
 			record_p_local
@@ -990,6 +989,9 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* error_p,
 exit:
 	if (is_batch_init) {
 		as_batch_destroy(&batch);
+	}
+	if (&key_entry) {
+		zval_ptr_dtor(key_entry);
 	}
 	return error_p->code;
 }
