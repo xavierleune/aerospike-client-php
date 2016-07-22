@@ -1968,14 +1968,10 @@ exit:
         as_key_destroy(&as_key_for_list);
     }
     #if PHP_VERSION_ID < 70000
-    if (temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
-    }
-  #else
-    if (&temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
-    }
-  #endif
+    	if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
 
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -2096,14 +2092,10 @@ exit:
     }
 
     #if PHP_VERSION_ID < 70000
-    if (temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
-    }
-  #else
-    if (&temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
-    }
-  #endif
+    	if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
 
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -2223,14 +2215,10 @@ exit:
         as_key_destroy(&as_key_for_list);
     }
     #if PHP_VERSION_ID < 70000
-    if (temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
-    }
-  #else
-    if (&temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
-    }
-  #endif
+		if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
 
     as_operations_destroy(&ops);
     as_record_destroy(&record);
