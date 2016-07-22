@@ -1193,7 +1193,7 @@
 
 #define AEROSPIKE_LIST_GET_APPEND_DOUBLE(as, key, value, array, static_pool,   \
     err)                                                                       \
-    ADD_LIST_APPEND_BYTES(as, key, value, &array, err TSRMLS_CC)
+    ADD_LIST_APPEND_DOUBLE(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_LIST(as, key, value, array, static_pool,     \
     err)                                                                       \

@@ -591,8 +591,9 @@ static void ADD_LIST_APPEND_BYTES(Aerospike_object* as, void *key, void *value, 
 
 exit:
 	if (AEROSPIKE_OK != ((as_error *) err)->code) {
-		if (&unserialized_zval)
-			zval_ptr_dtor(&unserialized_zval);
+		if (&unserialized_zval) {
+			//zval_ptr_dtor(&unserialized_zval);
+		}
 	}
 	return;
 }
