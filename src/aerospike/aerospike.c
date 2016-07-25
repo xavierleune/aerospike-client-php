@@ -4706,10 +4706,6 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (return_value_of_udf_p) {
-        zval_dtor(return_value_of_udf_p);
-    }
-
     if (AEROSPIKE_OK !=
             (status = aerospike_udf_apply(aerospike_obj_p,
                 &as_key_for_apply_udf, &error,
