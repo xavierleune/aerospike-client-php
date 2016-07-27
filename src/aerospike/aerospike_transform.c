@@ -404,7 +404,7 @@ exit:
  *                              encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_NULL(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_NULL(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	add_next_index_null(*((zval **) array));
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -439,7 +439,7 @@ static void ADD_LIST_APPEND_BOOL(Aerospike_object *as, void *key, void *value, v
  *                             encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_DOUBLE(void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_DOUBLE(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	add_next_index_double(*((zval **)array), (double) as_double_get((as_double *) value));
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -492,7 +492,7 @@ static void ADD_LIST_APPEND_STRING(Aerospike_object *as, void *key, void *value,
  *                              encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_REC(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_REC(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -508,7 +508,7 @@ static void ADD_LIST_APPEND_REC(Aerospike_object *as, void *key, void *value, vo
  *                              encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_PAIR(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_PAIR(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
 }
@@ -524,7 +524,7 @@ static void ADD_LIST_APPEND_PAIR(Aerospike_object *as, void *key, void *value, v
  *                              encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_BYTES(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_BYTES(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	DECLARE_ZVAL(unserialized_zval);
 	unserialize_based_on_as_bytes_type((as_bytes *) value, &unserialized_zval, (as_error *) err TSRMLS_CC);
@@ -1218,7 +1218,7 @@ exit:
  *                              encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_MAP(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_MAP(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	AS_APPEND_MAP_TO_LIST(key, value, array, err);
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -1235,7 +1235,7 @@ static void ADD_LIST_APPEND_MAP(Aerospike_object *as, void *key, void *value, vo
  *                              encountered error if any.
  *******************************************************************************************************
  */
-static void ADD_LIST_APPEND_LIST(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
+void ADD_LIST_APPEND_LIST(Aerospike_object *as, void *key, void *value, void *array, void *err TSRMLS_DC)
 {
 	AS_APPEND_LIST_TO_LIST(key, value, array, err);
 	PHP_EXT_SET_AS_ERR((as_error *) err, AEROSPIKE_OK, DEFAULT_ERROR);
@@ -4136,7 +4136,7 @@ static char* bin2hex(const unsigned char *old, const int oldlen)
  * @return AEROSPIKE_OK if success. Otherwise AEROSPIKE_x.
  *******************************************************************************************************
  */
-static as_status
+as_status
 aerospike_get_record_key_digest(as_config *as_config_p, as_record* get_record_p, as_key *record_key_p, zval* key_container_p, zval* options_p, bool get_flag TSRMLS_DC)
 {
 	as_status                  status = AEROSPIKE_OK;
