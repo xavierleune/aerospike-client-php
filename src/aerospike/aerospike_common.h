@@ -59,11 +59,19 @@
 	#define DECLARE_ZVAL_P(__var)   zval** __var = NULL
 	#define PARAM_ZVAL_P(__var)     zval** __var
 	#define PARAM_ZVAL(__var)       zval* __var
+	#define AEROSPIKE_ZVAL_ARG(zv) (zv)
+
+	typedef ulong as_php_ulong;
+	typedef zend_rsrc_list_entry as_php_zend_resource;
 #else
 	#define DECLARE_ZVAL(__var)     zval __var
 	#define DECLARE_ZVAL_P(__var)   zval* __var = NULL
 	#define PARAM_ZVAL_P(__var)     zval* __var
 	#define PARAM_ZVAL(__var)       zval __var
+	#define AEROSPIKE_ZVAL_ARG(zv) &(zv)
+
+	typedef zend_ulong as_php_ulong;
+	typedef zend_resource as_php_zend_resource;
 #endif
 
 /*
