@@ -191,7 +191,7 @@ static void execute_user_callback(zend_fcall_info *user_callback_info,
 		user_callback_info->retval = &user_callback_retval_p;
 	#endif
 
-	if (zend_call_function(user_callback_info, user_callback_info_cache TSRMLS_C) == SUCCESS &&
+	if (zend_call_function(user_callback_info, user_callback_info_cache TSRMLS_CC) == SUCCESS &&
 		#if PHP_VERSION_ID < 70000
 			user_callback_info->retval_ptr_ptr && *user_callback_info->retval_ptr_ptr
 		#else
