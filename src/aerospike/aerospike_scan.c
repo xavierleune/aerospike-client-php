@@ -101,6 +101,9 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 #if PHP_VERSION_ID >= 70000
 		ZEND_HASH_FOREACH_END();
 #endif
+
+	scan_p->concurrent = false;
+
 		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, &scan_policy,
 						&scan, aerospike_helper_record_stream_callback, user_func_p))) {
 			goto exit;
@@ -210,6 +213,8 @@ aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
 				"Unable to initiate background scan");
 		goto exit;
 	}
+
+	scan_p->concurrent = false;
 
 	if (AEROSPIKE_OK != (aerospike_scan_background(as_object_p->as_ref_p->as_p,
 			error_p, &scan_policy, scan_p, &scan_id))) {
