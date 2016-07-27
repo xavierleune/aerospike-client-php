@@ -132,8 +132,6 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
         zval    err_code_p;
         zval    err_msg_p;
 
-        array_init(&err_code_p);
-        array_init(&err_msg_p);
         if (error_t.reset) {
             AEROSPIKE_ZVAL_STRINGL(&err_msg_p, DEFAULT_ERROR, strlen(DEFAULT_ERROR), 1);
             ZVAL_LONG(&err_code_p, DEFAULT_ERRORNO);

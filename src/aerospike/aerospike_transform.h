@@ -538,7 +538,6 @@
             uint key_len;                                                      \
             zend_ulong index;                                                  \
             hashtable = Z_ARRVAL_P((zval*) value);                             \
-            zend_string* z_strr;                                               \
             zval* data;                                                        \
             HashPosition pointerr;                                             \
             zend_string* z;                                                    \
@@ -547,7 +546,6 @@
             ZEND_HASH_FOREACH_KEY_VAL(hashtable, index, z, dataval) {          \
                 do {                                                           \
                     char *local_key;                                           \
-                    zend_string* z_str;                                        \
                     int t = zend_hash_num_elements(hashtable);                 \
                     if (z) {                                                   \
                         as_string *map_str;                                    \
@@ -1195,7 +1193,7 @@
 
 #define AEROSPIKE_LIST_GET_APPEND_DOUBLE(as, key, value, array, static_pool,   \
     err)                                                                       \
-    ADD_LIST_APPEND_BYTES(as, key, value, &array, err TSRMLS_CC)
+    ADD_LIST_APPEND_DOUBLE(key, value, &array, err TSRMLS_CC)
 
 #define AEROSPIKE_LIST_GET_APPEND_LIST(as, key, value, array, static_pool,     \
     err)                                                                       \

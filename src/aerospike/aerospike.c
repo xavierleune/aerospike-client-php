@@ -577,7 +577,9 @@ static zend_function_entry Aerospike_class_functions[] =
         }
         intern_obj_p->as_ref_p = NULL;
         zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
-        efree(intern_obj_p);
+		#if PHP_VERSION_ID < 7
+        	efree(intern_obj_p);
+        #endif
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
@@ -964,6 +966,8 @@ PHP_METHOD(Aerospike, get)
         goto exit;
     }
 
+	convert_to_null(record_p);
+
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
             ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) && (PHP_TYPE_ISNOTNULL(bins_p)))) ||
             ((options_p) && ((PHP_TYPE_ISNOTARR(options_p)) && (PHP_TYPE_ISNOTNULL(options_p))))) {
@@ -1248,8 +1252,11 @@ PHP_METHOD(Aerospike, existsMany)
         goto exit;
     }
 
-    zval_dtor(metadata_p);
-    array_init(metadata_p);
+	convert_to_null(metadata_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(metadata_p);
+	#endif
+	array_init(metadata_p);
 
     if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
         aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
@@ -1298,8 +1305,11 @@ PHP_METHOD(Aerospike, getMany)
         goto exit;
     }
 
-    zval_dtor(records_p);
-    array_init(records_p);
+	convert_to_null(records_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(records_p);
+	#endif
+	array_init(records_p);
 
     if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
         aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
@@ -1850,14 +1860,13 @@ PHP_METHOD(Aerospike, listAppend)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
+	zval* append_val_p = NULL;
     #if PHP_VERSION_ID < 70000
         zval* temp_record_p = NULL;
         zval* append_val_copy = NULL;
-        zval* append_val_p = NULL;
     #else
         zval temp_record_p;
         zval append_val_copy;
-        zval append_val_p;
     #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -1879,7 +1888,7 @@ PHP_METHOD(Aerospike, listAppend)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz/|a",
         &key_record_p, &bin_name_p, &bin_name_len,
         &append_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1917,7 +1926,7 @@ PHP_METHOD(Aerospike, listAppend)
         add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
     #else
         array_init(&temp_record_p);
-        add_assoc_zval(&temp_record_p, bin_name_p, &append_val_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, append_val_p);
     #endif
 
     /*
@@ -1959,14 +1968,10 @@ exit:
         as_key_destroy(&as_key_for_list);
     }
     #if PHP_VERSION_ID < 70000
-    if (temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
-    }
-  #else
-    if (&temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
-    }
-  #endif
+    	if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
 
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -1988,16 +1993,14 @@ PHP_METHOD(Aerospike, listInsert)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-
+	zval* insert_val_p = NULL;
     #if PHP_VERSION_ID < 70000
         zval* insert_val_copy = NULL;
         zval* temp_record_p = NULL;
-		zval* insert_val_p = NULL;
         long bin_name_len;
     #else
         zval insert_val_copy;
         zval temp_record_p;
-        zval insert_val_p;
         zend_ulong bin_name_len;
     #endif
     zval*                  options_p = NULL;
@@ -2020,7 +2023,7 @@ PHP_METHOD(Aerospike, listInsert)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &insert_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2058,7 +2061,7 @@ PHP_METHOD(Aerospike, listInsert)
         add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
     #else
         array_init(&temp_record_p);
-        add_assoc_zval(&temp_record_p, bin_name_p, &insert_val_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, insert_val_p);
     #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
@@ -2089,14 +2092,10 @@ exit:
     }
 
     #if PHP_VERSION_ID < 70000
-    if (temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
-    }
-  #else
-    if (&temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
-    }
-  #endif
+    	if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
 
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -2216,14 +2215,10 @@ exit:
         as_key_destroy(&as_key_for_list);
     }
     #if PHP_VERSION_ID < 70000
-    if (temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
-    }
-  #else
-    if (&temp_record_p) {
-        AEROSPIKE_ZVAL_PTR_DTOR(&temp_record_p);
-    }
-  #endif
+		if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
 
     as_operations_destroy(&ops);
     as_record_destroy(&record);
@@ -4709,10 +4704,6 @@ PHP_METHOD(Aerospike, apply)
                 "Unable to iterate through apply key params");
         DEBUG_PHP_EXT_ERROR("Unable to iterate through apply key params");
         goto exit;
-    }
-
-    if (return_value_of_udf_p) {
-        zval_dtor(return_value_of_udf_p);
     }
 
     if (AEROSPIKE_OK !=
