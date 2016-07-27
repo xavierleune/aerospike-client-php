@@ -275,12 +275,15 @@ exit:
  */
 PS_READ_FUNC(aerospike)
 {
-    as_error            error;
-    aerospike_session*  session_p = PS_GET_MOD_DATA();
-    as_record*          record_p = NULL;
-    as_key              key_get;
-    int16_t             init_key = 0;
-    char*               session_data_p = NULL;
+    as_error                error;
+    aerospike_session*      session_p = PS_GET_MOD_DATA();
+    as_record*              record_p = NULL;
+    as_key                  key_get;
+    int16_t                 init_key = 0;
+    as_bin_value*           session_data_p = NULL;
+    as_bytes*               session_bytes = NULL;
+    uint8_t*                session_bytes_value = NULL;
+    const unsigned char*    session_bytes_str = NULL;
 
     DEBUG_PHP_EXT_INFO("In PS_READ_FUNC");
 
@@ -297,15 +300,31 @@ PS_READ_FUNC(aerospike)
         goto exit;
     }
 
-    if (NULL == (session_data_p = as_record_get_str(record_p, AEROSPIKE_SESSION_BIN))) {
+    if (NULL == (session_data_p = as_record_get(record_p, AEROSPIKE_SESSION_BIN))) {
          PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
                     "Unable to get session bin of the record");
          DEBUG_PHP_EXT_DEBUG("Unable to get session bin of the record");
          goto exit;
     }
 
-    *val = estrndup(session_data_p, strlen(session_data_p));
-    *vallen = strlen(session_data_p);
+    switch (as_val_type(session_data_p)) {
+        case AS_BYTES:
+            session_bytes = as_bytes_fromval((as_val *) session_data_p);
+            session_bytes_value = as_bytes_get(session_bytes);
+            session_bytes_str = (unsigned char *) session_bytes_value;
+            
+            *vallen = as_bytes_size(session_bytes);
+            *val = estrndup(session_bytes_str, *vallen);
+
+            as_val_destroy(session_data_p);
+            as_bytes_destroy(session_bytes);
+            break;
+        default: 
+            PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
+                    "Unable to read session bin of the record");
+            DEBUG_PHP_EXT_DEBUG("Unable to read session bin of the record");
+            goto exit;
+    }
 
 exit:
     if (init_key) {
@@ -350,17 +369,12 @@ PS_WRITE_FUNC(aerospike)
         goto exit;
     }
 
-    if (val == NULL || !strcmp(val, "")) {
-        DEBUG_PHP_EXT_DEBUG("Empty session data");
-        goto exit;
-    }
-
     as_key_init_str(&key_put, session_p->ns_p, session_p->set_p, key);
     init_key = 1;
 
     as_record_inita(&record, 1);
     init_record = 1;
-    if (!as_record_set_str(&record, AEROSPIKE_SESSION_BIN, val)) {
+    if (!as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, val, vallen, AS_BYTES_PHP, false)) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to set record");
         DEBUG_PHP_EXT_ERROR("Unable to set record");
         goto exit;
