@@ -46,6 +46,7 @@ class Autoloader
     public static function load($class_name)
     {
         $parts = explode('\\', $class_name);
+
         if ($parts[0] == "Aerospike" && $parts[1] == "GeoJSON") {
            if (count($parts) == 2) {
                 require __DIR__. DIRECTORY_SEPARATOR. 'GeoJSON.php';

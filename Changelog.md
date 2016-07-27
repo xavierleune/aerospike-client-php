@@ -1,4 +1,13 @@
 
+## 3.4.8
+
+### Features
+* Added Aersospike::operateOrdered API which takes the same parameters as Aerospike::operate but returns an indexed array of results, rather than a key-value associative array. _CLIENT-652_
+* Added support for Geospatial index using GeoJSON. _CLIENT-542_ **Requires server >= 3.7.0**
+
+### Fixes
+* Use session.gc\_maxlifetime for the session timeout (was session.cache\_expire). _CLIENT-705_
+
 ## 3.4.7
 
 ### Features

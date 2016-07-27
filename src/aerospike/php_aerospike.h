@@ -75,7 +75,6 @@ ZEND_EXTERN_MODULE_GLOBALS(aerospike);
 
 #ifdef ZTS
 #define AEROSPIKE_G(v) (((zend_aerospike_globals*)(*((void ***)tsrm_ls))[(aerospike_globals_id)-1])->v)
-zend_aerospike_globals *globals;
 #else
 #define AEROSPIKE_G(v) (aerospike_globals.v)
 #endif
@@ -128,6 +127,7 @@ PHP_METHOD(Aerospike, initKey);
 PHP_METHOD(Aerospike, getKeyDigest);
 PHP_METHOD(Aerospike, increment);
 PHP_METHOD(Aerospike, operate);
+PHP_METHOD(Aerospike, operateOrdered);
 PHP_METHOD(Aerospike, prepend);
 PHP_METHOD(Aerospike, put);
 PHP_METHOD(Aerospike, remove);

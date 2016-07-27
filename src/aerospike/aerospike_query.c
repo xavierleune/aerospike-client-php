@@ -56,34 +56,27 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 	char* set_p, HashTable *predicate_ht_p, const char* module_p,
 	const char* function_p, as_arraylist* args_list_p TSRMLS_DC)
 {
-	#if PHP_VERSION_ID < 70000
-		zval**              val_pp = NULL;
-		zval**              op_pp  = NULL;
-		zval**              bin_pp = NULL;
-		zval**              index_type_pp = NULL;
-	#else
-		zval*               val_pp = NULL;
-		zval*               op_pp  = NULL;
-		zval*               bin_pp = NULL;
-		zval*               index_type_pp = NULL;
-	#endif
+	DECLARE_ZVAL_P(val_pp);
+	DECLARE_ZVAL_P(op_pp);
+	DECLARE_ZVAL_P(bin_pp);
+	DECLARE_ZVAL_P(index_type_pp);
 
 	if (predicate_ht_p && (zend_hash_num_elements(predicate_ht_p) != 0)) {
-		#if PHP_VERSION_ID >= 70000
-			zend_string* z_bin = zend_string_init(BIN, strlen(BIN), 0);
-			zend_string* z_op  = zend_string_init(OP, strlen(OP), 0);
-			zend_string* z_val = zend_string_init(VAL, strlen(VAL), 0);
-		#endif
+#if PHP_VERSION_ID >= 70000
+		zend_string* z_bin = zend_string_init(BIN, strlen(BIN), 0);
+		zend_string* z_op  = zend_string_init(OP, strlen(OP), 0);
+		zend_string* z_val = zend_string_init(VAL, strlen(VAL), 0);
+#endif
 		if (
-		#if PHP_VERSION_ID < 70000
+#if PHP_VERSION_ID < 70000
 			(!zend_hash_exists(predicate_ht_p, BIN, sizeof(BIN))) ||
 			(!zend_hash_exists(predicate_ht_p, OP, sizeof(OP)))  ||
 			(!zend_hash_exists(predicate_ht_p, VAL, sizeof(VAL)))
-		#else
+#else
 			(!zend_hash_exists(predicate_ht_p, z_bin)) ||
 			(!zend_hash_exists(predicate_ht_p, z_op))  ||
 			(!zend_hash_exists(predicate_ht_p, z_val))
-		#endif
+#endif
 		) {
 			DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', and 'val'.");
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -92,20 +85,20 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 		}
 
 		if (
-			#if PHP_VERSION_ID < 70000
-				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
-					(void **) &op_pp)) ||
-				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
-					(void **) &bin_pp)) ||
-				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
-					(void **) &val_pp))
+#if PHP_VERSION_ID < 70000
+			(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
+				(void **) &op_pp)) ||
+			(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
+				(void **) &bin_pp)) ||
+			(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
+				(void **) &val_pp))
 #else
-				((op_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
-				    (void **) &op_pp)) == NULL) ||
-				((bin_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
-					(void **) &bin_pp)) == NULL) ||
-				((val_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
-					(void **) &val_pp)) == NULL)
+			((op_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, OP, sizeof(OP),
+				(void **) &op_pp)) == NULL) ||
+			((bin_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, BIN, sizeof(BIN),
+				(void **) &bin_pp)) == NULL) ||
+			((val_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, VAL, sizeof(VAL),
+				(void **) &val_pp)) == NULL)
 #endif
 		) {
 			DEBUG_PHP_EXT_DEBUG("Predicate is expected to include the keys 'bin','op', 'val'.");
@@ -151,21 +144,16 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 			bool between_unpacked = false;
 			if (AEROSPIKE_Z_TYPE_P(val_pp) == IS_ARRAY) {
 				convert_to_array_ex(val_pp);
-				#if PHP_VERSION_ID < 70000
-				  zval** min_pp;
-				  zval** max_pp;
-				#else
-				  zval* min_pp;
-				  zval* max_pp;
-				#endif
+				DECLARE_ZVAL_P(min_pp);
+				DECLARE_ZVAL_P(max_pp);
 				if (
-					#if PHP_VERSION_ID < 70000
-						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
-						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
-					#else
-						((min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) != NULL) &&
-						((max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp)) != NULL)
-					#endif
+#if PHP_VERSION_ID < 70000
+					(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
+					(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
+#else
+					((min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) != NULL) &&
+					((max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp)) != NULL)
+#endif
 				) {
 					convert_to_long_ex(min_pp);
 					convert_to_long_ex(max_pp);
@@ -189,13 +177,13 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 			}
 		} else if (strncmp(AEROSPIKE_Z_STRVAL_P(op_pp), "CONTAINS", 8) == 0) {
 			if (
-				#if PHP_VERSION_ID < 70000
-					(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-						(void **) &index_type_pp))
-				#else
-					((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
-						(void **) &index_type_pp)) == NULL)
-				#endif
+#if PHP_VERSION_ID < 70000
+				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+					(void **) &index_type_pp))
+#else
+				((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+					(void **) &index_type_pp)) == NULL)
+#endif
 			) {
 				DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -272,20 +260,20 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 					goto exit;
 			}
 		} else if (
-				#if PHP_VERSION_ID < 70000
-								strncmp(Z_STRVAL_PP(op_pp), "RANGE", 5) == 0
-				#else
-								strncmp(Z_STRVAL_P(op_pp), "RANGE", 5) == 0
-				#endif
+#if PHP_VERSION_ID < 70000
+					strncmp(Z_STRVAL_PP(op_pp), "RANGE", 5) == 0
+#else
+					strncmp(Z_STRVAL_P(op_pp), "RANGE", 5) == 0
+#endif
 				) {
 			if (
-				#if PHP_VERSION_ID < 70000
-					(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+#if PHP_VERSION_ID < 70000
+				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
 						(void **) &index_type_pp))
-				#else
-					((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
+#else
+				((index_type_pp = AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
 						(void **) &index_type_pp)) == NULL)
-				#endif
+#endif
 			) {
 				DEBUG_PHP_EXT_DEBUG("Predicate is expected to include 'index_type'.");
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
@@ -296,21 +284,16 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 			if (AEROSPIKE_Z_TYPE_P(val_pp) == IS_ARRAY) {
 				convert_to_array_ex(val_pp);
 				convert_to_long_ex(index_type_pp);
-				#if PHP_VERSION_ID < 70000
-					zval **min_pp;
-					zval **max_pp;
-				#else
-					zval *min_pp;
-					zval *max_pp;
-				#endif
+				DECLARE_ZVAL_P(min_pp);
+				DECLARE_ZVAL_P(max_pp);
 				if (
-					#if PHP_VERSION_ID < 70000
-						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
-						(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
-					#else
-						((min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) != NULL) &&
-						((max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp)) != NULL)
-					#endif
+#if PHP_VERSION_ID < 70000
+					(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 0, (void **) &min_pp) == SUCCESS) &&
+					(AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_PP(val_pp), 1, (void **) &max_pp) == SUCCESS)
+#else
+					((min_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 0, (void **) &min_pp)) != NULL) &&
+					((max_pp = AEROSPIKE_ZEND_HASH_INDEX_FIND(Z_ARRVAL_P(val_pp), 1, (void **) &max_pp)) != NULL)
+#endif
 				) {
 					convert_to_long_ex(min_pp);
 					convert_to_long_ex(max_pp);
@@ -467,13 +450,7 @@ exit:
  */
 extern as_status
 aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
-		char *module_p, char *function_p,
-    #if PHP_VERSION_ID < 70000
-		  zval **args_pp
-		#else
-		  zval *args_pp
-		#endif
-		, char *namespace_p,
+		char *module_p, char *function_p, PARAM_ZVAL_P(args_pp), char *namespace_p,
 		char *set_p, HashTable *predicate_ht_p,
 		zval *job_id_p
 		, zval *options_p,
@@ -496,15 +473,15 @@ aerospike_query_run_background(Aerospike_object *as_object_p, as_error *error_p,
 		goto exit;
 	}
 
-		#if PHP_VERSION_ID < 70000
-		if ((*args_pp)) {
-		  as_arraylist_inita(&args_list,
-				  zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
-		#else
-		if ((args_pp)) {
-		  as_arraylist_inita(&args_list,
-				  zend_hash_num_elements(Z_ARRVAL_P(args_pp)));
-		#endif
+#if PHP_VERSION_ID < 70000
+	if ((*args_pp)) {
+	  as_arraylist_inita(&args_list,
+			  zend_hash_num_elements(Z_ARRVAL_PP(args_pp)));
+#else
+	if ((args_pp)) {
+	  as_arraylist_inita(&args_list,
+			  zend_hash_num_elements(Z_ARRVAL_P(args_pp)));
+#endif
 		args_list_p = &args_list;
 		AS_LIST_PUT(as_object_p, NULL, args_pp , args_list_p, &udf_pool,
 				serializer_policy, error_p TSRMLS_CC);
@@ -598,7 +575,7 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 		char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
 		HashTable* predicate_ht_p, zval* options_p TSRMLS_DC)
 {
-  as_query			query;
+	as_query			query;
 	bool				is_init_query = false;
 	as_policy_query	 query_policy;
 
@@ -627,20 +604,19 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 	if (bins_ht_p) {
 		as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
-		#if PHP_VERSION_ID < 70000
-      zval** bin_names_pp = NULL;
-			AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-				if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
-					convert_to_string_ex(bin_names_pp);
-				}
-		#else
-      zval* bin_names_pp = NULL;
-			zend_string* z_str;
-			ZEND_HASH_FOREACH_KEY_VAL(bins_ht_p, pos, z_str, bin_names_pp) {
-			  if (!z_str) {
-						convert_to_string_ex(bin_names_pp);
-					}
-		#endif
+		DECLARE_ZVAL_P(bin_names_pp);
+#if PHP_VERSION_ID < 70000
+		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
+			if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
+				convert_to_string_ex(bin_names_pp);
+			}
+#else
+		zend_string* z_str;
+		ZEND_HASH_FOREACH_KEY_VAL(bins_ht_p, pos, z_str, bin_names_pp) {
+			if (!z_str) {
+				convert_to_string_ex(bin_names_pp);
+			}
+#endif
 
 			if (!as_query_select(&query, AEROSPIKE_Z_STRVAL_P(bin_names_pp))) {
 				DEBUG_PHP_EXT_DEBUG("Unable to apply filter bins to the query");
@@ -648,11 +624,10 @@ aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p
 						"Unable to apply filter bins to the query");
 				goto exit;
 			}
-		#if PHP_VERSION_ID < 70000
-      }
-		#else
-      } ZEND_HASH_FOREACH_END();
-		#endif
+		}
+#if PHP_VERSION_ID >= 70000
+		ZEND_HASH_FOREACH_END();
+#endif
 		if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p, error_p,
 						&query_policy, &query,
 						aerospike_helper_record_stream_callback,
@@ -699,13 +674,7 @@ exit:
  */
 extern as_status
 aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
-		const char* module_p, const char* function_p,
-		#if PHP_VERSION_ID < 70000
-			zval** args_pp
-		#else
-			zval* args_pp
-		#endif
-		,
+		const char* module_p, const char* function_p, PARAM_ZVAL_P(args_pp),
 		char* namespace_p, char* set_p, HashTable* bins_ht_p,
 		HashTable* predicate_ht_p, zval* return_value_p,
 		zval* options_p, int8_t* serializer_policy_p  TSRMLS_DC)
@@ -722,11 +691,11 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 
 	if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) ||
 			(!args_pp && (!(
-				#if PHP_VERSION_ID < 70000
+#if PHP_VERSION_ID < 70000
 					*args_pp
-				#else
+#else
 					args_pp
-				#endif
+#endif
 			))) || (!namespace_p) || (!set_p) ||
 			(!predicate_ht_p) || (!return_value_p)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to initiate query aggregation");
@@ -785,19 +754,14 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 	if (bins_ht_p) {
 		as_query_select_inita(&query, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
-		#if PHP_VERSION_ID < 70000
-      zval **bin_names_pp = NULL;
-		#else
-      zval *bin_names_pp = NULL;
-		#endif
+		DECLARE_ZVAL_P(bin_names_pp);
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
 			if (
-					#if PHP_VERSION_ID < 70000
-					  Z_TYPE_PP(bin_names_pp
-					#else
-						Z_TYPE_P(bin_names_pp
-					#endif
-				) != IS_STRING) {
+#if PHP_VERSION_ID < 70000
+					Z_TYPE_PP(bin_names_pp) != IS_STRING) {
+#else
+					Z_TYPE_P(bin_names_pp) != IS_STRING) {
+#endif
 				convert_to_string_ex(bin_names_pp);
 			}
 			if (

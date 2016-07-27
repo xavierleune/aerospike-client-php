@@ -87,23 +87,20 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 	if (bins_ht_p) {
 		as_scan_select_inita(&scan, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
-		#if PHP_VERSION_ID < 70000
-		  zval **bin_names_pp;
-			AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-		#else
-		  zval *bin_names_pp;
-			ZEND_HASH_FOREACH_VAL(bins_ht_p, bin_names_pp) {
-		#endif
-      if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
+		DECLARE_ZVAL_P(bin_names_pp);
+#if PHP_VERSION_ID < 70000
+		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
+#else
+		ZEND_HASH_FOREACH_VAL(bins_ht_p, bin_names_pp) {
+#endif
+			if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
 				convert_to_string_ex(bin_names_pp);
 			}
 			as_scan_select(&scan, AEROSPIKE_Z_STRVAL_P(bin_names_pp));
-
-    #if PHP_VERSION_ID < 70000
-	    }
-    #else
-	    } ZEND_HASH_FOREACH_END();
-    #endif
+		}
+#if PHP_VERSION_ID >= 70000
+		ZEND_HASH_FOREACH_END();
+#endif
 		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, &scan_policy,
 						&scan, aerospike_helper_record_stream_callback, user_func_p))) {
 			goto exit;
@@ -154,13 +151,7 @@ exit:
  */
 extern as_status
 aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
-		char* module_p, char* function_p,
-		#if PHP_VERSION_ID < 70000
-		  zval** args_pp
-    #else
-		  zval* args_pp
-		#endif
-		, char* namespace_p,
+		char* module_p, char* function_p, PARAM_ZVAL_P(args_pp), char* namespace_p,
 		char* set_p, zval* scan_id_p, zval* options_p, bool block,
 		int8_t* serializer_policy_p TSRMLS_DC)
 {
@@ -182,11 +173,11 @@ aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
 	}
 
 	if ((
-		#if PHP_VERSION_ID < 70000
+#if PHP_VERSION_ID < 70000
 			*args_pp
-		#else
+#else
 			args_pp
-		#endif
+#endif
 	)) {
 		as_arraylist_inita(&args_list, zend_hash_num_elements(AEROSPIKE_Z_ARRVAL_P(args_pp)));
 		args_list_p = &args_list;

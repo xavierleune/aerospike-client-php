@@ -424,6 +424,7 @@ static zend_function_entry Aerospike_class_functions[] =
     PHP_ME(Aerospike, initKey, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, getKeyDigest, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, operate, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
+    PHP_ME(Aerospike, operateOrdered, arginfo_third_by_ref, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, prepend, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, put, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(Aerospike, remove, NULL, ZEND_ACC_PUBLIC)
@@ -1402,6 +1403,86 @@ exit:
     RETURN_LONG(status);
 }
 /* }}} */
+
+/* {{{ proto int Aerospike::operateOrdered( array key, array operations [,array &returned [,array options ]] )
+   Performs multiple operation on a record */
+PHP_METHOD(Aerospike, operateOrdered)
+{
+    as_status           status = AEROSPIKE_OK;
+    zval*               key_record_p = NULL;
+    zval*               operations_p = NULL;
+    zval*               returned_p = NULL;
+    zval*               options_p = NULL;
+    as_error            error;
+    as_key              as_key_for_get_record;
+    int16_t             initializeKey = 0;
+    Aerospike_object*   aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
+    as_error_init(&error);
+    if (!aerospike_obj_p) {
+        status = AEROSPIKE_ERR_CLIENT;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        goto exit;
+    }
+
+    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
+        status = AEROSPIKE_ERR_CLUSTER;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "operateOrdered: connection not established");
+        DEBUG_PHP_EXT_ERROR("operateOrdered: connection not established");
+        goto exit;
+    }
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|za",
+                &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE){
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operateOrdered function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for operateOrdered function");
+        goto exit;
+    }
+
+    if (PHP_TYPE_ISNOTARR(key_record_p) ||
+            PHP_TYPE_ISNOTARR(operations_p) ||
+            ((options_p) && (PHP_TYPE_ISNOTARR(options_p)))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Input parameters (type) for operateOrdered function not proper");
+        DEBUG_PHP_EXT_ERROR("Input parameters (type) for operateOrdered function not proper");
+        goto exit;
+    }
+
+    if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
+                    &as_key_for_get_record,
+                    &initializeKey))) {
+        status = AEROSPIKE_ERR_PARAM;
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse key parameters for operateOrdered function");
+        DEBUG_PHP_EXT_ERROR("Unable to parse key parameters for operateOrdered function");
+        goto exit;
+    }
+
+    if (returned_p) {
+        zval_dtor(returned_p);
+        array_init(returned_p);
+    }
+
+    if (AEROSPIKE_OK !=
+            (status = aerospike_record_operations_operate_ordered(aerospike_obj_p,
+                                                                  &as_key_for_get_record,
+                                                                  options_p,
+                                                                  &error,
+                                                                  returned_p,
+                                                                  Z_ARRVAL_P(operations_p)))){
+        DEBUG_PHP_EXT_ERROR("operateOrdered function returned as error");
+        goto exit;
+    }
+
+exit:
+    if (initializeKey) {
+        as_key_destroy(&as_key_for_get_record);
+    }
+    PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
+    aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
+    RETURN_LONG(status);
+}
 
 /* {{{ proto int Aerospike::append( array key, string bin, string value [,array options ] )
     Appends a string to an existing bin's string value */
@@ -4398,6 +4479,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
     }
 
     array_init(return_value);
+
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, region_p, region_len, 1);
@@ -4427,6 +4509,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
     }
 
     array_init(return_value);
+
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
 
@@ -4458,6 +4541,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
     }
 
     array_init(return_value);
+
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geoPoint_p, geoPoint_len, 1);
@@ -4487,6 +4571,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
     }
 
     array_init(return_value);
+
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
 

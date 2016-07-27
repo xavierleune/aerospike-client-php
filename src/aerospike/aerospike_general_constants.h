@@ -116,15 +116,15 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
  *******************************************************************************************************
  */
 #define EXPOSE_GENERAL_CONSTANTS_LONG_ZEND(Aerospike_ce)                       \
-	do {                                                                       \
-    	int32_t i;                                                             \
-    	for (i = 0; i < AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE; i++) {      \
-        	zend_declare_class_constant_long(                                  \
-        		Aerospike_ce,                                                  \
-				aerospike_general_long_constants[i].constant_str,              \
-            	strlen(aerospike_general_long_constants[i].constant_str),      \
-            	aerospike_general_long_constants[i].constantno TSRMLS_CC);     \
-    	}                                                                      \
+    do {                                                                       \
+        int32_t i;                                                             \
+        for (i = 0; i < AEROSPIKE_GENERAL_LONG_CONSTANTS_ARR_SIZE; i++) {      \
+            zend_declare_class_constant_long(                                  \
+                Aerospike_ce,                                                  \
+                aerospike_general_long_constants[i].constant_str,              \
+                strlen(aerospike_general_long_constants[i].constant_str),      \
+                aerospike_general_long_constants[i].constantno TSRMLS_CC);     \
+        }                                                                      \
 	} while(0);
 
 /*
@@ -135,15 +135,15 @@ static AerospikeGeneralStringConstants aerospike_general_string_constants[] = {
  *******************************************************************************************************
  */
 #define EXPOSE_GENERAL_CONSTANTS_STRING_ZEND(Aerospike_ce)                     \
-	do {                                                                       \
-    	int32_t i;                                                             \
-    	for (i = 0; i < AEROSPIKE_GENERAL_STRING_CONSTANTS_ARR_SIZE; i++) {    \
-        	zend_declare_class_constant_string(                                \
-            	Aerospike_ce,                                                  \
-				aerospike_general_string_constants[i].constant_str,            \
+    do {                                                                       \
+        int32_t i;                                                             \
+        for (i = 0; i < AEROSPIKE_GENERAL_STRING_CONSTANTS_ARR_SIZE; i++) {    \
+            zend_declare_class_constant_string(                                \
+                Aerospike_ce,                                                  \
+                aerospike_general_string_constants[i].constant_str,            \
                 strlen(aerospike_general_string_constants[i].constant_str),    \
                 aerospike_general_string_constants[i].constant_value           \
-				TSRMLS_CC);                                                    \
-    	}                                                                      \
-	} while(0);
+                TSRMLS_CC);                                                    \
+        }                                                                      \
+    } while(0);
 #endif

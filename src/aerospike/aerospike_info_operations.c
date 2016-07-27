@@ -55,13 +55,8 @@ aerospike_info_specific_host(aerospike* as_object_p,
 {
 	as_status                   status = AEROSPIKE_OK;
 	as_policy_info              info_policy;
-	#if PHP_VERSION_ID < 70000
-		zval**                      host_name = NULL;
-		zval**                      port = NULL;
-	#else
-		zval*                       host_name = NULL;
-		zval*                       port = NULL;
-	#endif
+	DECLARE_ZVAL_P(host_name);
+	DECLARE_ZVAL_P(port);
 	char*                       address = (char *) as_object_p->config.hosts[0].addr;
 	long                        port_no = as_object_p->config.hosts[0].port;
 	char*                       response_p = NULL;
@@ -152,15 +147,13 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 	as_error* error_p, zval* return_p, zval* host, zval* options_p TSRMLS_DC)
 {
 	as_policy_info              info_policy;
-	#if PHP_VERSION_ID < 70000
-		zval*                       response_services_p = NULL;
-		zval*                       response_service_p = NULL;
-		zval*                       current_host_p[MAX_HOST_COUNT] = {0};
-	#else
-		zval                        response_services_p;
-		zval                        response_service_p;
-		zval                        current_host_p[MAX_HOST_COUNT];
-	#endif
+	DECLARE_ZVAL(response_services_p);
+	DECLARE_ZVAL(response_service_p);
+#if PHP_VERSION_ID < 70000
+	zval*                       current_host_p[MAX_HOST_COUNT] = {0};
+#else
+	zval                        current_host_p[MAX_HOST_COUNT];
+#endif
 	char*                       tok = NULL;
 	char*                       saved = NULL;
 	uint32_t                    host_index = 0;
@@ -168,53 +161,54 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 	bool                        iter_first = true;
 	bool                        break_flag = false;
 
-	#if PHP_VERSION_ID < 70000
-		MAKE_STD_ZVAL(response_services_p);
-		MAKE_STD_ZVAL(response_service_p);
-		if (AEROSPIKE_OK != aerospike_info_specific_host(as_object_p, error_p,
+#if PHP_VERSION_ID < 70000
+	MAKE_STD_ZVAL(response_services_p);
+	MAKE_STD_ZVAL(response_service_p);
+	if (AEROSPIKE_OK != aerospike_info_specific_host(as_object_p, error_p,
 			"services", response_services_p, host, options_p TSRMLS_CC))
-	#else
-			array_init(&response_services_p);
-			array_init(&response_service_p);
-			if (AEROSPIKE_OK != aerospike_info_specific_host(as_object_p, error_p,
-				"services", &response_services_p, host, options_p TSRMLS_CC))
-	#endif
-		{
-			DEBUG_PHP_EXT_ERROR("getNodes: services call returned an error");
-			goto exit;
-		}
+#else
+	array_init(&response_services_p);
+	array_init(&response_service_p);
+	if (AEROSPIKE_OK != aerospike_info_specific_host(as_object_p, error_p,
+			"services", &response_services_p, host, options_p TSRMLS_CC))
+#endif
+	{
+		DEBUG_PHP_EXT_ERROR("getNodes: services call returned an error");
+		goto exit;
+	}
+
 	if (AEROSPIKE_OK != aerospike_info_specific_host(as_object_p, error_p, "service",
-		#if PHP_VERSION_ID < 70000
-			response_service_p
-		#else
-			&response_service_p
-		#endif
-		, host, options_p TSRMLS_CC)) {
-			DEBUG_PHP_EXT_ERROR("getNodes: service call returned an error");
-			goto exit;
+#if PHP_VERSION_ID < 70000
+			response_service_p,
+#else
+			&response_service_p,
+#endif
+			host, options_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_ERROR("getNodes: service call returned an error");
+		goto exit;
 	}
 	host_index = 0;
 
-	#if PHP_VERSION_ID < 70000
-    	MAKE_STD_ZVAL(current_host_p[host_index]);
-    	array_init(current_host_p[host_index]);
-		if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
-	#else
-    	array_init(&current_host_p[host_index]);
-		if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
-	#endif
-		{
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get addr-port");
-			DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
-			goto exit;
-		}
+#if PHP_VERSION_ID < 70000
+	MAKE_STD_ZVAL(current_host_p[host_index]);
+	array_init(current_host_p[host_index]);
+	if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
+#else
+	array_init(&current_host_p[host_index]);
+	if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
+#endif
+	{
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+			"Unable to get addr-port");
+		DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
+		goto exit;
+	}
 
-	#if PHP_VERSION_ID < 70000
-		tok = strtok_r(Z_STRVAL_P(response_service_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
-	#else
-		tok = strtok_r(Z_STRVAL_P(&response_service_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
-	#endif
+#if PHP_VERSION_ID < 70000
+	tok = strtok_r(Z_STRVAL_P(response_service_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
+#else
+	tok = strtok_r(Z_STRVAL_P(&response_service_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
+#endif
 	if (tok == NULL) {
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 			"Unable to get addr in service");
@@ -230,17 +224,17 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 		goto exit;
 	}
 
-	#if PHP_VERSION_ID < 70000
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "addr", tok, strlen(tok), 1))
-	#else
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "addr", tok, strlen(tok), 1))
-	#endif
-		{
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get addr");
-			DEBUG_PHP_EXT_DEBUG("Unable to get addr");
-				goto exit;
-		}
+#if PHP_VERSION_ID < 70000
+	if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "addr", tok, strlen(tok), 1))
+#else
+	if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "addr", tok, strlen(tok), 1))
+#endif
+	{
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+			"Unable to get addr");
+		DEBUG_PHP_EXT_DEBUG("Unable to get addr");
+			goto exit;
+	}
 
 	tok = strtok_r(NULL, INFO_RESPONSE_END, &saved);
 	if (tok == NULL) {
@@ -250,24 +244,24 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 		goto exit;
 	}
 
-	#if PHP_VERSION_ID < 70000
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "port", tok, strlen(tok), 1))
-	#else
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "port", tok, strlen(tok), 1))
-	#endif
-		{
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get port");
-			DEBUG_PHP_EXT_DEBUG("Unable to get port");
-			goto exit;
-		}
+#if PHP_VERSION_ID < 70000
+	if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "port", tok, strlen(tok), 1))
+#else
+	if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "port", tok, strlen(tok), 1))
+#endif
+	{
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+			"Unable to get port");
+		DEBUG_PHP_EXT_DEBUG("Unable to get port");
+		goto exit;
+	}
 
 	host_index++;
-	#if PHP_VERSION_ID < 70000
-		tok = strtok_r(Z_STRVAL_P(response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
-	#else
-		tok = strtok_r(Z_STRVAL_P(&response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
-	#endif
+#if PHP_VERSION_ID < 70000
+	tok = strtok_r(Z_STRVAL_P(response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
+#else
+	tok = strtok_r(Z_STRVAL_P(&response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
+#endif
 
 	while (tok != NULL) {
 		tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
@@ -275,14 +269,14 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 			goto exit;
 		}
 
-	#if PHP_VERSION_ID < 70000
-        MAKE_STD_ZVAL(current_host_p[host_index]);
-        array_init(current_host_p[host_index]);
+#if PHP_VERSION_ID < 70000
+		MAKE_STD_ZVAL(current_host_p[host_index]);
+		array_init(current_host_p[host_index]);
 		if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
-	#else
-        array_init(&current_host_p[host_index]);
+#else
+		array_init(&current_host_p[host_index]);
 		if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
-	#endif
+#endif
 		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 				"Unable to get addr-port");
@@ -290,11 +284,11 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 			goto exit;
 		}
 
-	#if PHP_VERSION_ID < 70000
+#if PHP_VERSION_ID < 70000
 		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "addr", tok, strlen(tok), 1))
-	#else
+#else
 		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "addr", tok, strlen(tok), 1))
-	#endif
+#endif
 		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 				"Unable to get addr");
@@ -309,17 +303,17 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 			DEBUG_PHP_EXT_DEBUG("Unable to get port");
 			goto exit;
 		}
-
+	
 		if (strstr(tok, INFO_RESPONSE_END)) {
 			tok = strtok_r(tok, INFO_RESPONSE_END, &saved);
 			break_flag = true;
 		}
 
-	#if PHP_VERSION_ID < 70000
+#if PHP_VERSION_ID < 70000
 		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "port", tok, strlen(tok), 1))
-	#else
+#else
 		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "port", tok, strlen(tok), 1))
-	#endif
+#endif
 		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 				"Unable to get port");
@@ -434,15 +428,14 @@ aerospike_info_callback(const as_error* err, const as_node* node,
 				&(addr->sin_addr), ip_port, INET_ADDRSTRLEN),
 			ntohs(addr->sin_port));
 
-			#if PHP_VERSION_ID < 70000
-				zval **tmp;
-				if (SUCCESS == AEROSPIKE_ZEND_HASH_FIND(udata_ptr->host_lookup_p, ip_port,
+			DECLARE_ZVAL_P(tmp);
+#if PHP_VERSION_ID < 70000
+			if (SUCCESS == AEROSPIKE_ZEND_HASH_FIND(udata_ptr->host_lookup_p, ip_port,
 					strlen(ip_port), (void**)&tmp))
-			#else
-				zval *tmp;
-				if (NULL == (tmp = AEROSPIKE_ZEND_HASH_FIND(udata_ptr->host_lookup_p, ip_port,
+#else
+			if (NULL == (tmp = AEROSPIKE_ZEND_HASH_FIND(udata_ptr->host_lookup_p, ip_port,
 					strlen(ip_port), (void**)&tmp)))
-			#endif
+#endif
 			{
 				if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(udata_ptr->udata_p, node->name,
 					response, strlen(response), 1)) {

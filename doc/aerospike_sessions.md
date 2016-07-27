@@ -6,7 +6,7 @@ the container for the sessions.
 
 The session ID is used as the primary key of the record containing the
 session. The key-value pairs in the $_SESSION object are stored in the matching
-record. The value of *session.cache_expire* is used as the record ttl.
+record. The value of *session.gc_maxlifetime* is used as the record ttl.
 
 
 **session.save\_handler string**

@@ -58,10 +58,12 @@
 	#define DECLARE_ZVAL(__var)     zval* __var = NULL
 	#define DECLARE_ZVAL_P(__var)   zval** __var = NULL
 	#define PARAM_ZVAL_P(__var)     zval** __var
+	#define PARAM_ZVAL(__var)       zval* __var
 #else
 	#define DECLARE_ZVAL(__var)     zval __var
 	#define DECLARE_ZVAL_P(__var)   zval* __var = NULL
 	#define PARAM_ZVAL_P(__var)     zval* __var
+	#define PARAM_ZVAL(__var)       zval __var
 #endif
 
 /*
@@ -125,6 +127,7 @@
 #define SAVE_HANDLER_PHP_INI INI_STR("session.save_handler") ? INI_STR("session.save_handler") : NULL
 #define SAVE_PATH_PHP_INI INI_STR("session.save_path") ? INI_STR("session.save_path") : NULL
 #define CACHE_EXPIRE_PHP_INI INI_INT("session.cache_expire") ? INI_INT("session.cache_expire") * 60 : 0
+#define SESSION_EXPIRE_PHP_INI INI_INT("session.gc_maxlifetime") ? INI_INT("session.gc_maxlifetime") * 60 : 0
 
 #define AEROSPIKE_SESSION "aerospike"
 #define AEROSPIKE_SESSION_LEN 9
@@ -177,6 +180,8 @@
 #define PHP_AS_RECORD_DEFINE_FOR_METADATA_LEN               8
 #define PHP_AS_RECORD_DEFINE_FOR_BINS                       "bins"
 #define PHP_AS_RECORD_DEFINE_FOR_BINS_LEN                   4
+#define PHP_AS_RECORD_DEFINE_FOR_RESULTS                    "results"
+#define PHP_AS_RECORD_DEFINE_FOR_RESULTS_LEN                7
 #define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS                   "max_threads"
 #define PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN               11
 #define PHP_AS_KEY_DEFINE_FOR_THREAD_POOL_SIZE              "thread_pool_size"
@@ -661,6 +666,13 @@ extern as_status aerospike_record_operations_operate(Aerospike_object* aerospike
 								as_error* error_p,
 								zval* returned_p,
 								HashTable* operations_array_p);
+
+extern as_status aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
+                                as_key* as_key_p,
+                                zval* options_p,
+                                as_error* error_p,
+                                zval* returned_p,
+                                HashTable* operations_array_p);
 
 extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,

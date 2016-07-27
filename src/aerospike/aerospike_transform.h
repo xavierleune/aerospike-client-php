@@ -1405,6 +1405,9 @@
 #define ADD_LIST_APPEND_ZVAL(array, key, store)                                \
     add_next_index_zval(array, store);
 
+extern as_status
+aerospike_get_record_metadata(as_record* get_record_p, zval* metadata_container_p TSRMLS_DC);
+
 extern void
 aerospike_transform_iterate_records(Aerospike_object* as,
     #if PHP_VERSION_ID < 70000
@@ -1415,4 +1418,5 @@ aerospike_transform_iterate_records(Aerospike_object* as,
     , as_record* as_record_p, as_static_pool* static_pool,
     int8_t serializer_policy,
     bool server_support_double, as_error *error_p TSRMLS_DC);
+
 #endif /* end of __AERROSPIKE_TRANSFORM_H__ */
