@@ -1433,7 +1433,7 @@ PHP_METHOD(Aerospike, operateOrdered)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|za",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|z/a",
                 &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE){
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operateOrdered function");
@@ -1459,10 +1459,11 @@ PHP_METHOD(Aerospike, operateOrdered)
         goto exit;
     }
 
-    if (returned_p) {
-        zval_dtor(returned_p);
-        array_init(returned_p);
-    }
+	convert_to_null(returned_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(returned_p);
+	#endif
+	array_init(returned_p);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_operations_operate_ordered(aerospike_obj_p,

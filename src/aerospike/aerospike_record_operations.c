@@ -34,16 +34,16 @@
 
 extern bool operater_ordered_callback(const char *key, const as_val *value, void *array TSRMLS_DC)
 {
-	zval* record_local_p;
 	static int iterator = 0;
 	as_error err;
+	DECLARE_ZVAL(record_local_p);
 
 #if PHP_VERSION_ID < 70000
 	MAKE_STD_ZVAL(record_local_p);
 #endif
-	array_init(record_local_p);
+	array_init(AEROSPIKE_ZVAL_ARG(record_local_p));
 	if (key) {
-		if (0 != AEROSPIKE_ADD_NEXT_INDEX_STRINGL(record_local_p, key, strlen(key), 1)) {
+		if (0 != AEROSPIKE_ADD_NEXT_INDEX_STRINGL(AEROSPIKE_ZVAL_ARG(record_local_p), key, strlen(key), 1)) {
 			DEBUG_PHP_EXT_DEBUG("Unable to get the record key.");
 			return false;
 		}
@@ -52,7 +52,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 	if (value) {
 		switch(value->type) {
 			case AS_STRING:
-				if (0 != AEROSPIKE_ADD_NEXT_INDEX_STRINGL(record_local_p, as_string_get((as_string *) value), 
+				if (0 != AEROSPIKE_ADD_NEXT_INDEX_STRINGL(AEROSPIKE_ZVAL_ARG(record_local_p), as_string_get((as_string *) value),
 					strlen(as_string_get((as_string *) value)), 1)) {
 					DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 					return false;
@@ -60,14 +60,14 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 				break;
 
 			case AS_INTEGER:
-				if (0 != add_next_index_long(record_local_p, (long) as_integer_get((as_integer *) value))) {
+				if (0 != add_next_index_long(AEROSPIKE_ZVAL_ARG(record_local_p), (long) as_integer_get((as_integer *) value))) {
 					DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 					return false;
 				}
 				break;
 
 			case AS_BOOLEAN:
-				if (0 != add_next_index_bool(record_local_p, (int) as_boolean_get((as_boolean *)value))) {
+				if (0 != add_next_index_bool(AEROSPIKE_ZVAL_ARG(record_local_p), (int) as_boolean_get((as_boolean *)value))) {
 					DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 					return false;
 				}
@@ -90,7 +90,7 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 				break;
 
 			case AS_DOUBLE:
-				ADD_LIST_APPEND_DOUBLE(NULL, NULL, (void *)value, &record_local_p, &err TSRMLS_CC);
+				ADD_LIST_APPEND_DOUBLE(NULL, NULL, (void *)value, /*&record_local_p*/ (void *) array, &err TSRMLS_CC);
 				if (err.code != AEROSPIKE_OK) {
 					DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 					return false;
@@ -130,12 +130,12 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 				break;
 		}
 	} else {
-		if (0 != add_next_index_null(record_local_p)) {
+		if (0 != add_next_index_null(AEROSPIKE_ZVAL_ARG(record_local_p))) {
 			DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 			return false;
 		}
 	}
-	if(0 != add_index_zval(((foreach_callback_udata *) array)->udata_p, iterator, record_local_p)) {
+	if(0 != add_index_zval(((foreach_callback_udata *) array)->udata_p, iterator, AEROSPIKE_ZVAL_ARG(record_local_p))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 		return false;
 	}
@@ -286,7 +286,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		#else
 			array_init(&temp_record_p);
-			add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+			add_assoc_zval(&temp_record_p, bin_name_p, each_operation);
 		 #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
@@ -314,7 +314,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		#else
 			array_init(&temp_record_p);
-			add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+			add_assoc_zval(&temp_record_p, bin_name_p, each_operation);
 		#endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
@@ -398,11 +398,11 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			 MAKE_STD_ZVAL(temp_record_p);
 			 array_init(temp_record_p);
 			 ALLOC_ZVAL(append_val_copy);
-				MAKE_COPY_ZVAL(each_operation, append_val_copy);
+			 MAKE_COPY_ZVAL(each_operation, append_val_copy);
 			 add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
 		 #else
 			 array_init(&temp_record_p);
-				add_assoc_zval(&temp_record_p, bin_name_p, &append_val_copy);
+			 add_assoc_zval(&temp_record_p, bin_name_p, each_operation);
 		 #endif
 
 			aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool, serializer_policy, aerospike_has_double(as_object_p), error_p TSRMLS_CC);
@@ -952,9 +952,6 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 	char*                       bin_name_p;
 	char*                       str;
 	char*                       geoStr;
-	DECLARE_ZVAL_P(each_operation);
-	DECLARE_ZVAL_P(operation);
-	DECLARE_ZVAL_P(each_operation_back);
 	int                         offset = 0;
 	double                      double_offset = 0.0;
 #if PHP_VERSION_ID < 70000
@@ -967,19 +964,21 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 	uint32_t                    ttl;
 	int64_t                     index;
 	foreach_callback_udata      foreach_record_callback_udata;
-	zval*                       record_p_local;
-	zval*                       metadata_container_p;
-	zval*                       key_container_p;
+	DECLARE_ZVAL_P(each_operation);
+	DECLARE_ZVAL_P(operation);
+	DECLARE_ZVAL_P(each_operation_back);
+	DECLARE_ZVAL(record_p_local);
+	DECLARE_ZVAL(metadata_container_p);
+	DECLARE_ZVAL(key_container_p);
 
 #if PHP_VERSION_ID < 70000
 	MAKE_STD_ZVAL(record_p_local)
 	MAKE_STD_ZVAL(metadata_container_p);
 	MAKE_STD_ZVAL(key_container_p);
 #endif
-	array_init(record_p_local);
-	array_init(metadata_container_p);
-	array_init(key_container_p);
-
+	array_init(AEROSPIKE_ZVAL_ARG(record_p_local));
+	array_init(AEROSPIKE_ZVAL_ARG(metadata_container_p));
+	array_init(AEROSPIKE_ZVAL_ARG(key_container_p));
 
 	TSRMLS_FETCH_FROM_CTX(aerospike_obj_p->ts);
 
@@ -996,6 +995,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 	AEROSPIKE_FOREACH_HASHTABLE(operations_array_p, pointer, operation) {
 #else
 	ZEND_HASH_FOREACH_VAL(operations_array_p, operation) {
+		zend_string* z_str;
 #endif
 		as_operations_inita(&ops, zend_hash_num_elements(operations_array_p));
 
@@ -1016,7 +1016,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 #if PHP_VERSION_ID < 70000
 			AEROSPIKE_FOREACH_HASHTABLE(each_operation_array_p, each_pointer, each_operation) {
 #else
-			ZEND_HASH_FOREACH_VAL(each_operation_array_p, each_operation) {
+			ZEND_HASH_FOREACH_KEY_VAL(each_operation_array_p, each_pointer, z_str, each_operation) {
 #endif
 				uint options_key_len;
 #if PHP_VERSION_ID < 70000
@@ -1025,13 +1025,11 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 				zend_ulong options_index;
 #endif
 				char* options_key;
-				
+
 #if PHP_VERSION_ID < 70000
 				if (zend_hash_get_current_key_ex(each_operation_array_p, (char **) &options_key,
 					&options_key_len, &options_index, 0, &each_pointer) != HASH_KEY_IS_STRING)
 #else
-				zend_string* z_str;// = zend_string_init(options_key, strlen(options_key), 0);
-				ZEND_HASH_FOREACH_KEY_VAL(each_operation_array_p, each_pointer, z_str, each_operation) {
 					options_key = z_str->val;
 					if (!z_str)
 #endif
@@ -1155,7 +1153,6 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 			}
 #else
 			} ZEND_HASH_FOREACH_END();
-			} ZEND_HASH_FOREACH_END();
 #endif
 			if (op == AS_OPERATOR_INCR) {
 				if (str) {
@@ -1186,7 +1183,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 		if (AEROSPIKE_OK != get_options_ttl_value(options_p, &ops.ttl, error_p TSRMLS_CC)) {
 			goto exit;
 		}
-		foreach_record_callback_udata.udata_p = record_p_local;
+		foreach_record_callback_udata.udata_p = AEROSPIKE_ZVAL_ARG(record_p_local);
 		foreach_record_callback_udata.error_p = error_p;
 		foreach_record_callback_udata.obj = aerospike_obj_p;
 
@@ -1239,7 +1236,7 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 #endif
 
 exit:
-	status = aerospike_get_record_metadata(get_rec_temp, metadata_container_p TSRMLS_CC);
+	status = aerospike_get_record_metadata(get_rec_temp, AEROSPIKE_ZVAL_ARG(metadata_container_p) TSRMLS_CC);
 	if (status != AEROSPIKE_OK) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get metadata of record.");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of record.");
@@ -1247,26 +1244,27 @@ exit:
 	}
 
 
-	status = aerospike_get_record_key_digest(&(aerospike_obj_p->as_ref_p->as_p->config), get_rec_temp, as_key_p, key_container_p, options_p, true TSRMLS_CC);
+	status = aerospike_get_record_key_digest(&(aerospike_obj_p->as_ref_p->as_p->config), get_rec_temp, as_key_p,
+	AEROSPIKE_ZVAL_ARG(key_container_p), options_p, true TSRMLS_CC);
 	if (status != AEROSPIKE_OK) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get key and digest for record.");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get key and digest for record.");
 		goto exit_1;
 	}
 
-	if (0 != add_assoc_zval(returned_p, PHP_AS_KEY_DEFINE_FOR_KEY, key_container_p)) {
+	if (0 != add_assoc_zval(returned_p, PHP_AS_KEY_DEFINE_FOR_KEY, AEROSPIKE_ZVAL_ARG(key_container_p))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get key of a record.");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get key of a record.");
 		goto exit_1;
 	}
 
-	if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, metadata_container_p)) {
+	if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_METADATA, AEROSPIKE_ZVAL_ARG(metadata_container_p))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get metadata of a record.");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get metadata of a record.");
 		goto exit_1;
 	}
 
-	if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_RESULTS, record_p_local)) {
+	if (0 != add_assoc_zval(returned_p, PHP_AS_RECORD_DEFINE_FOR_RESULTS, AEROSPIKE_ZVAL_ARG(record_p_local))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to get the record.");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unable to get the record.");
 		goto exit_1;
