@@ -373,9 +373,9 @@ PS_WRITE_FUNC(aerospike)
 
 	if (key == NULL ||
 #if PHP_VERSION_ID < 70000
-		!strcmp(val, "")
+		!strcmp(key, "")
 #else
-		!strcmp(ZSTR_VAL(val), "")
+		!strcmp(ZSTR_VAL(key), "")
 #endif
 			) {
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid Session ID");
@@ -394,9 +394,9 @@ PS_WRITE_FUNC(aerospike)
 	init_record = 1;
 	if (
 #if PHP_VERSION_ID < 70000
-		!as_record_set_str(&record, AEROSPIKE_SESSION_BIN, val)
+	 	!as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, val, vallen, AS_BYTES_PHP, false)
 #else
-		!as_record_set_str(&record, AEROSPIKE_SESSION_BIN, ZSTR_VAL(val))
+	    !as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, ZSTR_VAL(val), ZSTR_LEN(val), AS_BYTES_PHP, false)
 #endif
 		) {
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to set record");
