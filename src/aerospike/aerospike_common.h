@@ -40,22 +40,39 @@
  * CURRENT OBJECT UPON WHICH THE API IS INVOKED.
  *******************************************************************************************************
  */
-#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
+	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(zend_object_store_get_object(getThis() TSRMLS_CC))
+#else
+	#define Z_CUSTOM_OBJ_P(zv)          php_custom_object_fetch_object(Z_OBJ_P(zv));
+	#define PHP_AEROSPIKE_GET_OBJECT    (Aerospike_object *)(php_custom_object_fetch_object(Z_OBJ_P(getThis())))
+#endif
 
-/*
- *******************************************************************************************************
- * MACRO TO ITERATE OVER A HASHTABLE.
- *
- * @param ht            Hashtable pointer.
- * @param position      HashPosition.
- * @param datavalue     zval ** which shall be populated with the current data.
- *******************************************************************************************************
- */
-#define foreach_hashtable(ht, position, datavalue)               \
-    for (zend_hash_internal_pointer_reset_ex(ht, &position);     \
-         zend_hash_get_current_data_ex(ht,                       \
-                (void **) &datavalue, &position) == SUCCESS;     \
-         zend_hash_move_forward_ex(ht, &position))
+
+/*Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+#if PHP_VERSION_ID >= 70000
+  aerospike_obj_p = Z_CUSTOM_OBJ_P(getThis());
+#endif*/
+
+
+#if PHP_VERSION_ID < 70000
+	#define DECLARE_ZVAL(__var)     zval* __var = NULL
+	#define DECLARE_ZVAL_P(__var)   zval** __var = NULL
+	#define PARAM_ZVAL_P(__var)     zval** __var
+	#define PARAM_ZVAL(__var)       zval* __var
+	#define AEROSPIKE_ZVAL_ARG(zv) (zv)
+
+	typedef ulong as_php_ulong;
+	typedef zend_rsrc_list_entry as_php_zend_resource;
+#else
+	#define DECLARE_ZVAL(__var)     zval __var
+	#define DECLARE_ZVAL_P(__var)   zval* __var = NULL
+	#define PARAM_ZVAL_P(__var)     zval* __var
+	#define PARAM_ZVAL(__var)       zval __var
+	#define AEROSPIKE_ZVAL_ARG(zv) &(zv)
+
+	typedef zend_ulong as_php_ulong;
+	typedef zend_resource as_php_zend_resource;
+#endif
 
 /*
  *******************************************************************************************************
@@ -63,9 +80,9 @@
  *******************************************************************************************************
  */
 #ifdef __APPLE__
-    #define AS_MAX_STORE_SIZE 2560
+	#define AS_MAX_STORE_SIZE 2560
 #else
-    #define AS_MAX_STORE_SIZE 4096
+	#define AS_MAX_STORE_SIZE 4096
 #endif
 #define AS_MAX_LIST_SIZE AS_MAX_STORE_SIZE
 #define AS_MAX_MAP_SIZE AS_MAX_STORE_SIZE
@@ -117,19 +134,20 @@
  */
 #define SAVE_HANDLER_PHP_INI INI_STR("session.save_handler") ? INI_STR("session.save_handler") : NULL
 #define SAVE_PATH_PHP_INI INI_STR("session.save_path") ? INI_STR("session.save_path") : NULL
+#define CACHE_EXPIRE_PHP_INI INI_INT("session.cache_expire") ? INI_INT("session.cache_expire") * 60 : 0
 #define SESSION_EXPIRE_PHP_INI INI_INT("session.gc_maxlifetime") ? INI_INT("session.gc_maxlifetime") * 60 : 0
 
 #define AEROSPIKE_SESSION "aerospike"
 #define AEROSPIKE_SESSION_LEN 9
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS FOR AEROSPIKE GEOJSON CLASS.
  *******************************************************************************************************
  */
 #define GEOJSONCLASS "Aerospike\\GeoJSON"
 
-/* 
+/*
  *******************************************************************************************************
  * MACROS FOR PREDICATE ARRAY KEYS.
  *******************************************************************************************************
@@ -200,16 +218,16 @@
  *******************************************************************************************************
  */
 typedef struct list_map_static_pool {
-    u_int32_t        current_list_id;
-    as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
-    u_int32_t        current_map_id;
-    as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
-    as_string        string_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_str_id;
-    as_integer       integer_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_int_id;
-    as_bytes         bytes_pool[AS_MAX_STORE_SIZE];
-    u_int32_t        current_bytes_id;
+	u_int32_t        current_list_id;
+	as_arraylist     alloc_list[AS_MAX_LIST_SIZE];
+	u_int32_t        current_map_id;
+	as_hashmap       alloc_map[AS_MAX_MAP_SIZE];
+	as_string        string_pool[AS_MAX_STORE_SIZE];
+	u_int32_t        current_str_id;
+	as_integer       integer_pool[AS_MAX_STORE_SIZE];
+	u_int32_t        current_int_id;
+	as_bytes         bytes_pool[AS_MAX_STORE_SIZE];
+	u_int32_t        current_bytes_id;
 } as_static_pool;
 
 /*
@@ -218,24 +236,24 @@ typedef struct list_map_static_pool {
  *******************************************************************************************************
  */
 typedef struct csdk_aerospike_obj {
-    /*
-     * as_p holds the reference of internal C SDK aerospike object
-     */
-    aerospike *as_p;
+	/*
+	 * as_p holds the reference of internal C SDK aerospike object
+	 */
+	aerospike *as_p;
 
-    /*
-     * ref_as_p indicates the no. of references for internal C
-     * SDK aerospike object being held by the various PHP userland Aerospike
-     * objects.
-     */
-    int ref_as_p;
+	/*
+	 * ref_as_p indicates the no. of references for internal C
+	 * SDK aerospike object being held by the various PHP userland Aerospike
+	 * objects.
+	 */
+	int ref_as_p;
 
-    /*
-     * ref_hosts_entry indicates the no. of references for internal C
-     * SDK aerospike object being held by entries in aerospike global
-     * persistent_list hashtable.
-     */
-    int ref_hosts_entry;
+	/*
+	 * ref_hosts_entry indicates the no. of references for internal C
+	 * SDK aerospike object being held by entries in aerospike global
+	 * persistent_list hashtable.
+	 */
+	int ref_hosts_entry;
 } aerospike_ref;
 
 /*
@@ -243,28 +261,43 @@ typedef struct csdk_aerospike_obj {
  * Structure to map the zend Aerospike object with the C client's aerospike object ref structure.
  *******************************************************************************************************
  */
-typedef struct Aerospike_object {
-    zend_object std;
-    bool is_persistent;
-    aerospike_ref *as_ref_p;
-    u_int16_t is_conn_16;
-    int8_t serializer_opt;
-    bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported 
-                                or not */
-#ifdef ZTS
-    void ***ts;
-#endif
-} Aerospike_object;
 
-/* 
+#if PHP_VERSION_ID < 70000
+  typedef struct Aerospike_object {
+	  zend_object std;
+	  bool is_persistent;
+	  aerospike_ref *as_ref_p;
+	  u_int16_t is_conn_16;
+	  int8_t serializer_opt;
+	  bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported or not */
+    #ifdef ZTS
+	    void ***ts;
+    #endif
+  } Aerospike_object;
+#else
+typedef struct Aerospike_object {
+	bool is_persistent;
+	aerospike_ref *as_ref_p;
+	u_int16_t is_conn_16;
+	int8_t serializer_opt;
+	bool hasGeoJSON;         /* Boolean value to store if GeoJSON is supported or not */
+	#ifdef ZTS
+		void ***ts;
+	#endif
+	zend_object std;
+} Aerospike_object;
+#endif
+
+
+/*
  *******************************************************************************************************
  * Structure containing session info of Aerospike_object.
  *******************************************************************************************************
  */
 typedef struct aerospike_session_t {
-    Aerospike_object    *aerospike_obj_p;
-    char                ns_p[AS_NAMESPACE_MAX_SIZE];
-    char                set_p[AS_SET_MAX_SIZE];
+	Aerospike_object    *aerospike_obj_p;
+	char                ns_p[AS_NAMESPACE_MAX_SIZE];
+	char                set_p[AS_SET_MAX_SIZE];
 } aerospike_session;
 
 /*
@@ -275,9 +308,9 @@ typedef struct aerospike_session_t {
  *******************************************************************************************************
  */
 typedef struct foreach_callback_udata_t {
-    zval        *udata_p;
-    as_error    *error_p;
-    Aerospike_object *obj;
+	zval        *udata_p;
+	as_error    *error_p;
+	Aerospike_object *obj;
 } foreach_callback_udata;
 
 /*
@@ -288,8 +321,8 @@ typedef struct foreach_callback_udata_t {
  *******************************************************************************************************
  */
 typedef struct foreach_callback_info_udata_t {
-    zval        *udata_p;
-    HashTable   *host_lookup_p;
+	zval        *udata_p;
+	HashTable   *host_lookup_p;
 } foreach_callback_info_udata;
 
 /*
@@ -299,7 +332,12 @@ typedef struct foreach_callback_info_udata_t {
  */
 extern zend_fcall_info       func_call_info;
 extern zend_fcall_info_cache func_call_info_cache;
+
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
 extern zval                  *func_callback_retval_p;
+#else
+extern zval                  func_callback_retval_p;
+#endif
 extern uint32_t              is_callback_registered;
 
 /*
@@ -309,7 +347,11 @@ extern uint32_t              is_callback_registered;
  */
 extern zend_fcall_info       user_serializer_call_info;
 extern zend_fcall_info_cache user_serializer_call_info_cache;
-extern zval                  *user_serializer_callback_retval_p;
+#if PHP_VERSION_ID < 70000
+  extern zval                  *user_serializer_callback_retval_p;
+#else
+  extern zval                  user_serializer_callback_retval_p;
+#endif
 extern uint32_t              is_user_serializer_registered;
 
 /*
@@ -317,10 +359,28 @@ extern uint32_t              is_user_serializer_registered;
  * PHP Userland Deserializer callback
  *******************************************************************************************************
  */
-extern zend_fcall_info       user_deserializer_call_info;
-extern zend_fcall_info_cache user_deserializer_call_info_cache;
-extern zval                  *user_deserializer_callback_retval_p;
+ #if PHP_VERSION_ID < 70000
+ extern zend_fcall_info       user_deserializer_call_info;
+ extern zend_fcall_info_cache user_deserializer_call_info_cache;
+ #else
+ extern zend_fcall_info       user_deserializer_call_info;
+ extern zend_fcall_info_cache user_deserializer_call_info_cache;
+ #endif
+ #if PHP_VERSION_ID < 70000
+   extern zval*                  user_deserializer_callback_retval_p;
+ #else
+   extern zval                  user_deserializer_callback_retval_p;
+ #endif
 extern uint32_t              is_user_deserializer_registered;
+
+/*
+ *******************************************************************************************************
+ * Flag used to indicate if the server supports as_double data type,
+ * and if the data is float expected to convert to as_double.
+ *******************************************************************************************************
+ */
+extern bool does_server_support_double;
+extern bool is_datatype_double;
 
 /*
  ****************************************************************************
@@ -330,11 +390,11 @@ extern uint32_t              is_user_deserializer_registered;
  ****************************************************************************
  */
 typedef struct _userland_callback {
-    zend_fcall_info fci;
-    zend_fcall_info_cache fcc;
-    Aerospike_object *obj;
+	zend_fcall_info fci;
+	zend_fcall_info_cache fcc;
+	Aerospike_object *obj;
 #ifdef ZTS
-    void ***ts;
+	void ***ts;
 #endif
 } userland_callback;
 
@@ -345,8 +405,8 @@ typedef struct _userland_callback {
  *******************************************************************************************************
  */
 enum config_transform_result_type {
-    TRANSFORM_INTO_AS_CONFIG    = 0,
-    TRANSFORM_INTO_ZVAL         = 1
+	TRANSFORM_INTO_AS_CONFIG    = 0,
+	TRANSFORM_INTO_ZVAL         = 1
 };
 
 /*
@@ -356,8 +416,8 @@ enum config_transform_result_type {
  *******************************************************************************************************
  */
 typedef union _transform_result {
-    as_config* as_config_p;
-    HashTable* host_lookup_p;
+	as_config* as_config_p;
+	HashTable* host_lookup_p;
 } transform_result_t;
 
 /*
@@ -367,10 +427,10 @@ typedef union _transform_result {
  *******************************************************************************************************
  */
 typedef struct _transform_zval_config_into {
-    enum config_transform_result_type       transform_result_type;
-    transform_result_t                      transform_result;
-    char                                    user[AS_USER_SIZE];
-    char                                    pass[AS_PASSWORD_HASH_SIZE];
+	enum config_transform_result_type       transform_result_type;
+	transform_result_t                      transform_result;
+	char                                    user[AS_USER_SIZE];
+	char                                    pass[AS_PASSWORD_HASH_SIZE];
 } transform_zval_config_into;
 
 /*
@@ -380,7 +440,7 @@ typedef struct _transform_zval_config_into {
  */
 typedef struct _shared_memory_key
 {
-    int key;
+	int key;
 } shared_memory_key;
 
 extern bool
@@ -392,7 +452,7 @@ extern bool
 aerospike_helper_aggregate_callback(const as_val* val_p, void* udata_p);
 extern bool
 aerospike_info_callback(const as_error* err, const as_node* node, char* request,
-        char* response, void* udata);
+		char* response, void* udata);
 
 /*
  *******************************************************************************************************
@@ -482,7 +542,7 @@ do {                                                                            
 #define PHP_TYPE_ISNOTSTR(zend_val)      PHP_IS_NOT_STRING(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTLONG(zend_val)     PHP_IS_NOT_LONG(Z_TYPE_P(zend_val))
 #define PHP_TYPE_ISNOTARR(zend_val)      PHP_IS_NOT_ARRAY(Z_TYPE_P(zend_val))
- 
+
 /*
  *******************************************************************************************************
  * MACRO TO CHECK IF GIVEN CONNECTION TO AEROSPIKE DB IS ESTABLISHED.
@@ -538,40 +598,49 @@ extern bool AS_AGGREGATE_GET(Aerospike_object* as, const char *key, const as_val
 
 extern as_status
 aerospike_transform_iterate_for_rec_key_params(HashTable* ht_p,
-        as_key* as_key_p, int16_t* set_val_p);
+		as_key* as_key_p, int16_t* set_val_p);
 
 extern as_status
-aerospike_transform_check_and_set_config(HashTable* ht_p, zval** retdata_pp,
-        void* config_p);
+aerospike_transform_check_and_set_config(HashTable* ht_p,
+	#if PHP_VERSION_ID < 70000
+		zval** retdata_pp
+	#else
+		zval* retdata_pp
+	#endif
+	, void* config_p);
 
 extern as_status
 aerospike_transform_key_data_put(Aerospike_object* as_object_p,
-                                 zval **record_pp,
-                                 as_key* as_key_p,
-                                 as_error *error_p,
-                                 u_int32_t ttl_u32,
-                                 zval* options_p,
-                                 int8_t* serializer_policy_p TSRMLS_DC);
+	              #if PHP_VERSION_ID < 70000
+		              zval **record_pp
+	              #else
+		              zval *record_pp
+	              #endif
+								, as_key* as_key_p,
+								as_error *error_p,
+								u_int32_t ttl_u32,
+								zval* options_p,
+								int8_t* serializer_policy_p TSRMLS_DC);
 
 extern as_status
 aerospike_transform_get_record(Aerospike_object* aerospike_object_p,
-                               as_key* get_rec_key_p,
-                               zval* options_p,
-                               as_error *error_p,
-                               zval* get_record_p,
-                               zval* bins_p TSRMLS_DC);
+								as_key* get_rec_key_p,
+								zval* options_p,
+								as_error *error_p,
+								zval* get_record_p,
+								zval* bins_p TSRMLS_DC);
 
 extern as_status
 aerospike_get_key_digest(as_key *key_p, char *ns_p, char *set_p,
-        zval *pk_p, char **digest_pp TSRMLS_DC);
+		zval *pk_p, char **digest_pp TSRMLS_DC);
 
 extern as_status
 aerospike_init_php_key(as_config *as_config_p, char *ns_p, long ns_p_length, char *set_p,
-        long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
-        as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
+		long set_p_length, zval *pk_p, bool is_digest, zval *return_value,
+		as_key *record_key_p, zval *options_p, bool get_flag TSRMLS_DC);
 
 extern void AS_LIST_PUT(Aerospike_object* as, void *key, void *value, void *store, void *static_pool,
-        int8_t serializer_policy, as_error *error_p TSRMLS_DC);
+		int8_t serializer_policy, as_error *error_p TSRMLS_DC);
 /*
  *******************************************************************************************************
  * Extern declarations of record operation functions.
@@ -579,32 +648,32 @@ extern void AS_LIST_PUT(Aerospike_object* as, void *key, void *value, void *stor
  */
 extern as_status
 aerospike_record_operations_exists(aerospike* as_object_p,
-                                   as_key* as_key_p,
-                                   as_error *error_p,
-                                   zval* metadata_p,
-                                   zval* options_p TSRMLS_DC);
+									as_key* as_key_p,
+									as_error *error_p,
+									zval* metadata_p,
+									zval* options_p TSRMLS_DC);
 extern as_status
 aerospike_record_operations_remove(Aerospike_object* aerospike_object_p,
-                                   as_key* as_key_p,
-                                   as_error *error_p,
-                                   zval* options_p);
+									as_key* as_key_p,
+									as_error *error_p,
+									zval* options_p);
 extern as_status
 aerospike_record_operations_general(Aerospike_object* aerospike_object_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                char* bin_name_p,
-                                char* str,
-                                u_int64_t offset,
-                                u_int64_t time_to_live,
-                                u_int64_t operation);
+								as_key* as_key_p,
+								zval* options_p,
+								as_error* error_p,
+								char* bin_name_p,
+								char* str,
+								u_int64_t offset,
+								u_int64_t time_to_live,
+								u_int64_t operation);
 
 extern as_status aerospike_record_operations_operate(Aerospike_object* aerospike_obj_p,
-                                as_key* as_key_p,
-                                zval* options_p,
-                                as_error* error_p,
-                                zval* returned_p,
-                                HashTable* operations_array_p);
+								as_key* as_key_p,
+								zval* options_p,
+								as_error* error_p,
+								zval* returned_p,
+								HashTable* operations_array_p);
 
 extern as_status aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
                                 as_key* as_key_p,
@@ -615,37 +684,37 @@ extern as_status aerospike_record_operations_operate_ordered(Aerospike_object* a
 
 extern as_status
 aerospike_record_operations_remove_bin(Aerospike_object* aerospike_object_p,
-                                       as_key* as_key_p,
-                                       zval* bin_name_p,
-                                       as_error* error_p,
-                                       zval* options_p);
+										as_key* as_key_p,
+										zval* bin_name_p,
+										as_error* error_p,
+										zval* options_p);
 
 extern as_status
 aerospike_php_exists_metadata(Aerospike_object*  aerospike_object_p,
-                              zval* key_record_p,
-                              zval* metadata_p,
-                              zval* options_p,
-                              as_error *error_p);
+								zval* key_record_p,
+								zval* metadata_p,
+								zval* options_p,
+								as_error *error_p);
 
 extern as_status
 aerospike_get_key_meta_bins_of_record_new(as_config *as_config_p,
-        as_record* get_record_p,
-        as_key* record_key_p, zval* outer_container_p,
-        zval* options_p, bool nullflag, bool get_flag TSRMLS_DC);
+		as_record* get_record_p,
+		as_key* record_key_p, zval* outer_container_p,
+		zval* options_p, bool nullflag, bool get_flag TSRMLS_DC);
 
 extern as_status
 aerospike_get_key_meta_bins_of_record(as_config *as_config_p,
-        as_record* get_record_p,
-        as_key* record_key_p, zval* outer_container_p,
-        zval* options_p, bool get_flag TSRMLS_DC);
+		as_record* get_record_p,
+		as_key* record_key_p, zval* outer_container_p,
+		zval* options_p, bool get_flag TSRMLS_DC);
 
 extern void
 get_generation_value(zval* options_p, uint16_t* generation_value_p,
-        as_error *error_p TSRMLS_DC);
+		as_error *error_p TSRMLS_DC);
 
 extern as_status
 get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p,
-        as_error *error_p TSRMLS_DC);
+		as_error *error_p TSRMLS_DC);
 
 /*
  *******************************************************************************************************
@@ -654,30 +723,30 @@ get_options_ttl_value(zval* options_p, uint32_t* ttl_value_p,
  */
 extern void
 aerospike_helper_set_error(zend_class_entry *ce_p,
-                           zval *object_p TSRMLS_DC);
+							zval *object_p TSRMLS_DC);
 
 extern as_status
 aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
-                                        bool persist_flag,
-                                        as_config* conf,
-                                        HashTable *shm_key_list,
-                                        HashTable *persistent_list,
-                                        int val_persist TSRMLS_DC);
+										bool persist_flag,
+										as_config* conf,
+										HashTable *shm_key_list,
+										HashTable *persistent_list,
+										int val_persist TSRMLS_DC);
 
 extern void
 aerospike_helper_free_static_pool(as_static_pool *static_pool);
 
 extern as_status
 aerospike_helper_check_and_set_config_for_session(as_config *config_p,
-        char *save_path, aerospike_session *session_p,
-        as_error *error_p TSRMLS_DC);
+		char *save_path, aerospike_session *session_p,
+		as_error *error_p TSRMLS_DC);
 
 extern void
 aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC);
 
 extern as_status
 aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
-        as_error *error_p TSRMLS_DC);
+		as_error *error_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -686,26 +755,32 @@ aerospike_helper_close_php_connection(Aerospike_object *as_obj_p,
  */
 extern as_status
 aerospike_udf_register(Aerospike_object* aerospike_obj_p, as_error* error_p,
-        char *path_p, char *module_p, long language, zval *options_p);
+		char *path_p, char *module_p, long language, zval *options_p);
 
 extern as_status
 aerospike_udf_deregister(Aerospike_object* aerospike_obj_p, as_error* error_p,
-        char *module_p, zval *options_p);
+		char *module_p, zval *options_p);
 
 extern as_status
 aerospike_udf_apply(Aerospike_object* aerospike_obj_p, as_key* as_key_p,
-        as_error* error_p, char* module_p, char* function_p, zval** args_pp,
-        zval* return_value_p, zval* options_p, int8_t* serializer_policy_p);
+		as_error* error_p, char* module_p, char* function_p,
+		#if PHP_VERSION_ID < 70000
+      zval** args_pp
+    #else
+      zval* args_pp
+    #endif
+		,
+		zval* return_value_p, zval* options_p, int8_t* serializer_policy_p);
 
 extern as_status
 aerospike_list_registered_udf_modules(Aerospike_object* aerospike_obj_p,
-        as_error *error_p, zval* array_of_modules_p, long language,
-        zval* options_p);
+		as_error *error_p, zval* array_of_modules_p, long language,
+		zval* options_p);
 
 extern as_status
 aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
-        as_error *error_p, char* module_p, zval* udf_code_p, long language,
-        zval* options_p);
+		as_error *error_p, char* module_p, zval* udf_code_p, long language,
+		zval* options_p);
 
 /*
  ******************************************************************************************************
@@ -714,21 +789,27 @@ aerospike_get_registered_udf_module_code(Aerospike_object* aerospike_obj_p,
  */
 extern as_status
 aerospike_scan_run(aerospike* as_object_p, as_error* error_p,
-        char* namespace_p, char* set_p, userland_callback* user_func_p,
-        HashTable* bins_ht_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
+		char* namespace_p, char* set_p, userland_callback* user_func_p,
+		HashTable* bins_ht_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
 
 extern as_status
 aerospike_scan_run_background(Aerospike_object* as_object_p, as_error* error_p,
-        char *module_p, char *function_p, zval** args_pp, char* namespace_p,
-        char* set_p, zval* scan_id_p, zval *options_p, bool block, int8_t* serializer_policy_p TSRMLS_DC);
+		char *module_p, char *function_p,
+		#if PHP_VERSION_ID < 70000
+			zval** args_pp
+		#else
+			zval* args_pp
+		#endif
+		, char* namespace_p,
+		char* set_p, zval* scan_id_p, zval *options_p, bool block, int8_t* serializer_policy_p TSRMLS_DC);
 
 extern as_status
 aerospike_scan_get_info(aerospike* as_object_p, as_error* error_p,
-        uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC);
+		uint64_t scan_id, zval* scan_info_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
-        uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC);
+		uint64_t job_id, zval* job_info_p, char* module_p, zval* options_p TSRMLS_DC);
 /*
  ******************************************************************************************************
  * Extern declarations of query functions.
@@ -736,20 +817,32 @@ aerospike_job_get_info(aerospike* as_object_p, as_error* error_p,
  */
 extern as_status
 aerospike_query_run_background(Aerospike_object* as_object_p, as_error* error_p,
-        char *module_p, char *function_p, zval** args_pp, char *namespace_p,
-        char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p, 
-        bool block, int8_t *serializer_policy_p TSRMLS_DC);
+		char *module_p, char *function_p,
+		#if PHP_VERSION_ID < 70000
+		  zval **args_pp
+		#else
+		  zval *args_pp
+		#endif
+		, char *namespace_p,
+		char *set_p, HashTable *predicate_ht_p, zval *job_id_p, zval *options_p,
+		bool block, int8_t *serializer_policy_p TSRMLS_DC);
 
 extern as_status
 aerospike_query_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
-        char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
-        HashTable* predicate_ht_p, zval* options_p TSRMLS_DC);
+		char* set_p, userland_callback* user_func_p, HashTable* bins_ht_p,
+		HashTable* predicate_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
-        const char* module_p, const char* function_p, zval** args_pp,
-        char* namespace_p, char* set_p, HashTable* bins_ht_p,
-        HashTable* predicate_ht_p, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
+		const char* module_p, const char* function_p,
+		#if PHP_VERSION_ID < 70000
+			zval** args_pp
+		#else
+			zval* args_pp
+		#endif
+		,
+		char* namespace_p, char* set_p, HashTable* bins_ht_p,
+		HashTable* predicate_ht_p, zval* return_value_p, zval* options_p, int8_t* serializer_policy_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -758,12 +851,12 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
  */
 extern as_status
 aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
-        char* ns_p, char* set_p, char* bin_p, char *name_p,
+		char* ns_p, char* set_p, char* bin_p, char *name_p,
 		uint32_t type, uint32_t datatype, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
-        char* ns_p, char *name_p, zval* options_p TSRMLS_DC);
+		char* ns_p, char *name_p, zval* options_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -772,16 +865,16 @@ aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
  */
 extern as_status
 aerospike_info_specific_host(aerospike* as_object_p, as_error* error_p,
-        char* request, zval* response_p, zval* host, zval* options_p TSRMLS_DC);
+		char* request, zval* response_p, zval* host, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_info_request_multiple_nodes(aerospike* as_object_p,
-        as_error* error_p, char* request_str_p, zval* config_p,
-        zval* return_value_p, zval* options_p TSRMLS_DC);
+		as_error* error_p, char* request_str_p, zval* config_p,
+		zval* return_value_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_info_get_cluster_nodes(aerospike* as_object_p,
-        as_error* error_p, zval* return_p, zval* host, zval* options_p TSRMLS_DC);
+		as_error* error_p, zval* return_p, zval* host, zval* options_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -790,12 +883,12 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
  */
 extern as_status
 aerospike_batch_operations_exists_many(aerospike* as_object_p,
-        as_error* as_error_p,zval* keys_p, zval* metadata_p,
-        zval* options_p TSRMLS_DC);
+		as_error* as_error_p,zval* keys_p, zval* metadata_p,
+		zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* as_error_p,
-        zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC);
+		zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -804,12 +897,12 @@ aerospike_batch_operations_get_many(aerospike* as_object_p, as_error* as_error_p
  */
 extern as_status
 aerospike_batch_operations_exists_many_new(aerospike* as_object_p,
-        as_error* as_error_p, zval* keys_p, zval* metadata_p,
-        zval* options_p TSRMLS_DC);
+		as_error* as_error_p, zval* keys_p, zval* metadata_p,
+		zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* as_error_p,
-        zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC);
+		zval* keys_p, zval* records_p, zval* filter_bins_p, zval* options_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -818,22 +911,22 @@ aerospike_batch_operations_get_many_new(aerospike* as_object_p, as_error* as_err
  */
 extern void
 set_policy(as_config* as_config_p, as_policy_read *read_policy_p,
-        as_policy_write *write_policy_p, as_policy_operate *operate_policy_p,
-        as_policy_remove *remove_policy_p, as_policy_info *info_policy_p,
-        as_policy_scan *scan_policy_p, as_policy_query *query_policy_p,
-        int8_t *serializer_policy_p, zval *options_p, as_error *error_p TSRMLS_DC);
+		as_policy_write *write_policy_p, as_policy_operate *operate_policy_p,
+		as_policy_remove *remove_policy_p, as_policy_info *info_policy_p,
+		as_policy_scan *scan_policy_p, as_policy_query *query_policy_p,
+		int8_t *serializer_policy_p, zval *options_p, as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_info(as_policy_info *info_policy_p, zval *options_p,
-        as_error *error_p TSRMLS_DC);
+		as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_query(as_policy_query *query_policy_p, zval *options_p,
-        as_error *error_p TSRMLS_DC);
+		as_error *error_p TSRMLS_DC);
 
 extern void
 set_policy_admin(as_policy_admin *admin_policy_p, zval *options_p,
-        as_error *error_p TSRMLS_DC);
+		as_error *error_p TSRMLS_DC);
 
 /*
  ******************************************************************************************************
@@ -842,66 +935,603 @@ set_policy_admin(as_policy_admin *admin_policy_p, zval *options_p,
  */
 extern as_status
 aerospike_security_operations_create_user(aerospike* as_object_p, as_error *error_p,
-        char* user_p, char* password_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
+		char* user_p, char* password_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_drop_user(aerospike* as_object_p,
-        as_error *error_p, char* user_p, zval* options_p TSRMLS_DC);
+		as_error *error_p, char* user_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_change_password(aerospike* as_object_p,
-        as_error *error_p, char* user_p, char* password_p,
-        zval* options_p TSRMLS_DC);
+		as_error *error_p, char* user_p, char* password_p,
+		zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_set_password(aerospike* as_object_p,
-        as_error *error_p, char* user_p, char* password_p,
-        zval* options_p TSRMLS_DC);
+		as_error *error_p, char* user_p, char* password_p,
+		zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *error_p,
-        char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
+		char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_revoke_roles(aerospike* as_object_p, as_error *error_p,
-        char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
+		char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_query_user(aerospike* as_object_p, as_error *error_p,
-        char* user_p, zval* roles_p, zval* options_p TSRMLS_DC);
+		char* user_p, zval* roles_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_query_users(aerospike* as_object_p, as_error *error_p,
-        zval* roles_p, zval* options_p TSRMLS_DC);
+		zval* roles_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_create_role(aerospike* as_object_p, as_error *error_p,
-        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+		char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_drop_role(aerospike* as_object_p, as_error *error_p,
-        char* role_p, zval* options_p TSRMLS_DC);
+		char* role_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_drop_user(aerospike* as_object_p,
-        as_error *error_p, char* role_p, zval* options_p TSRMLS_DC);
+		as_error *error_p, char* role_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_grant_privileges(aerospike* as_object_p, as_error *error_p,
-        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+		char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_revoke_privileges(aerospike* as_object_p, as_error *error_p,
-        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
+		char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error_p,
-        char* role_p, zval* roles_p, zval* options_p TSRMLS_DC);
+		char* role_p, zval* roles_p, zval* options_p TSRMLS_DC);
 
 extern as_status
 aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
-        zval* roles_p, zval* options_p TSRMLS_DC);
+		zval* roles_p, zval* options_p TSRMLS_DC);
 
 extern int
-check_val_type_list(zval **value);
+check_val_type_list(
+	#if PHP_VERSION_ID < 70000
+		zval **value
+	#else
+		zval* value
+	#endif
+);
+#endif
+
+
+/*
+ ******************************************************************************************************
+ * Macros for PHP version 7.
+ ******************************************************************************************************
+*/
+
+#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)/* If version is less than 70000 */
+	/*
+	******************************************************************************************************
+	* Macro to copy char* in zval when size is specified.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, x, ifDuplicate) \
+		ZVAL_STRINGL(return_value, digest_p, x, ifDuplicate)
+
+  /*
+	******************************************************************************************************
+	* Macro to copy char* in zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_STRING(return_value, digest_p, ifDuplicate) \
+		ZVAL_STRING(return_value, digest_p, ifDuplicate)
+
+	/*
+	******************************************************************************************************
+	* Macro to verify Address reference
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_ADDREF_P(reference) \
+		Z_ADDREF_P(reference)
+
+	/*
+	******************************************************************************************************
+	* Macro to check if the reference pointer is valid.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_ISREF_P(reference) \
+		Z_ISREF_P(reference)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at specified key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_length, ifDuplicate) \
+		add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_length, ifDuplicate)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at next index key which is a int.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_STRING(minmax_arr, str, ifDuplicate) \
+		add_next_index_string(minmax_arr, str, ifDuplicate)
+
+	/*
+	******************************************************************************************************
+	* Macro to add next index long.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, str) \
+		add_next_index_long(minmax_arr, str)
+
+  /*
+	******************************************************************************************************
+	* Macro to initialize a hashtable into a zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, size) \
+		array_init_size(minmax_arr, size)
+
+	/*
+	******************************************************************************************************
+	* Macro to add zval value to an assoc array.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr) \
+	  add_assoc_zval(return_value, VAL, minmax_arr)
+
+	  /*
+	  ******************************************************************************************************
+	  * Macro to append long at indexed key.
+	  ******************************************************************************************************
+	  */
+#define AEROSPIKE_ADD_ASSOC_LONG(z_value, index_key, n) \
+	  	add_assoc_long(z_value, index_key, n)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at indexed key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_INDEX_STRINGL(z_value, index_key, str, str_length, ifDuplicate) \
+		add_index_stringl(z_value, index_key, str, str_length, ifDuplicate)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at indexed key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_INDEX_STRING(z_value, index_key, str, ifDuplicate) \
+		add_index_string(z_value, index_key, str, ifDuplicate)
+
+	/*
+	******************************************************************************************************
+	* Macro to unref zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
+		ZVAL_UNREF(zval_pointer)
+
+	/*
+	******************************************************************************************************
+	* Macro to find value at specific index.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value)                            \
+    zend_hash_index_find(ht, index, (void **) value)                                \
+
+	/*
+	******************************************************************************************************
+	* Macro to fetch a value from current index.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
+        index, if_duplicate, pos)                                                   \
+    zend_hash_get_current_key_ex(ht, (char **) key, key_len, index,                 \
+            if_duplicate, pos)
+
+	/*
+	******************************************************************************************************
+	* Macro to iterate over a hashtable.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                        \
+    for (zend_hash_internal_pointer_reset_ex(ht, &position);                        \
+         zend_hash_get_current_data_ex(ht,                                          \
+                (void **) &datavalue, &position) == SUCCESS;                        \
+            zend_hash_move_forward_ex(ht, &position))
+
+ /*
+ ******************************************************************************************************
+ * Macro to get the data at the current position in ht.
+ ******************************************************************************************************
+ */
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht, data, pos)                      \
+		zend_hash_get_current_data_ex(ht, (void**) data, pos)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at next index key which is a long.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_INDEX_STRINGL(z_val, value, len, ifDuplicate) \
+		add_next_index_stringl(z_val, value, len, ifDuplicate)
+
+  /*****************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_ZVAL_ZVAL(z, zv, copy, dtor) \
+    ZVAL_ZVAL(z, zv, copy, dtor)
+
+  /*****************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_STRVAL_P(retval) \
+    Z_STRVAL_PP(retval)
+
+  /*****************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_STRLEN_P(retval) \
+			Z_STRLEN_PP(retval)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_LVAL_P(retval) \
+    Z_LVAL_PP(retval)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_ARRVAL_P(retval) \
+    Z_ARRVAL_PP(retval)
+
+  /*******************************************************************************************************
+  * Macro to .
+	******************************************************************************************************
+  */
+#define AEROSPIKE_Z_TYPE_P(val) \
+			Z_TYPE_PP(val)
+
+  /*******************************************************************************************************
+  * Macro to .
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_DVAL_P(retval) \
+					Z_DVAL_PP(retval)
+
+	/*
+	******************************************************************************************************
+	* Macro to find key in hastable
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_FIND(ht, key, len, zv_ptr) \
+		zend_hash_find(ht, key, len, zv_ptr)
+
+	/*
+	******************************************************************************************************
+	* Macro to add key in hastable
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
+		zend_hash_add(ht, key, len, data, data_size, dest)
+
+	/*
+	******************************************************************************************************
+	* Macro for zval destructor.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_PTR_DTOR(object) \
+		zval_ptr_dtor(&object)
+	/*
+	*******************************************************************************************************
+	* Macro to invoke callback function.
+	*******************************************************************************************************
+	*/
+#define INVOKE_CALLBACK_FUNCTION(level, func, file, line)                           \
+	int16_t   iter = 0;                                                             \
+	zval**    params[4];                                                            \
+	zval*     z_func = NULL;                                                        \
+	zval*     z_file = NULL;                                                        \
+	zval*     z_line = NULL;                                                        \
+	zval*     z_level = NULL;                                                       \
+                                                                                    \
+	ALLOC_INIT_ZVAL(z_level);                                                       \
+	ZVAL_LONG(z_level, level);                                                      \
+	params[0] = &z_level;                                                           \
+                                                                                    \
+	ALLOC_INIT_ZVAL(z_func);                                                        \
+	ZVAL_STRING(z_func, func, 1);                                                   \
+	params[1] = &z_func;                                                            \
+                                                                                    \
+	ALLOC_INIT_ZVAL(z_file);                                                        \
+	ZVAL_STRING(z_file, file, 1);                                                   \
+	params[2] = &z_file;                                                            \
+                                                                                    \
+	ALLOC_INIT_ZVAL(z_line);                                                        \
+	ZVAL_LONG(z_line, line);                                                        \
+	params[3] = &z_line;                                                            \
+                                                                                    \
+	func_call_info.param_count = 4;                                                 \
+	func_call_info.params = params;                                                 \
+	func_call_info.retval_ptr_ptr = &func_callback_retval_p;                        \
+                                                                                    \
+	if (zend_call_function(&func_call_info,                                         \
+				&func_call_info_cache TSRMLS_CC) == SUCCESS &&                      \
+			func_call_info.retval_ptr_ptr && *func_call_info.retval_ptr_ptr) {      \
+	} else {                                                                        \
+	}                                                                               \
+                                                                                    \
+	for (iter = 0; iter < 4; iter++) {                                              \
+		zval_ptr_dtor(params[iter]);                                                \
+	}
+#else   /* Else if the version is greater than or equal to 70000 */
+
+	/*
+	******************************************************************************************************
+	* Macro to copy char* in zval when size is specified.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, SIZE, ifDuplicate) \
+		ZVAL_STRINGL(return_value, digest_p, SIZE)
+
+ /*
+	******************************************************************************************************
+	* Macro to copy char* in zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_STRING(return_value, digest_p, ifDuplicate) \
+		ZVAL_STRING(&return_value, digest_p)
+
+	/*
+	******************************************************************************************************
+	* Macro to verify Address reference
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_ADDREF_P(function_name) \
+		Z_ADDREF_P(&(function_name))
+
+	/*
+	******************************************************************************************************
+	* Macro to check if the reference pointer is valid.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_ISREF_P(reference) \
+		Z_ISREF_P(&(reference))
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at specified key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_ASSOC_STRINGL(return_value, str, bin_name_p, bin_name_length, ifDuplicate) \
+		add_assoc_stringl(return_value, str, bin_name_p, bin_name_length)
+
+	/*
+	 ******************************************************************************************************
+	 * Macro to append long at indexed key.
+	 ******************************************************************************************************
+	 */
+#define AEROSPIKE_ADD_ASSOC_LONG(z_value, index_key, n) \
+	   add_assoc_long(&z_value, index_key, n)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at indexed key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_INDEX_STRINGL(z_value, index_key, str, str_length, ifDuplicate) \
+		add_index_stringl(z_value, index_key, str, str_length)
+
+	/*
+	******************************************************************************************************
+	* Macro to append string at indexed key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_INDEX_STRING(z_value, index_key, str, ifDuplicate) \
+		add_index_string(z_value, index_key, str)
+	/*
+	******************************************************************************************************
+	* Macro to append string at next index key.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_STRING(minmax_arr, str, ifDuplicate) \
+		add_next_index_string(&minmax_arr, str)
+
+	/*
+	******************************************************************************************************
+	* Macro to add next index long.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, str) \
+		add_next_index_long(&minmax_arr, str)
+
+	/*
+	******************************************************************************************************
+	* Macro to initialize a hashtable into a zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, size) \
+		array_init_size(&minmax_arr, size)
+
+	/*
+	******************************************************************************************************
+	* Macro to add zval value to an assoc array.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr) \
+    add_assoc_zval(return_value, VAL, &minmax_arr)
+
+	/*
+	******************************************************************************************************
+	* Macro to unref zval.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_UNREF(zval_pointer) \
+	ZVAL_UNREF(&(zval_pointer))
+
+	/*
+	******************************************************************************************************
+	* Macro to find value at specific index.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_INDEX_FIND(ht, index, value)                            \
+	zend_hash_index_find(ht, index)                                                 \
+
+	/*
+	******************************************************************************************************
+	* Macro to fetch a value from current index.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht, key, key_len,                    \
+		index, if_duplicate, pos)                                                   \
+	zend_hash_get_current_key_ex(ht, (zend_string**)key, index, pos)
+
+	/*
+	*****************************************************************************************************
+	* Macro to iterate over a hashtable.
+	*****************************************************************************************************
+	*/
+#define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                   \
+  ZEND_HASH_FOREACH_VAL(ht, datavalue) {                                  \
+  } ZEND_HASH_FOREACH_END();
+
+ /*
+	******************************************************************************************************
+	* Macro to get the data at the current position in ht.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht, data, pos)                      \
+    zend_hash_get_current_data_ex(ht, pos)
+
+  /*
+	******************************************************************************************************
+	* Macro to append string at next index key which is a long.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ADD_NEXT_INDEX_STRINGL(z_val, value, len, ifDuplicate) \
+		add_next_index_stringl(z_val, value, len)
+
+  /*
+	******************************************************************************************************
+	* Macro to .
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_ZVAL(z, zv, copy, dtor) \
+    ZVAL_ZVAL(z, &zv, copy, dtor)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_STRVAL_P(retval) \
+    Z_STRVAL_P(retval)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_STRLEN_P(retval) \
+    Z_STRLEN_P(retval)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_LVAL_P(retval) \
+		Z_LVAL_P(retval)
+
+  /*******************************************************************************************************
+	* Macro to .
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_DVAL_P(retval) \
+			Z_DVAL_P(retval)
+
+  /*******************************************************************************************************
+  * Macro to .
+  ******************************************************************************************************
+  */
+#define AEROSPIKE_Z_ARRVAL_P(retval) \
+    Z_ARRVAL_P(retval)
+
+  /*******************************************************************************************************
+	* Macro to .
+  ******************************************************************************************************
+	*/
+#define AEROSPIKE_Z_TYPE_P(val) \
+    Z_TYPE_P(val)
+
+	/*
+	******************************************************************************************************
+	* Macro to find key in hastable
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_FIND(ht, key, len, zv_ptr) \
+		zend_hash_find(ht, zend_string_init(key, strlen(key), 0))
+
+	/*
+	******************************************************************************************************
+	* Macro for zval destructor.
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZVAL_PTR_DTOR(object) \
+		zval_ptr_dtor(object)
+	/*
+	******************************************************************************************************
+	* Macro to add key in hastable
+	******************************************************************************************************
+	*/
+#define AEROSPIKE_ZEND_HASH_ADD(ht, key, len, data, data_size, dest, flag, z_val) \
+		zend_hash_add_new(ht, zend_string_init(key, strlen(key), 0), z_val)
+
+	/*
+	******************************************************************************************************
+	* Macro to invoke callback function.
+	******************************************************************************************************
+	*/
+#define INVOKE_CALLBACK_FUNCTION(level, func, file, line)                           \
+	int16_t   iter = 0;                                                             \
+	zval      params[4];                                                            \
+	zval      z_func;                                                               \
+	zval      z_file;                                                               \
+	zval      z_line;                                                               \
+	zval      z_level;                                                              \
+                                                                                    \
+	ZVAL_LONG(&z_level, level);                                                     \
+	params[0] = z_level;                                                            \
+                                                                                    \
+	ZVAL_STRING(&z_func, func);                                                     \
+	params[1] = z_func;                                                             \
+                                                                                    \
+	ZVAL_STRING(&z_file, file);                                                     \
+	params[2] = z_file;                                                             \
+                                                                                    \
+	ZVAL_LONG(&z_line, line);                                                       \
+	params[3] = z_line;                                                             \
+                                                                                    \
+	func_call_info.param_count = 4;                                                 \
+	func_call_info.params = params;                                                 \
+	func_call_info.retval = &func_callback_retval_p;                                \
+                                                                                    \
+	if (zend_call_function(&func_call_info,                                         \
+				&func_call_info_cache TSRMLS_CC) == SUCCESS &&                      \
+			func_call_info.retval) {                                                \
+	} else {                                                                        \
+	}                                                                               \
+                                                                                    \
+	for (iter = 0; iter < 4; iter++) {                                              \
+		zval_ptr_dtor(&params[iter]);                                               \
+	}
 #endif

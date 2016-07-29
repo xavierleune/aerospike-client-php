@@ -703,7 +703,7 @@ class Operate  extends AerospikeTestCommon
            return Aerospike::OK;
        }
    }
-   
+
    /**
      * @test
      * operate() with OPT_TTL option

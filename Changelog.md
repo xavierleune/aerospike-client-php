@@ -1,3 +1,7 @@
+## 3.4.9
+
+### Features
+* Support PHP 7
 
 ## 3.4.8
 

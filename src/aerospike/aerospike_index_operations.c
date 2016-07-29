@@ -45,43 +45,43 @@
  */
 extern as_status
 aerospike_index_create_php(aerospike* as_object_p, as_error *error_p,
-        char* ns_p, char* set_p, char* bin_p, char *name_p,
-        uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
+	char* ns_p, char* set_p, char* bin_p, char *name_p,
+	uint32_t index_type, uint32_t datatype, zval* options_p TSRMLS_DC)
 {
-    as_status                   status = AEROSPIKE_OK;
-    as_policy_info              info_policy;
-    as_index_task               task;
+	as_status                   status = AEROSPIKE_OK;
+	as_policy_info              info_policy;
+	as_index_task               task;
 
-    set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
-            NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+	set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+			NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
-    if ((!error_p) || (!as_object_p)) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to create index");
-        DEBUG_PHP_EXT_DEBUG("Unable to create index");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p)) {
+		status = AEROSPIKE_ERR_CLIENT;
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to create index");
+		DEBUG_PHP_EXT_DEBUG("Unable to create index");
+		goto exit;
+	}
 
-    if (AEROSPIKE_OK !=
-            (status = aerospike_index_create_complex(as_object_p, error_p,
-                                             &task, &info_policy, ns_p,
-                                             set_p, bin_p, name_p,
-                                             index_type, datatype))) {
-        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-        goto exit;
-    } else if (AEROSPIKE_OK !=
-            (status = aerospike_index_create_wait(error_p, &task, 0))) {
-        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			(status = aerospike_index_create_complex(as_object_p, error_p,
+					&task, &info_policy, ns_p,
+					set_p, bin_p, name_p,
+					index_type, datatype))) {
+		DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+		goto exit;
+	} else if (AEROSPIKE_OK !=
+			(status = aerospike_index_create_wait(error_p, &task, 0))) {
+		DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+		goto exit;
+	}
 
 exit:
-    return(status);
+	return(status);
 }
 
 /*
@@ -101,33 +101,33 @@ exit:
  */
 extern as_status
 aerospike_index_remove_php(aerospike* as_object_p, as_error *error_p,
-        char* ns_p, char *name_p, zval* options_p TSRMLS_DC)
+	char* ns_p, char *name_p, zval* options_p TSRMLS_DC)
 {
-    as_status                   status = AEROSPIKE_OK;
-    as_policy_info              info_policy;
+	as_status                   status = AEROSPIKE_OK;
+	as_policy_info              info_policy;
 
-    set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
-            NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
+	set_policy(&as_object_p->config, NULL, NULL, NULL, NULL, &info_policy,
+			NULL, NULL, NULL, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
-    if ((!error_p) || (!as_object_p)) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to drop index");
-        DEBUG_PHP_EXT_DEBUG("Unable to drop index");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p)) {
+		status = AEROSPIKE_ERR_CLIENT;
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to drop index");
+		DEBUG_PHP_EXT_DEBUG("Unable to drop index");
+		goto exit;
+	}
 
-    if (AEROSPIKE_OK !=
-            (status = aerospike_index_remove(as_object_p, error_p,
-                                             &info_policy, ns_p, name_p))) {
-        DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			(status = aerospike_index_remove(as_object_p, error_p,
+											&info_policy, ns_p, name_p))) {
+		DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
+		goto exit;
+	}
 
 exit:
-    return(status);
+	return(status);
 }

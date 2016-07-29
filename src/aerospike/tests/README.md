@@ -35,7 +35,7 @@ make test TESTS=tests/phpt/Put
 To clean up artifacts created by the tests you can run:
 
 ```
-./srcipts/test-cleanup.sh
+./scripts/test-cleanup.sh
 ```
 
 ## Source Code
