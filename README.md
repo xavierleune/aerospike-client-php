@@ -4,7 +4,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/dt/aerospike/aerospike-client-php.svg)
 [![License](https://img.shields.io/packagist/l/aerospike/aerospike-client-php.svg)](https://img.shields.io/packagist/l/aerospike/aerospike-client-php.svg)
 
-The Aerospike PHP Client works with PHP 5.3.3+, 5.4, 5.5, and 5.6.
+The Aerospike PHP Client works with PHP 5.3.3+, 5.4, 5.5, 5.6 and 7.0 (tested with 7.0.5)
 
 The PHP extension was tested to build on 64-bit
 

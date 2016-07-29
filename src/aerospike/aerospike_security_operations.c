@@ -40,29 +40,41 @@
  */
 static as_status
 aerospike_security_operations_convert_roles_from_zval(HashTable *roles_ht_p,
-        char **roles_array_p, int *roles_count, as_error *error_p TSRMLS_DC)
+		char **roles_array_p, int *roles_count, as_error *error_p TSRMLS_DC)
 {
-    HashPosition                roles_position;
-    zval**                      roles_entry = NULL;
-    int                         roles_index = 0;
+	HashPosition                roles_position;
+	DECLARE_ZVAL_P(roles_entry);
+	int                         roles_index = 0;
 
-    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
-    if ((*roles_count = zend_hash_num_elements(roles_ht_p)) == 0) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No roles specified");
-        DEBUG_PHP_EXT_DEBUG("No roles specified");
-        goto exit;
-    }
+	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
+	if ((*roles_count = zend_hash_num_elements(roles_ht_p)) == 0) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No roles specified");
+		DEBUG_PHP_EXT_DEBUG("No roles specified");
+		goto exit;
+	}
 
-    foreach_hashtable(roles_ht_p, roles_position, roles_entry) {
-        if (Z_TYPE_PP(roles_entry) != IS_STRING) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Expected role of type string");
-            DEBUG_PHP_EXT_DEBUG("Expected role of type string");
-            goto exit;
-        }
-        roles_array_p[roles_index++] = Z_STRVAL_PP(roles_entry);
-    }
+#if (PHP_VERSION_ID < 70000)
+	AEROSPIKE_FOREACH_HASHTABLE(roles_ht_p, roles_position, roles_entry) {
+		if (Z_TYPE_PP(roles_entry) != IS_STRING)
+#else
+	ZEND_HASH_FOREACH_VAL(roles_ht_p, roles_entry) {
+		if (Z_TYPE_P(roles_entry) != IS_STRING)
+#endif
+		{
+			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Expected role of type string");
+			DEBUG_PHP_EXT_DEBUG("Expected role of type string");
+			goto exit;
+		}
+#if (PHP_VERSION_ID < 70000)
+		roles_array_p[roles_index++] = Z_STRVAL_PP(roles_entry);
+	}
+#else
+		roles_array_p[roles_index++] = Z_STRVAL_P(roles_entry);
+	} ZEND_HASH_FOREACH_END();
+#endif
+
 exit:
-    return error_p->code;
+	return error_p->code;
 }
 
 /*
@@ -80,57 +92,102 @@ exit:
  */
 static as_status
 aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges_ht_p,
-        as_privilege **privileges, int privileges_count, as_error *error_p TSRMLS_DC)
+		as_privilege **privileges, int privileges_count, as_error *error_p TSRMLS_DC)
 {
-    HashPosition                privileges_position;
-    HashPosition                privileges_individual_position;
-    zval**                      privileges_entry = NULL;
-    int                         privileges_index = 0;
+	HashPosition                privileges_position;
+	HashPosition                privileges_individual_position;
+	DECLARE_ZVAL_P(privileges_entry);
+	int                         privileges_index = 0;
 
-    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
+	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
-    foreach_hashtable(privileges_ht_p, privileges_position, privileges_entry) {
-        zval**                      each_privilege_entry = NULL;
-        HashTable* each_privilege_p = NULL;
-        if (Z_TYPE_PP(privileges_entry) != IS_ARRAY) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Expected privilege of type array");
-            DEBUG_PHP_EXT_DEBUG("Expected privilege of type array");
-            goto exit;
-        }
+#if (PHP_VERSION_ID < 70000)
+	AEROSPIKE_FOREACH_HASHTABLE(privileges_ht_p, privileges_position, privileges_entry) {
+#else
+	ZEND_HASH_FOREACH_VAL(privileges_ht_p, privileges_entry) {
+#endif
+
+		DECLARE_ZVAL_P(each_privilege_entry);
+		HashTable*               each_privilege_p = NULL;
+
+#if (PHP_VERSION_ID < 70000)
+		if (Z_TYPE_PP(privileges_entry) != IS_ARRAY)
+#else
+		if (Z_TYPE_P(privileges_entry) != IS_ARRAY)
+#endif
+		{
+			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Expected privilege of type array");
+			DEBUG_PHP_EXT_DEBUG("Expected privilege of type array");
+			goto exit;
+		}
 		privileges[privileges_index] = (as_privilege *)cf_malloc(sizeof(as_privilege));
-		strcpy(privileges[privileges_index]->ns, ""); 
-		strcpy(privileges[privileges_index]->set, ""); 
-        each_privilege_p = Z_ARRVAL_P(*privileges_entry);
-		foreach_hashtable(each_privilege_p, privileges_individual_position, each_privilege_entry)  {
-			char * options_key = NULL;
+		strcpy(privileges[privileges_index]->ns, "");
+		strcpy(privileges[privileges_index]->set, "");
+#if (PHP_VERSION_ID < 70000)
+		each_privilege_p = Z_ARRVAL_P(*privileges_entry);
+		AEROSPIKE_FOREACH_HASHTABLE(each_privilege_p, privileges_individual_position, each_privilege_entry)  {
 			ulong options_index;
+#else
+		each_privilege_p = Z_ARRVAL_P(privileges_entry);
+		zend_string* z_str;
+		zend_ulong options_index;
+		ZEND_HASH_FOREACH_KEY_VAL(each_privilege_p, options_index, z_str, each_privilege_entry)  {
+#endif
+			char * options_key = NULL;
 			uint options_key_len;
 
-			if (zend_hash_get_current_key_ex(Z_ARRVAL_P(*privileges_entry), (char **) &options_key,
-                        &options_key_len, &options_index, 0, &privileges_individual_position)
-                                != HASH_KEY_IS_STRING) {
-                DEBUG_PHP_EXT_DEBUG("Privilege key should be a string");
-                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                        "Privilege key should be a string");
-                goto exit;
-            }
-			if(strcmp(options_key, "ns") == 0) {
-				strcpy(privileges[privileges_index]->ns, Z_STRVAL_PP(each_privilege_entry)); 
-			} else if(strcmp(options_key, "set") == 0) {
-				strcpy(privileges[privileges_index]->set, Z_STRVAL_PP(each_privilege_entry));
-			} else if(strcmp(options_key, "code") == 0) {
-				privileges[privileges_index]->code = Z_LVAL_PP(each_privilege_entry);
-			} else {
-                DEBUG_PHP_EXT_DEBUG("Privilege key should be either code, ns or set");
-                PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
-                        "Privilege key should be either code, ns or set");
-                goto exit;
+#if (PHP_VERSION_ID < 70000)
+			if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(Z_ARRVAL_P(*privileges_entry), (char **) &options_key,
+				&options_key_len, &options_index, 0, &privileges_individual_position)
+						!= HASH_KEY_IS_STRING)
+#else
+			if (!z_str)
+#endif
+			{
+				DEBUG_PHP_EXT_DEBUG("Privilege key should be a string");
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+						"Privilege key should be a string");
+				goto exit;
 			}
-        }
+			#if PHP_VERSION_ID >= 70000
+				options_key = z_str->val;
+			#endif
+			if (strcmp(options_key, "ns") == 0) {
+#if (PHP_VERSION_ID < 70000)
+				strcpy(privileges[privileges_index]->ns, Z_STRVAL_PP(each_privilege_entry));
+#else
+				strcpy(privileges[privileges_index]->ns, Z_STRVAL_P(each_privilege_entry));
+#endif
+			} else if (strcmp(options_key, "set") == 0) {
+#if (PHP_VERSION_ID < 70000)
+				strcpy(privileges[privileges_index]->set, Z_STRVAL_PP(each_privilege_entry));
+#else
+				strcpy(privileges[privileges_index]->set, Z_STRVAL_P(each_privilege_entry));
+#endif
+			} else if (strcmp(options_key, "code") == 0) {
+#if (PHP_VERSION_ID < 70000)
+				privileges[privileges_index]->code = Z_LVAL_PP(each_privilege_entry);
+#else
+				privileges[privileges_index]->code = Z_LVAL_P(each_privilege_entry);
+#endif
+			} else {
+				DEBUG_PHP_EXT_DEBUG("Privilege key should be either code, ns or set");
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR,
+						"Privilege key should be either code, ns or set");
+				goto exit;
+			}
+		}
+#if PHP_VERSION_ID >= 70000
+		ZEND_HASH_FOREACH_END();
+#endif
 		privileges_index++;
-    }
+	}
+#if PHP_VERSION_ID >= 70000
+	ZEND_HASH_FOREACH_END();
+#endif
+
 exit:
-    return error_p->code;
+	return error_p->code;
 }
 /*
  *******************************************************************************************************
@@ -145,30 +202,31 @@ exit:
  */
 static as_status
 aerospike_security_operations_convert_user_to_zval(zval *roles_p,
-        as_user *user_object_p, as_error *error_p TSRMLS_DC)
+		as_user *user_object_p, as_error *error_p TSRMLS_DC)
 {
-    int                         roles_index = 0;
+	int                         roles_index = 0;
 
-    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
+	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
-    if (!user_object_p) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid as_user_roles");
-        DEBUG_PHP_EXT_DEBUG("Invalid as_user_roles");
-        goto exit;
-    }
+	if (!user_object_p) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid as_user_roles");
+		DEBUG_PHP_EXT_DEBUG("Invalid as_user_roles");
+		goto exit;
+	}
 
-    for (roles_index = 0; roles_index < user_object_p->roles_size; roles_index++) {
-        if (user_object_p->roles[roles_index] && add_next_index_stringl(roles_p,
-                        user_object_p->roles[roles_index],
-                        strlen(user_object_p->roles[roles_index]), 1)) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to add a role into the zval array");
-            DEBUG_PHP_EXT_DEBUG("Unable to add a role into the zval array");
-            goto exit; 
-        }
-    }
+	for (roles_index = 0; roles_index < user_object_p->roles_size; roles_index++) {
+		//if (user_object_p->roles[roles_index] && add_next_index_stringl(roles_p,
+		if (user_object_p->roles[roles_index] && AEROSPIKE_ADD_NEXT_INDEX_STRINGL(roles_p,
+						user_object_p->roles[roles_index],
+						strlen(user_object_p->roles[roles_index]), 1)) {
+			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to add a role into the zval array");
+			DEBUG_PHP_EXT_DEBUG("Unable to add a role into the zval array");
+			goto exit;
+		}
+	}
 
 exit:
-    return error_p->code;
+	return error_p->code;
 }
 
 /*
@@ -182,31 +240,59 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_security_operations_convert_privileges_to_zval(zval **privileges_p,
-        as_privilege privileges[], int privileges_size, as_error *error_p TSRMLS_DC)
+aerospike_security_operations_convert_privileges_to_zval(
+#if PHP_VERSION_ID < 70000
+		zval **privileges_p,
+#else
+		zval privileges_p,
+#endif
+		as_privilege privileges[], int privileges_size, as_error *error_p TSRMLS_DC)
 {
 	int i = 0;
 	for(i = 0; i < privileges_size; i++) {
-		zval*	each_privilege_p = NULL;
+		DECLARE_ZVAL(each_privilege_p);
+#if (PHP_VERSION_ID < 70000)
 		MAKE_STD_ZVAL(each_privilege_p);
 		array_init(each_privilege_p);
+#else
+		array_init(&each_privilege_p);
+#endif
 
-		if(0 != add_assoc_stringl(each_privilege_p, "ns", privileges[i].ns, strlen(privileges[i].ns), 1)) {
+#if (PHP_VERSION_ID < 70000)
+		if(0 != AEROSPIKE_ADD_ASSOC_STRINGL(each_privilege_p, "ns", privileges[i].ns, strlen(privileges[i].ns), 1))
+#else
+		if(0 != AEROSPIKE_ADD_ASSOC_STRINGL(&each_privilege_p, "ns", privileges[i].ns, strlen(privileges[i].ns), 1))
+#endif
+		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get ns");
-        	DEBUG_PHP_EXT_DEBUG("Unable to get ns");
-        	goto exit;	
+			DEBUG_PHP_EXT_DEBUG("Unable to get ns");
+			goto exit;
 		}
-		if(0 != add_assoc_stringl(each_privilege_p, "set", privileges[i].set, strlen(privileges[i].set), 1)) {
+#if (PHP_VERSION_ID < 70000)
+		if(0 != AEROSPIKE_ADD_ASSOC_STRINGL(each_privilege_p, "set", privileges[i].set, strlen(privileges[i].set), 1))
+#else
+		if(0 != AEROSPIKE_ADD_ASSOC_STRINGL(&each_privilege_p, "set", privileges[i].set, strlen(privileges[i].set), 1))
+#endif
+		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get set");
-        	DEBUG_PHP_EXT_DEBUG("Unable to get set");
-        	goto exit;	
+			DEBUG_PHP_EXT_DEBUG("Unable to get set");
+			goto exit;
 		}
-		if(0 != add_assoc_long(each_privilege_p, "code", privileges[i].code)) {
+#if (PHP_VERSION_ID < 70000)
+		if(0 != add_assoc_long(each_privilege_p, "code", privileges[i].code))
+#else
+		if(0 != add_assoc_long(&each_privilege_p, "code", privileges[i].code))
+#endif
+		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get code");
-        	DEBUG_PHP_EXT_DEBUG("Unable to get code");
-        	goto exit;	
+			DEBUG_PHP_EXT_DEBUG("Unable to get code");
+			goto exit;
 		}
+#if (PHP_VERSION_ID < 70000)
 		add_index_zval(*privileges_p, i, each_privilege_p);
+#else
+		add_index_zval(&privileges_p, i, &each_privilege_p);
+#endif
 
 	}
 exit:
@@ -224,26 +310,32 @@ exit:
  *******************************************************************************************************
  */
 static as_status
-aerospike_security_operations_convert_role_to_zval(zval *role_p,
-        as_role *role_object_p, as_error *error_p TSRMLS_DC)
+aerospike_security_operations_convert_role_to_zval(
+	PARAM_ZVAL(role_p), as_role *role_object_p, as_error *error_p TSRMLS_DC)
 {
-    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
+	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
-    if (!role_object_p) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid as_role");
-        DEBUG_PHP_EXT_DEBUG("Invalid as_role");
-        goto exit;
-    }
+	if (!role_object_p) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid as_role");
+		DEBUG_PHP_EXT_DEBUG("Invalid as_role");
+		goto exit;
+	}
 
-	if(AEROSPIKE_OK != aerospike_security_operations_convert_privileges_to_zval(&role_p, role_object_p->privileges, 
-							role_object_p->privileges_size, error_p TSRMLS_CC)) {
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to parse privileges");
-        	DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
-        	goto exit;	
+	if(AEROSPIKE_OK != aerospike_security_operations_convert_privileges_to_zval(
+#if PHP_VERSION_ID < 70000
+				&role_p,
+#else
+				role_p,
+#endif
+				role_object_p->privileges,
+				role_object_p->privileges_size, error_p TSRMLS_CC)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to parse privileges");
+		DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
+		goto exit;
 	}
 
 exit:
-    return error_p->code;
+	return error_p->code;
 }
 
 /*
@@ -259,35 +351,48 @@ exit:
  */
 static as_status
 aerospike_security_operations_convert_roles_to_zval(zval *role_p,
-        as_role **role_object_p, int roles_size, as_error *error_p TSRMLS_DC)
+		as_role **role_object_p, int roles_size, as_error *error_p TSRMLS_DC)
 {
 	int i = 0;
-    PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
+	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
-    if (!role_object_p) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid as_role");
-        DEBUG_PHP_EXT_DEBUG("Invalid as_role");
-        goto exit;
-    }
+	if (!role_object_p) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Invalid as_role");
+		DEBUG_PHP_EXT_DEBUG("Invalid as_role");
+		goto exit;
+	}
 
 	for (i = 0; i < roles_size; i++) {
-		zval*	privileges_p = NULL;
-
+		DECLARE_ZVAL(privileges_p);
+#if (PHP_VERSION_ID < 70000)
 		MAKE_STD_ZVAL(privileges_p);
 		array_init(privileges_p);
+#else
+		array_init(&privileges_p);
+#endif
 
-		if( 0 != aerospike_security_operations_convert_privileges_to_zval(&privileges_p, role_object_p[i]->privileges, 
-																role_object_p[i]->privileges_size, error_p TSRMLS_CC)) {
+#if (PHP_VERSION_ID < 70000)
+		if( 0 != aerospike_security_operations_convert_privileges_to_zval(&privileges_p, role_object_p[i]->privileges,
+																role_object_p[i]->privileges_size, error_p TSRMLS_CC))
+#else
+		if( 0 != aerospike_security_operations_convert_privileges_to_zval(privileges_p, role_object_p[i]->privileges,
+																role_object_p[i]->privileges_size, error_p TSRMLS_CC))
+#endif
+		{
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to parse privileges");
-        	DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
-        	goto exit;	
+			DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
+			goto exit;
 		}
 
+#if (PHP_VERSION_ID < 70000)
 		add_assoc_zval(role_p, role_object_p[i]->name, privileges_p);
+#else
+		add_assoc_zval(role_p, role_object_p[i]->name, &privileges_p);
+#endif
 	}
 
 exit:
-    return error_p->code;
+	return error_p->code;
 }
 /*
  *******************************************************************************************************
@@ -305,42 +410,42 @@ exit:
  */
 extern as_status
 aerospike_security_operations_create_user(aerospike* as_object_p, as_error *error_p,
-        char* user_p, char* password_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC)
+		char* user_p, char* password_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    char*                       roles_array_p[MAX_ROLES] = {0};
-    int                         roles_count = 0;
+	as_policy_admin             admin_policy;
+	char*                       roles_array_p[MAX_ROLES] = {0};
+	int                         roles_count = 0;
 
-    if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to create user");
-        DEBUG_PHP_EXT_DEBUG("Unable to create user");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to create user");
+		DEBUG_PHP_EXT_DEBUG("Unable to create user");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-    
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
-	aerospike_create_user(as_object_p, error_p, &admin_policy, user_p, 
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
+				roles_array_p, &roles_count, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
+		goto exit;
+	}
+
+	aerospike_create_user(as_object_p, error_p, &admin_policy, user_p,
 					password_p, (const char **) roles_array_p, roles_count);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to create user");
-        DEBUG_PHP_EXT_DEBUG("Unable to create user");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to create user");
+		DEBUG_PHP_EXT_DEBUG("Unable to create user");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -357,32 +462,32 @@ exit:
  */
 extern as_status
 aerospike_security_operations_drop_user(aerospike* as_object_p,
-        as_error *error_p, char* user_p, zval* options_p TSRMLS_DC)
+		as_error *error_p, char* user_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
+	as_policy_admin             admin_policy;
 
-    if ((!error_p) || (!as_object_p) || (!user_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to drop user");
-        DEBUG_PHP_EXT_DEBUG("Unable to drop user");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to drop user");
+		DEBUG_PHP_EXT_DEBUG("Unable to drop user");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-   
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
 	aerospike_drop_user(as_object_p, error_p, &admin_policy, user_p);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to drop user");
-        DEBUG_PHP_EXT_DEBUG("Unable to drop user");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to drop user");
+		DEBUG_PHP_EXT_DEBUG("Unable to drop user");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -400,33 +505,33 @@ exit:
  */
 extern as_status
 aerospike_security_operations_change_password(aerospike* as_object_p,
-        as_error *error_p, char* user_p, char* password_p,
-        zval* options_p TSRMLS_DC)
+		as_error *error_p, char* user_p, char* password_p,
+		zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
+	as_policy_admin             admin_policy;
 
-    if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to change password");
-        DEBUG_PHP_EXT_DEBUG("Unable to change password");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to change password");
+		DEBUG_PHP_EXT_DEBUG("Unable to change password");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
 	aerospike_change_password(as_object_p, error_p, &admin_policy, user_p, password_p);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to change password");
-        DEBUG_PHP_EXT_DEBUG("Unable to change password");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to change password");
+		DEBUG_PHP_EXT_DEBUG("Unable to change password");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -444,32 +549,32 @@ exit:
  */
 extern as_status
 aerospike_security_operations_set_password(aerospike* as_object_p,
-        as_error *error_p, char* user_p, char* password_p,
-        zval* options_p TSRMLS_DC)
+		as_error *error_p, char* user_p, char* password_p,
+		zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
+	as_policy_admin             admin_policy;
 
-    if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set password");
-        DEBUG_PHP_EXT_DEBUG("Unable to set password");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p) || (!password_p)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to set password");
+		DEBUG_PHP_EXT_DEBUG("Unable to set password");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 	aerospike_set_password(as_object_p, error_p, &admin_policy, user_p, password_p);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to set password");
-        DEBUG_PHP_EXT_DEBUG("Unable to set password");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to set password");
+		DEBUG_PHP_EXT_DEBUG("Unable to set password");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -487,41 +592,41 @@ exit:
  */
 extern as_status
 aerospike_security_operations_grant_roles(aerospike* as_object_p, as_error *error_p,
-        char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC)
+		char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    char*                       roles_array_p[MAX_ROLES] = {0};
-    int                         roles_count = 0;
+	as_policy_admin             admin_policy;
+	char*                       roles_array_p[MAX_ROLES] = {0};
+	int                         roles_count = 0;
 
-    if ((!error_p) || (!as_object_p) || (!user_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to grant roles");
-        DEBUG_PHP_EXT_DEBUG("Unable to grant roles");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to grant roles");
+		DEBUG_PHP_EXT_DEBUG("Unable to grant roles");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-    
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
+				roles_array_p, &roles_count, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
+		goto exit;
+	}
 
 	aerospike_grant_roles(as_object_p, error_p, &admin_policy, user_p, (const char **) roles_array_p, roles_count);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to grant roles");
-        DEBUG_PHP_EXT_DEBUG("Unable to grant roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to grant roles");
+		DEBUG_PHP_EXT_DEBUG("Unable to grant roles");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -539,41 +644,41 @@ exit:
  */
 extern as_status
 aerospike_security_operations_revoke_roles(aerospike* as_object_p, as_error *error_p,
-        char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC)
+		char* user_p, HashTable* roles_ht_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    char*                       roles_array_p[MAX_ROLES] = {0};
-    int                         roles_count = 0;
+	as_policy_admin             admin_policy;
+	char*                       roles_array_p[MAX_ROLES] = {0};
+	int                         roles_count = 0;
 
-    if ((!error_p) || (!as_object_p) || (!user_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to revoke roles");
-        DEBUG_PHP_EXT_DEBUG("Unable to revoke roles");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to revoke roles");
+		DEBUG_PHP_EXT_DEBUG("Unable to revoke roles");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-    
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
-                roles_array_p, &roles_count, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_roles_from_zval(roles_ht_p,
+				roles_array_p, &roles_count, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse roles");
+		goto exit;
+	}
 
 	aerospike_revoke_roles(as_object_p, error_p, &admin_policy, user_p, (const char **) roles_array_p, roles_count);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to revoke roles");
-        DEBUG_PHP_EXT_DEBUG("Unable to revoke roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to revoke roles");
+		DEBUG_PHP_EXT_DEBUG("Unable to revoke roles");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -591,43 +696,43 @@ exit:
  */
 extern as_status
 aerospike_security_operations_query_user(aerospike* as_object_p, as_error *error_p,
-        char* user_p, zval* roles_p, zval* options_p TSRMLS_DC)
+		char* user_p, zval* roles_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    as_user*              		user_object_p = NULL;
+	as_policy_admin             admin_policy;
+	as_user*                    user_object_p = NULL;
 
-    if ((!error_p) || (!as_object_p) || (!user_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query user");
-        DEBUG_PHP_EXT_DEBUG("Unable to query user");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!user_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query user");
+		DEBUG_PHP_EXT_DEBUG("Unable to query user");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
 	aerospike_query_user(as_object_p, error_p, &admin_policy, user_p, &user_object_p);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query user");
-        DEBUG_PHP_EXT_DEBUG("Unable to query user");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query user");
+		DEBUG_PHP_EXT_DEBUG("Unable to query user");
+		goto exit;
+	}
 
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_user_to_zval(roles_p,
-                user_object_p, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse as_user");
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_user_to_zval(roles_p,
+				user_object_p, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse as_user");
+		goto exit;
+	}
 
 exit:
-    if (user_object_p) {
-        as_user_destroy(user_object_p);
-    }
-    return(error_p->code);
+	if (user_object_p) {
+		as_user_destroy(user_object_p);
+	}
+	return(error_p->code);
 }
 
 /*
@@ -645,58 +750,77 @@ exit:
  */
 extern as_status
 aerospike_security_operations_query_users(aerospike* as_object_p, as_error *error_p,
-        zval* roles_p, zval* options_p TSRMLS_DC)
+		zval* roles_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    as_user**             		all_users_pp = NULL;
-    int                         user_count = 0;
-    int                         user_index = 0;
+	as_policy_admin             admin_policy;
+	as_user**                   all_users_pp = NULL;
+	int                         user_count = 0;
+	int                         user_index = 0;
 
-    if ((!error_p) || (!as_object_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query users");
-        DEBUG_PHP_EXT_DEBUG("Unable to query users");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query users");
+		DEBUG_PHP_EXT_DEBUG("Unable to query users");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-   
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
 	aerospike_query_users(as_object_p, error_p, &admin_policy, &all_users_pp, &user_count);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query users");
-        DEBUG_PHP_EXT_DEBUG("Unable to query users");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query users");
+		DEBUG_PHP_EXT_DEBUG("Unable to query users");
+		goto exit;
+	}
 
-    for (user_index = 0; user_index < user_count; user_index++) {
-        zval *user_p = NULL;
-        MAKE_STD_ZVAL(user_p);
-        array_init(user_p);
+	for (user_index = 0; user_index < user_count; user_index++) {
+		DECLARE_ZVAL(user_p);
+#if (PHP_VERSION_ID < 70000)
+		MAKE_STD_ZVAL(user_p);
+		array_init(user_p);
+#else
+		array_init(&user_p);
+#endif
 
-        if (AEROSPIKE_OK !=
-                aerospike_security_operations_convert_user_to_zval(user_p,
-                    all_users_pp[user_index], error_p TSRMLS_CC)) {
-            zval_ptr_dtor(&user_p);
-            DEBUG_PHP_EXT_DEBUG("Unable to parse as_user");
-            goto exit;
-        }
+#if (PHP_VERSION_ID < 70000)
+		if (AEROSPIKE_OK !=
+				aerospike_security_operations_convert_user_to_zval(user_p,
+					all_users_pp[user_index], error_p TSRMLS_CC))
+#else
+		if (AEROSPIKE_OK !=
+				aerospike_security_operations_convert_user_to_zval(&user_p,
+					all_users_pp[user_index], error_p TSRMLS_CC))
+#endif
+		{
+			zval_ptr_dtor(&user_p);
+			DEBUG_PHP_EXT_DEBUG("Unable to parse as_user");
+			goto exit;
+		}
 
-        if (all_users_pp[user_index]->name &&
-                (0 != add_assoc_zval(roles_p, all_users_pp[user_index]->name,
-                                     user_p))) {
-            PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-                    "Unable to add user to all users array");
-            DEBUG_PHP_EXT_DEBUG("Unable to add user to all users array");
-            goto exit;
-        }
-    }
+#if (PHP_VERSION_ID < 70000)
+		if (all_users_pp[user_index]->name &&
+				(0 != add_assoc_zval(roles_p, all_users_pp[user_index]->name,
+									 user_p)))
+#else
+
+		if (all_users_pp[user_index]->name &&
+				(0 != add_assoc_zval(roles_p, all_users_pp[user_index]->name,
+									 &user_p)))
+#endif
+		{
+			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+					"Unable to add user to all users array");
+			DEBUG_PHP_EXT_DEBUG("Unable to add user to all users array");
+			goto exit;
+		}
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -714,57 +838,57 @@ exit:
  */
 extern as_status
 aerospike_security_operations_create_role(aerospike* as_object_p, as_error *error_p,
-        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC)
+		char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-	as_privilege** 				privileges = NULL;
-    int                         privileges_size = 0;
-	int 						i = 0;
+	as_policy_admin             admin_policy;
+	as_privilege**              privileges = NULL;
+	int                         privileges_size = 0;
+	int                         i = 0;
 
-    if ((!error_p) || (!as_object_p) || (!role_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to create role");
-        DEBUG_PHP_EXT_DEBUG("Unable to create role");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!role_p)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to create role");
+		DEBUG_PHP_EXT_DEBUG("Unable to create role");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
 	if( (privileges_size = zend_hash_num_elements(privileges_ht_p)) == 0) {
-    	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No privileges specified");
-        DEBUG_PHP_EXT_DEBUG("No privileges specified");
-        goto exit;
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No privileges specified");
+		DEBUG_PHP_EXT_DEBUG("No privileges specified");
+		goto exit;
 	}
 
 	privileges = (as_privilege **)alloca(sizeof(as_privilege *) * privileges_size);
 
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_privileges_from_zval(privileges_ht_p,
-                privileges, privileges_size, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_privileges_from_zval(privileges_ht_p,
+				privileges, privileges_size, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
+		goto exit;
+	}
 
 	aerospike_create_role(as_object_p, error_p, &admin_policy, role_p, privileges, privileges_size);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to create role");
-        DEBUG_PHP_EXT_DEBUG("Unable to create role");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to create role");
+		DEBUG_PHP_EXT_DEBUG("Unable to create role");
+		goto exit;
+	}
 
 exit:
 	if(privileges) {
-        for(i = 0; i < privileges_size; i++) {
-            if( privileges[i] != NULL)
-                cf_free(privileges[i]);
-        }
-    }
+		for(i = 0; i < privileges_size; i++) {
+			if( privileges[i] != NULL)
+				cf_free(privileges[i]);
+		}
+	}
 
-    return(error_p->code);
+	return(error_p->code);
 }
 /*
  *******************************************************************************************************
@@ -780,32 +904,32 @@ exit:
  */
 extern as_status
 aerospike_security_operations_drop_role(aerospike* as_object_p,
-        as_error *error_p, char* role_p, zval* options_p TSRMLS_DC)
+		as_error *error_p, char* role_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
+	as_policy_admin             admin_policy;
 
-    if ((!error_p) || (!as_object_p) || (!role_p)) {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to drop role");
-        DEBUG_PHP_EXT_DEBUG("Unable to drop role");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!role_p)) {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to drop role");
+		DEBUG_PHP_EXT_DEBUG("Unable to drop role");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-   
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
 	aerospike_drop_role(as_object_p, error_p, &admin_policy, role_p);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to drop role");
-        DEBUG_PHP_EXT_DEBUG("Unable to drop role");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to drop role");
+		DEBUG_PHP_EXT_DEBUG("Unable to drop role");
+		goto exit;
+	}
 
 exit:
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -823,57 +947,57 @@ exit:
  */
 extern as_status
 aerospike_security_operations_grant_privileges(aerospike* as_object_p, as_error *error_p,
-        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC)
+		char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-	as_privilege** 				privileges = NULL;
-    int                         privileges_size = 0;
-	int 						i = 0;
+	as_policy_admin             admin_policy;
+	as_privilege**              privileges = NULL;
+	int                         privileges_size = 0;
+	int                         i = 0;
 
-    if ((!error_p) || (!as_object_p) || (!role_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to grant privileges");
-        DEBUG_PHP_EXT_DEBUG("Unable to grant privileges");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!role_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to grant privileges");
+		DEBUG_PHP_EXT_DEBUG("Unable to grant privileges");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-    
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
 	if( (privileges_size = zend_hash_num_elements(privileges_ht_p)) == 0) {
-    	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No privileges specified");
-        DEBUG_PHP_EXT_DEBUG("No privileges specified");
-        goto exit;
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No privileges specified");
+		DEBUG_PHP_EXT_DEBUG("No privileges specified");
+		goto exit;
 	}
 
 	privileges = (as_privilege **)alloca(sizeof(as_privilege *) * privileges_size);
 
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_privileges_from_zval(privileges_ht_p,
-                privileges, privileges_size, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_privileges_from_zval(privileges_ht_p,
+				privileges, privileges_size, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
+		goto exit;
+	}
 
 	aerospike_grant_privileges(as_object_p, error_p, &admin_policy, role_p, privileges, privileges_size);
 
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to grant privileges");
-        DEBUG_PHP_EXT_DEBUG("Unable to grant privileges");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to grant privileges");
+		DEBUG_PHP_EXT_DEBUG("Unable to grant privileges");
+		goto exit;
+	}
 exit:
 	if(privileges) {
-        for(i = 0; i < privileges_size; i++) {
-            if( privileges[i] != NULL)
-                cf_free(privileges[i]);
-        }
-    }
+		for(i = 0; i < privileges_size; i++) {
+			if( privileges[i] != NULL)
+				cf_free(privileges[i]);
+		}
+	}
 
-    return(error_p->code);
+	return(error_p->code);
 }
 /*
  *******************************************************************************************************
@@ -890,57 +1014,57 @@ exit:
  */
 extern as_status
 aerospike_security_operations_revoke_privileges(aerospike* as_object_p, as_error *error_p,
-        char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC)
+		char* role_p, HashTable* privileges_ht_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-	as_privilege** 				privileges = NULL;
-    int                         privileges_size = 0;
-	int 						i = 0;
+	as_policy_admin             admin_policy;
+	as_privilege**              privileges = NULL;
+	int                         privileges_size = 0;
+	int                         i = 0;
 
-    if ((!error_p) || (!as_object_p) || (!role_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to revoke privileges");
-        DEBUG_PHP_EXT_DEBUG("Unable to revoke privileges");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!role_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to revoke privileges");
+		DEBUG_PHP_EXT_DEBUG("Unable to revoke privileges");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
-    
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
+
 	if( (privileges_size = zend_hash_num_elements(privileges_ht_p)) == 0) {
-    	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No privileges specified");
-        DEBUG_PHP_EXT_DEBUG("No privileges specified");
-        goto exit;
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "No privileges specified");
+		DEBUG_PHP_EXT_DEBUG("No privileges specified");
+		goto exit;
 	}
 
 	privileges = (as_privilege **)alloca(sizeof(as_privilege *) * privileges_size);
 
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_privileges_from_zval(privileges_ht_p,
-                privileges, privileges_size, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_privileges_from_zval(privileges_ht_p,
+				privileges, privileges_size, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse privileges");
+		goto exit;
+	}
 
 	aerospike_revoke_privileges(as_object_p, error_p, &admin_policy, role_p, privileges, privileges_size);
 
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to revoke privileges");
-        DEBUG_PHP_EXT_DEBUG("Unable to revoke privileges");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to revoke privileges");
+		DEBUG_PHP_EXT_DEBUG("Unable to revoke privileges");
+		goto exit;
+	}
 exit:
 	if(privileges) {
-        for(i = 0; i < privileges_size; i++) {
-            if( privileges[i] != NULL)
-                cf_free(privileges[i]);
-        }
-    }
+		for(i = 0; i < privileges_size; i++) {
+			if( privileges[i] != NULL)
+				cf_free(privileges[i]);
+		}
+	}
 
-    return(error_p->code);
+	return(error_p->code);
 }
 
 /*
@@ -958,43 +1082,48 @@ exit:
  */
 extern as_status
 aerospike_security_operations_query_role(aerospike* as_object_p, as_error *error_p,
-        char* role_p, zval* roles_p, zval* options_p TSRMLS_DC)
+		char* role_p, zval* roles_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    as_role*              		role_object_p = NULL;
+	as_policy_admin             admin_policy;
+	as_role*                    role_object_p = NULL;
 
-    if ((!error_p) || (!as_object_p) || (!role_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query role");
-        DEBUG_PHP_EXT_DEBUG("Unable to query role");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p) || (!role_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query role");
+		DEBUG_PHP_EXT_DEBUG("Unable to query role");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
 	aerospike_query_role(as_object_p, error_p, &admin_policy, role_p, &role_object_p);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query role");
-        DEBUG_PHP_EXT_DEBUG("Unable to query role");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query role");
+		DEBUG_PHP_EXT_DEBUG("Unable to query role");
+		goto exit;
+	}
 
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_role_to_zval(roles_p,
-                role_object_p, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse as_role");
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_role_to_zval(
+#if PHP_VERSION_ID < 70000
+			roles_p,
+#else
+			*roles_p,
+#endif
+			role_object_p, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse as_role");
+		goto exit;
+	}
 
 exit:
-    if (role_object_p) {
-        as_role_destroy(role_object_p);
-    }
-    return(error_p->code);
+	if (role_object_p) {
+		as_role_destroy(role_object_p);
+	}
+	return(error_p->code);
 }
 
 /*
@@ -1011,42 +1140,42 @@ exit:
  */
 extern as_status
 aerospike_security_operations_query_roles(aerospike* as_object_p, as_error *error_p,
-        zval* roles_p, zval* options_p TSRMLS_DC)
+		zval* roles_p, zval* options_p TSRMLS_DC)
 {
-    as_policy_admin             admin_policy;
-    as_role**             		role_object_p = NULL;
-	int							roles_size = 0;
+	as_policy_admin             admin_policy;
+	as_role**                   role_object_p = NULL;
+	int                         roles_size = 0;
 
-    if ((!error_p) || (!as_object_p))  {
-        PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query roles");
-        DEBUG_PHP_EXT_DEBUG("Unable to query roles");
-        goto exit;
-    }
+	if ((!error_p) || (!as_object_p))  {
+		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR, "Unable to query roles");
+		DEBUG_PHP_EXT_DEBUG("Unable to query roles");
+		goto exit;
+	}
 
-    set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
+	set_policy_admin(&admin_policy, options_p, error_p TSRMLS_CC);
 
-    if (AEROSPIKE_OK != (error_p->code)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to set policy");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != (error_p->code)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to set policy");
+		goto exit;
+	}
 
 	aerospike_query_roles(as_object_p, error_p, &admin_policy, &role_object_p, &roles_size);
-    if (AEROSPIKE_OK != error_p->code) {
-        PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query all roles");
-        DEBUG_PHP_EXT_DEBUG("Unable to query all roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK != error_p->code) {
+		PHP_EXT_SET_AS_ERR(error_p, error_p->code, "Unable to query all roles");
+		DEBUG_PHP_EXT_DEBUG("Unable to query all roles");
+		goto exit;
+	}
 
-    if (AEROSPIKE_OK !=
-            aerospike_security_operations_convert_roles_to_zval(roles_p,
-                role_object_p, roles_size, error_p TSRMLS_CC)) {
-        DEBUG_PHP_EXT_DEBUG("Unable to parse as_roles");
-        goto exit;
-    }
+	if (AEROSPIKE_OK !=
+			aerospike_security_operations_convert_roles_to_zval(roles_p,
+				role_object_p, roles_size, error_p TSRMLS_CC)) {
+		DEBUG_PHP_EXT_DEBUG("Unable to parse as_roles");
+		goto exit;
+	}
 
 exit:
-    if (role_object_p) {
-        as_roles_destroy(role_object_p, roles_size);
-    }
-    return(error_p->code);
+	if (role_object_p) {
+		as_roles_destroy(role_object_p, roles_size);
+	}
+	return(error_p->code);
 }

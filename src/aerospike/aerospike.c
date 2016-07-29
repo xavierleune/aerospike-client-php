@@ -60,6 +60,22 @@
 #include "aerospike_general_constants.h"
 #include "aerospike_transform.h"
 
+#define CHECK_AEROSPIKE_OBJECT()\
+	if (!aerospike_obj_p) {\
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");\
+        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");\
+        status = AEROSPIKE_ERR_CLIENT;\
+        goto exit;\
+    }
+
+#define CHECK_CONNECTED()\
+	 if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {\
+        status = AEROSPIKE_ERR_CLUSTER;\
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "put: connection not established");\
+        DEBUG_PHP_EXT_ERROR("put: connection not established");\
+        goto exit;\
+    }
+
 bool record_stream_callback(const as_val* p_val, void* udata);
 
 /*
@@ -80,36 +96,57 @@ static zend_object_handlers Aerospike_handlers;
 int persist;
 extern ps_module ps_mod_aerospike;
 
-PHP_INI_BEGIN()
-   STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.connect_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, connect_timeout, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.read_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, read_timeout, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.write_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, write_timeout, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_DEFAULT, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/usr/local/aerospike/lua", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/usr/local/aerospike/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.key", "0xA5000000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_key, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.use_batch_direct", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, use_batch_direct, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.max_threads", "300", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, max_threads, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.thread_pool_size", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, thread_pool_size, zend_aerospike_globals, aerospike_globals)
-   STD_PHP_INI_ENTRY("aerospike.compression_threshold", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, compression_threshold, zend_aerospike_globals, aerospike_globals)
-PHP_INI_END()
+/*
+ *******************************************************************************************************
+ * Flag used to indicate if the server supports as_double data type,
+ * and if the data is float expected to convert to as_double.
+ *******************************************************************************************************
+ */
+bool does_server_support_double = false;
+bool is_datatype_double = false;
 
+PHP_INI_BEGIN()
+    STD_PHP_INI_ENTRY("aerospike.nesting_depth", "3", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, nesting_depth, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.connect_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, connect_timeout, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.read_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, read_timeout, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.write_timeout", "1000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, write_timeout, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.log_path", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, log_path, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.log_level", NULL, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, log_level, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.serializer", SERIALIZER_DEFAULT, PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, serializer, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.udf.lua_system_path", "/usr/local/aerospike/lua", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, lua_system_path, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.udf.lua_user_path", "/usr/local/aerospike/usr-lua", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, lua_user_path, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.key_policy", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_policy, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.key_gen", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateString, key_gen, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.shm.use", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateBool, shm_use, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.shm.key", "0xA5000000", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_key, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.shm.max_nodes", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_nodes, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.shm.max_namespaces", "8", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_max_namespaces, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.shm.takeover_threshold_sec", "30", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, shm_takeover_threshold_sec, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.use_batch_direct", "false", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, use_batch_direct, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.max_threads", "300", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, max_threads, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.thread_pool_size", "16", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, thread_pool_size, zend_aerospike_globals, aerospike_globals)
+    STD_PHP_INI_ENTRY("aerospike.compression_threshold", "0", PHP_INI_PERDIR|PHP_INI_SYSTEM|PHP_INI_USER, OnUpdateLong, compression_threshold, zend_aerospike_globals, aerospike_globals)
+PHP_INI_END()
 
 ZEND_DECLARE_MODULE_GLOBALS(aerospike)
 
-static void aerospike_check_close_and_destroy(void *hashtable_element) {
+static void aerospike_check_close_and_destroy(
+    #if PHP_VERSION_ID < 70000
+        void
+    #else
+        zval
+    #endif
+    *hashtable_element)
+{
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In destructor function");
-    aerospike_ref *as_ref_p = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+    aerospike_ref *as_ref_p =
+    #if PHP_VERSION_ID < 70000
+        ((zend_rsrc_list_entry *)
+    #else
+        Z_RES_P(
+    #endif
+    hashtable_element)->ptr;
     as_error error;
     if (as_ref_p) {
         if (as_ref_p->ref_hosts_entry > 1) {
@@ -139,11 +176,23 @@ static void aerospike_check_close_and_destroy(void *hashtable_element) {
 }
 
 /* Shared memory key persistent list destruction */
-static void shm_key_hashtable_dtor(void *hashtable_element)
+static void shm_key_hashtable_dtor(
+    #if PHP_VERSION_ID < 70000
+        void
+    #else
+        zval
+    #endif
+    *hashtable_element)
 {
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
-    struct set_get_data *shm_key_ptr = ((zend_rsrc_list_entry *) hashtable_element)->ptr;
+    struct set_get_data *shm_key_ptr =
+    #if PHP_VERSION_ID < 70000
+        ((zend_rsrc_list_entry *)
+    #else
+        Z_RES_P(
+    #endif
+    hashtable_element)->ptr;
     if (shm_key_ptr) {
         pefree(shm_key_ptr, 1);
     }
@@ -162,7 +211,6 @@ static void aerospike_globals_ctor(zend_aerospike_globals *globals TSRMLS_DC)
     } else {
         AEROSPIKE_G(persistent_ref_count)++;
     }
-
     if ((!(AEROSPIKE_G(shm_key_list_g))) || (AEROSPIKE_G(shm_key_ref_count) < 1)) {
         AEROSPIKE_G(shm_key_list_g) = (HashTable *)pemalloc(sizeof(HashTable), 1);
         zend_hash_init(AEROSPIKE_G(shm_key_list_g), 1000, NULL, &shm_key_hashtable_dtor, 1);
@@ -306,9 +354,9 @@ ZEND_END_ARG_INFO()
 
 zend_module_entry aerospike_module_entry =
 {
-#if ZEND_MODULE_API_NO >= 20010901
-    STANDARD_MODULE_HEADER,
-#endif
+    #if ZEND_MODULE_API_NO >= 20010901
+        STANDARD_MODULE_HEADER,
+    #endif
     PHP_AEROSPIKE_EXTNAME,
     NULL, /* N.B.:  No functions provided by this extension, only classes. */
     PHP_MINIT(aerospike),
@@ -316,14 +364,14 @@ zend_module_entry aerospike_module_entry =
     PHP_RINIT(aerospike),
     PHP_RSHUTDOWN(aerospike),
     PHP_MINFO(aerospike),
-#if  ZEND_MODULE_API_NO >= 20010901
-    PHP_AEROSPIKE_VERSION,
-#endif
+    #if  ZEND_MODULE_API_NO >= 20010901
+        PHP_AEROSPIKE_VERSION,
+    #endif
     STANDARD_MODULE_PROPERTIES
-    };
+};
 
 #ifdef COMPILE_DL_AEROSPIKE
-ZEND_GET_MODULE(aerospike)
+    ZEND_GET_MODULE(aerospike)
 #endif
 
 /*
@@ -502,11 +550,12 @@ static zend_function_entry Aerospike_class_functions[] =
  * Aerospike object freeing up on scope termination
  ********************************************************************
  */
-static void Aerospike_object_free_storage(void *object TSRMLS_DC)
-{
-    Aerospike_object    *intern_obj_p = (Aerospike_object *) object;
-    as_error            error;
+ static void Aerospike_object_free_storage(zend_object *object TSRMLS_DC)
+ {
+    Aerospike_object    *intern_obj_p;
+    intern_obj_p = (Aerospike_object *)((char *)object - XtOffsetOf(Aerospike_object, std));
 
+    as_error            error;
     as_error_init(&error);
 
     if (intern_obj_p) {
@@ -529,13 +578,15 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
         }
         intern_obj_p->as_ref_p = NULL;
         zend_object_std_dtor(&intern_obj_p->std TSRMLS_CC);
-        efree(intern_obj_p);
+		#if PHP_VERSION_ID < 7
+        	efree(intern_obj_p);
+        #endif
         DEBUG_PHP_EXT_INFO("aerospike zend object destroyed");
     } else {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
     }
 
-    return; 
+    return;
 }
 
 /*
@@ -543,27 +594,43 @@ static void Aerospike_object_free_storage(void *object TSRMLS_DC)
  * Aerospike class new method
  ********************************************************************
  */
-static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
-{
-    zend_object_value retval = {0};
-    Aerospike_object *intern_obj_p;
-
-    if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
-        zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
-#if PHP_VERSION_ID < 50399
-        zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
-#else
-        object_properties_init((zend_object*) &(intern_obj_p->std), ce);
-#endif
-
-        retval.handle = zend_objects_store_put(intern_obj_p, NULL, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
-        retval.handlers = &Aerospike_handlers;
-        intern_obj_p->as_ref_p = NULL;
-    } else {
-        DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+#if PHP_VERSION_ID < 70000
+    static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
+    {
+        zend_object_value retval = {0};
+        Aerospike_object *intern_obj_p;
+        if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object)))) {
+            zend_object_std_init(&(intern_obj_p->std), ce TSRMLS_CC);
+            #if PHP_VERSION_ID < 50399
+                zend_hash_copy(intern_obj_p->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, NULL, sizeof(zval *));
+            #else
+                object_properties_init((zend_object*) &(intern_obj_p->std), ce);
+            #endif
+            retval.handle = zend_objects_store_put(intern_obj_p, NULL, (zend_objects_free_object_storage_t) Aerospike_object_free_storage, NULL TSRMLS_CC);
+            retval.handlers = &Aerospike_handlers;
+            intern_obj_p->as_ref_p = NULL;
+        } else {
+            DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+        }
+        return (retval);
     }
-    return (retval);
-}
+#else
+    static zend_object* Aerospike_object_new_php7(zend_class_entry *ce TSRMLS_DC)
+    {
+        Aerospike_object *intern_obj_p;
+        if (NULL != (intern_obj_p = ecalloc(1, sizeof(Aerospike_object) + zend_object_properties_size(ce)))) {
+            zend_object_std_init(&intern_obj_p->std, ce TSRMLS_CC);
+            object_properties_init(&intern_obj_p->std, ce);
+            Aerospike_handlers.offset = XtOffsetOf(Aerospike_object, std);
+            Aerospike_handlers.free_obj = Aerospike_object_free_storage;
+            intern_obj_p->std.handlers = &Aerospike_handlers;
+            intern_obj_p->as_ref_p = NULL;
+        } else {
+            DEBUG_PHP_EXT_ERROR("Could not allocate memory for aerospike object");
+        }
+        return &intern_obj_p->std;
+    }
+#endif
 
 /*
  ********************************************************************
@@ -576,6 +643,15 @@ static zend_object_value Aerospike_object_new(zend_class_entry *ce TSRMLS_DC)
  *  Lifecycle APIs:
  ********************************************************************
  */
+
+ /*
+  ********************************************************************
+  * Aerospike Custom Object Fetching
+  ********************************************************************
+  */
+static inline struct Aerospike_object * php_custom_object_fetch_object(zend_object *obj) {
+    return (Aerospike_object *)((char *)obj - XtOffsetOf(Aerospike_object, std));
+}
 
 /* {{{ proto Aerospike::__construct(array config [, bool persistent_connection=true [, array options]]))
    Creates a new Aerospike object, with optional persistent connection control */
@@ -591,18 +667,13 @@ PHP_METHOD(Aerospike, __construct)
     HashTable              *persistent_list;
     HashTable              *shm_key_list;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     persistent_list =      (AEROSPIKE_G(persistent_list_g));
     shm_key_list =         (AEROSPIKE_G(shm_key_list_g));
 
-
-
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+
     /* initializing the connection flag */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
 
@@ -627,7 +698,6 @@ PHP_METHOD(Aerospike, __construct)
         goto exit;
     }
 
-
     /* configuration */
     as_config_init(&config);
     strcpy(config.lua.system_path, ini_value = LUA_SYSTEM_PATH_PHP_INI);
@@ -644,7 +714,7 @@ PHP_METHOD(Aerospike, __construct)
     transform_zval_config_into_as_config.transform_result_type = TRANSFORM_INTO_AS_CONFIG;
 
     if (AEROSPIKE_OK != (aerospike_transform_check_and_set_config(Z_ARRVAL_P(config_p),
-                    NULL, &transform_zval_config_into_as_config/*&config*/))) {
+                    NULL, &transform_zval_config_into_as_config))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to find host parameter");
         DEBUG_PHP_EXT_ERROR("Unable to find host parameter");
@@ -665,6 +735,7 @@ PHP_METHOD(Aerospike, __construct)
         DEBUG_PHP_EXT_ERROR("Unable to find object from alias");
         goto exit;
     }
+
     aerospike_obj_p->as_ref_p->as_p->config.shm_key = config.shm_key;
     /* Connect to the cluster */
     if (aerospike_obj_p->as_ref_p && aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE &&
@@ -693,7 +764,7 @@ exit:
 /* }}} */
 
 /* {{{ proto array Aerospike::shm_key( void )
-   Function which returns the shm_key which is set and returns NULL if shm is not configured */
+    Function which returns the shm_key which is set and returns NULL if shm is not configured */
 PHP_METHOD(Aerospike, shmKey)
 {
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -757,7 +828,7 @@ PHP_METHOD(Aerospike, isConnected)
 /* }}} */
 
 /* {{{ proto Aerospike::close( void )
-   Closes all connections to the cluster */
+    Closes all connections to the cluster */
 PHP_METHOD(Aerospike, close)
 {
     as_status              status = AEROSPIKE_OK;
@@ -802,7 +873,6 @@ PHP_METHOD(Aerospike, close)
 
     /* Now as connection is getting closed we need to set the connection flag to false */
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_FALSE;
-
 exit:
     aerospike_helper_set_error(Aerospike_ce, getThis() TSRMLS_CC);
     RETURN_LONG(status);
@@ -810,7 +880,7 @@ exit:
 /* }}} */
 
 /* {{{ proto Aerospike::reconnect( void )
-   Closes then reopens all connections to the cluster */
+    Closes then reopens all connections to the cluster */
 PHP_METHOD(Aerospike, reconnect)
 {
     as_status              status = AEROSPIKE_OK;
@@ -865,12 +935,12 @@ exit:
  */
 
 /* {{{ proto int Aerospike::get( array key, array record [, array filter [,array options]] )
-   Reads a record from the cluster */
+    Reads a record from the cluster */
 PHP_METHOD(Aerospike, get)
 {
     as_status              status = AEROSPIKE_OK;
     zval*                  key_record_p = NULL;
-    zval*                  record_p = NULL;
+    zval*                  record_p;
     zval*                  options_p = NULL;
     zval*                  bins_p = NULL;
     as_error               error;
@@ -879,28 +949,25 @@ PHP_METHOD(Aerospike, get)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
+    CHECK_AEROSPIKE_OBJECT();
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_CONNECTED();
 
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "get: connection not established");
-        DEBUG_PHP_EXT_ERROR("get: connection not established");
-        goto exit;
-    }
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+    #if PHP_VERSION_ID < 70000
+      "zz|zz"
+    #else
+      "zz/|zz"
+    #endif
+    ,
                 &key_record_p, &record_p, &bins_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for get function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for get function.");
         goto exit;
     }
+
+	convert_to_null(record_p);
 
     if (PHP_TYPE_ISNOTARR(key_record_p) ||
             ((bins_p) && ((PHP_TYPE_ISNOTARR(bins_p)) && (PHP_TYPE_ISNOTNULL(bins_p)))) ||
@@ -919,7 +986,10 @@ PHP_METHOD(Aerospike, get)
         options_p = NULL;
     }
 
-    zval_dtor(record_p);
+    #if PHP_VERSION_ID < 70000
+        zval_dtor(record_p);
+    #endif
+
     array_init(record_p);
 
     if (AEROSPIKE_OK != (status = aerospike_transform_iterate_for_rec_key_params(Z_ARRVAL_P(key_record_p),
@@ -952,7 +1022,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::put( array key, array record [, int ttl=0 [, array options ]] )
-   Writes a record to the cluster */
+    Writes a record to the cluster */
 PHP_METHOD(Aerospike, put)
 {
     as_status              status = AEROSPIKE_OK;
@@ -966,19 +1036,9 @@ PHP_METHOD(Aerospike, put)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
 
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "put: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("put: connection not established");
-        goto exit;
-    }
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|la", &key_record_p, &record_p, &ttl_u32, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1005,7 +1065,12 @@ PHP_METHOD(Aerospike, put)
     }
 
     if (AEROSPIKE_OK != (status = aerospike_transform_key_data_put(aerospike_obj_p,
-                    &record_p, &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+            #if PHP_VERSION_ID < 70000
+                &record_p
+            #else
+                record_p
+            #endif
+            , &as_key_for_put_record, &error, ttl_u32, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("put function returned an error");
         goto exit;
     }
@@ -1021,7 +1086,7 @@ exit:
 /* }}} */
 
 /* {{{ proto array Aerospike::getNodes( void )
-   Gets the host information of the cluster nodes */
+    Gets the host information of the cluster nodes */
 PHP_METHOD(Aerospike, getNodes)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1029,27 +1094,14 @@ PHP_METHOD(Aerospike, getNodes)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        status = AEROSPIKE_ERR_CLIENT;
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "getNodes: connection not established");
-        DEBUG_PHP_EXT_ERROR("getNodes: connection not established");
-        status = AEROSPIKE_ERR_CLUSTER;
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     array_init(return_value);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_info_get_cluster_nodes(aerospike_obj_p->as_ref_p->as_p,
-                                                       &error, return_value,
-                                                       NULL, NULL TSRMLS_CC))) {
+                &error, return_value, NULL, NULL TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("getNodes function returned an error");
         goto exit;
     }
@@ -1065,7 +1117,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::info( string request, string &response [, array host [, array options ]] )
-   Sends an info command to a cluster node */
+    Sends an info command to a cluster node */
 PHP_METHOD(Aerospike, info)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1078,23 +1130,17 @@ PHP_METHOD(Aerospike, info)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Info: connection not established");
-        DEBUG_PHP_EXT_ERROR("Info: connection not established");
-        goto exit;
-    }
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|zz",
-                &request, &request_len, &response_p,
-                &host, &options_p) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+        #if PHP_VERSION_ID < 70000
+            "sz|zz"
+        #else
+            "sz/|zz"
+        #endif
+            , &request, &request_len, &response_p,
+            &host, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for Info function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for Info function.");
@@ -1108,7 +1154,9 @@ PHP_METHOD(Aerospike, info)
         goto exit;
     }
 
-    zval_dtor(response_p);
+  #if PHP_VERSION_ID < 70000
+      zval_dtor(response_p);
+ #endif
 
     if (AEROSPIKE_OK !=
             (status = aerospike_info_specific_host(aerospike_obj_p->as_ref_p->as_p, &error,
@@ -1125,7 +1173,7 @@ exit:
 /* }}} */
 
 /* {{{ proto array Aerospike::infoMany( string request, [, array config [, array options ]] )
-   Sends an info command to several or all cluster nodes */
+    Sends an info command to several or all cluster nodes */
 PHP_METHOD(Aerospike, infoMany)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1137,19 +1185,8 @@ PHP_METHOD(Aerospike, infoMany)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        status = AEROSPIKE_ERR_CLIENT;
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "InfoMany: connection not established");
-        DEBUG_PHP_EXT_ERROR("InfoMany: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|aa",
                 &request_p, &request_len, &config_p, &options_p) == FAILURE) {
@@ -1196,23 +1233,12 @@ PHP_METHOD(Aerospike, existsMany)
     zval*                   metadata_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     as_error_init(&error);
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "existsMany : connection not established"); 
-        DEBUG_PHP_EXT_ERROR("existsMany : connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a", &keys_p, &metadata_p, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az/|a", &keys_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for existsMany");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for existsMany");
@@ -1227,8 +1253,11 @@ PHP_METHOD(Aerospike, existsMany)
         goto exit;
     }
 
-    zval_dtor(metadata_p);
-    array_init(metadata_p);
+	convert_to_null(metadata_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(metadata_p);
+	#endif
+	array_init(metadata_p);
 
     if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
         aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
@@ -1253,7 +1282,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::getMany( array keys, array &records [, array filter [, array options ]] )
-   Returns a batch of records from the cluster */
+    Returns a batch of records from the cluster */
 PHP_METHOD(Aerospike, getMany)
 {
     as_status               status = AEROSPIKE_OK;
@@ -1265,22 +1294,10 @@ PHP_METHOD(Aerospike, getMany)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "getMany : connection not established"); 
-        DEBUG_PHP_EXT_ERROR("getMany : connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az|a!a", &keys_p,
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "az/|a!a", &keys_p,
                 &records_p, &filter_bins_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -1289,8 +1306,11 @@ PHP_METHOD(Aerospike, getMany)
         goto exit;
     }
 
-    zval_dtor(records_p);
-    array_init(records_p);
+	convert_to_null(records_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(records_p);
+	#endif
+	array_init(records_p);
 
     if (!(aerospike_obj_p->as_ref_p->as_p->config.policies.batch.use_batch_direct) &&
         aerospike_has_batch_index(aerospike_obj_p->as_ref_p->as_p)) {
@@ -1315,7 +1335,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::operate( array key, array operations [,array &returned [,array options ]] )
-   Performs multiple operation on a record */
+    Performs multiple operation on a record */
 PHP_METHOD(Aerospike, operate)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1329,21 +1349,10 @@ PHP_METHOD(Aerospike, operate)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "operate: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("operate: connection not established");
-        goto exit;
-    }
-
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|za",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|z/a",
                 &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operate function");
@@ -1424,7 +1433,7 @@ PHP_METHOD(Aerospike, operateOrdered)
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|za",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|z/a",
                 &key_record_p, &operations_p, &returned_p, &options_p) == FAILURE){
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for operateOrdered function");
@@ -1450,10 +1459,11 @@ PHP_METHOD(Aerospike, operateOrdered)
         goto exit;
     }
 
-    if (returned_p) {
-        zval_dtor(returned_p);
-        array_init(returned_p);
-    }
+	convert_to_null(returned_p);
+	#if PHP_VERSION_ID < 70000
+		zval_dtor(returned_p);
+	#endif
+	array_init(returned_p);
 
     if (AEROSPIKE_OK !=
             (status = aerospike_record_operations_operate_ordered(aerospike_obj_p,
@@ -1476,7 +1486,7 @@ exit:
 }
 
 /* {{{ proto int Aerospike::append( array key, string bin, string value [,array options ] )
-   Appends a string to an existing bin's string value */
+    Appends a string to an existing bin's string value */
 PHP_METHOD(Aerospike, append)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1493,19 +1503,8 @@ PHP_METHOD(Aerospike, append)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "append: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("append: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
@@ -1558,7 +1557,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::remove( array key [, array options ] )
-   Removes a record from the cluster */
+    Removes a record from the cluster */
 PHP_METHOD(Aerospike, remove)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1570,19 +1569,8 @@ PHP_METHOD(Aerospike, remove)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "remove: connection not established");
-        DEBUG_PHP_EXT_ERROR("remove: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "a|a", &key_record_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1620,7 +1608,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::exists( array key, array &metadata [, array options] )
-   Returns a record's metadata */
+    Returns a record's metadata */
 PHP_METHOD(Aerospike, exists)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1631,20 +1619,10 @@ PHP_METHOD(Aerospike, exists)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "exists: connection not established");
-        DEBUG_PHP_EXT_ERROR("exists: connection not established");
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, &options_p)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|z", &key_record_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse parameters for exists");
         DEBUG_PHP_EXT_ERROR("Unable to parse parameters for exists");
@@ -1665,7 +1643,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::getMetadata( array key, array &metadata [, array options] )
-   Returns a record's metadata */
+    Returns a record's metadata */
 PHP_METHOD(Aerospike, getMetadata)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1676,19 +1654,8 @@ PHP_METHOD(Aerospike, getMetadata)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "getMetadata: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("getMetadata: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &key_record_p, &metadata_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -1713,7 +1680,7 @@ exit:
 PHP_METHOD(Aerospike, getHeader)
 {
     zval *object = getThis();
-    Aerospike_object *intern = (Aerospike_object *) zend_object_store_get_object(object TSRMLS_CC);
+    Aerospike_object *intern = PHP_AEROSPIKE_GET_OBJECT;
 
     /*** TO BE IMPLEMENTED ***/
 
@@ -1721,7 +1688,7 @@ PHP_METHOD(Aerospike, getHeader)
 }
 
 /* {{{ proto int Aerospike::prepend( array key, string bin, string value [, array options ] )
-   Prepends a string to an existing bin's string value */
+    Prepends a string to an existing bin's string value */
 PHP_METHOD(Aerospike, prepend)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1738,19 +1705,8 @@ PHP_METHOD(Aerospike, prepend)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "prepend: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("prepend: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zss|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
@@ -1803,7 +1759,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::increment ( array key, string bin, int offset [, array options ] )
-   Increments an existing bin's numeric value */
+    Increments an existing bin's numeric value */
 PHP_METHOD(Aerospike, increment)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1815,24 +1771,19 @@ PHP_METHOD(Aerospike, increment)
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
-    int                    bin_name_len;
-    long                   offset = 0;
+    #if PHP_VERSION_ID < 70000
+        int                    bin_name_len;
+        long                 offset = 0;
+    #else
+        size_t                 bin_name_len;
+        zend_long            offset = 0;
+    #endif
+
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     as_error_init(&error);
-
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "increment: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("increment: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
@@ -1863,7 +1814,7 @@ PHP_METHOD(Aerospike, increment)
 
     if(Z_TYPE_P(offset_p) == IS_LONG) {
         offset = Z_LVAL_P(offset_p);
-    } else if( !(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
+    } else if(!(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
         DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
@@ -1894,7 +1845,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::touch( array key, int ttl=0 [, array options ] )
-   Touch a record, incrementing its generation and resetting its time-to-live */
+    Touch a record, incrementing its generation and resetting its time-to-live */
 PHP_METHOD(Aerospike, touch)
 {
     as_status              status = AEROSPIKE_OK;
@@ -1908,19 +1859,8 @@ PHP_METHOD(Aerospike, touch)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object ");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "touch: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("touch: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zl|a",
                 &key_record_p, &time_to_live, &options_p) == FAILURE) {
@@ -1991,7 +1931,7 @@ static bool has_cdt_list(aerospike *as, as_error *err)
 }
 
 /* {{{ proto int Aerospike::listAppend( array key, string bin, mixed value [,array options ] )
-   Add a single value (of any type) to the end of the list */
+    Add a single value (of any type) to the end of the list */
 PHP_METHOD(Aerospike, listAppend)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2002,9 +1942,14 @@ PHP_METHOD(Aerospike, listAppend)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  append_val_p = NULL;
-    zval*                  append_val_copy = NULL;
-    zval*                  temp_record_p = NULL;
+	zval* append_val_p = NULL;
+    #if PHP_VERSION_ID < 70000
+        zval* temp_record_p = NULL;
+        zval* append_val_copy = NULL;
+    #else
+        zval temp_record_p;
+        zval append_val_copy;
+    #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
@@ -2017,28 +1962,17 @@ PHP_METHOD(Aerospike, listAppend)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listAppend: connection not established");
-        DEBUG_PHP_EXT_ERROR("listAppend: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
-                &key_record_p, &bin_name_p, &bin_name_len,
-                &append_val_p, &options_p) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz/|a",
+        &key_record_p, &bin_name_p, &bin_name_len,
+        &append_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Unable to parse php parameters for listAppend function");
         DEBUG_PHP_EXT_ERROR("Unable to parse php parameters for listAppend function");
@@ -2066,12 +2000,29 @@ PHP_METHOD(Aerospike, listAppend)
         goto exit;
     }
 
+    #if PHP_VERSION_ID < 70000
     MAKE_STD_ZVAL(temp_record_p);
-    array_init(temp_record_p);
+        array_init(temp_record_p);
+        ALLOC_ZVAL(append_val_copy);
+        MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
+        add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+    #else
+        array_init(&temp_record_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, append_val_p);
+    #endif
 
-    ALLOC_ZVAL(append_val_copy);
-    MAKE_COPY_ZVAL(&append_val_p, append_val_copy);
-    add_assoc_zval(temp_record_p, bin_name_p, append_val_copy);
+    /*
+     #if PHP_VERSION_ID < 70000
+     if (user_deserializer_call_info.function_name &&
+     (Z_ISREF_P(user_deserializer_call_info.function_name))) {
+     RETURN_TRUE;
+     }
+     #else
+     if (Z_ISREF_P(&(user_deserializer_call_info.function_name))) {
+     RETURN_TRUE;
+     }
+     #endif
+     */
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2098,9 +2049,12 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
     }
-    if (temp_record_p) {
-        zval_ptr_dtor(&temp_record_p);
-    }
+    #if PHP_VERSION_ID < 70000
+    	if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
+
     as_operations_destroy(&ops);
     as_record_destroy(&record);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -2110,7 +2064,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listInsert( array key, string bin, int index, mixed value [,array options ] )
-   Insert an element at the specified index of a list value in the bin */
+    Insert an element at the specified index of a list value in the bin */
 PHP_METHOD(Aerospike, listInsert)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2121,13 +2075,19 @@ PHP_METHOD(Aerospike, listInsert)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  insert_val_p = NULL;
-    zval*                  insert_val_copy = NULL;
-    zval*                  temp_record_p = NULL;
+	zval* insert_val_p = NULL;
+    #if PHP_VERSION_ID < 70000
+        zval* insert_val_copy = NULL;
+        zval* temp_record_p = NULL;
+        long bin_name_len;
+    #else
+        zval insert_val_copy;
+        zval temp_record_p;
+        zend_ulong bin_name_len;
+    #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
-    long                   bin_name_len;
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -2137,26 +2097,15 @@ PHP_METHOD(Aerospike, listInsert)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listInsert: connection not established");
-        DEBUG_PHP_EXT_ERROR("listInsert: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &insert_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2186,12 +2135,16 @@ PHP_METHOD(Aerospike, listInsert)
         goto exit;
     }
 
-    MAKE_STD_ZVAL(temp_record_p);
-    array_init(temp_record_p);
-
-    ALLOC_ZVAL(insert_val_copy);
-    MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
-    add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
+    #if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(temp_record_p);
+        array_init(temp_record_p);
+        ALLOC_ZVAL(insert_val_copy);
+        MAKE_COPY_ZVAL(&insert_val_p, insert_val_copy);
+        add_assoc_zval(temp_record_p, bin_name_p, insert_val_copy);
+    #else
+        array_init(&temp_record_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, insert_val_p);
+    #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2208,6 +2161,7 @@ PHP_METHOD(Aerospike, listInsert)
     }
 
     val = (as_val*) as_record_get(&record, bin_name_p);
+
     if (val) {
         as_operations_add_list_insert(&ops, bin_name_p, index, (as_val*) val);
         status = aerospike_key_operate(aerospike_obj_p->as_ref_p->as_p, &error,
@@ -2218,9 +2172,13 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
     }
-    if (temp_record_p) {
-        zval_ptr_dtor(&temp_record_p);
-    }
+
+    #if PHP_VERSION_ID < 70000
+    	if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
+
     as_operations_destroy(&ops);
     as_record_destroy(&record);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -2230,7 +2188,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listSet( array key, string bin, int index, mixed value [,array options ] )
-   Set list element val at the specified index of a list value in the bin */
+    Set list element val at the specified index of a list value in the bin */
 PHP_METHOD(Aerospike, listSet)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2241,13 +2199,20 @@ PHP_METHOD(Aerospike, listSet)
     as_policy_operate      operate_policy;
     as_static_pool         static_pool = {0};
     zval*                  key_record_p = NULL;
-    zval*                  set_val_p = NULL;
-    zval*                  set_val_copy = NULL;
-    zval*                  temp_record_p = NULL;
+	zval* set_val_p  = NULL;
+    #if PHP_VERSION_ID < 70000
+        zval* set_val_copy = NULL;
+        zval* temp_record_p = NULL;
+        long bin_name_len;
+    #else
+        zval set_val_copy;
+        zval temp_record_p;
+        zend_ulong bin_name_len;
+    #endif
+
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
-    long                   bin_name_len;
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -2257,26 +2222,15 @@ PHP_METHOD(Aerospike, listSet)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listSet: connection not established");
-        DEBUG_PHP_EXT_ERROR("listSet: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &set_val_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2306,12 +2260,16 @@ PHP_METHOD(Aerospike, listSet)
         goto exit;
     }
 
-    MAKE_STD_ZVAL(temp_record_p);
-    array_init(temp_record_p);
-
-    ALLOC_ZVAL(set_val_copy);
-    MAKE_COPY_ZVAL(&set_val_p, set_val_copy);
-    add_assoc_zval(temp_record_p, bin_name_p, set_val_copy);
+    #if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(temp_record_p);
+        array_init(temp_record_p);
+        ALLOC_ZVAL(set_val_copy);
+        ALLOC_ZVAL(set_val_copy);
+        add_assoc_zval(temp_record_p, bin_name_p, set_val_p);
+    #else
+        array_init(&temp_record_p);
+        add_assoc_zval(&temp_record_p, bin_name_p, set_val_p);
+    #endif
 
     aerospike_transform_iterate_records(aerospike_obj_p, &temp_record_p, &record, &static_pool,
             aerospike_obj_p->serializer_opt, aerospike_has_double(aerospike_obj_p->as_ref_p->as_p),
@@ -2338,9 +2296,12 @@ exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
     }
-    if (temp_record_p) {
-        zval_ptr_dtor(&temp_record_p);
-    }
+    #if PHP_VERSION_ID < 70000
+		if (temp_record_p) {
+        	AEROSPIKE_ZVAL_PTR_DTOR(temp_record_p);
+    	}
+  	#endif
+
     as_operations_destroy(&ops);
     as_record_destroy(&record);
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -2350,7 +2311,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listMerge( array key, string bin, mixed value [,array options ] )
-   Add items to the end of a list */
+    Add items to the end of a list */
 PHP_METHOD(Aerospike, listMerge)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2373,19 +2334,8 @@ PHP_METHOD(Aerospike, listMerge)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listMerge: connection not established");
-        DEBUG_PHP_EXT_ERROR("listMerge: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2409,7 +2359,13 @@ PHP_METHOD(Aerospike, listMerge)
         goto exit;
     }
 
-    if (!check_val_type_list(&items_p)) {
+		if (!check_val_type_list(
+            #if PHP_VERSION_ID < 70000
+                &items_p
+			#else
+                items_p
+			#endif
+		)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
         DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
@@ -2432,7 +2388,13 @@ PHP_METHOD(Aerospike, listMerge)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL,
+					#if PHP_VERSION_ID < 70000
+					  &items_p
+					#else
+					  items_p
+					#endif
+					, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
@@ -2461,7 +2423,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listSize( array key, string bin, int count [,array options ] )
-   Count the elements of the list value in the bin */
+    Count the elements of the list value in the bin */
 PHP_METHOD(Aerospike, listSize)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2482,26 +2444,15 @@ PHP_METHOD(Aerospike, listSize)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listSize: connection not established");
-        DEBUG_PHP_EXT_ERROR("listSize: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &list_elements_count, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2557,7 +2508,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listClear( array key, string bin [,array options ] )
-   Remove all the elements from the list value in the bin */
+    Remove all the elements from the list value in the bin */
 PHP_METHOD(Aerospike, listClear)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2576,19 +2527,8 @@ PHP_METHOD(Aerospike, listClear)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listClear: connection not established");
-        DEBUG_PHP_EXT_ERROR("listClear: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2646,7 +2586,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listTrim( array key, string bin, int index, int count [,array options ] )
-   Removing all elements not in the range starting at a given index plus count */
+    Removing all elements not in the range starting at a given index plus count */
 PHP_METHOD(Aerospike, listTrim)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2657,7 +2597,11 @@ PHP_METHOD(Aerospike, listTrim)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
+    #if PHP_VERSION_ID < 70000
+      long                 bin_name_len;
+    #else
+      zend_ulong           bin_name_len;
+    #endif
     long                   index;
     long                   count;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -2667,19 +2611,8 @@ PHP_METHOD(Aerospike, listTrim)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listTrim: connection not established");
-        DEBUG_PHP_EXT_ERROR("listTrim: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2737,7 +2670,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listInsertItems( array key, string bin, int index, array items [,array options ] )
-   Insert items at the specified index of a list value in the bin */
+    Insert items at the specified index of a list value in the bin */
 PHP_METHOD(Aerospike, listInsertItems)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2752,7 +2685,12 @@ PHP_METHOD(Aerospike, listInsertItems)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
+    #if PHP_VERSION_ID < 70000
+      long                 bin_name_len;
+    #else
+      zend_ulong           bin_name_len;
+    #endif
+
     long                   index = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -2761,19 +2699,8 @@ PHP_METHOD(Aerospike, listInsertItems)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listInsertItems: connection not established");
-        DEBUG_PHP_EXT_ERROR("listInsertItems: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -2797,7 +2724,13 @@ PHP_METHOD(Aerospike, listInsertItems)
         goto exit;
     }
 
-    if (!check_val_type_list(&items_p)) {
+    if (!check_val_type_list(
+      #if PHP_VERSION_ID < 70000
+			  &items_p
+			#else
+			  items_p
+			#endif
+		)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "Items parameter should be of type list");
         DEBUG_PHP_EXT_ERROR("Items parameter should be of type list");
@@ -2820,7 +2753,13 @@ PHP_METHOD(Aerospike, listInsertItems)
     if (items_p) {
         as_arraylist_inita(&args_list, zend_hash_num_elements(Z_ARRVAL_P(items_p)));
         args_list_p = &args_list;
-        AS_LIST_PUT(aerospike_obj_p, NULL, &items_p, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
+        AS_LIST_PUT(aerospike_obj_p, NULL,
+            #if PHP_VERSION_ID < 70000
+                &items_p
+		    #else
+                items_p
+		    #endif
+			, args_list_p, &items_pool, aerospike_obj_p->serializer_opt,
                 (&error) TSRMLS_CC);
     }
 
@@ -2849,7 +2788,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listGet( array key, string bin, int index, mixed element [,array options ] )
-   Get the list element at the specified index of a list value in the bin */
+    Get the list element at the specified index of a list value in the bin */
 PHP_METHOD(Aerospike, listGet)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2858,11 +2797,16 @@ PHP_METHOD(Aerospike, listGet)
     as_record              *rec = NULL;
     as_policy_operate      operate_policy;
     zval*                  key_record_p = NULL;
-    zval*                  element_p = NULL;
+    #if PHP_VERSION_ID < 70000
+      zval* element_p = NULL;
+      long                 bin_name_len;
+    #else
+      zval* element_p = NULL;
+      zend_ulong           bin_name_len;
+    #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
     long                   index;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -2872,26 +2816,15 @@ PHP_METHOD(Aerospike, listGet)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listGet: connection not established");
-        DEBUG_PHP_EXT_ERROR("listGet: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &element_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -2927,10 +2860,12 @@ PHP_METHOD(Aerospike, listGet)
         goto exit;
     }
 
-    if (element_p) {
+		if (element_p) {
         zval_dtor(element_p);
-    } else {
-        MAKE_STD_ZVAL(element_p);
+		#if PHP_VERSION_ID < 70000
+            } else {
+                MAKE_STD_ZVAL(element_p);
+	    #endif
     }
 
     if (rec && rec->bins.size) {
@@ -2938,7 +2873,6 @@ PHP_METHOD(Aerospike, listGet)
         list_get_callback_udata.error_p = &error;
         AS_DEFAULT_GET(NULL, (as_val*) (rec->bins.entries[0].valuep), &list_get_callback_udata);
     }
-
 exit:
     if (initializeKey) {
         as_key_destroy(&as_key_for_list);
@@ -2956,7 +2890,7 @@ exit:
 
 /* {{{ proto int Aerospike::listGetRange( array key, string bin, int index, int count,
  * array elements [,array options ] )
-   Get the list of $count elements starting at a specified index of a list value in the bin */
+    Get the list of $count elements starting at a specified index of a list value in the bin */
 PHP_METHOD(Aerospike, listGetRange)
 {
     as_status              status = AEROSPIKE_OK;
@@ -2965,11 +2899,16 @@ PHP_METHOD(Aerospike, listGetRange)
     as_record              *rec = NULL;
     as_policy_operate      operate_policy;
     zval*                  key_record_p = NULL;
-    zval*                  elements_p = NULL;
+    #if PHP_VERSION_ID < 70000
+        zval*                  elements_p = NULL;
+        long                 bin_name_len;
+    #else
+        zval*                  elements_p = NULL;
+        zend_ulong           bin_name_len;
+    #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
     long                   index;
     long                   count;
     foreach_callback_udata list_get_callback_udata;
@@ -2980,26 +2919,15 @@ PHP_METHOD(Aerospike, listGetRange)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listGetRange: connection not established");
-        DEBUG_PHP_EXT_ERROR("listGetRange: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &count, &elements_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3035,10 +2963,12 @@ PHP_METHOD(Aerospike, listGetRange)
         goto exit;
     }
 
-    if (elements_p) {
+		if (elements_p) {
         zval_dtor(elements_p);
-    } else {
-        MAKE_STD_ZVAL(elements_p);
+		#if PHP_VERSION_ID < 70000
+            } else {
+                MAKE_STD_ZVAL(elements_p);
+		#endif
     }
 
     list_get_callback_udata.udata_p = elements_p;
@@ -3066,7 +2996,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listPop( array key, string bin, int index, mixed element [,array options ] )
-   Remove and get back the list element at a given index of a list value in the bin */
+    Remove and get back the list element at a given index of a list value in the bin */
 PHP_METHOD(Aerospike, listPop)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3079,7 +3009,11 @@ PHP_METHOD(Aerospike, listPop)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
+    #if PHP_VERSION_ID < 70000
+      long                 bin_name_len;
+    #else
+      zend_ulong           bin_name_len;
+    #endif
     long                   index;
     foreach_callback_udata list_get_callback_udata;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -3089,26 +3023,15 @@ PHP_METHOD(Aerospike, listPop)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listPop: connection not established");
-        DEBUG_PHP_EXT_ERROR("listPop: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zslz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &element_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3148,11 +3071,13 @@ PHP_METHOD(Aerospike, listPop)
         goto exit;
     }
 
-    if (element_p) {
-        zval_dtor(element_p);
-    } else {
-        MAKE_STD_ZVAL(element_p);
-    }
+      if (element_p) {
+          zval_dtor(element_p);
+		      #if PHP_VERSION_ID < 70000
+            } else {
+                MAKE_STD_ZVAL(element_p);
+          #endif
+      }
 
     if (rec && rec->bins.size) {
         list_get_callback_udata.udata_p = element_p;
@@ -3177,7 +3102,7 @@ exit:
 
 /* {{{ proto int Aerospike::listPopRange( array key, string bin, int index, int count,
  * array elements [,array options ] )
-   Remove and get back list elements at a given index of a list value in the bin */
+    Remove and get back list elements at a given index of a list value in the bin */
 PHP_METHOD(Aerospike, listPopRange)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3186,11 +3111,15 @@ PHP_METHOD(Aerospike, listPopRange)
     as_record              *rec = NULL;
     as_policy_operate      operate_policy;
     zval*                  key_record_p = NULL;
-    zval*                  elements_p = NULL;
+		zval*                  elements_p = NULL;
+    #if PHP_VERSION_ID < 70000
+      long                 bin_name_len;
+    #else
+      zend_ulong           bin_name_len;
+    #endif
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
     long                   index;
     long                   count;
     foreach_callback_udata list_get_callback_udata;
@@ -3201,26 +3130,15 @@ PHP_METHOD(Aerospike, listPopRange)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listPopRange: connection not established");
-        DEBUG_PHP_EXT_ERROR("listPopRange: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
     }
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz|a",
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zsllz/|a",
                 &key_record_p, &bin_name_p, &bin_name_len,
                 &index, &count, &elements_p, &options_p) == FAILURE) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3262,8 +3180,10 @@ PHP_METHOD(Aerospike, listPopRange)
 
     if (elements_p) {
         zval_dtor(elements_p);
-    } else {
-        MAKE_STD_ZVAL(elements_p);
+				#if PHP_VERSION_ID < 70000
+          } else {
+              MAKE_STD_ZVAL(elements_p);
+			  #endif
     }
 
     if (rec && rec->bins.size) {
@@ -3288,7 +3208,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listRemove( array key, string bin, int index [,array options ] )
-   Remove a list element at a given index of a list value in the bin */
+    Remove a list element at a given index of a list value in the bin */
 PHP_METHOD(Aerospike, listRemove)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3299,7 +3219,11 @@ PHP_METHOD(Aerospike, listRemove)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
+    #if PHP_VERSION_ID < 70000
+      long                 bin_name_len;
+    #else
+      zend_ulong           bin_name_len;
+    #endif
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -3308,19 +3232,8 @@ PHP_METHOD(Aerospike, listRemove)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listRemove: connection not established");
-        DEBUG_PHP_EXT_ERROR("listRemove: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
@@ -3378,7 +3291,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listRemoveRange( array key, string bin, int index, int count [,array options ] )
-   Remove list elements at a given index of a list value in the bin */
+    Remove list elements at a given index of a list value in the bin */
 PHP_METHOD(Aerospike, listRemoveRange)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3389,7 +3302,11 @@ PHP_METHOD(Aerospike, listRemoveRange)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    long                   bin_name_len;
+    #if PHP_VERSION_ID < 70000
+      long                 bin_name_len;
+    #else
+      zend_ulong           bin_name_len;
+    #endif
     long                   index;
     long                   count;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -3399,20 +3316,8 @@ PHP_METHOD(Aerospike, listRemoveRange)
     as_operations ops;
     as_operations_inita(&ops, 1);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "listRemoveRange: connection not established");
-        DEBUG_PHP_EXT_ERROR("listRemoveRange: connection not established");
-        goto exit;
-    }
-
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
     if (!has_cdt_list(aerospike_obj_p->as_ref_p->as_p, &error)) {
         as_error_update(&error, AEROSPIKE_ERR_UNSUPPORTED_FEATURE, "CDT list feature is not supported");
         goto exit;
@@ -3469,18 +3374,22 @@ exit:
 /* }}} */
 
 /* {{{ proto array Aerospike::initKey( string ns, string set, int|string pk [, bool digest=false ])
-   Helper which builds the key array that is needed for read/write operations */
+    Helper which builds the key array that is needed for read/write operations */
 PHP_METHOD(Aerospike, initKey)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
     char                   *ns_p = NULL;
-    int                    ns_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                    ns_p_length = 0;
+      int                    set_p_length = 0;
+    #else
+      size_t                 ns_p_length = 0;
+      size_t                 set_p_length = 0;
+    #endif
     char                   *set_p = NULL;
-    int                    set_p_length = 0;
     zval                   *pk_p ;
     zend_bool              is_digest = false;
-
 
     as_error_init(&error);
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssz|b", &ns_p, &ns_p_length,
@@ -3507,16 +3416,21 @@ PHP_METHOD(Aerospike, initKey)
 /* }}} */
 
 /* {{{ proto string Aerospike::getKeyDigest( string ns, string set, int|string pk )
-   Helper which computes the digest that for a given key */
+    Helper which computes the digest that for a given key */
 PHP_METHOD(Aerospike, getKeyDigest)
 {
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     as_key                  key;
     char                    *ns_p = NULL;
-    int                     ns_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                    ns_p_length = 0;
+      int                    set_p_length = 0;
+    #else
+      size_t                 ns_p_length = 0;
+      size_t                 set_p_length = 0;
+    #endif
     char                    *set_p = NULL;
-    int                     set_p_length = 0;
     zval                    *pk_p = NULL;
     char                    *digest_p = NULL;
 
@@ -3540,69 +3454,87 @@ PHP_METHOD(Aerospike, getKeyDigest)
         RETURN_NULL();
     }
 
-    ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
+    AEROSPIKE_ZVAL_STRINGL(return_value, digest_p, AS_DIGEST_VALUE_SIZE, 1);
     as_key_destroy(&key);
 }
 /* }}} */
 
 /* {{{ proto static Aerospike::setDeserializer( callback unserialize_cb )
-   Sets a userland method as responsible for deserializing bin values */
+    Sets a userland method as responsible for deserializing bin values */
 PHP_METHOD(Aerospike, setDeserializer)
 {
     as_status              status = AEROSPIKE_OK;
-
-    if (user_deserializer_call_info.function_name &&
+    #if PHP_VERSION_ID < 70000
+        if (user_deserializer_call_info.function_name &&
             (Z_ISREF_P(user_deserializer_call_info.function_name))) {
-        RETURN_TRUE;
-    }
+                RETURN_TRUE;
+        }
+    #else
+        if (&user_deserializer_call_info.function_name && Z_ISREF_P(&(user_deserializer_call_info.function_name))) {
+            RETURN_TRUE;
+        }
+    #endif
+
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                &user_deserializer_call_info,
-                &user_deserializer_call_info_cache,
-                &user_deserializer_call_info.params,
-                &user_deserializer_call_info.param_count) == FAILURE) {
-        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setDeserializer");
-        RETURN_FALSE;
+        &user_deserializer_call_info,
+        &user_deserializer_call_info_cache,
+        &user_deserializer_call_info.params,
+        &user_deserializer_call_info.param_count) == FAILURE) {
+            DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setDeserializer");
+            RETURN_FALSE;
     }
 
     is_user_deserializer_registered = 1;
-    Z_ADDREF_P(user_deserializer_call_info.function_name);
+    AEROSPIKE_Z_ADDREF_P(user_deserializer_call_info.function_name);
+
     RETURN_TRUE;
 }
 /* }}} */
 
 /* {{{ proto static Aerospike::setSerializer( callback serialize_cb )
-   Sets a userland method as responsible for serializing bin values */
+    Sets a userland method as responsible for serializing bin values */
 PHP_METHOD(Aerospike, setSerializer)
 {
     as_status              status = AEROSPIKE_OK;
-
-    if (user_serializer_call_info.function_name &&
+    #if PHP_VERSION_ID < 70000
+        if (user_serializer_call_info.function_name &&
             (Z_ISREF_P(user_serializer_call_info.function_name))) {
+                RETURN_TRUE;
+        }
+    #else
+        if (&(user_serializer_call_info.function_name) && Z_ISREF_P(&(user_serializer_call_info.function_name))) {
+            RETURN_TRUE;
+        }
+    #endif
+
         /*
-         * once set the same serializer would be used. Incase a new 
+         * once set the same serializer would be used. Incase a new
          * serializer is to be given, then we would have to unref the older
          * serialiser function and then attach the new serializer callback
          */
-        RETURN_TRUE;
-    }
-
     if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "f*",
-                &user_serializer_call_info,
-                &user_serializer_call_info_cache,
-                &user_serializer_call_info.params,
-                &user_serializer_call_info.param_count) == FAILURE) {
-        DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setSerializer");
-        RETURN_FALSE;
+        &user_serializer_call_info,
+        &user_serializer_call_info_cache,
+        &user_serializer_call_info.params,
+        &user_serializer_call_info.param_count) == FAILURE) {
+            DEBUG_PHP_EXT_ERROR("Unable to parse parameters for setSerializer");
+            RETURN_FALSE;
     }
 
     is_user_serializer_registered = 1;
-    Z_ADDREF_P(user_serializer_call_info.function_name);
+
+    #if PHP_VERSION_ID < 70000
+        Z_ADDREF_P(user_serializer_call_info.function_name);
+    #else
+        Z_TRY_ADDREF_P(&(user_serializer_call_info.function_name));
+    #endif
+
     RETURN_TRUE;
 }
 /* }}} */
 
 /* {{{ proto int Aerospike::removeBin( array key, array bins [, array options ])
-   Removes a bin from a record */
+    Removes a bin from a record */
 PHP_METHOD(Aerospike, removeBin)
 {
     as_status              status = AEROSPIKE_OK;
@@ -3615,19 +3547,8 @@ PHP_METHOD(Aerospike, removeBin)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "removeBin: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("removeBin: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a", &key_record_p, &bins_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3671,12 +3592,16 @@ exit:
  */
 
 /* {{{ proto array Aerospike::predicateEquals( string bin, int|string val )
-   Helper which builds the 'WHERE EQUALS' predicate */
+    Helper which builds the 'WHERE EQUALS' predicate */
 PHP_METHOD(Aerospike, predicateEquals)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
-    int                    bin_name_len = 0;
+    #if PHP_VERSION_ID < 70000
+      int                    bin_name_len = 0;
+    #else
+      size_t                 bin_name_len = 0;
+    #endif
     zval                   *val_p;
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -3696,8 +3621,9 @@ PHP_METHOD(Aerospike, predicateEquals)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "=", sizeof("=") - 1, 1);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "=", sizeof("=") - 1, 1);
 
     switch(Z_TYPE_P(val_p)) {
         case IS_LONG:
@@ -3709,7 +3635,7 @@ PHP_METHOD(Aerospike, predicateEquals)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateEquals() expects parameter 2 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
+            AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
             break;
         default:
             zval_dtor(return_value);
@@ -3720,15 +3646,20 @@ PHP_METHOD(Aerospike, predicateEquals)
 /* }}} */
 
 /* {{{ proto array Aerospike::predicateBetween( string bin, int min, int max )
-   Helper which builds the 'WHERE BETWEEN' predicate */
+    Helper which builds the 'WHERE BETWEEN' predicate */
 PHP_METHOD(Aerospike, predicateBetween)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
-    int                    bin_name_len = 0;
     long                   min_p;
     long                   max_p;
-    zval                   *minmax_arr;
+    #if PHP_VERSION_ID < 70000
+        int                    bin_name_len = 0;
+        zval                   *minmax_arr = NULL;
+    #else
+        size_t                 bin_name_len = 0;
+        zval                   minmax_arr;
+    #endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll",
                 &bin_name_p, &bin_name_len, &min_p, &max_p)) {
@@ -3741,23 +3672,31 @@ PHP_METHOD(Aerospike, predicateBetween)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
-    MAKE_STD_ZVAL(minmax_arr);
-    array_init_size(minmax_arr, 2);
-    add_next_index_long(minmax_arr, min_p);
-    add_next_index_long(minmax_arr, max_p);
-    add_assoc_zval(return_value, VAL, minmax_arr);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "BETWEEN", sizeof("BETWEEN") - 1, 1);
+
+    #if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(minmax_arr);
+    #endif
+    AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
+    AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, min_p);
+    AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, max_p);
+    AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 
 /* {{{ proto array Aerospike::predicateContains( string bin, int index_type, int|string val )
-   Helper which builds the 'WHERE CONTAINS' predicate */
+    Helper which builds the 'WHERE CONTAINS' predicate */
 PHP_METHOD(Aerospike, predicateContains)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
-    int                    bin_name_len = 0;
+    #if PHP_VERSION_ID < 70000
+      int                  bin_name_len = 0;
+    #else
+      size_t               bin_name_len = 0;
+    #endif
     long                   index_type;
     zval                   *val_p = NULL;
 
@@ -3777,9 +3716,10 @@ PHP_METHOD(Aerospike, predicateContains)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     add_assoc_long(return_value, INDEX_TYPE, index_type);
-    add_assoc_stringl(return_value, OP, "CONTAINS", sizeof("CONTAINS") - 1, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "CONTAINS", sizeof("CONTAINS") - 1, 1);
     /*
      * Add index type.
      */
@@ -3793,7 +3733,7 @@ PHP_METHOD(Aerospike, predicateContains)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_assoc_stringl(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
+            AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, Z_STRVAL_P(val_p), Z_STRLEN_P(val_p), 1);
             break;
         default:
             zval_dtor(return_value);
@@ -3810,11 +3750,16 @@ PHP_METHOD(Aerospike, predicateRange)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
-    int                    bin_name_len = 0;
     long                   index_type;
     zval                   *min_p = NULL;
     zval                   *max_p = NULL;
-    zval                   *minmax_arr = NULL;
+    #if PHP_VERSION_ID < 70000
+        int                    bin_name_len = 0;
+        zval                   *minmax_arr = NULL;
+    #else
+        size_t                 bin_name_len = 0;
+        zval                   minmax_arr;
+    #endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slzz",
                 &bin_name_p, &bin_name_len, &index_type, &min_p, &max_p)) {
@@ -3837,17 +3782,22 @@ PHP_METHOD(Aerospike, predicateRange)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     add_assoc_long(return_value, INDEX_TYPE, index_type);
-    add_assoc_stringl(return_value, OP, "RANGE", sizeof("RANGE") - 1, 1);
-    MAKE_STD_ZVAL(minmax_arr);
-    array_init_size(minmax_arr, 2);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "RANGE", sizeof("RANGE") - 1, 1);
+
+    #if PHP_VERSION_ID < 70000
+        MAKE_STD_ZVAL(minmax_arr);
+    #endif
+    AEROSPIKE_ARRAY_INIT_SIZE(minmax_arr, 2);
     /*
      * Range min value
      */
     switch(Z_TYPE_P(min_p)) {
         case IS_LONG:
-            add_next_index_long(minmax_arr, Z_LVAL_P(min_p));
+            AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, Z_LVAL_P(min_p));
+
             break;
         case IS_STRING:
             if (Z_STRLEN_P(min_p) == 0) {
@@ -3855,7 +3805,9 @@ PHP_METHOD(Aerospike, predicateRange)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_next_index_string(minmax_arr, Z_STRVAL_P(min_p), 1);
+
+            AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(min_p), 1);
+
             break;
         default:
             zval_ptr_dtor(&minmax_arr);
@@ -3868,7 +3820,8 @@ PHP_METHOD(Aerospike, predicateRange)
      */
     switch(Z_TYPE_P(max_p)) {
         case IS_LONG:
-            add_next_index_long(minmax_arr, Z_LVAL_P(max_p));
+            AEROSPIKE_ADD_NEXT_INDEX_LONG(minmax_arr, Z_LVAL_P(max_p));
+
             break;
         case IS_STRING:
             if (Z_STRLEN_P(min_p) == 0) {
@@ -3876,7 +3829,9 @@ PHP_METHOD(Aerospike, predicateRange)
                 DEBUG_PHP_EXT_ERROR("Aerospike::predicateRange() expects parameter 3 to be a non-empty string or an integer.");
                 RETURN_NULL();
             }
-            add_next_index_string(minmax_arr, Z_STRVAL_P(max_p), 1);
+
+            AEROSPIKE_ADD_NEXT_STRING(minmax_arr, Z_STRVAL_P(max_p), 1);
+
             break;
         default:
             zval_ptr_dtor(&minmax_arr);
@@ -3884,20 +3839,25 @@ PHP_METHOD(Aerospike, predicateRange)
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
             RETURN_NULL();
     }
-    add_assoc_zval(return_value, VAL, minmax_arr);
+AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 
 /* {{{ proto int Aerospike::query( string ns, string set, array where, callback record_cb [, array select [, array options ]] )
-   Queries a secondary index on a set for records matching the where predicate  */
+    Queries a secondary index on a set for records matching the where predicate  */
 PHP_METHOD(Aerospike, query)
 {
     as_status                   status = AEROSPIKE_OK;
     as_error                    error;
     char*                       ns_p = NULL;
-    int                         ns_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                    ns_p_length = 0;
+      int                    set_p_length = 0;
+    #else
+      size_t                 ns_p_length = 0;
+      size_t                 set_p_length = 0;
+    #endif
     char*                       set_p = NULL;
-    int                         set_p_length = 0;
     zval*                       predicate_p = NULL;
     char*                       bin_name = NULL;
     zval*                       options_p = NULL;
@@ -3905,26 +3865,14 @@ PHP_METHOD(Aerospike, query)
     HashTable*                  bins_ht_p = NULL;
     HashTable*                  predicate_ht_p = NULL;
     Aerospike_object*           aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     userland_callback           user_func = {0};
 
     as_error_init(&error);
     PHP_EXT_SET_AS_ERR(&error, DEFAULT_ERRORNO, DEFAULT_ERROR);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
-                "Aerospike::query() has no valid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        DEBUG_PHP_EXT_ERROR("Aerospike::query() has no connection to the database");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "Aerospike::query() has no connection to the database");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!a!f|a!a!",
                 &ns_p, &ns_p_length, &set_p, &set_p_length, &predicate_p,
@@ -3965,7 +3913,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::aggregate( string ns, string set, array where, string module, string function, array args, mixed &returned [, array options ] )
-   Applies a stream UDF to the records matching a query and aggregates the results  */
+    Applies a stream UDF to the records matching a query and aggregates the results  */
 PHP_METHOD(Aerospike, aggregate)
 {
     as_status               status = AEROSPIKE_OK;
@@ -3997,20 +3945,8 @@ PHP_METHOD(Aerospike, aggregate)
      * parameter in zend_parse_parameters().
      */
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "aggregate: Connection not established");
-        DEBUG_PHP_EXT_ERROR("aggregate: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
                 "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
@@ -4072,12 +4008,17 @@ PHP_METHOD(Aerospike, aggregate)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_query_aggregate(aerospike_obj_p,
-                                                &error, module_p, function_name_p,
-                                                &args_p, namespace_p, set_p,
-                                                bins_ht_p, Z_ARRVAL_P(predicate_p),
-                                                returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
-        DEBUG_PHP_EXT_ERROR("aggregate returned an error");
-        goto exit;
+                &error, module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                , namespace_p, set_p,
+                bins_ht_p, Z_ARRVAL_P(predicate_p),
+                returned_p, options_p, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                    DEBUG_PHP_EXT_ERROR("aggregate returned an error");
+                    goto exit;
     }
 exit:
     PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -4087,17 +4028,23 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::scan( string ns, string set, callback record_cb [, array select [, array options ]] )
-   Returns all the records in a set to a callback method  */
+    Returns all the records in a set to a callback method  */
 PHP_METHOD(Aerospike, scan)
 {
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     int                     e_level = 0;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     char                    *ns_p = NULL;
-    int                     ns_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                    ns_p_length = 0;
+      int                    set_p_length = 0;
+    #else
+      size_t                 ns_p_length = 0;
+      size_t                 set_p_length = 0;
+    #endif
     char                    *set_p = NULL;
-    int                     set_p_length = 0;
     char                    *bin_name = NULL;
     zval                    *bins_p = NULL;
     zval                    *options_p = NULL;
@@ -4110,19 +4057,8 @@ PHP_METHOD(Aerospike, scan)
      */
     as_error_init(&error);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Aerospike::scan() has no valid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        DEBUG_PHP_EXT_ERROR("Aerospike::scan() has no valid aerospike object");
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "Aerospike::scan() has no connection to the database");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss!f|aza",
                 &ns_p, &ns_p_length, &set_p, &set_p_length,
@@ -4187,23 +4123,11 @@ PHP_METHOD(Aerospike, queryApply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryApply: Connection not established");
-        DEBUG_PHP_EXT_ERROR("queryApply : Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
+                "zzzzzzz/|z", &namespace_zval_p, &set_zval_p, &predicate_p,
                 &module_zval_p, &function_zval_p, &args_p, &job_id_p,
                 &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -4232,7 +4156,7 @@ PHP_METHOD(Aerospike, queryApply)
     if (args_p && PHP_TYPE_ISNULL(args_p)) {
         args_p = NULL;
     }
-    
+
     if (options_p && PHP_TYPE_ISNULL(options_p)) {
         options_p = NULL;
     }
@@ -4262,14 +4186,25 @@ PHP_METHOD(Aerospike, queryApply)
 
     predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
 
+    #if PHP_VERSION_ID < 70000
     zval_dtor(job_id_p);
     ZVAL_LONG(job_id_p, 0);
-    if (AEROSPIKE_OK != 
+    #else
+    zval_dtor(job_id_p);
+    ZVAL_LONG(job_id_p, 0);
+    #endif
+
+    if (AEROSPIKE_OK !=
             (status = aerospike_query_run_background(aerospike_obj_p,
-                                                     &error, module_p, function_name_p,
-                                                     &args_p, namespace_p, set_p,
-                                                     predicate_ht_p,
-                                                     job_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                &error, module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                , namespace_p, set_p,
+                predicate_ht_p, job_id_p
+                , options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("queryApply returned an error");
         goto exit;
     }
@@ -4281,7 +4216,7 @@ exit:
 }
 
 /* {{{ proto int Aerospike::scanApply( string ns, string set, string module, string function, array args, int &scan_id [, array options ] )
-   Applies a record UDF to each record of a set using a background scan  */
+    Applies a record UDF to each record of a set using a background scan  */
 PHP_METHOD(Aerospike, scanApply)
 {
     as_status              status = AEROSPIKE_OK;
@@ -4304,23 +4239,11 @@ PHP_METHOD(Aerospike, scanApply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "scanApply: Connection not established");
-        DEBUG_PHP_EXT_ERROR("scanApply : Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzz|z", &namespace_zval_p, &set_zval_p,
+                "zzzzzz/|z", &namespace_zval_p, &set_zval_p,
                 &module_zval_p, &function_zval_p, &args_p, &scan_id_p,
                 &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -4376,13 +4299,21 @@ PHP_METHOD(Aerospike, scanApply)
         DEBUG_PHP_EXT_ERROR("Input parameters (type) for scanApply function not proper");
     }
 
-    zval_dtor(scan_id_p);
+    #if PHP_VERSION_ID < 70000
+        zval_dtor(scan_id_p);
+    #endif
     ZVAL_LONG(scan_id_p, 0);
+
     if (AEROSPIKE_OK !=
             (status = aerospike_scan_run_background(aerospike_obj_p,
-                                                    &error, module_p, function_name_p,
-                                                    &args_p, namespace_p, set_p,
-                                                    scan_id_p, options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
+                &error, module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                , namespace_p, set_p, scan_id_p,
+                options_p, true, &aerospike_obj_p->serializer_opt TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("scanApply returned an error");
         goto exit;
     }
@@ -4394,33 +4325,21 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::scanInfo ( int scan_id, array &info [, array $options ] )
-   Gets the status of a background scan triggered by scanApply()  */
+    Gets the status of a background scan triggered by scanApply()  */
 PHP_METHOD(Aerospike, scanInfo)
 {
     as_status              status = AEROSPIKE_OK;
     as_error               error;
-    long                   scan_id = -1;
+	long                   scan_id = -1;
     zval*                  scan_info_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, 
-                "scanInfo: Connection not established");
-        DEBUG_PHP_EXT_ERROR("scanInfo: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz|z",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lz/|z",
                 &scan_id, &scan_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -4467,29 +4386,21 @@ PHP_METHOD(Aerospike, jobInfo)
     as_status           status = AEROSPIKE_OK;
     as_error            error;
     char*               module_p = NULL;
-    int                 module_len = -1;
+    #if PHP_VERSION_ID < 70000
+      int               module_len = -1;
+    #else
+      size_t            module_len = -1;
+    #endif
     long                job_id = -1;
     zval*               job_info_p = NULL;
     zval*               options_p = NULL;
     Aerospike_object*   aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "jobInfo: Connection not established");
-        DEBUG_PHP_EXT_ERROR("jobInfo: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz|z",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lsz/|z",
                 &job_id, &module_p, &module_len, &job_info_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -4522,7 +4433,7 @@ PHP_METHOD(Aerospike, jobInfo)
     zval_dtor(job_info_p);
     array_init(job_info_p);
 
-    if (AEROSPIKE_OK != 
+    if (AEROSPIKE_OK !=
             (status = aerospike_job_get_info(aerospike_obj_p->as_ref_p->as_p,
                                              &error, job_id, job_info_p,
                                              module_p,
@@ -4549,10 +4460,14 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
     as_status               status = AEROSPIKE_OK;
     char                    *bin_name_p = NULL;
     char                    *region_p = NULL;
-    int                     region_len = 0;
-    int                     bin_name_len = 0;
+    #if PHP_VERSION_ID < 70000
+        int                   bin_name_len = 0;
+        int                     region_len = 0;
+    #else
+        size_t                bin_name_len = 0;
+        size_t                region_len = 0;
+    #endif
     zval                    *val_p;
-
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
                 &bin_name_p, &bin_name_len, &region_p, &region_len)) {
         DEBUG_PHP_EXT_ERROR("Invalid parameters for predicateGeoWithingGeoJSONRegion");
@@ -4565,9 +4480,10 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
-    add_assoc_stringl(return_value, VAL, region_p, region_len, 1);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, region_p, region_len, 1);
 }
 
 /* {{{proto array Aerospike::predicateGeoWithinRadius( string bin, double long, double $lat,
@@ -4580,8 +4496,12 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
     double                  latitude;
     double                  radius;
     char                    *bin_name_p = NULL;
-    int                     bin_name_len = 0;
     char                    geo_value[1024];
+    #if PHP_VERSION_ID < 70000
+      int                   bin_name_len = 0;
+    #else
+      size_t                bin_name_len = 0;
+    #endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
                 &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
@@ -4590,12 +4510,13 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOWITHIN", strlen("GEOWITHIN"), 1);
 
     snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
 
-    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geo_value, strlen(geo_value), 1);
 }
 
 /* {{{proto array Aerospike::predicateGeoContainsGeoJSONPoint(string bin, string
@@ -4605,9 +4526,14 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
 {
     as_status                 status = AEROSPIKE_OK;
     char                      *bin_name_p = NULL;
-    int                       bin_name_len = 0;
     char                      *geoPoint_p = NULL;
-    int                       geoPoint_len = 0;
+    #if PHP_VERSION_ID < 70000
+        int                   bin_name_len = 0;
+        int                   geoPoint_len = 0;
+    #else
+        size_t                bin_name_len = 0;
+        size_t                geoPoint_len = 0;
+    #endif
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
                 &bin_name_p, &bin_name_len, &geoPoint_p, &geoPoint_len)) {
@@ -4616,9 +4542,10 @@ PHP_METHOD(Aerospike, predicateGeoContainsGeoJSONPoint)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
-    add_assoc_stringl(return_value, VAL, geoPoint_p, geoPoint_len, 1);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geoPoint_p, geoPoint_len, 1);
 }
 
 /* {{{proto array Aerospike::predicateGeoContainsPoint(string bin, double long,
@@ -4628,7 +4555,11 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 {
     as_status               status = AEROSPIKE_OK;
     char                    *bin_name_p = NULL;
-    int                     bin_name_len = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   bin_name_len = 0;
+    #else
+      size_t                bin_name_len = 0;
+    #endif
     double                  longitude;
     double                  latitude;
     double                  radius;
@@ -4641,12 +4572,13 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
     }
 
     array_init(return_value);
-    add_assoc_stringl(return_value, BIN, bin_name_p, bin_name_len, 1);
-    add_assoc_stringl(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
 
-    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius); 
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
 
-    add_assoc_stringl(return_value, VAL, geo_value, strlen(geo_value), 1);
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
+
+    AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geo_value, strlen(geo_value), 1);
 }
 /*
  *******************************************************************************************************
@@ -4655,7 +4587,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
  */
 
 /* {{{ proto int Aerospike::register( string path, string module [, int language=Aerospike::UDF_TYPE_LUA [, array options ]] )
-   Registers a UDF module with the cluster  */
+    Registers a UDF module with the cluster  */
 PHP_METHOD(Aerospike, register)
 {
     as_status              status = AEROSPIKE_OK;
@@ -4671,20 +4603,8 @@ PHP_METHOD(Aerospike, register)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "register: connection not established");
-        DEBUG_PHP_EXT_ERROR("register: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|la",
                 &path_zval_p, &module_zval_p, &language, &options_p)) {
@@ -4731,7 +4651,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::deregister( string module [, array options ] )
-   Removes a UDF module from the cluster  */
+    Removes a UDF module from the cluster  */
 PHP_METHOD(Aerospike, deregister)
 {
     as_status              status = AEROSPIKE_OK;
@@ -4739,23 +4659,11 @@ PHP_METHOD(Aerospike, deregister)
     char*                  module_p = NULL;
     zval*                  module_zval_p = NULL;
     zval*                  options_p = NULL;
-    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT; 
+    Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "deregister: connection not established");
-        DEBUG_PHP_EXT_ERROR("deregister: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
                 &module_zval_p, &options_p)) {
@@ -4797,7 +4705,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::apply( array key, string module, string function[, array args [, mixed &returned [, array options ]]] )
-   Applies a UDF to a record  */
+    Applies a UDF to a record  */
 PHP_METHOD(Aerospike, apply)
 {
     as_status              status = AEROSPIKE_OK;
@@ -4817,22 +4725,10 @@ PHP_METHOD(Aerospike, apply)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "apply: Connection not established");
-        DEBUG_PHP_EXT_ERROR("apply: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zzz",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|zz/z",
                 &key_record_p, &module_zval_p, &function_zval_p, &args_p,
                 &return_value_of_udf_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -4896,16 +4792,18 @@ PHP_METHOD(Aerospike, apply)
         goto exit;
     }
 
-    if (return_value_of_udf_p) {
-        zval_dtor(return_value_of_udf_p);
-    }
-
     if (AEROSPIKE_OK !=
-            (status = aerospike_udf_apply(aerospike_obj_p, 
-                                          &as_key_for_apply_udf, &error,
-                                          module_p, function_name_p, &args_p,
-                                          return_value_of_udf_p, options_p,
-                                          &aerospike_obj_p->serializer_opt))) {
+            (status = aerospike_udf_apply(aerospike_obj_p,
+                &as_key_for_apply_udf, &error,
+                module_p, function_name_p,
+                #if PHP_VERSION_ID < 70000
+                    &args_p
+                #else
+                    args_p
+                #endif
+                ,
+                return_value_of_udf_p, options_p,
+                &aerospike_obj_p->serializer_opt))) {
         DEBUG_PHP_EXT_ERROR("apply function returned an error");
         goto exit;
     }
@@ -4920,7 +4818,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::listRegistered( array &modules [, int language [, array options ]] )
-   Lists the UDF modules registered with the cluster */
+    Lists the UDF modules registered with the cluster */
 PHP_METHOD(Aerospike, listRegistered)
 {
     as_status              status = AEROSPIKE_OK;
@@ -4931,22 +4829,16 @@ PHP_METHOD(Aerospike, listRegistered)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "listRegistered: Connection not established");
-        DEBUG_PHP_EXT_ERROR("listRegistered: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|lz",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+        #if PHP_VERSION_ID < 70000
+            "z|lz"
+        #else
+            "z/|lz"
+        #endif
+    ,
                 &array_of_modules_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -4982,7 +4874,7 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::getRegistered( string module, string &code [, int language=Aerospike::UDF_TYPE_LUA [, array options ]] )
-   Gets the code for a UDF module registered with the cluster */
+    Gets the code for a UDF module registered with the cluster */
 PHP_METHOD(Aerospike, getRegistered)
 {
     as_status              status = AEROSPIKE_OK;
@@ -4993,24 +4885,19 @@ PHP_METHOD(Aerospike, getRegistered)
     zval*                  udf_code_p = NULL;
     zval*                  options_p = NULL;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     as_error_init(&error);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "getRegistered: Connection not established");
-        DEBUG_PHP_EXT_ERROR("getRegistered: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|lz",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+		#if PHP_VERSION_ID < 70000
+            "zz|lz"
+        #else
+            "zz/|lz"
+        #endif
+    ,
                 &module_zval_p, &udf_code_p, &language, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -5042,7 +4929,7 @@ PHP_METHOD(Aerospike, getRegistered)
             (status = aerospike_get_registered_udf_module_code(aerospike_obj_p,
                                                                &error, module_p,
                                                                udf_code_p,
-                                                               language, 
+                                                               language,
                                                                options_p))) {
         ZVAL_EMPTY_STRING(udf_code_p);
         DEBUG_PHP_EXT_ERROR("getRegistered function returned an error");
@@ -5069,33 +4956,28 @@ PHP_METHOD(Aerospike, addIndex)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char                    *ns_p = NULL;
-    int                     ns_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+        int                   ns_p_length = 0;
+        int                   set_p_length = 0;
+        int                   bin_p_length = 0;
+        int                   name_p_length = 0;
+    #else
+        size_t                ns_p_length = 0;
+        size_t                set_p_length = 0;
+        size_t                bin_p_length = 0;
+        size_t                name_p_length = 0;
+    #endif
     char                    *set_p = NULL;
-    int                     set_p_length = 0;
     char                    *bin_p = NULL;
-    int                     bin_p_length = 0;
     long                    index_type = -1;
     long                    datatype = -1;
     char                    *name_p = NULL;
-    int                     name_p_length = 0;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "addIndex: Connection not established");
-        DEBUG_PHP_EXT_ERROR("addIndex: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssssll|z",
                 &ns_p, &ns_p_length, &set_p, &set_p_length, &bin_p,
@@ -5139,33 +5021,26 @@ exit:
 /* }}} */
 
 /* {{{ proto int Aerospike::dropIndex( string ns, string name [, array options ] )
-   Drops a secondary index from a specified set */
+    Drops a secondary index from a specified set */
 PHP_METHOD(Aerospike, dropIndex)
 {
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char                    *ns_p = NULL;
-    int                     ns_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+        int                    ns_p_length = 0;
+        int                    name_p_length = 0;
+    #else
+        size_t                 ns_p_length = 0;
+        size_t                 name_p_length = 0;
+    #endif
     char                    *name_p = NULL;
-    int                     name_p_length = 0;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "dropIndex: Connection not established");
-        DEBUG_PHP_EXT_ERROR("dropIndex: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|z",
                 &ns_p, &ns_p_length, &name_p, &name_p_length, &options_p)) {
@@ -5225,28 +5100,22 @@ PHP_METHOD(Aerospike, createUser)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
     char*                   password_p = NULL;
-    int                     password_p_length = 0;
+
+    #if PHP_VERSION_ID < 70000
+        int                     user_p_length = 0;
+        int                     password_p_length = 0;
+    #else
+        size_t                  user_p_length = 0;
+        size_t                  password_p_length = 0;
+    #endif
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "createUser: Connection not established");
-        DEBUG_PHP_EXT_ERROR("createUser: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssa|a",
                 &user_p, &user_p_length, &password_p, &password_p_length,
@@ -5294,25 +5163,17 @@ PHP_METHOD(Aerospike, dropUser)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   user_p_length = 0;
+    #else
+      size_t                user_p_length = 0;
+    #endif
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "dropUser: Connection not established");
-        DEBUG_PHP_EXT_ERROR("dropUser: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a",
                 &user_p, &user_p_length, &options_p)) {
@@ -5359,27 +5220,20 @@ PHP_METHOD(Aerospike, changePassword)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
     char*                   password_p = NULL;
-    int                     password_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   user_p_length = 0;
+      int                   password_p_length = 0;
+    #else
+      size_t                user_p_length = 0;
+      size_t                password_p_length = 0;
+    #endif
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "changePassword: Connection not established");
-        DEBUG_PHP_EXT_ERROR("changePassword: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
                 &user_p, &user_p_length, &password_p, &password_p_length,
@@ -5427,27 +5281,20 @@ PHP_METHOD(Aerospike, setPassword)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   user_p_length = 0;
+      int                   password_p_length = 0;
+    #else
+      size_t                user_p_length = 0;
+      size_t                password_p_length = 0;
+    #endif
     char*                   password_p = NULL;
-    int                     password_p_length = 0;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "setPassword: Connection not established");
-        DEBUG_PHP_EXT_ERROR("setPassword: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
                 &user_p, &user_p_length, &password_p, &password_p_length,
@@ -5495,26 +5342,18 @@ PHP_METHOD(Aerospike, grantRoles)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   user_p_length = 0;
+    #else
+      size_t                user_p_length = 0;
+    #endif
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "grantRoles: Connection not established");
-        DEBUG_PHP_EXT_ERROR("grantRoles: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
                 &user_p, &user_p_length, &roles_p, &options_p)) {
@@ -5562,26 +5401,18 @@ PHP_METHOD(Aerospike, revokeRoles)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   user_p_length = 0;
+    #else
+      size_t                user_p_length = 0;
+    #endif
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "revokeRoles: Connection not established");
-        DEBUG_PHP_EXT_ERROR("revokeRoles: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|a",
                 &user_p, &user_p_length, &roles_p, &options_p)) {
@@ -5629,28 +5460,20 @@ PHP_METHOD(Aerospike, queryUser)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    int                     user_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+        int                   user_p_length = 0;
+    #else
+        size_t                user_p_length = 0;
+    #endif
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryUser: Connection not established");
-        DEBUG_PHP_EXT_ERROR("queryUser: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz|a",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz/|a",
                 &user_p, &user_p_length, &roles_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -5701,24 +5524,13 @@ PHP_METHOD(Aerospike, queryUsers)
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
+
     as_error_init(&error);
 
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryUsers: Connection not established");
-        DEBUG_PHP_EXT_ERROR("queryUsers: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/|a",
                 &roles_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -5765,20 +5577,8 @@ PHP_METHOD(Aerospike, createRole)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "createRole: Connection not established");
-        DEBUG_PHP_EXT_ERROR("createRole: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a",
                 &role_zval_p, &privileges_p, &options_p)) {
@@ -5810,8 +5610,8 @@ PHP_METHOD(Aerospike, createRole)
 
     if (AEROSPIKE_OK !=
             (status = aerospike_security_operations_create_role(aerospike_obj_p->as_ref_p->as_p,
-                                                                &error, role_p, Z_ARRVAL_P(privileges_p), 
-																options_p TSRMLS_CC))) {
+                                                                &error, role_p, Z_ARRVAL_P(privileges_p),
+                                                                options_p TSRMLS_CC))) {
         DEBUG_PHP_EXT_ERROR("createRole() function returned an error");
         goto exit;
     }
@@ -5835,25 +5635,17 @@ PHP_METHOD(Aerospike, dropRole)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   role_p = NULL;
-    int                     role_p_length = 0;
+    #if PHP_VERSION_ID < 70000
+      int                   role_p_length = 0;
+    #else
+      size_t                role_p_length = 0;
+    #endif
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "dropRole: Connection not established");
-        DEBUG_PHP_EXT_ERROR("dropRole: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|a",
                 &role_p, &role_p_length, &options_p)) {
@@ -5907,20 +5699,8 @@ PHP_METHOD(Aerospike, grantPrivileges)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "grantPrivileges: Connection not established");
-        DEBUG_PHP_EXT_ERROR("grantPrivileges: Connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a",
                 &role_zval_p, &privileges_p, &options_p)) {
@@ -5986,22 +5766,10 @@ PHP_METHOD(Aerospike, revokePrivileges)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "revokePrivileges: Connection not established");
-        DEBUG_PHP_EXT_ERROR("revokePrivileges: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "za|a",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/a|a",
                 &role_zval_p, &privileges_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -6064,22 +5832,9 @@ PHP_METHOD(Aerospike, queryRole)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryRole: Connection not established");
-        DEBUG_PHP_EXT_ERROR("querRole: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|a",
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz/|a",
                 &role_zval_p, &roles_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -6142,22 +5897,10 @@ PHP_METHOD(Aerospike, queryRoles)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
-    if (PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER,
-                "queryRoles: Connection not established");
-        DEBUG_PHP_EXT_ERROR("querRoles: Connection not established");
-        goto exit;
-    }
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|a",
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/|a",
                 &roles_p, &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM,
@@ -6207,19 +5950,8 @@ PHP_METHOD(Aerospike, setLogLevel)
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
-        DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
-        goto exit;
-    }
-
-    if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
-        status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogLevel: connection not established"); 
-        DEBUG_PHP_EXT_ERROR("setLogLevel: connection not established");
-        goto exit;
-    }
+    CHECK_AEROSPIKE_OBJECT();
+    CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &log_level)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -6252,16 +5984,16 @@ PHP_METHOD(Aerospike, setLogHandler)
     is_callback_registered = 0;
 
     as_error_init(&error);
-    if (!aerospike_obj_p) {
-        status = AEROSPIKE_ERR_CLIENT;
+	if (!aerospike_obj_p) {
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid aerospike object");
         DEBUG_PHP_EXT_ERROR("Invalid aerospike object");
+        status = AEROSPIKE_ERR_CLIENT;
         RETURN_FALSE;
     }
 
     if(PHP_IS_CONN_NOT_ESTABLISHED(aerospike_obj_p->is_conn_16)) {
         status = AEROSPIKE_ERR_CLUSTER;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogHandler: connection not established"); 
+        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLUSTER, "setLogHandler: connection not established");
         DEBUG_PHP_EXT_ERROR("setLogHandler: connection not established");
         RETURN_FALSE;
     }
@@ -6276,7 +6008,7 @@ PHP_METHOD(Aerospike, setLogHandler)
 
     as_log_set_callback((as_log_callback)&aerospike_helper_log_callback);
     is_callback_registered = 1;
-    Z_ADDREF_P(func_call_info.function_name);
+    AEROSPIKE_Z_ADDREF_P(func_call_info.function_name);
     PHP_EXT_RESET_AS_ERR_IN_CLASS();
     RETURN_TRUE;
 }
@@ -6289,11 +6021,17 @@ PHP_METHOD(Aerospike, setLogHandler)
  */
 
 /* {{{ proto string Aerospike::error ( void )
-   Displays the error message associated with the last operation */
+    Displays the error message associated with the last operation */
 PHP_METHOD(Aerospike, error)
 {
+#if PHP_VERSION_ID < 70000
     char *error_msg = Z_STRVAL_P(zend_read_property(Aerospike_ce, getThis(), "error", strlen("error"), 1 TSRMLS_CC));
     RETURN_STRINGL(error_msg, strlen(error_msg), 1);
+#else
+    zval rv;
+    char *error_msg = Z_STRVAL_P(zend_read_property(Aerospike_ce, getThis(), "error", strlen("error"), 1, &rv TSRMLS_CC));
+    RETURN_STRINGL(error_msg, strlen(error_msg));
+#endif
 }
 /* }}} */
 
@@ -6301,7 +6039,12 @@ PHP_METHOD(Aerospike, error)
    Displays the status code associated with the last operation */
 PHP_METHOD(Aerospike, errorno)
 {
-    int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1 TSRMLS_CC));
+    #if PHP_VERSION_ID < 70000
+        int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1 TSRMLS_CC));
+    #else
+        zval rv;
+        int error_code = Z_LVAL_P(zend_read_property(Aerospike_ce, getThis(), "errorno", strlen("errorno"), 1, &rv TSRMLS_CC));
+    #endif
     RETURN_LONG(error_code);
 }
 /* }}} */
@@ -6324,15 +6067,24 @@ PHP_MINIT_FUNCTION(aerospike)
         return FAILURE;
     }
 
-    Aerospike_ce->create_object = Aerospike_object_new;
-
+    #if PHP_VERSION_ID < 70000
+        Aerospike_ce->create_object = Aerospike_object_new;
+    #else
+        Aerospike_ce->create_object = Aerospike_object_new_php7;
+    #endif
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 
-#ifdef ZTS
-    ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
-#else
-    ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
-#endif
+    #if PHP_VERSION_ID < 70000
+        Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+    #else
+        Aerospike_ce->ce_flags |= ZEND_ACC_FINAL;
+    #endif
+
+    #ifdef ZTS
+        ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);
+    #else
+        ZEND_INIT_MODULE_GLOBALS(aerospike, aerospike_globals_ctor, aerospike_globals_dtor);
+    #endif
     REGISTER_INI_ENTRIES();
     /* Refer aerospike_policy.h
      * This will expose the policy values for PHP
@@ -6365,11 +6117,11 @@ PHP_MSHUTDOWN_FUNCTION(aerospike)
 {
     DEBUG_PHP_EXT_DEBUG("Inside mshutdown");
     UNREGISTER_INI_ENTRIES();
-#ifndef ZTS
-    aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
-#else
-    ts_free_id(aerospike_globals_id);
-#endif
+    #ifndef ZTS
+        aerospike_globals_dtor(&aerospike_globals TSRMLS_CC);
+    #else
+        ts_free_id(aerospike_globals_id);
+    #endif
     return SUCCESS;
 }
 
@@ -6393,22 +6145,47 @@ PHP_RINIT_FUNCTION(aerospike)
  */
 PHP_RSHUTDOWN_FUNCTION(aerospike)
 {
-    if (user_serializer_call_info.function_name) {
-        if (1 == Z_REFCOUNT_P(user_serializer_call_info.function_name)) {
+    #if PHP_VERSION_ID < 70000
+        if (user_serializer_call_info.function_name) {
+            if (1 == Z_REFCOUNT_P(user_serializer_call_info.function_name)) {
+                zval_ptr_dtor(&user_serializer_call_info.function_name);
+                user_serializer_call_info.function_name = NULL;
+            } else {
+                DEBUG_PHP_EXT_ERROR("leak for user serializer function");
+            }
+        }
+        if (user_deserializer_call_info.function_name) {
+            if (1 == Z_REFCOUNT_P(user_deserializer_call_info.function_name)) {
+                zval_ptr_dtor(&user_deserializer_call_info.function_name);
+                user_deserializer_call_info.function_name = NULL;
+            } else {
+                DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+            }
+        }
+    #else/*
+        if (&user_serializer_call_info.function_name) {
+            //if (1 == Z_REFCOUNT_P(&user_serializer_call_info.function_name)) {
             zval_ptr_dtor(&user_serializer_call_info.function_name);
-            user_serializer_call_info.function_name = NULL;
-        } else {
-            DEBUG_PHP_EXT_ERROR("leak for user serializer function");
+            if (Z_ISREF_P(&user_serializer_call_info.function_name))
+            {
+                AEROSPIKE_ZVAL_UNREF(user_serializer_call_info.function_name);
+            }
+            //} else {
+                // DEBUG_PHP_EXT_ERROR("leak for user serializer function");
+            //}
         }
-    }
-    if (user_deserializer_call_info.function_name) {
-        if (1 == Z_REFCOUNT_P(user_deserializer_call_info.function_name)) {
-            zval_ptr_dtor(&user_deserializer_call_info.function_name);
-            user_deserializer_call_info.function_name = NULL;
-        } else {
-            DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
-        }
-    }
+        if (&user_deserializer_call_info.function_name) {
+            //if (1 == Z_REFCOUNT_P(&(user_deserializer_call_info.function_name))) {
+                zval_ptr_dtor(&user_deserializer_call_info.function_name);
+                if(Z_ISREF_P(&user_deserializer_call_info.function_name))
+                {
+                    AEROSPIKE_ZVAL_UNREF(user_deserializer_call_info.function_name);
+                }
+                //} else {
+                    // DEBUG_PHP_EXT_ERROR("leak for user deserializer function");
+                //}
+        }*/
+    #endif
 
     DEBUG_PHP_EXT_DEBUG("Inside rshutdown of this build");
     return SUCCESS;
@@ -6426,4 +6203,3 @@ PHP_MINFO_FUNCTION(aerospike)
     php_info_print_table_row(2, "aerospike version", PHP_AEROSPIKE_VERSION);
     php_info_print_table_end();
 }
-

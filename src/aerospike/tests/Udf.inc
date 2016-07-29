@@ -95,7 +95,7 @@ class Udf extends AerospikeTestCommon
      * @test_plans{1.1}
      */
     function testUdfNegativeRegisterUnknownModule() {
-        $status = $this->ensureUdfModule("tests/lua/unknown.lua", "unknown.lua");
+        $status = $this->db->register("tests/lua/unknown.lua", "unknown.lua");
         if ($status !== Aerospike::OK) {
             return $this->db->errorno();
         }
@@ -228,7 +228,7 @@ class Udf extends AerospikeTestCommon
      *
      * @test_plans{1.1}
      */
-    function testUdfPositiveApplyOnInteger() 
+    function testUdfPositiveApplyOnInteger()
     {
         if (!$this->db->isConnected()) {
             return ($this->db->errorno());
@@ -854,7 +854,7 @@ class Udf extends AerospikeTestCommon
             if ($status != Aerospike::OK) {
                 return($this->db->errorno());
             }
-        } 
+        }
         return($status);
     }
     /**
@@ -898,6 +898,48 @@ class Udf extends AerospikeTestCommon
          $status = $this->db->remove($key,
              array(Aerospike::OPT_POLICY_RETRY=>Aerospike::POLICY_RETRY_NONE));
          return ($status);
+     }
+    /**
+     * @test
+     * apply Udf on a record and append float value to existing bin
+     * NULL.
+     *
+     * @pre
+     * Udf using aerospike object to the specified node
+     *
+     * @post
+     * newly initialized Aerospike objects
+     *
+     * @remark
+     * Variants: OO (normal_001)
+     *
+     * @test_plans{1.1}
+     */
+     function normal_001() {
+         if (!$this->db->isConnected()) {
+             return ($this->db->errorno());
+         }
+         $key = $this->db->initKey("test","demo", "pi");
+         $list = array(94, 5, 25);
+         if ($this->db->isConnected()) {
+             $status = $this->db->put($key, array("bin1"=>$list), NULL);
+         } else {
+             $this->db->close();
+             return($this->db->errorno());
+         }
+         $returned = NULL;
+         $udf_apply_status = $this->db->apply($key, "module",
+             "list_append", array("bin1", 3.141), $returned,
+             array(Aerospike::OPT_WRITE_TIMEOUT => 2000));
+         $this->keys[] = $key;
+         if ($udf_apply_status != Aerospike::OK) {
+             return ($this->db->errorno());
+         }
+
+         if (abs($returned[3] - 3.141) > 0.00001) {
+             return Aerospike::ERR_CLIENT;
+         }
+         return Aerospike::OK;
      }
 }
 ?>

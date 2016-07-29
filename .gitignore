@@ -1,3 +1,5 @@
+.DS_Store
+
 .project
 aerospike-client-c/
 src/aerospike/build/*

@@ -68,7 +68,8 @@ class Aerospike
     const OPT_POLICY_COMMIT_LEVEL;// set to one of Aerospike::POLICY_COMMIT_LEVEL_*
     const OPT_TTL;                // record ttl, value in seconds
     const USE_BATCH_DIRECT;       // batch-direct or batch-index protocol (default: 0)
-
+    const COMPRESSION_THRESHOLD;  // minimum record size beyond which it is compressed and sent to the server
+    
     // Aerospike Status Codes:
     //
     // Each Aerospike API method invocation returns a status code
@@ -139,6 +140,8 @@ class Aerospike
     const ERR_INVALID_PRIVILEGE;
     const ERR_NOT_AUTHENTICATED;
     const ERR_ROLE_VIOLATION;
+    const ERR_ROLE_ALREADY_EXISTS;
+    const ERR_GEO_INVALID_GEOJSON;
 
     // Status values returned by scanInfo(). Deprecated in favor of jobInfo()
     const SCAN_STATUS_UNDEF;      // scan status is undefined. deprecated.
@@ -164,6 +167,8 @@ class Aerospike
     const string OP_BETWEEN = 'BETWEEN';
     const string OP_CONTAINS = 'CONTAINS';
     const string OP_RANGE = 'RANGE';
+    const string OP_GEOWITHINREGION = 'GEOWITHIN';
+    const string OP_GEOCONTAINSPOINT = 'GEOCONTAINS';
 
     // Multi-operation operators map to the C client
     //  src/include/aerospike/as_operations.h
@@ -174,7 +179,6 @@ class Aerospike
     const OPERATOR_APPEND;
     const OPERATOR_TOUCH;
     const OP_LIST_APPEND;
-    const OP_LIST_MERGE;
     const OP_LIST_INSERT;
     const OP_LIST_INSERT_ITEMS;
     const OP_LIST_POP;
@@ -199,10 +203,11 @@ class Aerospike
     // data type
     const INDEX_STRING;  // if the index type is matched, regard values of type string
     const INDEX_NUMERIC; // if the index type is matched, regard values of type integer
+    const INDEX_GEO2DSPHERE; // index records where bin contains geojson data
 
     // Security role privileges
     const PRIV_READ; // user can read data only
-    const PRIV_WRITE; // user can read and write data
+    const PRIV_READ_WRITE; // user can read and write data
     const PRIV_READ_WRITE_UDF; // can read and write data through User-Defined Functions
     const PRIV_USER_ADMIN; // user can edit/remove other users
     const PRIV_SYS_ADMIN; // can perform sysadmin functions that do not involve user admin

@@ -114,3 +114,15 @@ function udf_put_bytes(record, bin)
         aerospike:create(record)
     end
 end
+
+--[[UDF which will append float array in DB.--]]
+function list_append(record, bin, value)
+    local l = record[bin];
+    list.append(l, value);
+    if aerospike:exists(record) then
+        aerospike:update(record)
+    else
+        aerospike:create(record)
+    end
+    return record[bin]
+end

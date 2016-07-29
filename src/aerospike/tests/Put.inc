@@ -2472,7 +2472,7 @@ function testMixedTypesWithDefaultSerializer()
      $put_record = array("binA"=>10, "binB"=>20);
      $put_status = $this->db->put($key, array("binA"=>10, "binB"=>20), NULL,
          array(Aerospike::OPT_POLICY_KEY=>Aerospike::POLICY_KEY_DIGEST));
-     $get_status = $this->db->get($key, $record, array());
+     $get_status = $this->db->get($key, $record, array("binA", "binB"));
      if ($get_status !== Aerospike::OK) {
          return $get_status;
      }
@@ -2508,7 +2508,7 @@ function testMixedTypesWithDefaultSerializer()
      if ($put_status !== AEROSPIKE::OK) {
           return $this->db->errorno();
      }
-     $get_status = $this->db->get($key, $record, array(), $policy);
+     $get_status = $this->db->get($key, $record, array("bin1"), $policy);
      if ($get_status !== Aerospike::OK) {
          return $get_status;
      }
@@ -2700,7 +2700,7 @@ function testMixedTypesWithDefaultSerializer()
         $put_record = array('my_data' => array(1, array('age' => 20,
             'job' => NULL, 'salary' => NULL,
             'qualifications' => array('B.Tech', 'M.Tech', NULL)),
-            'hello', NULL), 'no_data' => NULL); 
+            'hello', NULL), 'no_data' => NULL);
         $status = $this->db->put($key, $put_record);
         $this->keys[] = $key;
         $status = $this->db->get($key, $get_record);
@@ -2738,7 +2738,7 @@ function testMixedTypesWithDefaultSerializer()
             return $this->db->errorno();
         }
     }
-    
+
     /**
      * @test
      * put() with no data
@@ -2763,7 +2763,7 @@ function testMixedTypesWithDefaultSerializer()
         }
         return $status;
     }
-    
+
     /**
      * @test
      * put() with bin name only
