@@ -134,8 +134,7 @@ The *Large Data Type Methods* are implemented as a PHP library.
 Aerospike 3.7.x compatible list operations have been added to version 3.4.7 of the client.
 Geospatial data types, indexing, and quries are in-progress.
 
-PHP 5.3.3 - 5.6.x is supported by this client. A new PHP 7 compatible extension
-is in progress.
+PHP 5.3.3 - 7.0.x is supported by this client.
 
 ## Further Reading
 
