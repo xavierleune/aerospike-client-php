@@ -275,12 +275,15 @@ exit:
  */
 PS_READ_FUNC(aerospike)
 {
-	as_error            error;
-	aerospike_session*  session_p = PS_GET_MOD_DATA();
-	as_record*          record_p = NULL;
-	as_key              key_get;
-	int16_t             init_key = 0;
-	char*               session_data_p = NULL;
+	as_error                error;
+	aerospike_session*      session_p = PS_GET_MOD_DATA();
+	as_record*              record_p = NULL;
+	as_key                  key_get;
+	int16_t                 init_key = 0;
+	as_bin_value*           session_data_p = NULL;
+	as_bytes*               session_bytes = NULL;
+	uint8_t*                session_bytes_value = NULL;
+	const unsigned char*    session_bytes_str = NULL;
 
 	DEBUG_PHP_EXT_INFO("In PS_READ_FUNC");
 
@@ -296,26 +299,40 @@ PS_READ_FUNC(aerospike)
 	init_key = 1;
 
 	if (AEROSPIKE_OK != aerospike_key_get(session_p->aerospike_obj_p->as_ref_p->as_p,
-				&error, NULL, &key_get, &record_p)) {
+			&error, NULL, &key_get, &record_p)) {
 		DEBUG_PHP_EXT_ERROR("Unable to retrieve session data");
 		goto exit;
 	}
 
-	if (NULL == (session_data_p = as_record_get_str(record_p, AEROSPIKE_SESSION_BIN))) {
-		 PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
-					"Unable to get session bin of the record");
-		 DEBUG_PHP_EXT_DEBUG("Unable to get session bin of the record");
-		 goto exit;
+	if (NULL == (session_data_p = as_record_get(record_p, AEROSPIKE_SESSION_BIN))) {
+		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
+				"Unable to get session bin of the record");
+		DEBUG_PHP_EXT_DEBUG("Unable to get session bin of the record");
+		goto exit;
 	}
 
+	switch (as_val_type(session_data_p)) {
+		case AS_BYTES:
+			session_bytes = as_bytes_fromval((as_val *) session_data_p);
+			session_bytes_value = as_bytes_get(session_bytes);
+			session_bytes_str = (unsigned char *) session_bytes_value;
+
+			uint32_t size = as_bytes_size(session_bytes);
 #if PHP_VERSION_ID < 70000
-	*val = estrndup(session_data_p, strlen(session_data_p));
-	*vallen = strlen(session_data_p);
+			*vallen = size;
+			*val = estrndup(session_bytes_str, size);
 #else
-	zend_string*		z_str = zend_string_init(session_data_p, strlen(session_data_p), 0);
-	*val = zend_string_copy(z_str);
-	zend_string_release(z_str);
+			*val = zend_string_init((const char *)session_bytes_str, size, 0);
 #endif
+			as_val_destroy(session_data_p);
+			as_bytes_destroy(session_bytes);
+			break;
+		default: 
+			PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
+					"Unable to read session bin of the record");
+			DEBUG_PHP_EXT_DEBUG("Unable to read session bin of the record");
+			goto exit;
+	}
 
 exit:
 	if (init_key) {
@@ -354,26 +371,15 @@ PS_WRITE_FUNC(aerospike)
 		goto exit; 
 	}
 
-	if (key == NULL || 
+	if (key == NULL ||
 #if PHP_VERSION_ID < 70000
-			!strcmp(key, "")
+		!strcmp(key, "")
 #else
-			!strcmp(ZSTR_VAL(key), "")
+		!strcmp(ZSTR_VAL(key), "")
 #endif
 			) {
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Invalid Session ID");
 		DEBUG_PHP_EXT_ERROR("Invalid Session ID");
-		goto exit;
-	}
-
-	if (val == NULL || 
-#if PHP_VERSION_ID < 70000
-			!strcmp(val, "")
-#else
-			!strcmp(ZSTR_VAL(val), "")
-#endif
-			) {
-		DEBUG_PHP_EXT_DEBUG("Empty session data");
 		goto exit;
 	}
 
@@ -388,19 +394,19 @@ PS_WRITE_FUNC(aerospike)
 	init_record = 1;
 	if (
 #if PHP_VERSION_ID < 70000
-			!as_record_set_str(&record, AEROSPIKE_SESSION_BIN, val)
+	 	!as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, val, vallen, AS_BYTES_PHP, false)
 #else
-			!as_record_set_str(&record, AEROSPIKE_SESSION_BIN, ZSTR_VAL(val))
+	    !as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, ZSTR_VAL(val), ZSTR_LEN(val), AS_BYTES_PHP, false)
 #endif
-			) {
+		) {
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to set record");
 		DEBUG_PHP_EXT_ERROR("Unable to set record");
 		goto exit;
 	}
 
-	record.ttl = CACHE_EXPIRE_PHP_INI;
+	record.ttl = SESSION_EXPIRE_PHP_INI;
 	if (AEROSPIKE_OK != aerospike_key_put(session_p->aerospike_obj_p->as_ref_p->as_p,
-										&error, NULL, &key_put, &record)) {
+				&error, NULL, &key_put, &record)) {
 		DEBUG_PHP_EXT_ERROR("Unable to save session data");
 	}
 
