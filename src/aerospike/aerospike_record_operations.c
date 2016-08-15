@@ -277,7 +277,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_APPEND_NEW:
+		case OP_LIST_APPEND:
 		#if PHP_VERSION_ID < 70000
 			MAKE_STD_ZVAL(temp_record_p);
 			array_init(temp_record_p);
@@ -305,7 +305,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_INSERT_NEW:
+		case OP_LIST_INSERT:
 		#if PHP_VERSION_ID < 70000
 			MAKE_STD_ZVAL(temp_record_p);
 			array_init(temp_record_p);
@@ -333,7 +333,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_INSERT_ITEMS_NEW:
+		case OP_LIST_INSERT_ITEMS:
 			if (AEROSPIKE_Z_TYPE_P(each_operation) != IS_ARRAY) {
 				DEBUG_PHP_EXT_DEBUG("Value passed if not array type.");
 				goto exit;
@@ -353,7 +353,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_POP_NEW:
+		case OP_LIST_POP:
 			if (!as_operations_add_list_pop(ops, bin_name_p, index)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to pop.");
 				DEBUG_PHP_EXT_DEBUG("Unable to pop.");
@@ -361,7 +361,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_POP_RANGE_NEW:
+		case OP_LIST_POP_RANGE:
 			if (!as_operations_add_list_pop_range(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to pop range.");
 				DEBUG_PHP_EXT_DEBUG("Unable to pop range.");
@@ -369,7 +369,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_REMOVE_NEW:
+		case OP_LIST_REMOVE:
 			if (!as_operations_add_list_remove(ops, bin_name_p, index)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to remove.");
 				DEBUG_PHP_EXT_DEBUG("Unable to remove.");
@@ -377,7 +377,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_REMOVE_RANGE_NEW:
+		case OP_LIST_REMOVE_RANGE:
 			if (!as_operations_add_list_remove_range(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to remove range.");
 				DEBUG_PHP_EXT_DEBUG("Unable to remove range.");
@@ -385,7 +385,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_CLEAR_NEW:
+		case OP_LIST_CLEAR:
 			if (!as_operations_add_list_clear(ops, bin_name_p)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to clear.");
 				DEBUG_PHP_EXT_DEBUG("Unable to clear.");
@@ -393,7 +393,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_SET_NEW:
+		case OP_LIST_SET:
 		 #if PHP_VERSION_ID < 70000
 			 MAKE_STD_ZVAL(temp_record_p);
 			 array_init(temp_record_p);
@@ -421,7 +421,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_GET_NEW:
+		case OP_LIST_GET:
 			if (!as_operations_add_list_get(ops, bin_name_p, index)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get.");
 				DEBUG_PHP_EXT_DEBUG("Unable to get.");
@@ -429,7 +429,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_GET_RANGE_NEW:
+		case OP_LIST_GET_RANGE:
 			if (!as_operations_add_list_get_range(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get range.");
 				DEBUG_PHP_EXT_DEBUG("Unable to  get range.");
@@ -437,7 +437,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_TRIM_NEW:
+		case OP_LIST_TRIM:
 			if (!as_operations_add_list_trim(ops, bin_name_p, index, offset)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to trim.");
 				DEBUG_PHP_EXT_DEBUG("Unable to trim.");
@@ -445,7 +445,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 			}
 			break;
 
-		case AS_CDT_OP_LIST_SIZE_NEW:
+		case OP_LIST_SIZE:
 			if (!as_operations_add_list_size(ops, bin_name_p)) {
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to get size.");
 				DEBUG_PHP_EXT_DEBUG("Unable to get size.");
@@ -1195,11 +1195,11 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 		} else {
 			if (get_rec) {
 				if (!((op == AS_OPERATOR_READ ) ||
-							(op == AS_CDT_OP_LIST_SIZE_NEW) ||
-							(op == AS_CDT_OP_LIST_GET_NEW)   ||
-							(op == AS_CDT_OP_LIST_GET_RANGE_NEW) ||
-							(op == AS_CDT_OP_LIST_POP_NEW)   ||
-							(op == AS_CDT_OP_LIST_POP_RANGE_NEW))) {
+							(op == OP_LIST_SIZE) ||
+							(op == OP_LIST_GET)   ||
+							(op == OP_LIST_GET_RANGE) ||
+							(op == OP_LIST_POP)   ||
+							(op == OP_LIST_POP_RANGE))) {
 					if (!operater_ordered_callback(bin_name_p, NULL, &foreach_record_callback_udata TSRMLS_CC)) {
 						PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 								"Unable to get bins of a record");

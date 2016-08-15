@@ -16,7 +16,7 @@
 ################################################################################
 
 export CLIENTREPO_3X=${PWD}/../aerospike-client-c
-export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-4.0.2}
+export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-4.0.7}
 export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 export LUA_SYSPATH=${LUA_SYSPATH:-/usr/local/aerospike/lua}
 export LUA_USRPATH=${LUA_USRPATH:-/usr/local/aerospike/usr-lua}
@@ -202,7 +202,7 @@ phpStringIndex=`expr index "$phpVersion" 'PHP'`
 declare -i intPhpVer=${phpVersion:$phpStringIndex+2:2}
 echo $intPhpVer
 if (("$intPhpVer" >= "7")); then
-    echo 'Installing PHPUnit 5.1' 
+    echo 'Installing PHPUnit 5.1'
     sudo rm phpunit.phar
     sudo wget https://phar.phpunit.de/phpunit.phar
     sudo chmod +x phpunit.phar

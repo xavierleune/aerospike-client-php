@@ -16,25 +16,28 @@
  * the License.
  */
 
+#include "aerospike/aerospike_index.h"
+
 #ifndef __AEROSPIKE_GENERAL_CONSTANTS_H__
 #define __AEROSPIKE_GENERAL_CONSTANTS_H__
 
-#include "aerospike/aerospike_index.h"
-#include "aerospike/as_operations.h"
 #define MAX_GENERAL_CONSTANT_STR_SIZE 512
-#define AS_CDT_OP_LIST_APPEND_NEW AS_CDT_OP_LIST_APPEND + 1000
-#define AS_CDT_OP_LIST_INSERT_NEW AS_CDT_OP_LIST_INSERT + 1000
-#define AS_CDT_OP_LIST_INSERT_ITEMS_NEW AS_CDT_OP_LIST_INSERT_ITEMS + 1000
-#define AS_CDT_OP_LIST_POP_NEW AS_CDT_OP_LIST_POP + 1000
-#define AS_CDT_OP_LIST_POP_RANGE_NEW AS_CDT_OP_LIST_POP_RANGE + 1000
-#define AS_CDT_OP_LIST_REMOVE_NEW AS_CDT_OP_LIST_REMOVE + 1000
-#define AS_CDT_OP_LIST_REMOVE_RANGE_NEW AS_CDT_OP_LIST_REMOVE_RANGE + 1000
-#define AS_CDT_OP_LIST_CLEAR_NEW AS_CDT_OP_LIST_CLEAR + 1000
-#define AS_CDT_OP_LIST_SET_NEW AS_CDT_OP_LIST_SET + 1000
-#define AS_CDT_OP_LIST_GET_NEW AS_CDT_OP_LIST_GET + 1000
-#define AS_CDT_OP_LIST_GET_RANGE_NEW AS_CDT_OP_LIST_GET_RANGE + 1000
-#define AS_CDT_OP_LIST_TRIM_NEW AS_CDT_OP_LIST_TRIM + 1000
-#define AS_CDT_OP_LIST_SIZE_NEW AS_CDT_OP_LIST_SIZE + 1000
+
+enum Aerospike_list_operations {
+	OP_LIST_APPEND = 1001,
+	OP_LIST_INSERT,
+	OP_LIST_INSERT_ITEMS,
+	OP_LIST_POP,
+	OP_LIST_POP_RANGE,
+	OP_LIST_REMOVE,
+	OP_LIST_REMOVE_RANGE,
+	OP_LIST_CLEAR,
+	OP_LIST_SET,
+	OP_LIST_GET,
+	OP_LIST_GET_RANGE,
+	OP_LIST_TRIM,
+	OP_LIST_SIZE
+};
 
 /*
  *******************************************************************************************************
@@ -75,19 +78,19 @@ static AerospikeGeneralLongConstants aerospike_general_long_constants[] = {
 	{ AS_OPERATOR_APPEND,              "OPERATOR_APPEND"      },
 	{ AS_OPERATOR_TOUCH,               "OPERATOR_TOUCH"       },
 	{ AS_INDEX_GEO2DSPHERE,            "INDEX_GEO2DSPHERE"    },
-	{ AS_CDT_OP_LIST_APPEND_NEW,       "OP_LIST_APPEND"       },
-	{ AS_CDT_OP_LIST_INSERT_NEW,       "OP_LIST_INSERT"       },
-	{ AS_CDT_OP_LIST_INSERT_ITEMS_NEW, "OP_LIST_INSERT_ITEMS" },
-	{ AS_CDT_OP_LIST_POP_NEW,          "OP_LIST_POP"          },
-	{ AS_CDT_OP_LIST_POP_RANGE_NEW,    "OP_LIST_POP_RANGE"    },
-	{ AS_CDT_OP_LIST_REMOVE_NEW,       "OP_LIST_REMOVE"       },
-	{ AS_CDT_OP_LIST_REMOVE_RANGE_NEW, "OP_LIST_REMOVE_RANGE" },
-	{ AS_CDT_OP_LIST_CLEAR_NEW,        "OP_LIST_CLEAR"        },
-	{ AS_CDT_OP_LIST_SET_NEW,          "OP_LIST_SET"          },
-	{ AS_CDT_OP_LIST_GET_NEW,          "OP_LIST_GET"          },
-	{ AS_CDT_OP_LIST_GET_RANGE_NEW,    "OP_LIST_GET_RANGE"    },
-	{ AS_CDT_OP_LIST_TRIM_NEW,         "OP_LIST_TRIM"         },
-	{ AS_CDT_OP_LIST_SIZE_NEW,         "OP_LIST_SIZE"         }
+	{ OP_LIST_APPEND,       		   "OP_LIST_APPEND"       },
+	{ OP_LIST_INSERT,       		   "OP_LIST_INSERT"       },
+	{ OP_LIST_INSERT_ITEMS, 		   "OP_LIST_INSERT_ITEMS" },
+	{ OP_LIST_POP,          		   "OP_LIST_POP"          },
+	{ OP_LIST_POP_RANGE,    		   "OP_LIST_POP_RANGE"    },
+	{ OP_LIST_REMOVE,       		   "OP_LIST_REMOVE"       },
+	{ OP_LIST_REMOVE_RANGE, 		   "OP_LIST_REMOVE_RANGE" },
+	{ OP_LIST_CLEAR,        		   "OP_LIST_CLEAR"        },
+	{ OP_LIST_SET,         			   "OP_LIST_SET"          },
+	{ OP_LIST_GET,          		   "OP_LIST_GET"          },
+	{ OP_LIST_GET_RANGE,    		   "OP_LIST_GET_RANGE"    },
+	{ OP_LIST_TRIM,         		   "OP_LIST_TRIM"         },
+	{ OP_LIST_SIZE,         		   "OP_LIST_SIZE"         }
 };
 
 /*
