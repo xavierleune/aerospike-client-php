@@ -102,7 +102,7 @@ phpize
 
 OS=`uname`
 
-CFLAGS="-g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
+CFLAGS="-std=gnu99 -g -D__AEROSPIKE_PHP_CLIENT_LOG_LEVEL__=${LOGLEVEL}"
 
 if [ $OS = "Darwin" ] ; then
     LDFLAGS="-L$CLIENTREPO_3X/lib -laerospike -lcrypto"
