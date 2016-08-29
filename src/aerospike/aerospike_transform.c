@@ -2972,7 +2972,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
 			PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_MAX_THREADS,
 				PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN, key_p, key_len_u32 -1)) {
 		if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
-			(((transform_zval_config_into *) data_p)->transform_result).as_config_p->max_threads = AEROSPIKE_Z_LVAL_P(value_pp);
+			(((transform_zval_config_into *) data_p)->transform_result).as_config_p->max_conns_per_node = AEROSPIKE_Z_LVAL_P(value_pp);
 		} else {
 			DEBUG_PHP_EXT_DEBUG("Skipping max_threads as zval config is to be transformed into host_lookup");
 			status = AEROSPIKE_OK;
