@@ -18,8 +18,6 @@
 
 #include "php.h"
 #include "ext/standard/php_var.h"
-//#include "ext/standard/php_smart_string.h"
-//#include "ext/standard/php_smart_str.h"
 #include "aerospike/as_status.h"
 #include "aerospike/aerospike_key.h"
 #include "aerospike/as_error.h"
@@ -30,7 +28,6 @@
 #include "aerospike_policy.h"
 #include "aerospike_general_constants.h"
 #include "aerospike_transform.h"
-
 
 extern bool operater_ordered_callback(const char *key, const as_val *value, void *array TSRMLS_DC)
 {
@@ -262,7 +259,7 @@ aerospike_record_operations_ops(Aerospike_object *aerospike_obj_p,
 					DEBUG_PHP_EXT_DEBUG("Unable to write");
 					goto exit;
 				}
-			}else if (offset) {
+			} else if (offset) {
 				if (!as_operations_add_write_int64(ops, bin_name_p, offset)) {
 					PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to write");
 					DEBUG_PHP_EXT_DEBUG("Unable to write");
@@ -600,6 +597,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 		char* bin_name_p,
 		char* str,
 		u_int64_t offset,
+		double double_offset,
 		u_int64_t time_to_live,
 		u_int64_t operation)
 {
@@ -607,7 +605,6 @@ aerospike_record_operations_general(Aerospike_object* aerospike_obj_p,
 	as_record*          get_rec = NULL;
 	aerospike*          as_object_p = aerospike_obj_p->as_ref_p->as_p;
 	as_policy_operate   operate_policy;
-	double              double_offset = 0.0;
 	/*
 	 * TODO: serializer_policy is not used right now.
 	 * Need to pass on serializer_policy to aerospike_record_operations_ops
