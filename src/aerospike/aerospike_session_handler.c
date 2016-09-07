@@ -329,8 +329,8 @@ PS_READ_FUNC(aerospike)
 			as_bytes_destroy(session_bytes);
 			break;
         case AS_STRING:
-          session_bytes_string = as_string_fromval((as_val *) session_data_p);
-          session_bytes_str = as_string_get(session_bytes_string);
+            session_bytes_string = as_string_fromval((as_val *) session_data_p);
+            session_bytes_str = as_string_get(session_bytes_string);
 #if PHP_VERSION_ID < 70000
             *val = estrndup(session_bytes_str, strlen(session_bytes_str));
             *vallen = strlen(session_bytes_str);
