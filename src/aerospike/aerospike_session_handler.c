@@ -283,7 +283,7 @@ PS_READ_FUNC(aerospike)
 	as_bin_value*           session_data_p = NULL;
 	as_bytes*               session_bytes = NULL;
 	uint8_t*                session_bytes_value = NULL;
-	const unsigned char*    session_bytes_str = NULL;
+    const char*             session_bytes_str = NULL;
 
 	DEBUG_PHP_EXT_INFO("In PS_READ_FUNC");
 
@@ -315,7 +315,7 @@ PS_READ_FUNC(aerospike)
 		case AS_BYTES:
 			session_bytes = as_bytes_fromval((as_val *) session_data_p);
 			session_bytes_value = as_bytes_get(session_bytes);
-			session_bytes_str = (unsigned char *) session_bytes_value;
+			session_bytes_str = (char *) session_bytes_value;
 
 			uint32_t size = as_bytes_size(session_bytes);
 #if PHP_VERSION_ID < 70000
