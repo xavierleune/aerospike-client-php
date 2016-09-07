@@ -284,6 +284,7 @@ PS_READ_FUNC(aerospike)
 	as_bytes*               session_bytes = NULL;
 	uint8_t*                session_bytes_value = NULL;
     const char*             session_bytes_str = NULL;
+    const as_string*        session_bytes_string = NULL;
 
 	DEBUG_PHP_EXT_INFO("In PS_READ_FUNC");
 
@@ -328,13 +329,8 @@ PS_READ_FUNC(aerospike)
 			as_bytes_destroy(session_bytes);
 			break;
         case AS_STRING:
-            if (NULL == (session_bytes_str = as_record_get_str(record_p, AEROSPIKE_SESSION_BIN))) {
-                 PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT,
-                            "Unable to get session bin of the record");
-                 DEBUG_PHP_EXT_DEBUG("Unable to get session bin of the record");
-                 goto exit;
-            }
-
+          session_bytes_string = as_string_fromval((as_val *) session_data_p);
+          session_bytes_str = as_string_get(session_bytes_string);
 #if PHP_VERSION_ID < 70000
             *val = estrndup(session_bytes_str, strlen(session_bytes_str));
             *vallen = strlen(session_bytes_str);
