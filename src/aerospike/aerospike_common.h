@@ -665,6 +665,7 @@ aerospike_record_operations_general(Aerospike_object* aerospike_object_p,
 								char* bin_name_p,
 								char* str,
 								u_int64_t offset,
+								double double_offset,
 								u_int64_t time_to_live,
 								u_int64_t operation);
 

@@ -2735,15 +2735,18 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 		DECLARE_ZVAL_P(options_value);
 		DECLARE_ZVAL_P(data);
 
-	#if PHP_VERSION_ID < 70000
+#if PHP_VERSION_ID < 70000
 		ulong options_index;
-	#else
+		int8_t* options_key;
+#else
 		zend_ulong options_index;
-	#endif
+		zend_string* options_key;
+#endif
+		uint options_key_len;
 		(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->use_shm = true;
+
+#if PHP_VERSION_ID < 70000
 		AEROSPIKE_FOREACH_HASHTABLE(ht_shm, options_pointer, options_value) {
-			uint options_key_len;
-			int8_t* options_key;
 			if (AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_shm, (char **) &options_key,
 						&options_key_len, &options_index, 0, &options_pointer)
 					!= HASH_KEY_IS_STRING) {
@@ -2751,7 +2754,16 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 				DEBUG_PHP_EXT_DEBUG("Unable to set shared memory parameters");
 				goto exit;
 			}
-
+#else
+		ZEND_HASH_FOREACH_VAL(ht_shm, options_value) {
+			ZEND_HASH_FOREACH_KEY_VAL(ht_shm, options_index, options_key, options_value) {
+			if (!options_key) {
+				status = AEROSPIKE_ERR_PARAM;
+				DEBUG_PHP_EXT_DEBUG("Unable to set shared memory parameters");
+				goto exit;
+			}
+		} ZEND_HASH_FOREACH_END();
+#endif
 			if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_KEY) == 0) {
 				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
 					if (AEROSPIKE_Z_TYPE_P(data) != IS_LONG) {
@@ -2798,6 +2810,9 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 				goto exit;
 			}
 		}
+		#if PHP_VERSION_ID >= 70000
+			ZEND_HASH_FOREACH_END();
+		#endif
 	}
 exit:
 	return status;
@@ -2972,7 +2987,7 @@ aerospike_transform_config_callback(HashTable* ht_p,
 			PHP_COMPARE_KEY(PHP_AS_KEY_DEFINE_FOR_MAX_THREADS,
 				PHP_AS_KEY_DEFINE_FOR_MAX_THREADS_LEN, key_p, key_len_u32 -1)) {
 		if (((transform_zval_config_into *) data_p)->transform_result_type == TRANSFORM_INTO_AS_CONFIG) {
-			(((transform_zval_config_into *) data_p)->transform_result).as_config_p->max_threads = AEROSPIKE_Z_LVAL_P(value_pp);
+			(((transform_zval_config_into *) data_p)->transform_result).as_config_p->max_conns_per_node = AEROSPIKE_Z_LVAL_P(value_pp);
 		} else {
 			DEBUG_PHP_EXT_DEBUG("Skipping max_threads as zval config is to be transformed into host_lookup");
 			status = AEROSPIKE_OK;

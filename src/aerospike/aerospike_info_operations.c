@@ -22,6 +22,7 @@
 #include "aerospike/as_error.h"
 #include "aerospike/as_record.h"
 #include "aerospike/aerospike_info.h"
+#include "aerospike/as_cluster.h"
 #include <arpa/inet.h>
 
 #include "aerospike_common.h"
@@ -263,72 +264,79 @@ aerospike_info_get_cluster_nodes(aerospike* as_object_p,
 	tok = strtok_r(Z_STRVAL_P(&response_services_p), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
 #endif
 
-	while (tok != NULL) {
-		tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
-		if (tok == NULL) {
-			goto exit;
-		}
+	as_cluster* cluster = as_object_p->cluster;
+	as_nodes* nodes = as_nodes_reserve(cluster);
+	uint32_t n_nodes = nodes->size;
 
-#if PHP_VERSION_ID < 70000
-		MAKE_STD_ZVAL(current_host_p[host_index]);
-		array_init(current_host_p[host_index]);
-		if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
-#else
-		array_init(&current_host_p[host_index]);
-		if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
-#endif
-		{
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get addr-port");
-			DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
-			goto exit;
-		}
+	if (n_nodes > 1) {
+		while (tok != NULL) {
+			tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
+			if (tok == NULL) {
+				goto exit;
+			}
 
-#if PHP_VERSION_ID < 70000
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "addr", tok, strlen(tok), 1))
-#else
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "addr", tok, strlen(tok), 1))
-#endif
-		{
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get addr");
-			DEBUG_PHP_EXT_DEBUG("Unable to get addr");
-			goto exit;
-		}
+	#if PHP_VERSION_ID < 70000
+			MAKE_STD_ZVAL(current_host_p[host_index]);
+			array_init(current_host_p[host_index]);
+			if (0 != add_next_index_zval(return_p, current_host_p[host_index]))
+	#else
+			array_init(&current_host_p[host_index]);
+			if (0 != add_next_index_zval(return_p, &current_host_p[host_index]))
+	#endif
+			{
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+					"Unable to get addr-port");
+				DEBUG_PHP_EXT_DEBUG("Unable to get addr-port");
+				goto exit;
+			}
 
-		tok = strtok_r(NULL, HOST_DELIMITER, &saved);
-		if (tok == NULL) {
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get port");
-			DEBUG_PHP_EXT_DEBUG("Unable to get port");
-			goto exit;
-		}
-	
-		if (strstr(tok, INFO_RESPONSE_END)) {
-			tok = strtok_r(tok, INFO_RESPONSE_END, &saved);
-			break_flag = true;
-		}
+	#if PHP_VERSION_ID < 70000
+			if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "addr", tok, strlen(tok), 1))
+	#else
+			if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "addr", tok, strlen(tok), 1))
+	#endif
+			{
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+					"Unable to get addr");
+				DEBUG_PHP_EXT_DEBUG("Unable to get addr");
+				goto exit;
+			}
 
-#if PHP_VERSION_ID < 70000
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "port", tok, strlen(tok), 1))
-#else
-		if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "port", tok, strlen(tok), 1))
-#endif
-		{
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
-				"Unable to get port");
-			DEBUG_PHP_EXT_DEBUG("Unable to get port");
-			goto exit;
-		}
+			tok = strtok_r(NULL, HOST_DELIMITER, &saved);
+			if (tok == NULL) {
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+					"Unable to get port");
+				DEBUG_PHP_EXT_DEBUG("Unable to get port");
+				goto exit;
+			}
 
-		host_index++;
+			if (strstr(tok, INFO_RESPONSE_END)) {
+				tok = strtok_r(tok, INFO_RESPONSE_END, &saved);
+				break_flag = true;
+			}
 
-		if (break_flag == true) {
-			goto exit;
+	#if PHP_VERSION_ID < 70000
+			if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(current_host_p[host_index], "port", tok, strlen(tok), 1))
+	#else
+			if (0 != AEROSPIKE_ADD_ASSOC_STRINGL(&current_host_p[host_index], "port", tok, strlen(tok), 1))
+	#endif
+			{
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
+					"Unable to get port");
+				DEBUG_PHP_EXT_DEBUG("Unable to get port");
+				goto exit;
+			}
+
+			host_index++;
+
+			if (break_flag == true) {
+				goto exit;
+			}
 		}
 	}
 
 exit:
+	as_nodes_release(nodes);
 	#if PHP_VERSION_ID < 70000
 		if (response_services_p) {
 			zval_ptr_dtor(&response_services_p);

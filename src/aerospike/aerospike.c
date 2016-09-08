@@ -702,7 +702,7 @@ PHP_METHOD(Aerospike, __construct)
     as_config_init(&config);
     strcpy(config.lua.system_path, ini_value = LUA_SYSTEM_PATH_PHP_INI);
     strcpy(config.lua.user_path, ini_value = LUA_USER_PATH_PHP_INI);
-    config.max_threads = MAX_THREADS_PHP_INI;
+    config.max_conns_per_node = MAX_THREADS_PHP_INI;
     config.thread_pool_size = THREAD_POOL_SIZE_PHP_INI;
     aerospike_helper_check_and_configure_shm(&config TSRMLS_CC);
 
@@ -1540,6 +1540,7 @@ PHP_METHOD(Aerospike, append)
                     bin_name_p,
                     append_str_p,
                     0,
+					0,
                     0,
                     AS_OPERATOR_APPEND))) {
         DEBUG_PHP_EXT_ERROR("Append function returned an error");
@@ -1743,6 +1744,7 @@ PHP_METHOD(Aerospike, prepend)
                     prepend_str_p,
                     0,
                     0,
+					0,
                     AS_OPERATOR_PREPEND))) {
         DEBUG_PHP_EXT_ERROR("Prepend function returned an error");
         goto exit;
@@ -1778,6 +1780,7 @@ PHP_METHOD(Aerospike, increment)
         size_t                 bin_name_len;
         zend_long            offset = 0;
     #endif
+	double double_offset = 0.0;
 
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
@@ -1812,14 +1815,18 @@ PHP_METHOD(Aerospike, increment)
         goto exit;
     }
 
-    if(Z_TYPE_P(offset_p) == IS_LONG) {
-        offset = Z_LVAL_P(offset_p);
-    } else if(!(is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, NULL, 0))) {
-        status = AEROSPIKE_ERR_PARAM;
-        PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
-        DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
-        goto exit;
-    }
+    if (Z_TYPE_P(offset_p) == IS_LONG) {
+		offset = Z_LVAL_P(offset_p);
+    } else if (Z_TYPE_P(offset_p) == IS_DOUBLE) {
+		double_offset = Z_DVAL_P(offset_p);
+	} else if (Z_TYPE_P(offset_p) == IS_STRING) {
+		if (!is_numeric_string(Z_STRVAL_P(offset_p), Z_STRLEN_P(offset_p), &offset, &double_offset, 0)) {
+			status = AEROSPIKE_ERR_PARAM;
+			PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_PARAM, "invalid value for increment operation");
+			DEBUG_PHP_EXT_DEBUG("Invalid value for increment operation");
+			goto exit;
+		}
+	}
 
     if (AEROSPIKE_OK != (status = aerospike_record_operations_general(aerospike_obj_p,
                     &as_key_for_get_record,
@@ -1828,6 +1835,7 @@ PHP_METHOD(Aerospike, increment)
                     bin_name_p,
                     NULL,
                     offset,
+					double_offset,
                     0,
                     AS_OPERATOR_INCR))) {
         DEBUG_PHP_EXT_ERROR("Increment function returned an error");
@@ -1894,6 +1902,7 @@ PHP_METHOD(Aerospike, touch)
                     NULL,
                     NULL,
                     0,
+					0,
                     time_to_live,
                     AS_OPERATOR_TOUCH))) {
         DEBUG_PHP_EXT_ERROR("Touch function returned an error");
