@@ -1,3 +1,13 @@
+## 3.4.10
+
+### Fixes
+* Restore backward compatibility to session handler. Thanks @koleo!
+* Fix increment using floating point values.
+* Use correct C client bits for various Ubuntu builds.
+* Update to 4.0.7 version of C client.
+* Fix seg fault when configuration has "shm" option.
+* Update composer to reflect PHP7 support
+
 ## 3.4.9
 
 ### Features
