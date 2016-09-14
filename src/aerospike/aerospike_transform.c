@@ -3774,7 +3774,12 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 		PARAM_ZVAL_P(record_pp),
 		as_key* as_key_p,
 		as_error *error_p,
-		u_int32_t ttl_u32,
+#if PHP_VERSION_ID < 70000
+		long
+#else
+		zend_ulong
+#endif
+		ttl_u32,
 		zval* options_p,
 		int8_t* serializer_policy_p TSRMLS_DC)
 {

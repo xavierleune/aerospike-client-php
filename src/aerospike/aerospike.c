@@ -1030,7 +1030,12 @@ PHP_METHOD(Aerospike, put)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
-    u_int32_t              ttl_u32 = AS_RECORD_NO_EXPIRE_TTL;
+#if PHP_VERSION_ID < 70000
+	long                   ttl_u32 = AS_RECORD_DEFAULT_TTL;
+#else
+	zend_ulong             ttl_u32 = AS_RECORD_DEFAULT_TTL;
+#endif
+
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
