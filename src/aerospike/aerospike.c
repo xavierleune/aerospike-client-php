@@ -1030,7 +1030,7 @@ PHP_METHOD(Aerospike, put)
     zval*                  key_record_p = NULL;
     zval*                  record_p = NULL;
     zval*                  options_p = NULL;
-	as_php_ulong           ttl_u32 = AS_RECORD_DEFAULT_TTL;
+	AS_PHP_LONG            ttl_u32 = AS_RECORD_DEFAULT_TTL;
 
     as_key                 as_key_for_put_record;
     int16_t                initializeKey = 0;
@@ -1774,8 +1774,8 @@ PHP_METHOD(Aerospike, increment)
     as_key                 as_key_for_get_record;
     int16_t                initializeKey = 0;
     char*                  bin_name_p;
-    as_php_size            bin_name_len;
-    as_php_ulong           offset = 0;
+    AS_PHP_SIZE            bin_name_len;
+    AS_PHP_LONG            offset = 0;
 	double                 double_offset = 0.0;
 
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -2080,7 +2080,7 @@ PHP_METHOD(Aerospike, listInsert)
 
     DECLARE_ZVAL(insert_val_copy);
     DECLARE_ZVAL(temp_record_p);
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
 
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -2200,7 +2200,7 @@ PHP_METHOD(Aerospike, listSet)
 
     DECLARE_ZVAL(set_val_copy);
     DECLARE_ZVAL(temp_record_p);
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
 
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -2677,7 +2677,7 @@ PHP_METHOD(Aerospike, listInsertItems)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
 
     long                   index = 0;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -2785,8 +2785,8 @@ PHP_METHOD(Aerospike, listGet)
     as_record              *rec = NULL;
     as_policy_operate      operate_policy;
     zval*                  key_record_p = NULL;
-    DECLARE_ZVAL(element_p);
-    as_php_ulong           bin_name_len;
+    zval*                  element_p;
+    AS_PHP_LONG            bin_name_len;
 
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -2883,8 +2883,8 @@ PHP_METHOD(Aerospike, listGetRange)
     as_record              *rec = NULL;
     as_policy_operate      operate_policy;
     zval*                  key_record_p = NULL;
-    DECLARE_ZVAL(elements_p);
-    as_php_ulong           bin_name_len;
+    zval*                  elements_p;
+    AS_PHP_LONG            bin_name_len;
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
@@ -2988,7 +2988,7 @@ PHP_METHOD(Aerospike, listPop)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
 
     long                   index;
     foreach_callback_udata list_get_callback_udata;
@@ -3090,7 +3090,7 @@ PHP_METHOD(Aerospike, listPopRange)
     // XXX why not DECLARE_ZVAL ?
 	zval*                  elements_p = NULL;
 
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
 
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
@@ -3194,7 +3194,7 @@ PHP_METHOD(Aerospike, listRemove)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
 
     long                   index;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -3274,7 +3274,7 @@ PHP_METHOD(Aerospike, listRemoveRange)
     zval*                  options_p = NULL;
     int16_t                initializeKey = 0;
     char*                  bin_name_p = NULL;
-    as_php_ulong           bin_name_len;
+    AS_PHP_LONG            bin_name_len;
     long                   index;
     long                   count;
     Aerospike_object*      aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -3565,7 +3565,7 @@ PHP_METHOD(Aerospike, predicateEquals)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
-    as_php_size            bin_name_len = 0;
+    AS_PHP_SIZE            bin_name_len = 0;
     zval                   *val_p;
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -3617,7 +3617,7 @@ PHP_METHOD(Aerospike, predicateBetween)
     char                   *bin_name_p  =  NULL;
     long                   min_p;
     long                   max_p;
-    as_php_size            bin_name_len = 0;
+    AS_PHP_SIZE            bin_name_len = 0;
     DECLARE_ZVAL(minmax_arr);
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll",
@@ -3651,7 +3651,7 @@ PHP_METHOD(Aerospike, predicateContains)
 {
     as_status              status = AEROSPIKE_OK;
     char                   *bin_name_p  =  NULL;
-    as_php_size            bin_name_len = 0;
+    AS_PHP_SIZE            bin_name_len = 0;
     long                   index_type;
     zval                   *val_p = NULL;
 
@@ -3708,7 +3708,7 @@ PHP_METHOD(Aerospike, predicateRange)
     long                   index_type;
     zval                   *min_p = NULL;
     zval                   *max_p = NULL;
-    as_php_size            bin_name_len = 0;
+    AS_PHP_SIZE            bin_name_len = 0;
     DECLARE_ZVAL(minmax_arr);
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slzz",
@@ -3800,8 +3800,8 @@ PHP_METHOD(Aerospike, query)
     as_status                   status = AEROSPIKE_OK;
     as_error                    error;
     char*                       ns_p = NULL;
-    as_php_size                 ns_p_length = 0;
-    as_php_size                 set_p_length = 0;
+    AS_PHP_SIZE                 ns_p_length = 0;
+    AS_PHP_SIZE                 set_p_length = 0;
     char*                       set_p = NULL;
     zval*                       predicate_p = NULL;
     char*                       bin_name = NULL;
@@ -3982,8 +3982,8 @@ PHP_METHOD(Aerospike, scan)
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
 
     char                    *ns_p = NULL;
-    as_php_size             ns_p_length = 0;
-    as_php_size             set_p_length = 0;
+    AS_PHP_SIZE             ns_p_length = 0;
+    AS_PHP_SIZE             set_p_length = 0;
     char                    *set_p = NULL;
     char                    *bin_name = NULL;
     zval                    *bins_p = NULL;
@@ -4326,7 +4326,7 @@ PHP_METHOD(Aerospike, jobInfo)
     as_status           status = AEROSPIKE_OK;
     as_error            error;
     char*               module_p = NULL;
-    as_php_size         module_len = -1;
+    AS_PHP_SIZE         module_len = -1;
     long                job_id = -1;
     zval*               job_info_p = NULL;
     zval*               options_p = NULL;
@@ -4396,8 +4396,8 @@ PHP_METHOD(Aerospike, predicateGeoWithinGeoJSONRegion)
     as_status               status = AEROSPIKE_OK;
     char                    *bin_name_p = NULL;
     char                    *region_p = NULL;
-    as_php_size             bin_name_len = 0;
-    as_php_size             region_len = 0;
+    AS_PHP_SIZE             bin_name_len = 0;
+    AS_PHP_SIZE             region_len = 0;
 
     zval                    *val_p;
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
@@ -4429,7 +4429,7 @@ PHP_METHOD(Aerospike, predicateGeoWithinRadius)
     double                  radius;
     char                    *bin_name_p = NULL;
     char                    geo_value[1024];
-    as_php_size             bin_name_len = 0;
+    AS_PHP_SIZE             bin_name_len = 0;
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sddd",
                 &bin_name_p, &bin_name_len, &longitude, &latitude, &radius)) {
@@ -4483,7 +4483,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
 {
     as_status               status = AEROSPIKE_OK;
     char                    *bin_name_p = NULL;
-    as_php_size             bin_name_len = 0;
+    AS_PHP_SIZE             bin_name_len = 0;
     double                  longitude;
     double                  latitude;
     double                  radius;
@@ -4880,10 +4880,10 @@ PHP_METHOD(Aerospike, addIndex)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char                    *ns_p = NULL;
-    as_php_size             ns_p_length = 0;
-    as_php_size             set_p_length = 0;
-    as_php_size             bin_p_length = 0;
-    as_php_size             name_p_length = 0;
+    AS_PHP_SIZE             ns_p_length = 0;
+    AS_PHP_SIZE             set_p_length = 0;
+    AS_PHP_SIZE             bin_p_length = 0;
+    AS_PHP_SIZE             name_p_length = 0;
 
     char                    *set_p = NULL;
     char                    *bin_p = NULL;
@@ -4945,8 +4945,8 @@ PHP_METHOD(Aerospike, dropIndex)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char                    *ns_p = NULL;
-    as_php_size             ns_p_length = 0;
-    as_php_size             name_p_length = 0;
+    AS_PHP_SIZE             ns_p_length = 0;
+    AS_PHP_SIZE             name_p_length = 0;
     char                    *name_p = NULL;
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -5014,8 +5014,8 @@ PHP_METHOD(Aerospike, createUser)
     as_error                error;
     char*                   user_p = NULL;
     char*                   password_p = NULL;
-    as_php_size             user_p_length = 0;
-    as_php_size             password_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
+    AS_PHP_SIZE             password_p_length = 0;
 
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
@@ -5071,7 +5071,7 @@ PHP_METHOD(Aerospike, dropUser)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    as_php_size             user_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
 
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -5126,8 +5126,8 @@ PHP_METHOD(Aerospike, changePassword)
     as_error                error;
     char*                   user_p = NULL;
     char*                   password_p = NULL;
-    as_php_size             user_p_length = 0;
-    as_php_size             password_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
+    AS_PHP_SIZE             password_p_length = 0;
 
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;
@@ -5182,8 +5182,8 @@ PHP_METHOD(Aerospike, setPassword)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    as_php_size             user_p_length = 0;
-    as_php_size             password_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
+    AS_PHP_SIZE             password_p_length = 0;
 
     char*                   password_p = NULL;
     zval*                   options_p = NULL;
@@ -5239,7 +5239,7 @@ PHP_METHOD(Aerospike, grantRoles)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    as_php_size             user_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
 
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
@@ -5295,7 +5295,7 @@ PHP_METHOD(Aerospike, revokeRoles)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    as_php_size             user_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
 
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
@@ -5351,7 +5351,7 @@ PHP_METHOD(Aerospike, queryUser)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   user_p = NULL;
-    as_php_size             user_p_length = 0;
+    AS_PHP_SIZE             user_p_length = 0;
 
     zval*                   roles_p = NULL;
     zval*                   options_p = NULL;
@@ -5523,7 +5523,7 @@ PHP_METHOD(Aerospike, dropRole)
     as_status               status = AEROSPIKE_OK;
     as_error                error;
     char*                   role_p = NULL;
-    as_php_size             role_p_length = 0;
+    AS_PHP_SIZE             role_p_length = 0;
 
     zval*                   options_p = NULL;
     Aerospike_object*       aerospike_obj_p = PHP_AEROSPIKE_GET_OBJECT;

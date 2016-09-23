@@ -60,9 +60,8 @@
 	#define PARAM_ZVAL_P(__var)     zval** __var
 	#define PARAM_ZVAL(__var)       zval* __var
 	#define AEROSPIKE_ZVAL_ARG(zv) (zv)
-
-	typedef ulong as_php_ulong;
-	typedef int as_php_size;
+	#define AS_PHP_LONG long
+	#define AS_PHP_SIZE int
 	typedef zend_rsrc_list_entry as_php_zend_resource;
 #else
 	#define DECLARE_ZVAL(__var)     zval __var
@@ -70,9 +69,8 @@
 	#define PARAM_ZVAL_P(__var)     zval* __var
 	#define PARAM_ZVAL(__var)       zval __var
 	#define AEROSPIKE_ZVAL_ARG(zv) &(zv)
-
-	typedef zend_ulong as_php_ulong;
-	typedef size_t as_php_size;
+	#define AS_PHP_LONG zend_long
+	#define AS_PHP_SIZE size_t
 	typedef zend_resource as_php_zend_resource;
 #endif
 
