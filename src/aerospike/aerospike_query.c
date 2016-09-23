@@ -756,28 +756,18 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 		HashPosition pos;
 		DECLARE_ZVAL_P(bin_names_pp);
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-			if (
-#if PHP_VERSION_ID < 70000
-					Z_TYPE_PP(bin_names_pp) != IS_STRING) {
-#else
-					Z_TYPE_P(bin_names_pp) != IS_STRING) {
-#endif
+			if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
 				convert_to_string_ex(bin_names_pp);
 			}
-			if (
-#if PHP_VERSION_ID < 70000
-					!as_query_select(&query, Z_STRVAL_PP(bin_names_pp))
-#else
-					!as_query_select(&query, Z_STRVAL_P(bin_names_pp))
-#endif
-					) {
+			if (!as_query_select(&query, AEROSPIKE_Z_STRVAL_P(bin_names_pp))) {
 				DEBUG_PHP_EXT_DEBUG("Unable to apply filter bins to the query");
 				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 						"Unable to apply filter bins to the query");
 				goto exit;
 			}
 		}
-
+		AEROSPIKE_FOREACH_HASHTABLE_END;
+		
 		if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p->as_ref_p->as_p, error_p,
 						&query_policy, &query,
 						aerospike_helper_aggregate_callback,

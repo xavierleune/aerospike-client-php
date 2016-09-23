@@ -62,6 +62,7 @@
 	#define AEROSPIKE_ZVAL_ARG(zv) (zv)
 
 	typedef ulong as_php_ulong;
+	typedef int as_php_size;
 	typedef zend_rsrc_list_entry as_php_zend_resource;
 #else
 	#define DECLARE_ZVAL(__var)     zval __var
@@ -71,6 +72,7 @@
 	#define AEROSPIKE_ZVAL_ARG(zv) &(zv)
 
 	typedef zend_ulong as_php_ulong;
+	typedef size_t as_php_size;
 	typedef zend_resource as_php_zend_resource;
 #endif
 
@@ -1152,6 +1154,8 @@ check_val_type_list(
                 (void **) &datavalue, &position) == SUCCESS;                        \
             zend_hash_move_forward_ex(ht, &position))
 
+#define AEROSPIKE_FOREACH_HASHTABLE_END
+
  /*
  ******************************************************************************************************
  * Macro to get the data at the current position in ht.
@@ -1410,8 +1414,10 @@ check_val_type_list(
 	*****************************************************************************************************
 	*/
 #define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                   \
-  ZEND_HASH_FOREACH_VAL(ht, datavalue) {                                  \
-  } ZEND_HASH_FOREACH_END();
+  ZEND_HASH_FOREACH_VAL(ht, datavalue) 
+
+#define AEROSPIKE_FOREACH_HASHTABLE_END		\
+  ZEND_HASH_FOREACH_END()
 
  /*
 	******************************************************************************************************

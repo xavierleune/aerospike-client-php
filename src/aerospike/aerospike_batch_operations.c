@@ -241,11 +241,8 @@ exit:
 
 	as_batch_read_record* record = NULL;
 
-#if PHP_VERSION_ID < 70000
+
 	AEROSPIKE_FOREACH_HASHTABLE(keys_array, key_pointer, key_entry) {
-#else
-	ZEND_HASH_FOREACH_VAL(keys_array, key_entry) {
-#endif
 		record = as_batch_read_reserve(&records);
 		if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(
 			AEROSPIKE_Z_ARRVAL_P(key_entry), &record->key, &initializeKey)) {
@@ -254,11 +251,9 @@ exit:
 				goto exit;
 		}
 		i++;
-#if PHP_VERSION_ID < 70000
 	}
-#else
-	} ZEND_HASH_FOREACH_END();
-#endif
+	AEROSPIKE_FOREACH_HASHTABLE_END;
+
 	metadata_callback.udata_p = metadata_p;
 	metadata_callback.error_p = error_p;
 	if (aerospike_batch_read(as_object_p, error_p, &batch_policy, &records) != AEROSPIKE_OK) {
@@ -414,11 +409,7 @@ aerospike_batch_operations_exists_many(aerospike *as_object_p, as_error *error_p
 	as_batch_inita(&batch, zend_hash_num_elements(keys_array));
 	is_batch_init = true;
 
-#if PHP_VERSION_ID < 70000
 	AEROSPIKE_FOREACH_HASHTABLE (keys_array, key_pointer, key_entry) {
-#else
-	ZEND_HASH_FOREACH_VAL(keys_array, key_entry) {
-#endif
 		if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(
 			AEROSPIKE_Z_ARRVAL_P(key_entry), as_batch_keyat(&batch, i), &initializeKey)) {
 			DEBUG_PHP_EXT_DEBUG("Invalid params.");
@@ -426,11 +417,8 @@ aerospike_batch_operations_exists_many(aerospike *as_object_p, as_error *error_p
 			goto exit;
 		}
 		i++;
-#if PHP_VERSION_ID < 70000
 	}
-#else
-	} ZEND_HASH_FOREACH_END();
-#endif
+	AEROSPIKE_FOREACH_HASHTABLE_END;
 
 	metadata_callback.udata_p = metadata_p;
 	metadata_callback.error_p = error_p;
@@ -455,11 +443,8 @@ process_filer_bins(HashTable *bins_array_p, const char **select_p TSRMLS_DC)
 	int                 count = 0;
 	DECLARE_ZVAL_P(bin_names);
 
-#if PHP_VERSION_ID < 70000
+
 	AEROSPIKE_FOREACH_HASHTABLE(bins_array_p, pointer, bin_names) {
-#else
-	ZEND_HASH_FOREACH_VAL(bins_array_p, bin_names) {
-#endif
 		switch (AEROSPIKE_Z_TYPE_P(bin_names)) {
 			case IS_STRING:
 				select_p[count++] = AEROSPIKE_Z_STRVAL_P(bin_names);
@@ -470,9 +455,8 @@ process_filer_bins(HashTable *bins_array_p, const char **select_p TSRMLS_DC)
 				goto exit;
 		}
 	}
-#if PHP_VERSION_ID >= 70000
-	ZEND_HASH_FOREACH_END();
-#endif
+	AEROSPIKE_FOREACH_HASHTABLE_END;
+
 exit:
 	return status;
 }
@@ -651,11 +635,8 @@ aerospike_batch_operations_get_many_new(aerospike *as_object_p, as_error *error_
 
 	as_batch_read_record *record = NULL;
 
-#if PHP_VERSION_ID < 70000
+
 	AEROSPIKE_FOREACH_HASHTABLE (keys_ht_p, key_pointer, key_entry) {
-#else
-	ZEND_HASH_FOREACH_VAL(keys_ht_p, key_entry) {
-#endif
 		record = as_batch_read_reserve(&records);
 		if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(
 			AEROSPIKE_Z_ARRVAL_P(key_entry), &record->key, &initializeKey)) {
@@ -680,9 +661,8 @@ aerospike_batch_operations_get_many_new(aerospike *as_object_p, as_error *error_
 			record->read_all_bins = true;
 		}
 	}
-#if PHP_VERSION_ID >= 70000
-	ZEND_HASH_FOREACH_END();
-#endif
+	AEROSPIKE_FOREACH_HASHTABLE_END;
+
 	batch_get_callback_udata.udata_p = records_p;
 	batch_get_callback_udata.error_p = error_p;
 
@@ -840,11 +820,8 @@ aerospike_batch_operations_get_many(aerospike *as_object_p, as_error *error_p,
 	as_batch_inita(&batch, zend_hash_num_elements(keys_ht_p));
 	is_batch_init = true;
 
-#if PHP_VERSION_ID < 70000
+
 	AEROSPIKE_FOREACH_HASHTABLE(keys_ht_p, key_pointer, key_entry) {
-#else
-	ZEND_HASH_FOREACH_VAL(keys_ht_p, key_entry) {
-#endif
 		if (AEROSPIKE_OK != aerospike_transform_iterate_for_rec_key_params(AEROSPIKE_Z_ARRVAL_P(key_entry),
 			as_batch_keyat(&batch, i), &initializeKey)) {
 				DEBUG_PHP_EXT_DEBUG("Invalid params.");
@@ -853,9 +830,8 @@ aerospike_batch_operations_get_many(aerospike *as_object_p, as_error *error_p,
 		}
 		i++;
 	}
-#if PHP_VERSION_ID >= 70000
-	ZEND_HASH_FOREACH_END();
-#endif
+	AEROSPIKE_FOREACH_HASHTABLE_END;
+
 
 	batch_get_callback_udata.udata_p = records_p;
 	batch_get_callback_udata.error_p = error_p;

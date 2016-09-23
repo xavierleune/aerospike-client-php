@@ -1239,7 +1239,7 @@ set_config_policies(as_config *as_config_p,
 										   "Unable to set policy: Invalid Value for COMPRESSION_THRESHOLD");
 						goto exit;
 					}
-					uint32_t compression_threshold = (uint32_t) AEROSPIKE_Z_LVAL_P(options_value);
+					int32_t compression_threshold = (int32_t) AEROSPIKE_Z_LVAL_P(options_value);
 #if PHP_VERSION_ID < 70000
 					as_config_p->policies.write.compression_threshold = compression_threshold;
 #else

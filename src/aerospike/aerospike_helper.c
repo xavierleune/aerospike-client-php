@@ -40,12 +40,7 @@
 zend_fcall_info       func_call_info;
 zend_fcall_info_cache func_call_info_cache;
 uint32_t              is_callback_registered;
-
-#if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
-    zval *func_callback_retval_p = NULL;
-#else
-    zval func_callback_retval_p;
-#endif
+DECLARE_ZVAL(func_callback_retval_p);
 
 /*
  *******************************************************************************************************
