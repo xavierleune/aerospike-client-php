@@ -20,6 +20,7 @@ export AEROSPIKE_C_CLIENT=${AEROSPIKE_C_CLIENT:-4.0.7}
 export DOWNLOAD_C_CLIENT=${DOWNLOAD_C_CLIENT:-1}
 export LUA_SYSPATH=${LUA_SYSPATH:-/usr/local/aerospike/lua}
 export LUA_USRPATH=${LUA_USRPATH:-/usr/local/aerospike/usr-lua}
+PHP_UNIT="${PHP_UNIT:-1}"
 if [[ ! -d $CLIENTREPO_3X || ! `ls $CLIENTREPO_3X/package/aerospike-client-c-devel-${AEROSPIKE_C_CLIENT}* 2> /dev/null` ]]; then
     rm -rf $CLIENTREPO_3X/package
     echo "Downloading Aerospike C Client SDK $AEROSPIKE_C_CLIENT"
@@ -195,24 +196,26 @@ config()
 
 }
 
-echo "---------------------------Installing PHPUnit--------------------------"
+if [ "${PHP_UNIT}" == "1" ]; then
+    echo "---------------------------Installing PHPUnit--------------------------"
 
-phpVersion=$(php --version)
-phpStringIndex=`expr index "$phpVersion" 'PHP'`
-declare -i intPhpVer=${phpVersion:$phpStringIndex+2:2}
-echo $intPhpVer
-if (("$intPhpVer" >= "7")); then
-    echo 'Installing PHPUnit 5.1'
-    sudo rm phpunit.phar
-    sudo wget https://phar.phpunit.de/phpunit.phar
-    sudo chmod +x phpunit.phar
-    sudo mv phpunit.phar /usr/local/bin/phpunit
-else
-    echo 'Installing PHPUnit 4.8'
-    sudo rm phpunit-old.phar
-    sudo wget https://phar.phpunit.de/phpunit-old.phar
-    sudo chmod +x phpunit-old.phar
-    sudo mv phpunit-old.phar /usr/local/bin/phpunit
+    phpVersion=$(php --version)
+    phpStringIndex=`expr index "$phpVersion" 'PHP'`
+    declare -i intPhpVer=${phpVersion:$phpStringIndex+2:2}
+
+    if (("$intPhpVer" >= "7")); then
+        echo 'Installing PHPUnit 5.1'
+        sudo rm -f phpunit.phar
+        sudo wget https://phar.phpunit.de/phpunit.phar
+        sudo chmod +x phpunit.phar
+        sudo mv phpunit.phar /usr/local/bin/phpunit
+    else
+        echo 'Installing PHPUnit 4.8'
+        sudo rm -f phpunit-old.phar
+        sudo wget https://phar.phpunit.de/phpunit-old.phar
+        sudo chmod +x phpunit-old.phar
+        sudo mv phpunit-old.phar /usr/local/bin/phpunit
+    fi
 fi
 
 echo "----------------------------------------------------------------------"
