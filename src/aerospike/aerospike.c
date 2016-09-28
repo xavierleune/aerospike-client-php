@@ -142,11 +142,10 @@ static void aerospike_check_close_and_destroy(
     DEBUG_PHP_EXT_DEBUG("In destructor function");
     aerospike_ref *as_ref_p =
     #if PHP_VERSION_ID < 70000
-        ((zend_rsrc_list_entry *)
+        ((zend_rsrc_list_entry *)hashtable_element)->ptr;
     #else
-        Z_RES_P(
+        (aerospike_ref *)hashtable_element->value.obj;
     #endif
-    hashtable_element)->ptr;
     as_error error;
     if (as_ref_p) {
         if (as_ref_p->ref_hosts_entry > 1) {
@@ -173,6 +172,7 @@ static void aerospike_check_close_and_destroy(
     } else {
         DEBUG_PHP_EXT_ERROR("invalid aerospike object");
     }
+
 }
 
 /* Shared memory key persistent list destruction */
