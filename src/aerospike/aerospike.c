@@ -186,13 +186,13 @@ static void shm_key_hashtable_dtor(
 {
     TSRMLS_FETCH();
     DEBUG_PHP_EXT_DEBUG("In shared memory key pesrsittent list destruction function");
-    struct set_get_data *shm_key_ptr =
+    struct set_get_data *shm_key_ptr;
     #if PHP_VERSION_ID < 70000
-        ((zend_rsrc_list_entry *)
+        shm_key_ptr = ((zend_rsrc_list_entry *)hashtable_element)->ptr;
     #else
-        Z_RES_P(
+        shm_key_ptr = (struct set_get_data *)hashtable_element->value.obj;
     #endif
-    hashtable_element)->ptr;
+    
     if (shm_key_ptr) {
         pefree(shm_key_ptr, 1);
     }

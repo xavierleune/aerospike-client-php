@@ -13,10 +13,10 @@ The following configuration options in php.ini
 | aerospike.udf.lua_system_path | /opt/aerospike/lua |
 | aerospike.udf.lua_user_path | /opt/aerospike/usr-lua |
 | aerospike.shm.use | false |
-| aerospike.shm.key | 0xA5000000 |
-| aerospike.shm.max_nodes | 16 |
-| aerospike.shm.max_namespaces | 8 |
-| aerospike.shm.takeover_threshold_sec | 30 |
+| aerospike.shm.shm_key | 0xA5000000 |
+| aerospike.shm.shm_max_nodes | 16 |
+| aerospike.shm.shm_max_namespaces | 8 |
+| aerospike.shm.shm_takeover_threshold_sec | 30 |
 | aerospike.use_batch_direct | 0 |
 | aerospike.compression_threshold | 0 |
 | aerospike.max_threads | 300 |
