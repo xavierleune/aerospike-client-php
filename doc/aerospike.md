@@ -219,6 +219,7 @@ class Aerospike
     public boolean isConnected ( void )
     public close ( void )
     public reconnect ( void )
+    public int|null shmKey ( void )
 
     // error handling methods
     public string error ( void )
