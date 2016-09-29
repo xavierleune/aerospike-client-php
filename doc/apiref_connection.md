@@ -18,7 +18,7 @@ public boolean Aerospike::isConnected ( void )
 
 ### [Aerospike::shmKey](aerospike_shmkey.md)
 ```
-public boolean Aerospike::shmKey ( void )
+public int|null Aerospike::shmKey ( void )
 ```
 
 ### [Aerospike::close](aerospike_close.md)

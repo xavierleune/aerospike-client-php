@@ -41,9 +41,9 @@ if (!$client->isConnected()) {
 $res = $client->dropUser("john");
 if ($res == Aerospike::OK) {
     echo "User john successfully removed";
-} elseif ($res == Aerospike::INVALID_USER) {
+} elseif ($res == Aerospike::ERR_INVALID_USER) {
     echo "User john does not exist";
-} elseif ($res == Aerospike::ROLE_VIOLATION) {
+} elseif ($res == Aerospike::ERR_ROLE_VIOLATION) {
     echo "User does not possess the required role to drop a user";
 } else {
     echo "[{$client->errorno()}] ".$client->error();

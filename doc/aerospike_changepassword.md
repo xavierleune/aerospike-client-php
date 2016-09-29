@@ -44,9 +44,9 @@ if (!$client->isConnected()) {
 $res = $client->changePassword("john", "john@123");
 if ($res == Aerospike::OK) {
     echo "Password successfully changed";
-} elseif ($res == Aerospike::ROLE_VIOLATION) {
+} elseif ($res == Aerospike::ERR_ROLE_VIOLATION) {
     echo "User does not possess the required role to change password";
-} elseif ($res == Aerospike::INVALID_USER) {
+} elseif ($res == Aerospike::ERR_INVALID_USER) {
     echo "User john does not exist";
 } else {
     echo "[{$client->errorno()}] ".$client->error();

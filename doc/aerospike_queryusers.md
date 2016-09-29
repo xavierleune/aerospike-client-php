@@ -47,9 +47,9 @@ if ($res == Aerospike::OK) {
     } else {
         echo "[{$client->errorno()}] ".$client->error();
     }
-} elseif ($res == Aerospike::ROLE_VIOLATION) {
+} elseif ($res == Aerospike::ERR_ROLE_VIOLATION) {
     echo "User does not possess the required role to create user";
-} elseif ($res == Aerospike::INVALID_ROLE) {
+} elseif ($res == Aerospike::ERR_INVALID_ROLE) {
     echo "Invalid Role being attempted to be assigned to user";
 } else {
     echo "[{$client->errorno()}] ".$client->error();

@@ -71,7 +71,7 @@ detect_linux()
         return 0
         ;;
 
-      "ubuntu14" | "ubuntu15" | "linuxmint17" )
+      "ubuntu14" | "ubuntu15" | "ubuntu16" | "linuxmint17" )
         echo "ubuntu14" "deb"
         return 0
         ;;
@@ -154,7 +154,7 @@ detect_linux()
             return 0
             ;;
 
-          "14."* | "15."* )
+          "14."* | "15."* | "16."* )
             echo "ubuntu14" "deb"
             return 0
             ;;
@@ -227,7 +227,7 @@ download()
   printf "info: downloading '${URL}' to '${AEROSPIKE}/package/aerospike-client-c.tgz'\n"
 
   if [ $has_curl == 0 ]; then
-    curl -L ${URL} > ${AEROSPIKE}/package/aerospike-client-c.tgz
+    curl -s -L ${URL} > ${AEROSPIKE}/package/aerospike-client-c.tgz
     if [ $? != 0 ]; then
       echo "error: Unable to download package from '${URL}'"
       exit 1

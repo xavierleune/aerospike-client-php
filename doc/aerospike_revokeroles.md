@@ -43,9 +43,9 @@ if (!$client->isConnected()) {
 $res = $client->revokeRoles("john", array("user-admin", "sys-admin"));
 if ($res == Aerospike::OK) {
     echo "User john's user-admin and sys-admin roles have been successfully revoked";
-} elseif ($res == Aerospike::ROLE_VIOLATION) {
+} elseif ($res == Aerospike::ERR_ROLE_VIOLATION) {
     echo "User does not possess the required role to revoke roles";
-} elseif ($res == Aerospike::INVALID_ROLE) {
+} elseif ($res == Aerospike::ERR_INVALID_ROLE) {
     echo "Invalid Role being attempted to be revoked";
 } else {
     echo "[{$client->errorno()}] ".$client->error();
