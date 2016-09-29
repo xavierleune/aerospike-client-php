@@ -42,7 +42,7 @@ or an empty array() for no predicate.
 
 **args** an array of arguments for the UDF.
 
-**job_id** filled by an integer handle for the initiated backgroud query.
+**job_id** filled by an integer handle for the initiated background query.
 
 **options** including
 - **Aerospike::OPT_WRITE_TIMEOUT**
