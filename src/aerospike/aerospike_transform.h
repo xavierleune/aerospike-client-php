@@ -313,18 +313,18 @@
             zend_string* z_str;                                                \
             int t = zend_hash_num_elements(hashtable);                         \
             ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {                   \
+                if (z_str) {                                                   \
+                    as_string *map_str;                                        \
+                    GET_STR_POOL(map_str, static_pool, err, label);            \
+                    as_string_init(map_str, z_str->val, false);                \
+                    key = (as_val*) (map_str);                                 \
+                } else {                                                       \
+                    as_integer *map_int;                                       \
+                    GET_INT_POOL(map_int, static_pool, err, label);            \
+                    as_integer_init(map_int, index);                           \
+                    key = (as_val*) map_int;                                   \
+                }                                                              \
             } ZEND_HASH_FOREACH_END();                                         \
-            if (z_str) {                                                       \
-                as_string *map_str;                                            \
-                GET_STR_POOL(map_str, static_pool, err, label);                \
-                as_string_init(map_str, z_str->val, false);                    \
-                key = (as_val*) (map_str);                                     \
-            } else {                                                           \
-                as_integer *map_int;                                           \
-                GET_INT_POOL(map_int, static_pool, err, label);                \
-                as_integer_init(map_int, index);                               \
-                key = (as_val*) map_int;                                       \
-            }                                                                  \
         } while(0);
 #endif
 

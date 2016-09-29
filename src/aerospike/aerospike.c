@@ -3789,7 +3789,7 @@ PHP_METHOD(Aerospike, predicateRange)
             DEBUG_PHP_EXT_ERROR("Aerospike::predicateContains() expects parameter 3 to be a non-empty string or an integer.");
             RETURN_NULL();
     }
-AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
+    AEROSPIKE_ADD_ASSOC_ZVAL(return_value, VAL, minmax_arr);
 }
 /* }}} */
 
@@ -3894,7 +3894,7 @@ PHP_METHOD(Aerospike, aggregate)
     CHECK_CONNECTED();
 
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
-                "zzzzzzz|z", &namespace_zval_p, &set_zval_p, &predicate_p,
+                "zzzzzzz/|z", &namespace_zval_p, &set_zval_p, &predicate_p,
                 &module_zval_p, &function_zval_p, &args_p, &returned_p,
                 &options_p)) {
         status = AEROSPIKE_ERR_PARAM;
@@ -3905,9 +3905,9 @@ PHP_METHOD(Aerospike, aggregate)
     }
 
     if (((args_p) && (PHP_TYPE_ISNOTARR(args_p)) &&
-                (PHP_TYPE_ISNOTNULL(args_p))) || ((options_p) &&
-                    (PHP_TYPE_ISNOTARR(options_p)) &&
-                    (PHP_TYPE_ISNOTNULL(options_p))) ||
+            (PHP_TYPE_ISNOTNULL(args_p))) || ((options_p) &&
+            (PHP_TYPE_ISNOTARR(options_p)) &&
+            (PHP_TYPE_ISNOTNULL(options_p))) ||
             (PHP_TYPE_ISNOTSTR(module_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(function_zval_p)) ||
             (PHP_TYPE_ISNOTSTR(namespace_zval_p)) ||

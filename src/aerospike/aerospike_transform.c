@@ -1738,12 +1738,7 @@ static void AS_LIST_PUT_APPEND_STR(Aerospike_object *as, void *key, void *value,
 {
 	if (AEROSPIKE_OK != (error_p->code =
 				as_arraylist_append_str((as_arraylist *) array,
-#if PHP_VERSION_ID < 70000
-						Z_STRVAL_PP((zval**) value)
-#else
-						Z_STRVAL_P((zval*) value)
-#endif
-						))) {
+						AEROSPIKE_Z_STRVAL_P(value)))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to append string to list");
 		PHP_EXT_SET_AS_ERR(error_p, error_p->code,
 				"Unable to append string to list");

@@ -690,13 +690,11 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 	bool                        return_value_assoc = false;
 
 	if ((!as_object_p->as_ref_p->as_p) || (!error_p) || (!module_p) || (!function_p) ||
-			(!args_pp && (!(
+			(!args_pp 
 #if PHP_VERSION_ID < 70000
-					*args_pp
-#else
-					args_pp
+					&& (!(*args_pp))
 #endif
-			))) || (!namespace_p) || (!set_p) ||
+			) || (!namespace_p) || (!set_p) ||
 			(!predicate_ht_p) || (!return_value_p)) {
 		DEBUG_PHP_EXT_DEBUG("Unable to initiate query aggregation");
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Unable to initiate query aggregation");
@@ -711,11 +709,11 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 	}
 
 #if PHP_VERSION_ID < 70000
-    if ((*args_pp)) {
+    if (*args_pp) {
 		as_arraylist_init(&args_list,
 				zend_hash_num_elements(Z_ARRVAL_PP(args_pp)), 0);
 #else
-    if ((args_pp)) {
+    if (args_pp) {
 		as_arraylist_init(&args_list,
 				zend_hash_num_elements(Z_ARRVAL_P(args_pp)), 0);
 #endif
@@ -767,19 +765,13 @@ aerospike_query_aggregate(Aerospike_object* as_object_p, as_error* error_p,
 			}
 		}
 		AEROSPIKE_FOREACH_HASHTABLE_END;
-		
-		if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p->as_ref_p->as_p, error_p,
-						&query_policy, &query,
-						aerospike_helper_aggregate_callback,
-						&aggregate_result_callback_udata))) {
-			DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-			goto exit;
-		}
-	} else if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p->as_ref_p->as_p, error_p,
-					&query_policy, &query, aerospike_helper_aggregate_callback,
+	}
+
+	if (AEROSPIKE_OK != (aerospike_query_foreach(as_object_p->as_ref_p->as_p, error_p,
+					&query_policy, &query,
+					aerospike_helper_aggregate_callback,
 					&aggregate_result_callback_udata))) {
 		DEBUG_PHP_EXT_DEBUG("%s", error_p->message);
-		goto exit;
 	}
 
 exit:
