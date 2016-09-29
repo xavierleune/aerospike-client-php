@@ -101,12 +101,7 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 
 	PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_OK, "");
 
-#if (PHP_VERSION_ID < 70000)
 	AEROSPIKE_FOREACH_HASHTABLE(privileges_ht_p, privileges_position, privileges_entry) {
-#else
-	ZEND_HASH_FOREACH_VAL(privileges_ht_p, privileges_entry) {
-#endif
-
 		DECLARE_ZVAL_P(each_privilege_entry);
 		HashTable*               each_privilege_p = NULL;
 
@@ -177,14 +172,11 @@ aerospike_security_operations_convert_privileges_from_zval(HashTable *privileges
 				goto exit;
 			}
 		}
-#if PHP_VERSION_ID >= 70000
-		ZEND_HASH_FOREACH_END();
-#endif
+		AEROSPIKE_FOREACH_HASHTABLE_END;
+
 		privileges_index++;
 	}
-#if PHP_VERSION_ID >= 70000
-	ZEND_HASH_FOREACH_END();
-#endif
+	AEROSPIKE_FOREACH_HASHTABLE_END;
 
 exit:
 	return error_p->code;

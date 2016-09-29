@@ -1738,12 +1738,7 @@ static void AS_LIST_PUT_APPEND_STR(Aerospike_object *as, void *key, void *value,
 {
 	if (AEROSPIKE_OK != (error_p->code =
 				as_arraylist_append_str((as_arraylist *) array,
-#if PHP_VERSION_ID < 70000
-						Z_STRVAL_PP((zval**) value)
-#else
-						Z_STRVAL_P((zval*) value)
-#endif
-						))) {
+						AEROSPIKE_Z_STRVAL_P(value)))) {
 		DEBUG_PHP_EXT_DEBUG("Unable to append string to list");
 		PHP_EXT_SET_AS_ERR(error_p, error_p->code,
 				"Unable to append string to list");
@@ -2734,13 +2729,13 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 		HashPosition		options_pointer;
 		DECLARE_ZVAL_P(options_value);
 		DECLARE_ZVAL_P(data);
+		int8_t* options_key;
 
 #if PHP_VERSION_ID < 70000
 		ulong options_index;
-		int8_t* options_key;
 #else
 		zend_ulong options_index;
-		zend_string* options_key;
+		zend_string* options_key_z;
 #endif
 		uint options_key_len;
 		(((transform_zval_config_into *) as_config_p)->transform_result).as_config_p->use_shm = true;
@@ -2755,17 +2750,19 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 				goto exit;
 			}
 #else
-		ZEND_HASH_FOREACH_VAL(ht_shm, options_value) {
-			ZEND_HASH_FOREACH_KEY_VAL(ht_shm, options_index, options_key, options_value) {
-			if (!options_key) {
+		ZEND_HASH_FOREACH_KEY_VAL(ht_shm, options_index, options_key_z, data) {
+			if (!options_key_z) {
 				status = AEROSPIKE_ERR_PARAM;
 				DEBUG_PHP_EXT_DEBUG("Unable to set shared memory parameters");
 				goto exit;
 			}
-		} ZEND_HASH_FOREACH_END();
+			options_key = (int8_t *)options_key_z->val;
 #endif
 			if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_KEY) == 0) {
-				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+#if PHP_VERSION_ID < 70000
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) 
+#endif
+				{
 					if (AEROSPIKE_Z_TYPE_P(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory key");
@@ -2775,7 +2772,10 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 						AEROSPIKE_Z_LVAL_P(data);
 				}
 			} else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NODES) == 0) {
-				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+#if PHP_VERSION_ID < 70000
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) 
+#endif					
+				{
 					if (AEROSPIKE_Z_TYPE_P(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max nodes");
@@ -2785,7 +2785,10 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 						AEROSPIKE_Z_LVAL_P(data);
 				}
 			} else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_MAX_NAMESPACES) == 0) {
-				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+#if PHP_VERSION_ID < 70000
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) 
+#endif
+				{	
 					if (AEROSPIKE_Z_TYPE_P(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
@@ -2795,7 +2798,10 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 									AEROSPIKE_Z_LVAL_P(data);
 				}
 			} else if (strcmp((const char *) options_key, PHP_AS_KEY_DEFINE_FOR_SHM_TAKEOVER_THRESHOLD_SEC) == 0) {
-				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) {
+#if PHP_VERSION_ID < 70000
+				if (AEROSPIKE_ZEND_HASH_GET_CURRENT_DATA_EX(ht_shm, (void**) &data, &options_pointer) == SUCCESS) 
+#endif
+				{
 					if (AEROSPIKE_Z_TYPE_P(data) != IS_LONG) {
 						status = AEROSPIKE_ERR_PARAM;
 						DEBUG_PHP_EXT_DEBUG("Unable to set shared memory max namespaces");
@@ -2810,9 +2816,9 @@ aerospike_transform_set_shm_in_config(HashTable* ht_shm, void* as_config_p TSRML
 				goto exit;
 			}
 		}
-		#if PHP_VERSION_ID >= 70000
-			ZEND_HASH_FOREACH_END();
-		#endif
+#if PHP_VERSION_ID >= 70000
+		ZEND_HASH_FOREACH_END();
+#endif
 	}
 exit:
 	return status;
@@ -2884,9 +2890,7 @@ aerospike_transform_iterateKey(HashTable* ht_p,
 
 #if PHP_VERSION_ID < 70000
 	u_int32_t key_type_u32 = AEROSPIKE_ZEND_HASH_GET_CURRENT_KEY_EX(ht_p, (char **)&key_value_p, &key_len_u32, &index_u64, 0, &hashPosition_p);
-#endif
-
-#if PHP_VERSION_ID >= 70000
+#else
 	if (key_value_p) {
 		key_len_u32 = strlen(ZSTR_VAL(key_value_p)) + 1;
 	}
@@ -2896,28 +2900,26 @@ aerospike_transform_iterateKey(HashTable* ht_p,
 
 		status = keycallback_p(ht_p,
 #if PHP_VERSION_ID < 70000
-													Z_TYPE_PP(keyData_pp),
-													key_value_p,
-													key_len_u32,
-													data_p, keyData_pp
+				Z_TYPE_PP(keyData_pp),
+				key_value_p,
+				key_len_u32,
+				data_p, keyData_pp
 #else
-													Z_TYPE_P(keyData_pp),
-													key_value_p->val,
-													key_len_u32,
-													data_p, keyData_pp
+				Z_TYPE_P(keyData_pp),
+				key_value_p->val,
+				key_len_u32,
+				data_p, keyData_pp
 #endif
-														);
+		);
 
 		if(keycallback_p) {
 			if (AEROSPIKE_OK != status) {
 				goto exit;
 			}
 		}
-		#if PHP_VERSION_ID < 70000
-		  }
-		#else
-		  } ZEND_HASH_FOREACH_END();
-		#endif
+	}
+	AEROSPIKE_FOREACH_HASHTABLE_END;
+
 
 exit:
 	if ((retdata_pp) && (keyData_pp)) {
@@ -3044,15 +3046,9 @@ aerospike_transform_check_and_set_config(HashTable* ht_p,
 		goto exit;
 	}
 
-#if PHP_VERSION_ID < 70000
 	if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
 						&aerospike_transform_config_callback,
 						config_p)))
-#else
-	if (AEROSPIKE_OK != (status = aerospike_transform_iterateKey(ht_p, NULL/*retdata_pp*/,
-						&aerospike_transform_config_callback,
-						config_p)))
-#endif
 	{
 		goto exit;
 	}
@@ -3327,10 +3323,10 @@ as_status aerospike_transform_array_callback_php7(HashTable* ht_p,
 #else
 		if (tmp == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 					ip_port, strlen(ip_port), (void**)&tmp)) {
-			zval* z_temp;
-			ZVAL_STRING(z_temp, ip_port);
+			zval z_temp;
+			ZVAL_STRING(&z_temp, ip_port);
 			if (!zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
-						ip_port, strlen(ip_port), z_temp)) {
+						ip_port, strlen(ip_port), &z_temp)) {
 #endif
 				status = AEROSPIKE_ERR_CLIENT;
 				goto exit;
@@ -3411,19 +3407,19 @@ as_status aerospike_transform_array_callback(HashTable* ht_p,
 		goto exit;
 	}
 	if (!set_as_config) {
-		zval **tmp;
+		DECLARE_ZVAL_P(tmp);
 #if PHP_VERSION_ID < 70000
 	if (FAILURE == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 		ip_port, strlen(ip_port), (void**)&tmp)) {
 			if (0 != zend_hash_add((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 				ip_port, strlen(ip_port), (void *) ip_port, strlen(ip_port), NULL)) {
 #else
-	if (FAILURE == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
+	if (NULL == AEROSPIKE_ZEND_HASH_FIND((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
 		ip_port, strlen(ip_port), (void**)&tmp)) {
-			zval* z_temp;
-			ZVAL_STRING(z_temp, ip_port);
-			if (*tmp != zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
-				ip_port, strlen(ip_port), z_temp)) {
+			zval z_temp;
+			ZVAL_STRING(&z_temp, ip_port);
+			if (!zend_hash_str_add_new((((config_transform_iter_map_t *) data_p)->transform_result).host_lookup_p,
+				ip_port, strlen(ip_port), &z_temp)) {
 #endif
 					status = AEROSPIKE_ERR_CLIENT;
 					goto exit;
@@ -3774,7 +3770,12 @@ aerospike_transform_key_data_put(Aerospike_object* aerospike_object_p,
 		PARAM_ZVAL_P(record_pp),
 		as_key* as_key_p,
 		as_error *error_p,
-		u_int32_t ttl_u32,
+#if PHP_VERSION_ID < 70000
+		long
+#else
+		zend_ulong
+#endif
+		ttl_u32,
 		zval* options_p,
 		int8_t* serializer_policy_p TSRMLS_DC)
 {

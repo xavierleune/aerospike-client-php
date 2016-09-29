@@ -60,8 +60,9 @@
 	#define PARAM_ZVAL_P(__var)     zval** __var
 	#define PARAM_ZVAL(__var)       zval* __var
 	#define AEROSPIKE_ZVAL_ARG(zv) (zv)
-
-	typedef ulong as_php_ulong;
+	#define AS_PHP_LONG long
+	#define AS_PHP_SIZE int
+	#define AEROSPIKE_Z_BVAL_P(__var)	 Z_BVAL_PP(__var)
 	typedef zend_rsrc_list_entry as_php_zend_resource;
 #else
 	#define DECLARE_ZVAL(__var)     zval __var
@@ -69,8 +70,9 @@
 	#define PARAM_ZVAL_P(__var)     zval* __var
 	#define PARAM_ZVAL(__var)       zval __var
 	#define AEROSPIKE_ZVAL_ARG(zv) &(zv)
-
-	typedef zend_ulong as_php_ulong;
+	#define AS_PHP_LONG zend_long
+	#define AS_PHP_SIZE size_t
+	#define AEROSPIKE_Z_BVAL_P(__var)	 Z_DVAL_P(__var)
 	typedef zend_resource as_php_zend_resource;
 #endif
 
@@ -618,7 +620,12 @@ aerospike_transform_key_data_put(Aerospike_object* as_object_p,
 	              #endif
 								, as_key* as_key_p,
 								as_error *error_p,
-								u_int32_t ttl_u32,
+								#if PHP_VERSION_ID < 70000
+			  		             	long
+			  	                #else
+			  		            	zend_ulong
+			  	                #endif
+								ttl_u32 ,
 								zval* options_p,
 								int8_t* serializer_policy_p TSRMLS_DC);
 
@@ -1147,6 +1154,8 @@ check_val_type_list(
                 (void **) &datavalue, &position) == SUCCESS;                        \
             zend_hash_move_forward_ex(ht, &position))
 
+#define AEROSPIKE_FOREACH_HASHTABLE_END
+
  /*
  ******************************************************************************************************
  * Macro to get the data at the current position in ht.
@@ -1175,7 +1184,7 @@ check_val_type_list(
   ******************************************************************************************************
   */
 #define AEROSPIKE_Z_STRVAL_P(retval) \
-    Z_STRVAL_PP(retval)
+    Z_STRVAL_PP((zval **)retval)
 
   /*****************************************************************************************************
   * Macro to .
@@ -1405,8 +1414,10 @@ check_val_type_list(
 	*****************************************************************************************************
 	*/
 #define AEROSPIKE_FOREACH_HASHTABLE(ht, position, datavalue)                   \
-  ZEND_HASH_FOREACH_VAL(ht, datavalue) {                                  \
-  } ZEND_HASH_FOREACH_END();
+  ZEND_HASH_FOREACH_VAL(ht, datavalue) 
+
+#define AEROSPIKE_FOREACH_HASHTABLE_END		\
+  ZEND_HASH_FOREACH_END()
 
  /*
 	******************************************************************************************************
@@ -1437,7 +1448,7 @@ check_val_type_list(
   ******************************************************************************************************
   */
 #define AEROSPIKE_Z_STRVAL_P(retval) \
-    Z_STRVAL_P(retval)
+    Z_STRVAL_P((zval *)retval)
 
   /*******************************************************************************************************
   * Macro to .

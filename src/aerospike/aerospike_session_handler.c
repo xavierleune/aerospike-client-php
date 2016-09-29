@@ -405,9 +405,9 @@ PS_WRITE_FUNC(aerospike)
 	init_record = 1;
 	if (
 #if PHP_VERSION_ID < 70000
-	 	!as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, val, vallen, AS_BYTES_PHP, false)
+	 	!as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, (const uint8_t *)val, vallen, AS_BYTES_PHP, false)
 #else
-	    !as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, ZSTR_VAL(val), ZSTR_LEN(val), AS_BYTES_PHP, false)
+	    !as_record_set_raw_typep(&record, AEROSPIKE_SESSION_BIN, (const uint8_t *)ZSTR_VAL(val), ZSTR_LEN(val), AS_BYTES_PHP, false)
 #endif
 		) {
 		PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Unable to set record");

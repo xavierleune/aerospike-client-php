@@ -88,21 +88,16 @@ aerospike_scan_run(aerospike* as_object_p, as_error* error_p, char* namespace_p,
 		as_scan_select_inita(&scan, zend_hash_num_elements(bins_ht_p));
 		HashPosition pos;
 		DECLARE_ZVAL_P(bin_names_pp);
-#if PHP_VERSION_ID < 70000
+
 		AEROSPIKE_FOREACH_HASHTABLE(bins_ht_p, pos, bin_names_pp) {
-#else
-		ZEND_HASH_FOREACH_VAL(bins_ht_p, bin_names_pp) {
-#endif
 			if (AEROSPIKE_Z_TYPE_P(bin_names_pp) != IS_STRING) {
 				convert_to_string_ex(bin_names_pp);
 			}
 			as_scan_select(&scan, AEROSPIKE_Z_STRVAL_P(bin_names_pp));
 		}
-#if PHP_VERSION_ID >= 70000
-		ZEND_HASH_FOREACH_END();
-#endif
+		AEROSPIKE_FOREACH_HASHTABLE_END;
 
-	scan_p->concurrent = false;
+		scan_p->concurrent = false;
 
 		if (AEROSPIKE_OK != (aerospike_scan_foreach(as_object_p, error_p, &scan_policy,
 						&scan, aerospike_helper_record_stream_callback, user_func_p))) {

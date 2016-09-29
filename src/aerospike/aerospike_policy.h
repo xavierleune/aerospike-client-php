@@ -47,6 +47,7 @@ enum Aerospike_constants {
 	OPT_TTL,                 /* set to time-to-live of the record in seconds                                  */
 	USE_BATCH_DIRECT,        /* use new batch index protocol if server supports it                            */
 	COMPRESSION_THRESHOLD,   /* Minimum record size beyond which it is compressed and sent to the server      */
+	OPT_POLICY_DURABLE_DELETE /* set to true to enable durable delete for the operation                       */
 };
 
 /*
@@ -140,7 +141,8 @@ AerospikeConstants aerospike_constants[] = {
 	{ AS_PRIVILEGE_READ                     ,   "PRIV_READ"                         },
 	{ AS_PRIVILEGE_READ_WRITE               ,   "PRIV_READ_WRITE"                   },
 	{ AS_PRIVILEGE_READ_WRITE_UDF           ,   "PRIV_READ_WRITE_UDF"               },
-	{ AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"                   }
+	{ AS_PRIVILEGE_DATA_ADMIN               ,   "PRIV_DATA_ADMIN"                   },
+	{ OPT_POLICY_DURABLE_DELETE             ,   "OPT_POLICY_DURABLE_DELETE"         }
 };
 /*
  *******************************************************************************************************

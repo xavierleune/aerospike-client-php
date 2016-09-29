@@ -125,6 +125,14 @@ extern bool operater_ordered_callback(const char *key, const as_val *value, void
 					return false;
 				}
 				break;
+
+			case AS_GEOJSON:
+				// TODO Handle this
+				break;
+
+			case AS_VAL_T_MAX:
+				// TODO Handle this
+				break;
 		}
 	} else {
 		if (0 != add_next_index_null(AEROSPIKE_ZVAL_ARG(record_local_p))) {
@@ -1069,8 +1077,10 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 									&& (aerospike_obj_p->hasGeoJSON)
 									&& op == AS_OPERATOR_WRITE) {
 								int result;
+
+								DECLARE_ZVAL(retval);
+								DECLARE_ZVAL(fname);
 #if PHP_VERSION_ID < 70000
-								zval* retval = NULL, *fname = NULL;
 								ALLOC_INIT_ZVAL(fname);
 								ZVAL_STRINGL(fname, "__tostring", sizeof("__tostring") -1, 1);
 								result = call_user_function_ex(NULL, each_operation, fname, &retval,
@@ -1095,8 +1105,6 @@ aerospike_record_operations_operate_ordered(Aerospike_object* aerospike_obj_p,
 									zval_ptr_dtor(&retval);
 								}
 #else
-								zval retval;
-								zval fname;
 								AEROSPIKE_ZVAL_STRINGL(&fname, "__tostring", sizeof("__tostring") -1, 1);
 								result = call_user_function_ex(NULL, each_operation, &fname, &retval,
 									0, NULL, 0, NULL TSRMLS_CC);
@@ -1332,6 +1340,7 @@ aerospike_record_operations_remove_bin(Aerospike_object* aerospike_obj_p,
 			goto exit;
 		}
 	}
+	AEROSPIKE_FOREACH_HASHTABLE_END;
 
 	get_generation_value(options_p, &rec.gen, error_p TSRMLS_CC);
 

@@ -313,18 +313,18 @@
             zend_string* z_str;                                                \
             int t = zend_hash_num_elements(hashtable);                         \
             ZEND_HASH_FOREACH_KEY(hashtable, index, z_str) {                   \
+                if (z_str) {                                                   \
+                    as_string *map_str;                                        \
+                    GET_STR_POOL(map_str, static_pool, err, label);            \
+                    as_string_init(map_str, z_str->val, false);                \
+                    key = (as_val*) (map_str);                                 \
+                } else {                                                       \
+                    as_integer *map_int;                                       \
+                    GET_INT_POOL(map_int, static_pool, err, label);            \
+                    as_integer_init(map_int, index);                           \
+                    key = (as_val*) map_int;                                   \
+                }                                                              \
             } ZEND_HASH_FOREACH_END();                                         \
-            if (z_str) {                                                       \
-                as_string *map_str;                                            \
-                GET_STR_POOL(map_str, static_pool, err, label);                \
-                as_string_init(map_str, z_str->val, false);                    \
-                key = (as_val*) (map_str);                                     \
-            } else {                                                           \
-                as_integer *map_int;                                           \
-                GET_INT_POOL(map_int, static_pool, err, label);                \
-                as_integer_init(map_int, index);                               \
-                key = (as_val*) map_int;                                       \
-            }                                                                  \
         } while(0);
 #endif
 
@@ -1412,13 +1412,8 @@ extern as_status
 aerospike_get_record_metadata(as_record* get_record_p, zval* metadata_container_p TSRMLS_DC);
 
 extern void
-aerospike_transform_iterate_records(Aerospike_object* as,
-    #if PHP_VERSION_ID < 70000
-        zval **record_pp
-    #else
-        zval *record_pp
-    #endif
-    , as_record* as_record_p, as_static_pool* static_pool,
+aerospike_transform_iterate_records(Aerospike_object* as, PARAM_ZVAL_P(record_pp),
+    as_record* as_record_p, as_static_pool* static_pool,
     int8_t serializer_policy,
     bool server_support_double, as_error *error_p TSRMLS_DC);
 
