@@ -43,9 +43,9 @@ if (!$client->isConnected()) {
 $res = $client->grantRoles("john", array("read-write", "sys-admin"));
 if ($res == Aerospike::OK) {
     echo "read-write and sys-admin roles successfully granted to user john";
-} elseif ($res == Aerospike::ROLE_VIOLATION) {
+} elseif ($res == Aerospike::ERR_ROLE_VIOLATION) {
     echo "User does not possess the required role to grant new roles";
-} elseif ($res == Aerospike::INVALID_ROLE) {
+} elseif ($res == Aerospike::ERR_INVALID_ROLE) {
     echo "Invalid Role being attempted to be assigned to user john";
 } else {
     echo "[{$client->errorno()}] ".$client->error();
