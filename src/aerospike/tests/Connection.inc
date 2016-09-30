@@ -238,6 +238,9 @@ class Connection extends AerospikeTestCommon
         $db1 = new Aerospike($config1);
         $config2 = array("hosts"=>array(array("addr"=>AEROSPIKE_CONFIG_NAME2,"port"=>AEROSPIKE_CONFIG_PORT2)));
         $db2 = new Aerospike($config2);
+        if (!$db1->isConnected() || !$db2->isConnected()) {
+            return Aerospike::OK;
+        }
         if ($db1->isConnected()) {
             $test1 = true;
             $db1->close();
