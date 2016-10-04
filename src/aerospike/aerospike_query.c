@@ -259,13 +259,7 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 						"Predicate 'val' must be either string or integer.");
 					goto exit;
 			}
-		} else if (
-#if PHP_VERSION_ID < 70000
-					strncmp(Z_STRVAL_PP(op_pp), "RANGE", 5) == 0
-#else
-					strncmp(Z_STRVAL_P(op_pp), "RANGE", 5) == 0
-#endif
-				) {
+		} else if (strncmp(AEROSPIKE_Z_STRVAL_P(op_pp), "RANGE", 5) == 0) {
 			if (
 #if PHP_VERSION_ID < 70000
 				(FAILURE == AEROSPIKE_ZEND_HASH_FIND(predicate_ht_p, INDEX_TYPE, sizeof(INDEX_TYPE),
@@ -339,19 +333,19 @@ aerospike_query_define(as_query* query_p, as_error* error_p, char* namespace_p,
 				goto exit;
 			}
 		} else if (strncmp(AEROSPIKE_Z_STRVAL_P(op_pp), "GEOWITHIN", 9) == 0) {
-		if (!as_query_where(query_p, AEROSPIKE_Z_STRVAL_P(bin_pp), as_geo_within(AEROSPIKE_Z_STRVAL_P(val_pp)))) {
-			DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-				"Unable to set query predicate");
-		}
-		goto exit;
-	} else if (strncmp(AEROSPIKE_Z_STRVAL_P(op_pp), "GEOCONTAINS", 9) == 0) {
-		if (!as_query_where(query_p, AEROSPIKE_Z_STRVAL_P(bin_pp), as_geo_contains(AEROSPIKE_Z_STRVAL_P(val_pp)))){
-			DEBUG_PHP_EXT_DEBUG("Unable to set the query predicate");
-			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
-				"Unable to set query predicate");
-		}
-		goto exit;
+			if (!as_query_where(query_p, AEROSPIKE_Z_STRVAL_P(bin_pp), as_geo_within(AEROSPIKE_Z_STRVAL_P(val_pp)))) {
+				DEBUG_PHP_EXT_DEBUG("Unable to set query predicate");
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+					"Unable to set query predicate");
+			}
+			goto exit;
+		} else if (strncmp(AEROSPIKE_Z_STRVAL_P(op_pp), "GEOCONTAINS", 9) == 0) {
+			if (!as_query_where(query_p, AEROSPIKE_Z_STRVAL_P(bin_pp), as_geo_contains(AEROSPIKE_Z_STRVAL_P(val_pp)))){
+				DEBUG_PHP_EXT_DEBUG("Unable to set the query predicate");
+				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM,
+					"Unable to set query predicate");
+			}
+			goto exit;
 		} else {
 			DEBUG_PHP_EXT_DEBUG("Unsupported 'op' in predicate");
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_PARAM, "Unsupported 'op' in predicate");
