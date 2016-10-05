@@ -4500,7 +4500,7 @@ PHP_METHOD(Aerospike, predicateGeoContainsPoint)
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, BIN, bin_name_p, bin_name_len, 1);
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, OP, "GEOCONTAINS", strlen("GEOCONTAINS"), 1);
 
-    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"AeroCircle\", \"coordinates\":[[%f, %f], %f]}", longitude, latitude, radius);
+    snprintf(geo_value, sizeof(geo_value), "{\"type\":\"Point\", \"coordinates\":[%f, %f]}", longitude, latitude);
 
     AEROSPIKE_ADD_ASSOC_STRINGL(return_value, VAL, geo_value, strlen(geo_value), 1);
 }

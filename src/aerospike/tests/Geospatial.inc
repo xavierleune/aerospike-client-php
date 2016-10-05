@@ -45,7 +45,7 @@ class Geospatial extends AerospikeTestCommon
             ]]]);
         $key = $this->db->initKey("test", "demo", "geo_polygon_key");
         $bins = ["tstamp"=> time(), "userid" => 12345,
-            "loc_polygon" => ((string) $rect)];
+            "loc_polygon" =>  $rect];
         $status = $this->db->put($key, $bins);
         $this->db->addIndex("test", "demo", "loc_polygon", "loc_polygon_index",
             Aerospike::INDEX_TYPE_DEFAULT, Aerospike::INDEX_GEO2DSPHERE);
@@ -55,7 +55,7 @@ class Geospatial extends AerospikeTestCommon
             "coordinates" => [[-122.0, 37.5], 250.2]]);
         $key = $this->db->initKey("test", "demo", "geo_circle_key");
         $bins = ["tstamp"=> time(), "userid" => 12345,
-            "loc_circle" => ((string) $rect)];
+            "loc_circle" => $rect];
         $status = $this->db->put($key, $bins);
         $this->keys[] = $key;
         $this->db->addIndex("test", "demo", "loc_circle", "loc_circle_index",
@@ -407,8 +407,7 @@ class Geospatial extends AerospikeTestCommon
         $geo_obj->type = "Point";
         $geo_obj->coordinates = [-122.0, 37.5];
         $loc = \Aerospike\GeoJSON::fromArray((array) $geo_obj);
-        //$where = Aerospike::predicateGeoContainsPoint("loc_polygon", -121.000000, 37.000000, 0.00);
-        $where = Aerospike::predicateGeoContainsGeoJSONPoint("loc_circle", (string) $loc);
+        $where = Aerospike::predicateGeoContainsGeoJSONPoint("loc_circle", $loc);
         $count = 0;
         $status = $this->db->query("test", "demo", $where, function ($record) use (&$count) {
             if (!is_null($record["bins"]["loc_circle"])) {
