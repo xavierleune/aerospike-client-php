@@ -652,7 +652,7 @@ class Aggregate extends AerospikeTestCommon
     {
         $this->ensureUdfModule("tests/lua/test_aggregate.lua", "test_aggregate.lua");
         $where = $this->db->predicateBetween("age", 0, 50);
-        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate", "double_group_count", array("first_name", "age", 2.2), $returned);
+        $status = $this->db->aggregate("test", "demo", $where, "test_aggregate", "double_group_count", array("first_name", "age", 2), $returned);
         if ($status != Aerospike::OK) {
             return($this->db->errorno());
         }
