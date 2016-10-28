@@ -422,6 +422,11 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 		goto exit;
 	}
 
+    if (conf->hosts_size == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        goto exit;
+    }
+
 	if (persist_flag == false) {
 		ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();
 		goto exit;
