@@ -472,7 +472,7 @@ exit:
 	if (init_key) {
 		as_key_destroy(&key_remove);
 	}
-	return (error.code == AEROSPIKE_OK) ? SUCCESS : FAILURE;
+	return (error.code == AEROSPIKE_OK || error.code == AEROSPIKE_ERR_RECORD_NOT_FOUND) ? SUCCESS : FAILURE;
 }
 
 /*
