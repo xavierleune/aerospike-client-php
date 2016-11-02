@@ -422,6 +422,11 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 		goto exit;
 	}
 
+    if (conf->hosts_size == 0) {
+        status = AEROSPIKE_ERR_PARAM;
+        goto exit;
+    }
+
 	if (persist_flag == false) {
 		ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();
 		goto exit;
@@ -958,21 +963,19 @@ aerospike_helper_check_and_set_config_for_session(as_config *config_p,
 
 	char *save_handler = SAVE_HANDLER_PHP_INI;
 	if (save_handler != NULL) {
-		if (!strncmp(save_handler, AEROSPIKE_SESSION, AEROSPIKE_SESSION_LEN)) {
-			if (!save_path) {
-				save_path = SAVE_PATH_PHP_INI;
-			}
+		if (!save_path) {
+			save_path = SAVE_PATH_PHP_INI;
+		}
 
-			if (save_path) {
-				if (AEROSPIKE_OK != parse_save_path(save_path, session_p,
-					config_p, error_p TSRMLS_CC)) {
-					goto exit;
-				}
-			} else {
-				PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_PATH settings");
-				DEBUG_PHP_EXT_ERROR("Could not read SAVE_PATH settings");
+		if (save_path) {
+			if (AEROSPIKE_OK != parse_save_path(save_path, session_p,
+				config_p, error_p TSRMLS_CC)) {
 				goto exit;
 			}
+		} else {
+			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_PATH settings");
+			DEBUG_PHP_EXT_ERROR("Could not read SAVE_PATH settings");
+			goto exit;
 		}
 	} else {
 		PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT, "Could not read SAVE_HANDLER settings");

@@ -139,9 +139,6 @@
 #define CACHE_EXPIRE_PHP_INI INI_INT("session.cache_expire") ? INI_INT("session.cache_expire") * 60 : 0
 #define SESSION_EXPIRE_PHP_INI INI_INT("session.gc_maxlifetime") ? INI_INT("session.gc_maxlifetime") * 60 : 0
 
-#define AEROSPIKE_SESSION "aerospike"
-#define AEROSPIKE_SESSION_LEN 9
-
 /*
  *******************************************************************************************************
  * MACROS FOR AEROSPIKE GEOJSON CLASS.
