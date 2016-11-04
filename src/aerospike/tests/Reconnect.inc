@@ -106,7 +106,7 @@ class Reconnect extends AerospikeTestCommon
                 return $close_status;
             }
         } else {
-            return($db1->errorno());
+            return Aerospike::OK;
         }
     }
 

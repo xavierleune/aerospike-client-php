@@ -8,7 +8,7 @@ The Aerospike PHP Client works with PHP 5.3.3+, 5.4, 5.5, 5.6 and 7.0 (tested wi
 
 The PHP extension was tested to build on 64-bit
 
- - Ubuntu 12.04 LTS, 14.04 LTS, Debian 6, 7, 8 and related distros using the **apt** package manager
+ - Ubuntu 12.04 LTS, 14.04 LTS, Debian 7, 8 and related distros using the **apt** package manager
  - CentOS 6.x, 7.x, RedHat 6.x, 7.x and related distros using the **yum** package manager
  - OS X 10.9 (Mavericks), 10.10 (Yosemite)
 

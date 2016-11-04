@@ -1,5 +1,6 @@
 <?php
 require_once 'Common.inc';
+require_once(realpath(__DIR__ . '/../../../autoload.php'));
 
 /**
  *Basic remove opeartion tests
