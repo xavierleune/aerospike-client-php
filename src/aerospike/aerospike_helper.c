@@ -193,18 +193,21 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
     #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)             \
         do {                                                                   \
             ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                          \
-            ZVAL_PTR(&new_le, as_object_p->as_ref_p);                          \
+            rsrc_result = zend_register_resource(as_object_p->as_ref_p->as_p,  \
+            	val_persist);												   \
+            new_le.value.ptr = as_object_p->as_ref_p;                          \
+            new_le.u1.v.type = val_persist;                                    \
             if (new_flag) {                                                    \
                 pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
                     zend_hash_add(persistent_list, zend_string_init(alias,     \
-                            strlen(alias), 0), &new_le);                            \
-                    ((aerospike_ref *) new_le.value.obj)->ref_hosts_entry++;   \
+                            strlen(alias), 0), &new_le);                       \
+                    ((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;   \
                 pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
             } else {                                                           \
                 pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
                     zend_hash_update(persistent_list, zend_string_init(alias,  \
                              strlen(alias), 0),  &new_le);                     \
-                    ((aerospike_ref *) new_le.value.obj)->ref_hosts_entry++;   \
+                    ((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;   \
                 pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
             }                                                                  \
         } while(0)
@@ -239,7 +242,7 @@ int is_unique_shm_key(int shm_key_to_match, HashTable *shm_key_list TSRMLS_DC)
 #else
 	zval* data;
 	ZEND_HASH_FOREACH_VAL(shm_key_list, data) {
-		if (shm_key_to_match == ((shared_memory_key *)(((zend_resource*)options_value)->ptr))->key) {
+		if (shm_key_to_match == ((shared_memory_key *)(data->value.ptr))->key ) {
 			return 0;
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -269,7 +272,8 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 	zval* rsrc_result = NULL;
 #else
 	zval *le, new_shm_entry;
-	zval rsrc_result;
+	zend_resource *rsrc_result = NULL;
+	array_init(&new_shm_entry);
 #endif
 	as_status status = AEROSPIKE_OK;
 	int itr_user = 0;
@@ -304,15 +308,17 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 		new_shm_entry.ptr = shm_key_ptr;
 		new_shm_entry.type = 1;
 #else
-		ZVAL_PTR(&new_shm_entry, shm_key_ptr);  
+		rsrc_result = zend_register_resource(shm_key_ptr, 1);
+		new_shm_entry.value.ptr = shm_key_ptr;
+		new_shm_entry.u1.v.type = 1; 
 #endif
 
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
 		zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
 			(void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
 #else
-		zend_hash_add(shm_key_list,                         
-			zend_string_init(alias_to_search, strlen(alias_to_search), 0), &new_shm_entry);
+		zend_hash_add(shm_key_list, zend_string_init(alias_to_search, strlen(alias_to_search), 0),
+			 &new_shm_entry);
 #endif
 		pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
 		goto exit;
@@ -327,8 +333,8 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 #else
 	if (NULL != (le = AEROSPIKE_ZEND_HASH_FIND(shm_key_list,
 			alias_to_search, strlen(alias_to_search), (void **) &le))) {
-		if ((le->value.obj) != NULL) {
-			conf->shm_key = ((shared_memory_key *)(le->value.obj))->key;
+		if ((le->value.ptr) != NULL) {
+			conf->shm_key = ((shared_memory_key *)(le->value.ptr))->key;
 		}
 #endif
 
@@ -355,7 +361,9 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 		zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
 			(void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
 #else
-		ZVAL_PTR(&new_shm_entry, shm_key_ptr);  
+		rsrc_result = zend_register_resource(shm_key_ptr, 1);
+		new_shm_entry.value.ptr = shm_key_ptr;
+		new_shm_entry.u1.v.type = 1;
 		zend_hash_add(shm_key_list,                                    
 			zend_string_init(alias_to_search, strlen(alias_to_search), 0),  &new_shm_entry);
 #endif
@@ -406,8 +414,8 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 	zval* rsrc_result = NULL;
 #else
 	zval *le, new_le;
-	zval rsrc_result;
-	array_init(&rsrc_result);
+	zend_resource *rsrc_result = NULL;
+	array_init(&new_le);
 #endif
 	as_status status = AEROSPIKE_OK;
 	int itr_user = 0, itr_stored = 0;
@@ -465,7 +473,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 				alias_to_search = NULL;
 			}
 			pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
-			tmp_ref = (aerospike_ref *)le->value.obj;
+			tmp_ref = (aerospike_ref *)le->value.ptr;
 			goto use_existing;
 		}
 #endif
@@ -507,7 +515,7 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 #else
 		zend_hash_add(persistent_list, zend_string_init(alias_to_hash, strlen(alias_to_hash), 0),
 				&new_le);
-		((aerospike_ref *) new_le.value.obj)->ref_hosts_entry++;
+		((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;
 #endif
 
 		pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
