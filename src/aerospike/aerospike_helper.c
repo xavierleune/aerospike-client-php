@@ -194,7 +194,7 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
         do {                                                                   \
             ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                          \
             rsrc_result = zend_register_resource(as_object_p->as_ref_p->as_p,  \
-            	val_persist);												   \
+                val_persist);                                                  \
             new_le.value.ptr = as_object_p->as_ref_p;                          \
             new_le.u1.v.type = val_persist;                                    \
             if (new_flag) {                                                    \
@@ -959,7 +959,7 @@ exit:
  */
 extern as_status
 aerospike_helper_check_and_set_config_for_session(as_config *config_p,
-    char *save_path, aerospike_session *session_p, as_error *error_p TSRMLS_DC)
+	char *save_path, aerospike_session *session_p, as_error *error_p TSRMLS_DC)
 {
 	char        *ip = NULL;
 	uint16_t    port = 0;
