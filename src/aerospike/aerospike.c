@@ -3466,12 +3466,13 @@ PHP_METHOD(Aerospike, setSerializer)
     as_status              status = AEROSPIKE_OK;
     #if PHP_VERSION_ID < 70000
         if (user_serializer_call_info.function_name &&
-            (Z_ISREF_P(user_serializer_call_info.function_name))) {
+            Z_ISREF_P(user_serializer_call_info.function_name)) {
                 RETURN_TRUE;
         }
     #else
-        if (&(user_serializer_call_info.function_name) && Z_ISREF_P(&(user_serializer_call_info.function_name))) {
-            RETURN_TRUE;
+        if (&(user_serializer_call_info.function_name) &&
+        	Z_ISREF_P(&(user_serializer_call_info.function_name))) {
+            	RETURN_TRUE;
         }
     #endif
 
@@ -4126,13 +4127,8 @@ PHP_METHOD(Aerospike, queryApply)
 
     predicate_ht_p = (predicate_p ? Z_ARRVAL_P(predicate_p) : NULL);
 
-    #if PHP_VERSION_ID < 70000
     zval_dtor(job_id_p);
     ZVAL_LONG(job_id_p, 0);
-    #else
-    zval_dtor(job_id_p);
-    ZVAL_LONG(job_id_p, 0);
-    #endif
 
     if (AEROSPIKE_OK !=
             (status = aerospike_query_run_background(aerospike_obj_p,
