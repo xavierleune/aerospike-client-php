@@ -245,7 +245,7 @@ typedef struct csdk_aerospike_obj {
 	 * SDK aerospike object being held by the various PHP userland Aerospike
 	 * objects.
 	 */
-	int ref_as_p;
+	int ref_count;
 
 	/*
 	 * ref_hosts_entry indicates the no. of references for internal C

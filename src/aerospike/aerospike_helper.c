@@ -150,11 +150,11 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
             pemalloc(sizeof(aerospike_ref), 1)))                               \
         {                                                                      \
             as_object_p->as_ref_p->as_p = NULL;                                \
-            as_object_p->as_ref_p->ref_as_p = 0;                               \
+            as_object_p->as_ref_p->ref_count = 0;                               \
             as_object_p->as_ref_p->ref_hosts_entry = 0;                        \
         }                                                                      \
         as_object_p->as_ref_p->as_p = aerospike_new(conf);                     \
-        as_object_p->as_ref_p->ref_as_p = 1;                                   \
+        as_object_p->as_ref_p->ref_count = 1;                                   \
     } while(0)
 
 /*
@@ -528,11 +528,11 @@ use_existing:
 	/*
 	 * config details have matched, use the existing one obtained from the
 	 * storage.
-	 * Increment corresponding ref_as_p of the aerospike_ref object.
+	 * Increment corresponding ref_count of the aerospike_ref object.
 	 */
 	as_object_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 	as_object_p->as_ref_p = tmp_ref;
-	as_object_p->as_ref_p->ref_as_p++;
+	as_object_p->as_ref_p->ref_count++;
 	goto exit;
 exit:
 	if (conf->use_shm) {
@@ -764,7 +764,7 @@ aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
 /*
  *******************************************************************************************************
  * Function called from Aerospike::close().
- * It decrements ref_as_p which indicates the no. of references for internal C
+ * It decrements ref_count which indicates the no. of references for internal C
  * SDK aerospike object being held by the various PHP userland Aerospike
  * objects.
  * It DOES NOT actually close the connection to server or free as_ref_p as other
@@ -784,9 +784,9 @@ aerospike_helper_close_php_connection(Aerospike_object *as_obj_p, as_error *erro
 	as_error_init(error_p);
 	DEBUG_PHP_EXT_DEBUG("In aerospike_helper_close_php_connection");
 	if (as_obj_p->as_ref_p) {
-		if (as_obj_p->as_ref_p->ref_as_p >= 1) {
-			as_obj_p->as_ref_p->ref_as_p--;
-		} else if (as_obj_p->as_ref_p->ref_as_p <= 0) {
+		if (as_obj_p->as_ref_p->ref_count >= 1) {
+			as_obj_p->as_ref_p->ref_count--;
+		} else if (as_obj_p->as_ref_p->ref_count <= 0) {
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 					"Connection already closed!");
 			DEBUG_PHP_EXT_ERROR("Connection already closed!");
