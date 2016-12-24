@@ -8,19 +8,24 @@ The following configuration options in php.ini
 | aerospike.connect_timeout | 1000 |
 | aerospike.read_timeout | 1000 |
 | aerospike.write_timeout | 1000 |
-| aerospike.key_policy | digest |
+| aerospike.key_policy | 0 |
 | aerospike.serializer | php |
-| aerospike.udf.lua_system_path | /opt/aerospike/lua |
-| aerospike.udf.lua_user_path | /opt/aerospike/usr-lua |
+| aerospike.udf.lua_system_path | /usr/local/aerospike/lua |
+| aerospike.udf.lua_user_path | /usr/local/aerospike/usr-lua |
 | aerospike.shm.use | false |
-| aerospike.shm.shm_key | 0xA5000000 |
-| aerospike.shm.shm_max_nodes | 16 |
-| aerospike.shm.shm_max_namespaces | 8 |
+| aerospike.shm.key | 0xA5000000 |
+| aerospike.shm.max_nodes | 16 |
+| aerospike.shm.max_namespaces | 8 |
 | aerospike.shm.shm_takeover_threshold_sec | 30 |
 | aerospike.use_batch_direct | 0 |
 | aerospike.compression_threshold | 0 |
 | aerospike.max_threads | 300 |
 | aerospike.thread_pool_size | 16 |
+| aerospike.nesting_depth | 3 |
+| aerospike.log_path | NULL |
+| aerospike.log_level | NULL |
+| aerospike.key_gen | 0 |
+
 
 Here is a description of the configuration directives:
 
