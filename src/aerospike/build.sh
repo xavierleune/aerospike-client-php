@@ -197,7 +197,7 @@ config()
 
 }
 
-if [ $DOWNLOAD_PHP_UNIT ]; then
+if [ x"$DOWNLOAD_PHP_UNIT" = x1 ]; then
     echo "---------------------------Installing PHPUnit--------------------------"
 
     phpVersion=$(php --version)
