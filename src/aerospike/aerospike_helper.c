@@ -321,8 +321,10 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 		zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
 			(void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
 #else
-		zend_hash_add(shm_key_list, zend_string_init(alias_to_search, strlen(alias_to_search), 0),
-			 &new_shm_entry);
+		zend_string * tmp_key =  zend_string_init(alias_to_search,
+				strlen(alias_to_search), 1);
+		zend_hash_add(shm_key_list, tmp_key, &new_shm_entry);
+		zend_string_release(tmp_key);
 #endif
 		pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
 		goto exit;
@@ -368,8 +370,10 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 		rsrc_result = zend_register_resource(shm_key_ptr, 1);
 		new_shm_entry.value.ptr = shm_key_ptr;
 		new_shm_entry.u1.v.type = 1;
-		zend_hash_add(shm_key_list,                                    
-			zend_string_init(alias_to_search, strlen(alias_to_search), 0),  &new_shm_entry);
+		zend_string * tmp_key =  zend_string_init(alias_to_search,
+				strlen(alias_to_search), 1);
+		zend_hash_add(shm_key_list, tmp_key, &new_shm_entry);
+		zend_string_release(tmp_key);
 #endif
 
 	}
