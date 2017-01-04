@@ -749,7 +749,8 @@ PHP_METHOD(Aerospike, __construct)
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 
     /* Checking if the GeoJSON feature is supported for this given cluster. */
-    if (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
+    if ((aerospike_obj_p->as_ref_p->as_p->cluster != NULL)
+    		&& aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
         aerospike_obj_p->hasGeoJSON = true;
     } else {
         aerospike_obj_p->hasGeoJSON = false;
