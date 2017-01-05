@@ -241,11 +241,11 @@ typedef struct csdk_aerospike_obj {
 	aerospike *as_p;
 
 	/*
-	 * ref_as_p indicates the no. of references for internal C
+	 * ref_count indicates the no. of references for internal C
 	 * SDK aerospike object being held by the various PHP userland Aerospike
 	 * objects.
 	 */
-	int ref_as_p;
+	int ref_count;
 
 	/*
 	 * ref_hosts_entry indicates the no. of references for internal C
@@ -610,19 +610,10 @@ aerospike_transform_check_and_set_config(HashTable* ht_p,
 
 extern as_status
 aerospike_transform_key_data_put(Aerospike_object* as_object_p,
-	              #if PHP_VERSION_ID < 70000
-		              zval **record_pp
-	              #else
-		              zval *record_pp
-	              #endif
-								, as_key* as_key_p,
+		              			PARAM_ZVAL_P(record_pp), 
+		              			as_key* as_key_p,
 								as_error *error_p,
-								#if PHP_VERSION_ID < 70000
-			  		             	long
-			  	                #else
-			  		            	zend_ulong
-			  	                #endif
-								ttl_u32 ,
+			  		            AS_PHP_LONG ttl_u32,
 								zval* options_p,
 								int8_t* serializer_policy_p TSRMLS_DC);
 

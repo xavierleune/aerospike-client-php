@@ -560,11 +560,11 @@ static zend_function_entry Aerospike_class_functions[] =
 
     if (intern_obj_p) {
         if (intern_obj_p->is_persistent == false && intern_obj_p->as_ref_p) {
-            if (intern_obj_p->as_ref_p->ref_as_p != 0) {
+            if (intern_obj_p->as_ref_p->ref_count != 0) {
                 if (AEROSPIKE_OK != aerospike_close(intern_obj_p->as_ref_p->as_p, &error)) {
                     DEBUG_PHP_EXT_ERROR("Aerospike close returned error for a non-persistent Aerospike object");
                 }
-                intern_obj_p->as_ref_p->ref_as_p = 0;
+                intern_obj_p->as_ref_p->ref_count = 0;
             }
             int iter_hosts = 0;
             for (iter_hosts = 0; iter_hosts < intern_obj_p->as_ref_p->as_p->config.hosts_size; iter_hosts++) {
@@ -749,7 +749,8 @@ PHP_METHOD(Aerospike, __construct)
     aerospike_obj_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 
     /* Checking if the GeoJSON feature is supported for this given cluster. */
-    if (aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
+    if ((aerospike_obj_p->as_ref_p->as_p->cluster != NULL)
+    		&& aerospike_has_geo(aerospike_obj_p->as_ref_p->as_p)) {
         aerospike_obj_p->hasGeoJSON = true;
     } else {
         aerospike_obj_p->hasGeoJSON = false;
@@ -846,7 +847,7 @@ PHP_METHOD(Aerospike, close)
     }
 
     if ((aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_FALSE)
-            || (aerospike_obj_p->as_ref_p->ref_as_p < 1)) {
+            || (aerospike_obj_p->as_ref_p->ref_count < 1)) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Already disconnected");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -860,7 +861,7 @@ PHP_METHOD(Aerospike, close)
             DEBUG_PHP_EXT_ERROR("Aerospike close returned error");
             PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         }
-        aerospike_obj_p->as_ref_p->ref_as_p = 0;
+        aerospike_obj_p->as_ref_p->ref_count = 0;
     } else {
         if (AEROSPIKE_OK !=
                 aerospike_helper_close_php_connection(aerospike_obj_p,
@@ -898,7 +899,7 @@ PHP_METHOD(Aerospike, reconnect)
     }
 
     if ((aerospike_obj_p->is_conn_16 == AEROSPIKE_CONN_STATE_TRUE) ||
-            (aerospike_obj_p->as_ref_p->ref_as_p > 0)) {
+            (aerospike_obj_p->as_ref_p->ref_count > 0)) {
         status = AEROSPIKE_ERR_CLIENT;
         PHP_EXT_SET_AS_ERR(&error, AEROSPIKE_ERR_CLIENT, "Already connected");
         PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
@@ -913,9 +914,9 @@ PHP_METHOD(Aerospike, reconnect)
             DEBUG_PHP_EXT_ERROR("Unable to connect to server");
             PHP_EXT_SET_AS_ERR_IN_CLASS(&error);
         }
-        aerospike_obj_p->as_ref_p->ref_as_p = 1;
+        aerospike_obj_p->as_ref_p->ref_count = 1;
     } else {
-        aerospike_obj_p->as_ref_p->ref_as_p++;
+        aerospike_obj_p->as_ref_p->ref_count++;
         PHP_EXT_RESET_AS_ERR_IN_CLASS();
     }
 
@@ -5954,12 +5955,6 @@ PHP_MINIT_FUNCTION(aerospike)
         Aerospike_ce->create_object = Aerospike_object_new_php7;
     #endif
     memcpy(&Aerospike_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-
-    #if PHP_VERSION_ID < 70000
-        Aerospike_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
-    #else
-        Aerospike_ce->ce_flags |= ZEND_ACC_FINAL;
-    #endif
 
     #ifdef ZTS
         ts_allocate_id(&aerospike_globals_id, sizeof(zend_aerospike_globals), (ts_allocate_ctor) aerospike_globals_ctor, (ts_allocate_dtor) aerospike_globals_dtor);

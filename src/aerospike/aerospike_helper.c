@@ -145,17 +145,17 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
  *******************************************************************************************************
  */
 #define ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT()                               \
-    do {                                                                       \
-        if (NULL != (as_object_p->as_ref_p =                                   \
-            pemalloc(sizeof(aerospike_ref), 1)))                               \
-        {                                                                      \
-            as_object_p->as_ref_p->as_p = NULL;                                \
-            as_object_p->as_ref_p->ref_as_p = 0;                               \
-            as_object_p->as_ref_p->ref_hosts_entry = 0;                        \
-        }                                                                      \
-        as_object_p->as_ref_p->as_p = aerospike_new(conf);                     \
-        as_object_p->as_ref_p->ref_as_p = 1;                                   \
-    } while(0)
+	do {                                                                       \
+		if (NULL != (as_object_p->as_ref_p =                                   \
+			pemalloc(sizeof(aerospike_ref), 1)))                               \
+		{                                                                      \
+			as_object_p->as_ref_p->as_p = NULL;                                \
+			as_object_p->as_ref_p->ref_count = 0;                              \
+			as_object_p->as_ref_p->ref_hosts_entry = 0;                        \
+		}                                                                      \
+		as_object_p->as_ref_p->as_p = aerospike_new(conf);                     \
+		as_object_p->as_ref_p->ref_count = 1;                                  \
+	} while(0)
 
 /*
  *******************************************************************************************************
@@ -163,54 +163,58 @@ aerospike_helper_set_error(zend_class_entry *ce_p, zval *object_p TSRMLS_DC)
  *******************************************************************************************************
  */
 #if defined(PHP_VERSION_ID) && (PHP_VERSION_ID < 70000)
-    #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)             \
-        do {                                                                   \
-            ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                          \
-            ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,   \
-                val_persist);                                                  \
-            new_le.ptr = as_object_p->as_ref_p;                                \
-            new_le.type = val_persist;                                         \
-            if (new_flag) {                                                    \
-                pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
-                zend_hash_add(persistent_list, alias, alias_len,               \
-                    (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);     \
-                ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;             \
-                pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
-            } else {                                                           \
-                pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
-                    zend_hash_update(persistent_list, alias, alias_len,        \
-                        (void *) &new_le, sizeof(zend_rsrc_list_entry),        \
-                        (void **) &le);                                        \
-                        ((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;     \
-                pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
-            }                                                                  \
-        } while(0)
+	#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)             \
+		do {                                                                   \
+			ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                          \
+			ZEND_REGISTER_RESOURCE(rsrc_result, as_object_p->as_ref_p->as_p,   \
+				val_persist);                                                  \
+			new_le.ptr = as_object_p->as_ref_p;                                \
+			new_le.type = val_persist;                                         \
+			if (new_flag) {                                                    \
+				pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
+				zend_hash_add(persistent_list, alias, alias_len,               \
+					(void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);     \
+				((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;             \
+				pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
+			} else {                                                           \
+				pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
+					zend_hash_update(persistent_list, alias, alias_len,        \
+						(void *) &new_le, sizeof(zend_rsrc_list_entry),        \
+						(void **) &le);                                        \
+						((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;     \
+				pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
+			}                                                                  \
+		} while(0)
 #else
 /*
  * Required or not??
  * le = (zend_resource *) zend_hash_update(persistent_list, alias, &new_le);
  * */
-    #define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)             \
-        do {                                                                   \
-            ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                          \
-            rsrc_result = zend_register_resource(as_object_p->as_ref_p->as_p,  \
-                val_persist);                                                  \
-            new_le.value.ptr = as_object_p->as_ref_p;                          \
-            new_le.u1.v.type = val_persist;                                    \
-            if (new_flag) {                                                    \
-                pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
-                    zend_hash_add(persistent_list, zend_string_init(alias,     \
-                            strlen(alias), 0), &new_le);                       \
-                    ((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;   \
-                pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
-            } else {                                                           \
-                pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
-                    zend_hash_update(persistent_list, zend_string_init(alias,  \
-                             strlen(alias), 0),  &new_le);                     \
-                    ((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;   \
-                pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
-            }                                                                  \
-        } while(0)
+	#define ZEND_HASH_CREATE_ALIAS_NEW(alias, alias_len, new_flag)             \
+		do {                                                                   \
+			ZEND_CREATE_AEROSPIKE_REFERENCE_OBJECT();                          \
+			rsrc_result = zend_register_resource(as_object_p->as_ref_p->as_p,  \
+				val_persist);                                                  \
+			new_le.value.ptr = as_object_p->as_ref_p;                          \
+			new_le.u1.v.type = val_persist;                                    \
+			if (new_flag) {                                                    \
+				pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
+				zend_string * tmp_key =  zend_string_init(alias,               \
+						strlen(alias), 1);                                     \
+				zend_hash_add(persistent_list, tmp_key, &new_le);              \
+				zend_string_release(tmp_key);                                  \
+				((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;       \
+				pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
+			} else {                                                           \
+				pthread_rwlock_wrlock(&AEROSPIKE_G(aerospike_mutex));          \
+				zend_string * tmp_key =  zend_string_init(alias,               \
+						strlen(alias), 1);                                     \
+				zend_hash_update(persistent_list, tmp_key, &new_le);           \
+				zend_string_release(tmp_key);                                  \
+				((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;       \
+				pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));          \
+			}                                                                  \
+		} while(0)
 #endif
 
 #define MAX_PORT_SIZE 6
@@ -317,8 +321,10 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 		zend_hash_add(shm_key_list, alias_to_search, strlen(alias_to_search),
 			(void *) &new_shm_entry, sizeof(zend_rsrc_list_entry*), NULL);
 #else
-		zend_hash_add(shm_key_list, zend_string_init(alias_to_search, strlen(alias_to_search), 0),
-			 &new_shm_entry);
+		zend_string * tmp_key =  zend_string_init(alias_to_search,
+				strlen(alias_to_search), 1);
+		zend_hash_add(shm_key_list, tmp_key, &new_shm_entry);
+		zend_string_release(tmp_key);
 #endif
 		pthread_rwlock_unlock(&AEROSPIKE_G(aerospike_mutex));
 		goto exit;
@@ -364,8 +370,10 @@ set_shm_key_from_alias_hash_or_generate(as_config* conf,
 		rsrc_result = zend_register_resource(shm_key_ptr, 1);
 		new_shm_entry.value.ptr = shm_key_ptr;
 		new_shm_entry.u1.v.type = 1;
-		zend_hash_add(shm_key_list,                                    
-			zend_string_init(alias_to_search, strlen(alias_to_search), 0),  &new_shm_entry);
+		zend_string * tmp_key =  zend_string_init(alias_to_search,
+				strlen(alias_to_search), 1);
+		zend_hash_add(shm_key_list, tmp_key, &new_shm_entry);
+		zend_string_release(tmp_key);
 #endif
 
 	}
@@ -513,8 +521,9 @@ aerospike_helper_object_from_alias_hash(Aerospike_object* as_object_p,
 		strlen(alias_to_hash), (void *) &new_le, sizeof(zend_rsrc_list_entry), NULL);
 		((aerospike_ref *) new_le.ptr)->ref_hosts_entry++;
 #else
-		zend_hash_add(persistent_list, zend_string_init(alias_to_hash, strlen(alias_to_hash), 0),
-				&new_le);
+		zend_string * tmp_key =  zend_string_init(alias_to_hash, strlen(alias_to_hash), 1);
+		zend_hash_add(persistent_list, tmp_key, &new_le);
+		zend_string_release(tmp_key);
 		((aerospike_ref *) new_le.value.ptr)->ref_hosts_entry++;
 #endif
 
@@ -528,11 +537,11 @@ use_existing:
 	/*
 	 * config details have matched, use the existing one obtained from the
 	 * storage.
-	 * Increment corresponding ref_as_p of the aerospike_ref object.
+	 * Increment corresponding ref_count of the aerospike_ref object.
 	 */
 	as_object_p->is_conn_16 = AEROSPIKE_CONN_STATE_TRUE;
 	as_object_p->as_ref_p = tmp_ref;
-	as_object_p->as_ref_p->ref_as_p++;
+	as_object_p->as_ref_p->ref_count++;
 	goto exit;
 exit:
 	if (conf->use_shm) {
@@ -764,7 +773,7 @@ aerospike_helper_check_and_configure_shm(as_config *config_p TSRMLS_DC) {
 /*
  *******************************************************************************************************
  * Function called from Aerospike::close().
- * It decrements ref_as_p which indicates the no. of references for internal C
+ * It decrements ref_count which indicates the no. of references for internal C
  * SDK aerospike object being held by the various PHP userland Aerospike
  * objects.
  * It DOES NOT actually close the connection to server or free as_ref_p as other
@@ -784,9 +793,9 @@ aerospike_helper_close_php_connection(Aerospike_object *as_obj_p, as_error *erro
 	as_error_init(error_p);
 	DEBUG_PHP_EXT_DEBUG("In aerospike_helper_close_php_connection");
 	if (as_obj_p->as_ref_p) {
-		if (as_obj_p->as_ref_p->ref_as_p >= 1) {
-			as_obj_p->as_ref_p->ref_as_p--;
-		} else if (as_obj_p->as_ref_p->ref_as_p <= 0) {
+		if (as_obj_p->as_ref_p->ref_count >= 1) {
+			as_obj_p->as_ref_p->ref_count--;
+		} else if (as_obj_p->as_ref_p->ref_count <= 0) {
 			PHP_EXT_SET_AS_ERR(error_p, AEROSPIKE_ERR_CLIENT,
 					"Connection already closed!");
 			DEBUG_PHP_EXT_ERROR("Connection already closed!");
